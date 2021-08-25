@@ -15,10 +15,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.file;
+package net.elytrium.limboauth.model;
 
-import net.elytrium.limboapi.server.world.SimpleWorld;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
-public interface WorldFile {
-  void toWorld(SimpleWorld world, int offsetX, int offsetY, int offsetZ);
+@NoArgsConstructor
+@AllArgsConstructor
+@DatabaseTable(tableName = "auth")
+public class RegisteredPlayer {
+
+  @DatabaseField(canBeNull = false)
+  public String nickname;
+
+  @DatabaseField(id = true)
+  public String lowercaseNickname;
+
+  @DatabaseField(canBeNull = false)
+  public String hash;
+
+  @DatabaseField
+  public String ip;
+
+  @DatabaseField
+  public String totpToken;
+
+  @DatabaseField
+  public Long regdate;
 }

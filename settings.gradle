@@ -2,7 +2,11 @@ rootProject.name = 'LimboAPI'
 
 include(
         'api',
-        'plugin'
+        'plugin',
+        'auth',
+        'filter'
 )
 findProject(':api')?.name = 'limboapi-api'
 findProject(':plugin')?.name = 'limboapi-plugin'
+findProject(':auth')?.name = 'limboauth'
+findProject(':filter')?.name = 'limbofilter'

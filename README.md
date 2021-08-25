@@ -11,20 +11,36 @@ Library for sending players to virtual servers (called limbo)<br>
 
 Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
 
-
 ## See also
 
-- [LimboAuth](https://github.com/Elytrium/LimboAuth) - Auth System built in virtual server (Limbo). Uses BCrypt, Hibernate ORM, has TOTP 2FA feature. Supports literally any database.
-- [LimboFilter](https://github.com/Elytrium/LimboFilter) - Most powerful bot filtering solution for Minecraft proxies. Built with LimboAPI.
+- [LimboAuth](https://github.com/Elytrium/LimboAPI/tree/master/net.elytrium.auth) - Auth System built in virtual server (Limbo). Uses BCrypt, has TOTP 2FA feature. Supports literally any database due to OrmLite.
+- [LimboFilter](https://github.com/Elytrium/Limbo/tree/master/net.elytrium.auth) - Most powerful bot filtering solution for Minecraft proxies. Built with LimboAPI.
 
-## Features
+### LimboFilter /vs/ popular antibot solutions:
+
+Test server: i7-3770 (4c/8t 3.4GHz) Dedicated server, Ubuntu Server 20.04, OpenJDK 11, 16GB DDR3 1600MHz RAM, 4GB RAM is allocated to proxy. <br>
+Attack: Motd + Join bot attack (100k joins per seconds, 1.17 Protocol)
+
+Proxy server | Info | Boot time | % CPU on attack
+--- | --- | --- | ---
+Velocity | LimboFilter + LimboAuth Online/Offline Mode | 2 sec | 20%
+Velocity | LimboFilter + Offline Mode | 2 sec | 20%
+Leymooo's BungeeCord BotFilter | JPremium Online/Offline Mode | 8 sec | 95%
+Leymooo's BungeeCord BotFilter | Offline Mode | 8 sec | 40%
+yooniks' BungeeCord Aegis Escanor 1.3.1 | Offline Mode | 10 sec | 20%
+yooniks' BungeeCord Aegis 9.2.1 | Offline Mode | 10 sec | 100% (what?)
+Velocity | JPremium Online/Offline Mode | 2 sec | 95%
+Velocity | Online Mode | 2 sec | 70%
+Velocity | Offline Mode | 2 sec | 55%
+
+## Features of LimboAPI
 
 - Send to Limbo during login process
 - Send to Limbo during play process
 - Send maps, items to player's virtual inventory
 - Display player's XP
 - Send Title, Chat, ActionBar
-- Render world from world files like .schematic
+- Load world from world files like .schematic
 - and more...
 
 ## How to
@@ -32,6 +48,11 @@ Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
 - Include ``limboapi-api`` to your Maven/Gradle project as compile-only
 - Subscribe to ``LoginLimboRegisterEvent`` to send players to Limbo during login process 
 - Use ``LimboFactory`` to send players to Limbo during play process
+
+### Demo
+
+- [LimboAuth](https://github.com/Elytrium/LimboAPI/tree/master/net.elytrium.auth) - Simple usage, using special api
+- [LimboFilter](https://github.com/Elytrium/Limbo/tree/master/net.elytrium.auth) - Advanced usage, using plugin's api
 
 ## Donation
 

@@ -1,32 +1,20 @@
 /*
  * Copyright (C) 2021 Elytrium
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * The LimboAPI (excluding the LimboAPI plugin) is licensed under the terms of the MIT License. For more details,
+ * reference the LICENSE file in the api top-level directory.
  */
 
-package net.elytrium.limboapi.file;
+package net.elytrium.limboapi.api.file;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import lombok.Getter;
-import net.elytrium.limboapi.server.world.SimpleBlock;
-import net.elytrium.limboapi.server.world.SimpleWorld;
+import net.elytrium.limboapi.api.LimboFactory;
+import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
-@Getter
 public class SchematicFile implements WorldFile {
   private short width;
   private short height;
@@ -50,7 +38,7 @@ public class SchematicFile implements WorldFile {
   }
 
   @Override
-  public void toWorld(SimpleWorld world, int offsetX, int offsetY, int offsetZ) {
+  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ) {
     short[] blockIds = new short[blocks.length];
 
     for (int index = 0; index < blocks.length; index++) {
@@ -70,8 +58,7 @@ public class SchematicFile implements WorldFile {
         for (int z = 0; z < length; ++z) {
           int index = (y * length + z) * width + x;
           world.setBlock(x + offsetX, y + offsetY, z + offsetZ,
-              SimpleBlock.fromLegacyId(blockIds[index])
-                  .setData(blocksData[index]));
+              factory.createSimpleBlock(blockIds[index], blocksData[index]));
         }
       }
     }

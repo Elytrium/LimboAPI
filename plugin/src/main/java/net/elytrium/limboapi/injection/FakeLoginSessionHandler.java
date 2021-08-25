@@ -61,6 +61,7 @@ import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
+import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
 import com.velocitypowered.proxy.connection.client.InitialInboundConnection;
@@ -86,6 +87,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.SneakyThrows;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -105,6 +107,7 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
   private static Method teardown;
   private static Method setPermissionFunction;
   private static Field defaultPermissions;
+  private static Field spawned;
 
   private final VelocityServer server;
   private final MinecraftConnection mcConnection;
@@ -132,6 +135,9 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
 
       defaultPermissions = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
       defaultPermissions.setAccessible(true);
+
+      spawned = ClientPlaySessionHandler.class.getDeclaredField("spawned");
+      spawned.setAccessible(true);
     } catch (NoSuchMethodException | NoSuchFieldException e) {
       e.printStackTrace();
     }
@@ -457,7 +463,23 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
                       e.printStackTrace();
                     }
                     server.getEventManager().fire(new PostLoginEvent(player))
-                        .thenCompose((ignored) -> connectToInitialServer(player))
+                        .thenCompose((ignored) -> connectToInitialServer(player)
+                            .thenRun(() -> {
+                              while (!(mcConnection.getSessionHandler() instanceof ClientPlaySessionHandler)) {
+                                // busy wait
+                              }
+                              try {
+                                if ((boolean) spawned.get(mcConnection.getSessionHandler())) {
+                                  logger.error("LimboAPI respawn patch injected too late");
+                                  logger.error("Probably, the player {} can't move cause of it", player);
+                                } else {
+                                  spawned.set(
+                                      mcConnection.getSessionHandler(), LimboAPI.getInstance().isVirtualServerJoined(player));
+                                }
+                              } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                              }
+                            }))
                         .exceptionally((ex) -> {
                           logger.error("Exception while connecting {} to initial server", player, ex);
                           return null;

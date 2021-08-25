@@ -51,8 +51,8 @@ public class ChunkData implements MinecraftPacket {
   private final List<NetworkSection> sections = new ArrayList<>(16);
   private final int mask;
   private final BiomeData biomeData;
-  private CompoundBinaryTag heightmap114;
-  private CompoundBinaryTag heightmap116;
+  private final CompoundBinaryTag heightmap114;
+  private final CompoundBinaryTag heightmap116;
 
   public ChunkData(ChunkSnapshot chunkSnapshot, boolean skyLight) {
     this.chunk = chunkSnapshot;

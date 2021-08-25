@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import net.elytrium.limboapi.config.Settings;
+import net.elytrium.limboapi.injection.DisconnectListener;
+import net.elytrium.limboapi.injection.HandshakeListener;
 import net.elytrium.limboapi.server.CachedPackets;
 import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
@@ -54,6 +56,7 @@ import org.slf4j.Logger;
 @Getter
 public class LimboAPI {
 
+  private static LimboAPI instance;
   private final VelocityServer server;
   private final Logger logger;
   private final Metrics.Factory metricsFactory;
@@ -65,6 +68,8 @@ public class LimboAPI {
   @Inject
   public LimboAPI(
       ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
+    instance = this;
+
     this.server = (VelocityServer) server;
     this.logger = logger;
     this.metricsFactory = metricsFactory;
@@ -85,6 +90,8 @@ public class LimboAPI {
   public void reload() {
     Settings.IMP.reload(new File(dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
     packets.createPackets();
+    server.getEventManager().register(this, new HandshakeListener(this));
+    server.getEventManager().register(this, new DisconnectListener(this));
   }
 
   @SuppressFBWarnings("NP_IMMEDIATE_DEREFERENCE_OF_READLINE")
@@ -119,5 +126,9 @@ public class LimboAPI {
 
   public boolean isVirtualServerJoined(Player player) {
     return players.contains(player);
+  }
+
+  public static LimboAPI getInstance() {
+    return instance;
   }
 }
