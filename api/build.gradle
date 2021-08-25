@@ -1,0 +1,90 @@
+plugins {
+    id 'java-library'
+    id 'checkstyle'
+}
+
+apply plugin: 'org.cadixdev.licenser'
+apply from: '../gradle/checkstyle.gradle'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+license {
+    matching(includes: ['**/mcprotocollib/**']) {
+        header = project.rootProject.file('HEADER_MCPROTOCOLLIB.txt')
+    }
+    header = project.rootProject.file('HEADER_API.txt')
+}
+
+dependencies {
+    api files('libs/3.0.0.jar')
+    api 'com.google.code.gson:gson:2.8.7'
+    api "com.google.guava:guava:${guavaVersion}"
+
+    api 'com.moandjiezana.toml:toml4j:0.7.2'
+
+    api(platform("net.kyori:adventure-bom:${adventureVersion}"))
+    api("net.kyori:adventure-api")
+    api("net.kyori:adventure-nbt")
+    api("net.kyori:adventure-text-serializer-gson")
+    api("net.kyori:adventure-text-serializer-legacy")
+    api("net.kyori:adventure-text-serializer-plain")
+
+    api "net.kyori:text-api:${textVersion}"
+    api "net.kyori:text-serializer-gson:${textVersion}"
+    api "net.kyori:text-serializer-legacy:${textVersion}"
+    api "net.kyori:text-serializer-plain:${textVersion}"
+
+    api "org.slf4j:slf4j-api:${slf4jVersion}"
+    api 'com.google.inject:guice:5.0.1'
+    api "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
+    api 'com.velocitypowered:velocity-brigadier:1.0.0-SNAPSHOT'
+
+    api "org.spongepowered:configurate-hocon:${configurateVersion}"
+    api "org.spongepowered:configurate-yaml:${configurateVersion}"
+    api "org.spongepowered:configurate-gson:${configurateVersion}"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+}
+
+task javadocJar(type: Jar) {
+    classifier 'javadoc'
+    from javadoc
+}
+
+artifacts {
+    archives javadocJar
+    archives shadowJar
+}
+
+javadoc {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    options.source = '8'
+    options.links(
+            'http://www.slf4j.org/apidocs/',
+            'https://google.github.io/guava/releases/25.1-jre/api/docs/',
+            'https://google.github.io/guice/api-docs/5.0.1/javadoc/',
+            'https://docs.oracle.com/en/java/javase/11/docs/api/',
+            'https://jd.adventure.kyori.net/api/4.7.0/'
+    )
+
+    // Disable the crazy super-strict doclint tool in Java 8
+    options.addStringOption('Xdoclint:none', '-quiet')
+
+    // Mark sources as Java 8 source compatible
+    options.source = '8'
+
+    // Remove 'undefined' from seach paths when generating javadoc for a non-modular project (JDK-8215291)
+    if (JavaVersion.current() >= JavaVersion.VERSION_1_9 && JavaVersion.current() < JavaVersion.VERSION_12) {
+        options.addBooleanOption('-no-module-directories', true)
+    }
+}
+
+test {
+    useJUnitPlatform()
+}

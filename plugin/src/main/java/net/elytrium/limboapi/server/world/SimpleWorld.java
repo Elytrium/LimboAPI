@@ -1,0 +1,144 @@
+/*
+ * Copyright (C) 2021 Elytrium
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package net.elytrium.limboapi.server.world;
+
+import com.google.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import lombok.Getter;
+import lombok.NonNull;
+import net.elytrium.limboapi.api.chunk.Dimension;
+import net.elytrium.limboapi.api.chunk.VirtualBiome;
+import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import net.elytrium.limboapi.api.chunk.VirtualChunk;
+import net.elytrium.limboapi.api.chunk.VirtualWorld;
+import net.elytrium.limboapi.material.Biome;
+import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class SimpleWorld implements VirtualWorld {
+
+  @NonNull
+  @Getter
+  private final Dimension dimension;
+  private final Map<Long, SimpleChunk> chunks = new HashMap<>();
+
+  @Getter
+  private final double spawnX;
+  @Getter
+  private final double spawnY;
+  @Getter
+  private final double spawnZ;
+  @Getter
+  private final float yaw;
+  @Getter
+  private final float pitch;
+
+  public SimpleWorld(@NonNull Dimension dimension, double x, double y, double z, float yaw, float pitch) {
+    this.dimension = dimension;
+
+    this.spawnX = x;
+    this.spawnY = y;
+    this.spawnZ = z;
+    this.yaw = yaw;
+    this.pitch = pitch;
+
+    getChunkOrNew((int) x, (int) z);
+  }
+
+  public void setBlock(int x, int y, int z, @Nullable VirtualBlock block) {
+    getChunkOrNew(x, z).setBlock(getChunkCoordinate(x), y, getChunkCoordinate(z), block);
+  }
+
+  @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
+  @NotNull
+  public VirtualBlock getBlock(int x, int y, int z) {
+    return chunkAction(x, z, (c) -> c.getBlock(getChunkCoordinate(x), y, getChunkCoordinate(z)),
+        () -> SimpleBlock.AIR);
+  }
+
+  public void setBiome2d(int x, int z, @NonNull VirtualBiome biome) {
+    getChunkOrNew(x, z).setBiome2d(getChunkCoordinate(x), getChunkCoordinate(z), biome);
+  }
+
+  public void setBiome3d(int x, int y, int z, @NonNull VirtualBiome biome) {
+    getChunkOrNew(x, z).setBiome3d(getChunkCoordinate(x), y, getChunkCoordinate(z), biome);
+  }
+
+  public VirtualBiome getBiome(int x, int y, int z) {
+    return chunkAction(x, z, (c) -> c.getBiome(x, y, z), () -> Biome.PLAINS);
+  }
+
+  public byte getBlockLight(int x, int y, int z) {
+    return chunkAction(x, z,
+        (c) -> c.getBlockLight(getChunkCoordinate(x), y, getChunkCoordinate(z)), () -> (byte) 0);
+  }
+
+  public void setBlockLight(int x, int y, int z, byte light) {
+    getChunkOrNew(x, z).setBlockLight(getChunkCoordinate(x), y, getChunkCoordinate(z), light);
+  }
+
+  public List<VirtualChunk> getChunks() {
+    return ImmutableList.copyOf(chunks.values());
+  }
+
+  private <T> T chunkAction(int x, int z, Function<SimpleChunk, T> function, Supplier<T> ifNull) {
+    SimpleChunk chunk = getChunk(x, z);
+    if (chunk == null) {
+      return ifNull.get();
+    }
+    return function.apply(chunk);
+  }
+
+  @Nullable
+  public SimpleChunk getChunk(int x, int z) {
+    return chunks.get(getChunkIndex(getChunkXZ(x), getChunkXZ(z)));
+  }
+
+  public SimpleChunk getChunkOrNew(int x, int z) {
+    x = getChunkXZ(x);
+    z = getChunkXZ(z);
+    long index = getChunkIndex(x, z);
+    SimpleChunk simpleChunk = chunks.get(index);
+    if (simpleChunk == null) {
+      chunks.put(index, simpleChunk = new SimpleChunk(x, z));
+    }
+    return simpleChunk;
+  }
+
+  private static long getChunkIndex(int x, int z) {
+    return (((long) x) << 32) | (z & 0xffffffffL);
+  }
+
+  private static int getChunkXZ(int xz) {
+    return xz >> 4;
+  }
+
+  private static int getChunkCoordinate(int xz) {
+    xz %= 16;
+    if (xz < 0) {
+      xz += 16;
+    }
+    return xz;
+  }
+}
