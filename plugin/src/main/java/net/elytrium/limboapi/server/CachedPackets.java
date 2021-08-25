@@ -24,7 +24,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.config.Settings;
-import net.elytrium.limboapi.protocol.cache.PreparedPacket;
+import net.elytrium.limboapi.injection.packet.PreparedPacket;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 

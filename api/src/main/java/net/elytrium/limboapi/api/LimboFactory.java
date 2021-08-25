@@ -54,17 +54,18 @@ public interface LimboFactory {
   VirtualBlock createSimpleBlock(short legacyId, byte data);
 
   /**
+   * Creates new virtual customizable block
+   *
+   * @return new virtual server.
+   */
+  VirtualBlock createSimpleBlock(
+      boolean solid, boolean air, boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
+
+  /**
    * Creates new virtual item from Item enum
    *
    * @param item Item from item enum
    * @return new virtual item.
    */
   VirtualItem getItem(Item item);
-
-  /**
-   * Creates new virtual customizable block
-   *
-   * @return new virtual server.
-   */
-  VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
 }

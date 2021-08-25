@@ -100,6 +100,11 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
   private static final Logger logger = LogManager.getLogger(FakeLoginSessionHandler.class);
   private static final String MOJANG_HASJOINED_URL =
       "https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%s&serverId=%s";
+  private static Constructor<ConnectedPlayer> ctor;
+  private static Constructor<InitialConnectSessionHandler> initialCtor;
+  private static Method teardown;
+  private static Method setPermissionFunction;
+  private static Field defaultPermissions;
 
   private final VelocityServer server;
   private final MinecraftConnection mcConnection;
@@ -107,6 +112,30 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
   private @MonotonicNonNull ServerLogin login;
   private byte[] verify = EMPTY_BYTE_ARRAY;
   private @MonotonicNonNull ConnectedPlayer connectedPlayer;
+
+  static {
+    try {
+      ctor = ConnectedPlayer.class.getDeclaredConstructor(
+          VelocityServer.class, GameProfile.class, MinecraftConnection.class, InetSocketAddress.class, boolean.class);
+      ctor.setAccessible(true);
+
+      Constructor<InitialConnectSessionHandler> initialCtor
+          = InitialConnectSessionHandler.class.getDeclaredConstructor(ConnectedPlayer.class);
+      initialCtor.setAccessible(true);
+
+      teardown = ConnectedPlayer.class.getDeclaredMethod("teardown");
+      teardown.setAccessible(true);
+
+      setPermissionFunction = ConnectedPlayer.class
+          .getDeclaredMethod("setPermissionFunction", PermissionFunction.class);
+      setPermissionFunction.setAccessible(true);
+
+      defaultPermissions = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
+      defaultPermissions.setAccessible(true);
+    } catch (NoSuchMethodException | NoSuchFieldException e) {
+      e.printStackTrace();
+    }
+  }
 
   FakeLoginSessionHandler(VelocityServer server, MinecraftConnection mcConnection,
                           InitialInboundConnection inbound) {
@@ -270,10 +299,6 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
 
       // Initiate a regular connection and move over to it.
       try {
-        Constructor<ConnectedPlayer> ctor = ConnectedPlayer.class.getDeclaredConstructor(
-            VelocityServer.class, GameProfile.class, MinecraftConnection.class, InetSocketAddress.class, boolean.class);
-
-        ctor.setAccessible(true);
         ConnectedPlayer player = ctor.newInstance(server, profileEvent.getGameProfile(),
             mcConnection, inbound.getVirtualHost().orElse(null), onlineMode);
         this.connectedPlayer = player;
@@ -285,12 +310,12 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
 
         logger.info("{} has connected", player);
 
-      return server.getEventManager()
-          .fire(new LoginLimboRegisterEvent(player))
-          .thenComposeAsync(event -> CompletableFuture
-              .allOf(event.getCallbacks().toArray(new CompletableFuture[0]))
-              .thenAcceptAsync(unused -> initialize(player)), mcConnection.eventLoop());
-      } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        return server.getEventManager()
+            .fire(new LoginLimboRegisterEvent(player))
+            .thenComposeAsync(event -> CompletableFuture
+                .allOf(event.getCallbacks().toArray(new CompletableFuture[0]))
+                .thenAcceptAsync(unused -> initialize(player)), mcConnection.eventLoop());
+      } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
         e.printStackTrace();
       }
 
@@ -382,9 +407,6 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
     mcConnection.setState(StateRegistry.PLAY);
 
     try {
-      Field defaultPermissions = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
-      defaultPermissions.setAccessible(true);
-
       server.getEventManager()
           .fire(new PermissionsSetupEvent(player, (PermissionProvider) defaultPermissions.get(null)))
           .thenComposeAsync(premissionEvent -> {
@@ -404,10 +426,8 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
                   player.getUsername());
             } else {
               try {
-                Method setPermissionFunction = ConnectedPlayer.class.getDeclaredMethod("setPermissionFunction", PermissionFunction.class);
-                setPermissionFunction.setAccessible(true);
                 setPermissionFunction.invoke(player, function);
-              } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+              } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
               }
             }
@@ -431,11 +451,9 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
                     }
 
                     try {
-                      Constructor<InitialConnectSessionHandler> initialCtor
-                          = InitialConnectSessionHandler.class.getDeclaredConstructor(ConnectedPlayer.class);
-                      initialCtor.setAccessible(true);
                       mcConnection.setSessionHandler(initialCtor.newInstance(player));
-                    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                    } catch (InstantiationException
+                        | IllegalAccessException | InvocationTargetException e) {
                       e.printStackTrace();
                     }
                     server.getEventManager().fire(new PostLoginEvent(player))
@@ -451,7 +469,7 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
             logger.error("Exception while completing login initialisation phase for {}", player, ex);
             return null;
           });
-    } catch (IllegalAccessException | NoSuchFieldException e) {
+    } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
   }
@@ -482,8 +500,6 @@ public class FakeLoginSessionHandler implements MinecraftSessionHandler {
   @Override
   public void disconnected() {
     if (connectedPlayer != null) {
-      Method teardown = ConnectedPlayer.class.getDeclaredMethod("teardown");
-      teardown.setAccessible(true);
       teardown.invoke(connectedPlayer);
     }
   }

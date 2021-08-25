@@ -47,9 +47,10 @@ import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.config.Settings;
+import net.elytrium.limboapi.injection.PreparedPacketEncoder;
+import net.elytrium.limboapi.injection.packet.PreparedPacket;
 import net.elytrium.limboapi.material.Biome;
-import net.elytrium.limboapi.protocol.cache.PreparedPacket;
-import net.elytrium.limboapi.protocol.cache.PreparedPacketEncoder;
+import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
@@ -58,6 +59,9 @@ import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 @Setter
 @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
 public class LimboImpl implements Limbo {
+  private static Field partialHashedSeed;
+  private static Field currentDimensionData;
+
   private final LimboAPI limboAPI;
   private VirtualWorld world;
 
@@ -66,6 +70,18 @@ public class LimboImpl implements Limbo {
   private PreparedPacket safeRejoinPackets;
   private PreparedPacket chunks;
   private PreparedPacket spawnPosition;
+
+  static {
+    try {
+      partialHashedSeed = JoinGame.class.getDeclaredField("partialHashedSeed");
+      partialHashedSeed.setAccessible(true);
+
+      currentDimensionData = JoinGame.class.getDeclaredField("currentDimensionData");
+      currentDimensionData.setAccessible(true);
+    } catch (NoSuchFieldException e) {
+      e.printStackTrace();
+    }
+  }
 
   public LimboImpl(LimboAPI limboAPI, VirtualWorld world) {
     this.limboAPI = limboAPI;
@@ -84,7 +100,9 @@ public class LimboImpl implements Limbo {
 
     fastRejoinPackets = new PreparedPacket();
     createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
-        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
+        .forEach(minecraftPacket ->
+            fastRejoinPackets.prepare(
+                minecraftPacket, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
     createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_16)
         .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16));
 
@@ -95,7 +113,8 @@ public class LimboImpl implements Limbo {
     spawnPosition = new PreparedPacket()
         .prepare(createPlayerPosAndLookPacket(
             world.getSpawnX(), world.getSpawnY(), world.getSpawnZ(), getWorld().getYaw(), getWorld().getPitch()))
-        .prepare(createUpdateViewPosition((int) world.getSpawnX(), (int) world.getSpawnZ()), ProtocolVersion.MINECRAFT_1_14);
+        .prepare(createUpdateViewPosition((int) world.getSpawnX(), (int) world.getSpawnZ()),
+            ProtocolVersion.MINECRAFT_1_14);
   }
 
   public void spawnPlayer(Player apiPlayer, LimboSessionHandler handler) {
@@ -117,13 +136,13 @@ public class LimboImpl implements Limbo {
             "prepared-encoder", new PreparedPacketEncoder(connection.getProtocolVersion()));
       }
 
-      LimboSessionHandlerImpl limboSessionHandlerImpl =
-          new LimboSessionHandlerImpl(limboAPI, player, handler, connection.getSessionHandler());
-
       limboAPI.setVirtualServerJoined(player);
 
-      if (player.getConnectedServer() != null) {
-        player.getConnectedServer().disconnect();
+      if (connection.getState() != LimboProtocol.getLimboRegistry()) {
+        connection.setState(LimboProtocol.getLimboRegistry());
+        if (player.getConnectedServer() != null) {
+          player.getConnectedServer().disconnect();
+        }
       }
 
       if (limboAPI.isVirtualServerJoined(player)) {
@@ -135,6 +154,9 @@ public class LimboImpl implements Limbo {
       } else {
         connection.delayedWrite(getJoinPackets());
       }
+
+      LimboSessionHandlerImpl limboSessionHandlerImpl =
+          new LimboSessionHandlerImpl(limboAPI, player, handler, connection.getSessionHandler());
 
       connection.setSessionHandler(limboSessionHandlerImpl);
 
@@ -162,16 +184,6 @@ public class LimboImpl implements Limbo {
   @SneakyThrows
   private JoinGame createJoinGamePacket() {
     Dimension dimension = world.getDimension();
-    DimensionData dimensionData = createDimensionData(dimension);
-    String key = dimension.getKey();
-
-    DimensionRegistry dimensionRegistry =
-        new DimensionRegistry(ImmutableSet.of(dimensionData), ImmutableSet.of(key));
-
-    Field partialHashedSeed = JoinGame.class.getDeclaredField("partialHashedSeed");
-    Field currentDimensionData = JoinGame.class.getDeclaredField("currentDimensionData");
-    partialHashedSeed.setAccessible(true);
-    currentDimensionData.setAccessible(true);
 
     JoinGame joinGame = new JoinGame();
     joinGame.setEntityId(0);
@@ -185,10 +197,15 @@ public class LimboImpl implements Limbo {
     joinGame.setViewDistance(12);
     joinGame.setReducedDebugInfo(true);
     joinGame.setIsHardcore(true);
-    joinGame.setDimensionRegistry(dimensionRegistry);
+
+    String key = dimension.getKey();
+    DimensionData dimensionData = createDimensionData(dimension);
+
+    joinGame.setDimensionRegistry(new DimensionRegistry(ImmutableSet.of(dimensionData), ImmutableSet.of(key)));
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
     currentDimensionData.set(joinGame, dimensionData);
     joinGame.setBiomeRegistry(Biome.getRegistry());
+
     return joinGame;
   }
 

@@ -63,7 +63,8 @@ public class LimboAPI {
   private CachedPackets packets;
 
   @Inject
-  public LimboAPI(ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
+  public LimboAPI(
+      ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
     this.server = (VelocityServer) server;
     this.logger = logger;
     this.metricsFactory = metricsFactory;

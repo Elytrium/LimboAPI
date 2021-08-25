@@ -29,7 +29,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.config.Settings;
-import net.elytrium.limboapi.protocol.cache.PreparedPacketEncoder;
+import net.elytrium.limboapi.injection.PreparedPacketEncoder;
 import net.elytrium.limboapi.protocol.packet.Player;
 import net.elytrium.limboapi.protocol.packet.PlayerPosition;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;

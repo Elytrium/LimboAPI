@@ -15,17 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.injection;
+package net.elytrium.limboapi.injection.packet;
 
-import com.velocitypowered.api.event.connection.DisconnectEvent;
-import lombok.RequiredArgsConstructor;
-import net.elytrium.limboapi.LimboAPI;
+import com.velocitypowered.api.network.ProtocolVersion;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageEncoder;
+import java.util.List;
+import lombok.AllArgsConstructor;
 
-@RequiredArgsConstructor
-public class DisconnectListener {
-  private final LimboAPI limboAPI;
+@AllArgsConstructor
+public class PreparedPacketEncoder extends MessageToMessageEncoder<PreparedPacket> {
+  private final ProtocolVersion protocolVersion;
 
-  public void onDisconnect(DisconnectEvent e) {
-    limboAPI.unsetVirtualServerJoined(e.getPlayer());
+  @Override
+  protected void encode(ChannelHandlerContext ctx, PreparedPacket msg, List<Object> out)
+      throws Exception {
+    if (msg.hasPacketsFor(protocolVersion)) {
+      out.addAll(msg.getPackets(protocolVersion));
+    }
   }
 }

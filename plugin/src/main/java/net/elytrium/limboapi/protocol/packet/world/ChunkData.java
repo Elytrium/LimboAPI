@@ -38,9 +38,9 @@ import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
+import net.elytrium.limboapi.api.chunk.util.CompactStorage;
 import net.elytrium.limboapi.mcprotocollib.BitStorage116;
 import net.elytrium.limboapi.mcprotocollib.BitStorage19;
-import net.elytrium.limboapi.api.chunk.util.CompactStorage;
 import net.elytrium.limboapi.protocol.util.NetworkSection;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -238,6 +238,7 @@ public class ChunkData implements MinecraftPacket {
     throw new UnsupportedOperationException("cant be called");
   }
 
+  @SuppressWarnings({"FieldMayBeFinal", "MismatchedReadAndWriteOfArray"}) // TODO: Implement biomes
   @Getter
   private static class BiomeData {
 

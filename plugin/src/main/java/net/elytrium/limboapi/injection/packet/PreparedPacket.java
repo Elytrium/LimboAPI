@@ -15,9 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.cache;
-
-import static net.elytrium.limboapi.protocol.VirtualProtocol.clientbound;
+package net.elytrium.limboapi.injection.packet;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
@@ -32,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import net.elytrium.limboapi.protocol.LimboProtocol;
 
 public class PreparedPacket {
 
@@ -100,12 +99,13 @@ public class PreparedPacket {
     return byteBuf;
   }
 
+  @SuppressWarnings("unchecked")
   private <T extends MinecraftPacket> int getPacketId(T packet, ProtocolVersion version) {
     try {
-      return clientbound.getProtocolRegistry(version).getPacketId(packet.getClass());
+      return LimboProtocol.getPacketId(LimboProtocol.getLimboRegistry().clientbound, packet.getClass(), version);
     } catch (Exception e) {
-      return clientbound.getProtocolRegistry(version).getPacketId(
-          (Class<? extends MinecraftPacket>) packet.getClass().getSuperclass());
+      return LimboProtocol.getPacketId(LimboProtocol.getLimboRegistry().clientbound,
+          (Class<? extends MinecraftPacket>) packet.getClass().getSuperclass(), version);
     }
   }
 }

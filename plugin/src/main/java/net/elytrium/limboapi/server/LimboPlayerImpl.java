@@ -65,19 +65,23 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
-  public void sendTitle(Component title, Component subtitle, ProtocolVersion version, int fadeIn, int stay, int fadeOut) {
+  public void sendTitle(
+      Component title, Component subtitle, ProtocolVersion version, int fadeIn, int stay, int fadeOut) {
     {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
+      GenericTitlePacket packet =
+          GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
       packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(title));
       player.getConnection().write(packet);
     }
     {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_SUBTITLE, version);
+      GenericTitlePacket packet =
+          GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_SUBTITLE, version);
       packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(subtitle));
       player.getConnection().write(packet);
     }
     {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TIMES, version);
+      GenericTitlePacket packet =
+          GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TIMES, version);
       packet.setFadeIn(fadeIn);
       packet.setStay(stay);
       packet.setFadeOut(fadeOut);
@@ -96,31 +100,35 @@ public class LimboPlayerImpl implements LimboPlayer {
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void disconnect() {
     LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) player.getConnection().getSessionHandler();
-    handler.disconnected();
+    if (handler != null) {
+      handler.disconnected();
 
-    player.getConnection().eventLoop().execute(() -> {
-      if (handler.getOriginalHandler() instanceof FakeLoginSessionHandler) {
-        ((FakeLoginSessionHandler) handler.getOriginalHandler()).initialize(player);
-      } else {
-        player.createConnectionRequest(handler.getPreviousServer()).fireAndForget();
-      }
-    });
+      player.getConnection().eventLoop().execute(() -> {
+        if (handler.getOriginalHandler() instanceof FakeLoginSessionHandler) {
+          ((FakeLoginSessionHandler) handler.getOriginalHandler()).initialize(player);
+        } else {
+          player.createConnectionRequest(handler.getPreviousServer()).fireAndForget();
+        }
+      });
+    }
   }
 
   @Override
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void disconnect(RegisteredServer server) {
     LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) player.getConnection().getSessionHandler();
-    handler.disconnected();
+    if (handler != null) {
+      handler.disconnected();
 
-    player.getConnection().eventLoop().execute(() -> {
-      if (handler.getOriginalHandler() instanceof LoginSessionHandler) {
-        handler.getLimboAPI().getLogger().error("Cannot send to Registered Server while joining");
-        ((FakeLoginSessionHandler) handler.getOriginalHandler()).initialize(player);
-      } else {
-        player.createConnectionRequest(server).fireAndForget();
-      }
-    });
+      player.getConnection().eventLoop().execute(() -> {
+        if (handler.getOriginalHandler() instanceof LoginSessionHandler) {
+          handler.getLimboAPI().getLogger().error("Cannot send to Registered Server while joining");
+          ((FakeLoginSessionHandler) handler.getOriginalHandler()).initialize(player);
+        } else {
+          player.createConnectionRequest(server).fireAndForget();
+        }
+      });
+    }
   }
 
   @Override

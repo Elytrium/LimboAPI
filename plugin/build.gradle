@@ -9,8 +9,16 @@ apply plugin: 'org.cadixdev.licenser'
 apply from: '../gradle/checkstyle.gradle'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-
 license {
+    matching(includes: ['**/limboapi/config/helpers/**']) {
+        header = project.rootProject.file('HEADER_BUNGEECORD.txt')
+    }
+    matching(includes: ['**/mcprotocollib/**']) {
+        header = project.rootProject.file('HEADER_MCPROTOCOLLIB.txt')
+    }
+    matching(includes: ['**/FakeLoginSessionHandler.java']) {
+        header = project.rootProject.file('HEADER_MIXED.txt')
+    }
     header = project.rootProject.file('HEADER.txt')
 }
 
@@ -34,6 +42,17 @@ task processSources(type: Sync) {
     inputs.property 'version', version
     filter ReplaceTokens, tokens: [version: version]
     into "$buildDir/src"
+}
+
+shadowJar {
+    relocate 'org.bstats', 'net.elytrium.limboapi.bstats'
+}
+
+tasks.withType(Checkstyle) {
+    exclude('**/net/elytrium/limboapi/config/Settings.java')
+    exclude('**/net/elytrium/limboapi/protocol/packet/**') // Member Name
+    exclude('**/net/elytrium/limboapi/protocol/util/**') // Local Variable Name
+    exclude('**/net/elytrium/limboapi/server/world/chunk/**') // Local Variable Name
 }
 
 compileJava.source = processSources.outputs

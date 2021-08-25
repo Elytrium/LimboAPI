@@ -44,6 +44,7 @@ public class SimpleBlock implements VirtualBlock {
   static {
     try {
       URL file = ClassLoader.getSystemResource("mapping/blocks.json");
+      //noinspection unchecked
       LinkedTreeMap<String, LinkedTreeMap<String, String>> map = gson.fromJson(
           new InputStreamReader(file.openStream(), StandardCharsets.UTF_8), LinkedTreeMap.class);
 
@@ -90,6 +91,10 @@ public class SimpleBlock implements VirtualBlock {
     return blockInfos.get(version).getId();
   }
 
+  public short getId(ProtocolVersion version) {
+    return getId(Version.map(version));
+  }
+
   public SimpleBlock setData(byte data) {
     blockInfos.forEach((e, k) -> k.setData(data));
     return this;
@@ -97,10 +102,6 @@ public class SimpleBlock implements VirtualBlock {
 
   public byte getData(Version version) {
     return blockInfos.get(version).getData();
-  }
-
-  public short getId(ProtocolVersion version) {
-    return getId(Version.map(version));
   }
 
   public byte getData(ProtocolVersion version) {

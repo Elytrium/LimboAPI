@@ -10,6 +10,9 @@ package net.elytrium.limboapi.api;
 import com.velocitypowered.api.proxy.Player;
 
 public interface Limbo {
+
   void spawnPlayer(Player player, LimboSessionHandler handler);
+
   void respawnPlayer(Player player);
+
 }

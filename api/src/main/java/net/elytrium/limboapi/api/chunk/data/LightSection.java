@@ -13,13 +13,13 @@ public interface LightSection {
 
   NibbleArray3d getBlockLight();
 
-  NibbleArray3d getSkyLight();
-
-  long getLastUpdate();
-
   byte getBlockLight(int x, int y, int z);
 
+  NibbleArray3d getSkyLight();
+
   byte getSkyLight(int x, int y, int z);
+
+  long getLastUpdate();
 
   void setBlockLight(int x, int y, int z, byte light);
 

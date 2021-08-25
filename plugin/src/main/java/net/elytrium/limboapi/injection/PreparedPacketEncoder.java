@@ -15,13 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.cache;
+package net.elytrium.limboapi.injection;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import net.elytrium.limboapi.injection.packet.PreparedPacket;
 
 @AllArgsConstructor
 public class PreparedPacketEncoder extends MessageToMessageEncoder<PreparedPacket> {

@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2021 Elytrium
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package net.elytrium.limboapi.injection;
 
 import com.velocitypowered.api.event.Subscribe;
@@ -12,14 +29,22 @@ import net.elytrium.limboapi.LimboAPI;
 
 @RequiredArgsConstructor
 public class HandshakeListener {
+  private static Field connectionField;
+
+  static {
+    try {
+      connectionField = InitialInboundConnection.class.getDeclaredField("connection");
+      connectionField.setAccessible(true);
+    } catch (NoSuchFieldException e) {
+      e.printStackTrace();
+    }
+  }
+
   private final LimboAPI limboAPI;
 
   @SneakyThrows
   @Subscribe
   public void onHandshakeFinished(ConnectionHandshakeEvent e) {
-    Field connectionField = InitialInboundConnection.class.getDeclaredField("connection");
-    connectionField.setAccessible(true);
-
     // TODO: Better injection
     new Thread(() -> {
       try {
@@ -29,8 +54,8 @@ public class HandshakeListener {
           // busy wait.
         }
 
-        connection.setSessionHandler(
-            new FakeLoginSessionHandler(limboAPI.getServer(), connection, (InitialInboundConnection) e.getConnection()));
+        connection.setSessionHandler(new FakeLoginSessionHandler(
+            limboAPI.getServer(), connection, (InitialInboundConnection) e.getConnection()));
       } catch (IllegalAccessException ex) {
         ex.printStackTrace();
       }

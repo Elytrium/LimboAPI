@@ -24,8 +24,10 @@
 
 package net.elytrium.limboapi.api.mcprotocollib;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Arrays;
 
+@SuppressFBWarnings("MALICIOUS_CODE")
 public class NibbleArray3d {
 
   private byte[] data;

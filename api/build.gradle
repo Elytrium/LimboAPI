@@ -49,6 +49,8 @@ dependencies {
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.1.2'
 }
 
 task javadocJar(type: Jar) {
