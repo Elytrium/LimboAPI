@@ -20,32 +20,32 @@ license {
 }
 
 dependencies {
-    api files('libs/3.0.0.jar')
-    api 'com.google.code.gson:gson:2.8.7'
-    api "com.google.guava:guava:${guavaVersion}"
+    compileOnly files('../libs/3.0.0.jar')
+    compileOnly 'com.google.code.gson:gson:2.8.7'
+    compileOnly "com.google.guava:guava:${guavaVersion}"
 
-    api 'com.moandjiezana.toml:toml4j:0.7.2'
+    compileOnly 'com.moandjiezana.toml:toml4j:0.7.2'
 
-    api(platform("net.kyori:adventure-bom:${adventureVersion}"))
-    api("net.kyori:adventure-api")
-    api("net.kyori:adventure-nbt")
-    api("net.kyori:adventure-text-serializer-gson")
-    api("net.kyori:adventure-text-serializer-legacy")
-    api("net.kyori:adventure-text-serializer-plain")
+    compileOnly(platform("net.kyori:adventure-bom:${adventureVersion}"))
+    compileOnly("net.kyori:adventure-api")
+    compileOnly("net.kyori:adventure-nbt")
+    compileOnly("net.kyori:adventure-text-serializer-gson")
+    compileOnly("net.kyori:adventure-text-serializer-legacy")
+    compileOnly("net.kyori:adventure-text-serializer-plain")
 
-    api "net.kyori:text-api:${textVersion}"
-    api "net.kyori:text-serializer-gson:${textVersion}"
-    api "net.kyori:text-serializer-legacy:${textVersion}"
-    api "net.kyori:text-serializer-plain:${textVersion}"
+    compileOnly "net.kyori:text-api:${textVersion}"
+    compileOnly "net.kyori:text-serializer-gson:${textVersion}"
+    compileOnly "net.kyori:text-serializer-legacy:${textVersion}"
+    compileOnly "net.kyori:text-serializer-plain:${textVersion}"
 
-    api "org.slf4j:slf4j-api:${slf4jVersion}"
-    api 'com.google.inject:guice:5.0.1'
-    api "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
-    api 'com.velocitypowered:velocity-brigadier:1.0.0-SNAPSHOT'
+    compileOnly "org.slf4j:slf4j-api:${slf4jVersion}"
+    compileOnly 'com.google.inject:guice:5.0.1'
+    compileOnly "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
+    compileOnly 'com.velocitypowered:velocity-brigadier:1.0.0-SNAPSHOT'
 
-    api "org.spongepowered:configurate-hocon:${configurateVersion}"
-    api "org.spongepowered:configurate-yaml:${configurateVersion}"
-    api "org.spongepowered:configurate-gson:${configurateVersion}"
+    compileOnly "org.spongepowered:configurate-hocon:${configurateVersion}"
+    compileOnly "org.spongepowered:configurate-yaml:${configurateVersion}"
+    compileOnly "org.spongepowered:configurate-gson:${configurateVersion}"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"

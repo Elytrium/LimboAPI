@@ -1,7 +1,5 @@
 /*
- * This file is part of Velocity-BotFilter, licensed under the AGPLv3 License (AGPLv3).
- *
- * Copyright (C) 2021 Vjatšeslav Maspanov <Leymooo>
+ * Copyright (C) 2021 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by

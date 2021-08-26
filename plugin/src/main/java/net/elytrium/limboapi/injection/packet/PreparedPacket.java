@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 
 public class PreparedPacket {
@@ -93,6 +94,10 @@ public class PreparedPacket {
 
   private <T extends MinecraftPacket> ByteBuf encodePacket(T packet, ProtocolVersion version) {
     int id = getPacketId(packet, version);
+    if (id == Integer.MIN_VALUE) {
+      LimboAPI.getInstance().getLogger()
+          .error("Bad packet id. {}", packet.getClass().getSimpleName());
+    }
     ByteBuf byteBuf = Unpooled.buffer();
     ProtocolUtils.writeVarInt(byteBuf, id);
     packet.encode(byteBuf, Direction.CLIENTBOUND, version);

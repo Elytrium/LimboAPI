@@ -16,7 +16,7 @@ license {
     matching(includes: ['**/mcprotocollib/**']) {
         header = project.rootProject.file('HEADER_MCPROTOCOLLIB.txt')
     }
-    matching(includes: ['**/FakeLoginSessionHandler.java']) {
+    matching(includes: ['**/LoginListener.java', '**/LoginTasksQueue.java']) {
         header = project.rootProject.file('HEADER_MIXED.txt')
     }
     header = project.rootProject.file('HEADER.txt')
@@ -24,8 +24,10 @@ license {
 
 dependencies {
     implementation project(':limboapi-api')
+    compileOnly files('../libs/3.0.0.jar')
     implementation 'org.bstats:bstats-velocity:2.2.1'
 
+    compileOnly 'com.velocitypowered:velocity-api:3.0.0-SNAPSHOT'
     annotationProcessor 'com.velocitypowered:velocity-api:3.0.0-SNAPSHOT'
 
     compileOnly 'org.projectlombok:lombok:1.18.20'
@@ -33,6 +35,35 @@ dependencies {
 
     testCompileOnly 'org.projectlombok:lombok:1.18.20'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
+
+    compileOnly 'com.google.code.gson:gson:2.8.7'
+    compileOnly "com.google.guava:guava:${guavaVersion}"
+
+    compileOnly 'com.moandjiezana.toml:toml4j:0.7.2'
+
+    compileOnly(platform("net.kyori:adventure-bom:${adventureVersion}"))
+    compileOnly("net.kyori:adventure-api")
+    compileOnly("net.kyori:adventure-nbt")
+    compileOnly("net.kyori:adventure-text-serializer-gson")
+    compileOnly("net.kyori:adventure-text-serializer-legacy")
+    compileOnly("net.kyori:adventure-text-serializer-plain")
+
+    compileOnly "net.kyori:text-api:${textVersion}"
+    compileOnly "net.kyori:text-serializer-gson:${textVersion}"
+    compileOnly "net.kyori:text-serializer-legacy:${textVersion}"
+    compileOnly "net.kyori:text-serializer-plain:${textVersion}"
+
+    compileOnly "org.slf4j:slf4j-api:${slf4jVersion}"
+    compileOnly 'com.google.inject:guice:5.0.1'
+    compileOnly "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
+    compileOnly 'com.velocitypowered:velocity-brigadier:1.0.0-SNAPSHOT'
+
+    compileOnly "org.spongepowered:configurate-hocon:${configurateVersion}"
+    compileOnly "org.spongepowered:configurate-yaml:${configurateVersion}"
+    compileOnly "org.spongepowered:configurate-gson:${configurateVersion}"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
 
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.1.2'
 }
@@ -53,6 +84,10 @@ tasks.withType(Checkstyle) {
     exclude('**/net/elytrium/limboapi/protocol/packet/**') // Member Name
     exclude('**/net/elytrium/limboapi/protocol/util/**') // Local Variable Name
     exclude('**/net/elytrium/limboapi/server/world/chunk/**') // Local Variable Name
+}
+
+artifacts {
+    archives shadowJar
 }
 
 compileJava.source = processSources.outputs

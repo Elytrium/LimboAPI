@@ -27,10 +27,10 @@ import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.image.BufferedImage;
 import lombok.RequiredArgsConstructor;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.player.LimboPlayer;
-import net.elytrium.limboapi.injection.FakeLoginSessionHandler;
 import net.elytrium.limboapi.protocol.map.MapPalette;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
@@ -103,13 +103,15 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (handler != null) {
       handler.disconnected();
 
-      player.getConnection().eventLoop().execute(() -> {
-        if (handler.getOriginalHandler() instanceof FakeLoginSessionHandler) {
-          ((FakeLoginSessionHandler) handler.getOriginalHandler()).initialize(player);
-        } else {
+      player.getConnection().setSessionHandler(handler.getOriginalHandler());
+
+      if (handler.getOriginalHandler() instanceof LoginSessionHandler) {
+        LimboAPI.getInstance().getLoginQueue(player).next();
+      } else {
+        if (handler.getPreviousServer() != null) {
           player.createConnectionRequest(handler.getPreviousServer()).fireAndForget();
         }
-      });
+      }
     }
   }
 
@@ -120,14 +122,13 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (handler != null) {
       handler.disconnected();
 
-      player.getConnection().eventLoop().execute(() -> {
-        if (handler.getOriginalHandler() instanceof LoginSessionHandler) {
-          handler.getLimboAPI().getLogger().error("Cannot send to Registered Server while joining");
-          ((FakeLoginSessionHandler) handler.getOriginalHandler()).initialize(player);
-        } else {
+      if (handler.getOriginalHandler() instanceof LoginSessionHandler) {
+        throw new IllegalArgumentException("Cannot send to server while login");
+      } else {
+        player.getConnection().eventLoop().execute(() -> {
           player.createConnectionRequest(server).fireAndForget();
-        }
-      });
+        });
+      }
     }
   }
 

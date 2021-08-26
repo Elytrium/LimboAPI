@@ -1,7 +1,5 @@
 /*
- * This file is part of Velocity-BotFilter, licensed under the AGPLv3 License (AGPLv3).
- *
- * Copyright (C) 2021 Vjatšeslav Maspanov <Leymooo>
+ * Copyright (C) 2021 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,12 +17,17 @@
 
 package net.elytrium.limbofilter;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.awt.GraphicsEnvironment;
+import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -32,14 +35,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
-import net.elytrium.elytraproxy.botfilter.cache.CachedCaptcha;
-import net.elytrium.elytraproxy.botfilter.generator.CaptchaPainter;
-import net.elytrium.elytraproxy.botfilter.generator.map.CraftMapCanvas;
-import net.elytrium.elytraproxy.botfilter.generator.map.MapPalette;
-import net.elytrium.elytraproxy.config.Settings;
-import net.elytrium.elytraproxy.virtual.protocol.packet.MapDataPacket;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.elytrium.limboapi.protocol.map.CraftMapCanvas;
+import net.elytrium.limboapi.protocol.map.MapPalette;
+import net.elytrium.limboapi.protocol.packet.MapDataPacket;
+import net.elytrium.limbofilter.cache.CachedCaptcha;
+import net.elytrium.limbofilter.config.Settings;
+import net.elytrium.limbofilter.generator.CaptchaPainter;
+import org.slf4j.Logger;
 
 /**
  * @author Leymooo
@@ -49,7 +51,7 @@ import org.apache.logging.log4j.Logger;
 public class CaptchaGeneration {
 
   private static final CraftMapCanvas cachedBackgroundMap = new CraftMapCanvas();
-  private final Logger logger = LogManager.getLogger("ElytraProxy");
+  private final Logger logger = FilterPlugin.getInstance().getLogger();
   private final CaptchaPainter painter = new CaptchaPainter();
   private final List<Font> fonts = new ArrayList<>();
   private final AtomicInteger fontCounter = new AtomicInteger(0);
@@ -65,13 +67,23 @@ public class CaptchaGeneration {
       e.printStackTrace();
     }
 
-    int fontSize = Settings.IMP.MAIN.CAPTCHA_GENERATOR.FONT_SIZE;
-
     fonts.clear();
+
+    int fontSize = Settings.IMP.MAIN.CAPTCHA_GENERATOR.FONT_SIZE;
+    Map<TextAttribute, Object> textSettings = Map.of(
+        TextAttribute.TRACKING,
+          Settings.IMP.MAIN.CAPTCHA_GENERATOR.LETTER_SPACING,
+        TextAttribute.SIZE,
+          (float) fontSize,
+        TextAttribute.STRIKETHROUGH,
+          Settings.IMP.MAIN.CAPTCHA_GENERATOR.STRIKETHROUGH,
+        TextAttribute.UNDERLINE,
+          Settings.IMP.MAIN.CAPTCHA_GENERATOR.UNDERLINE);
+
     if (Settings.IMP.MAIN.CAPTCHA_GENERATOR.USE_STANDARD_FONTS) {
-      fonts.add(new Font(Font.SANS_SERIF, Font.PLAIN, fontSize));
-      fonts.add(new Font(Font.SERIF, Font.PLAIN, fontSize));
-      fonts.add(new Font(Font.MONOSPACED, Font.BOLD, fontSize));
+      fonts.add(new Font(Font.SANS_SERIF, Font.PLAIN, fontSize).deriveFont(textSettings));
+      fonts.add(new Font(Font.SERIF, Font.PLAIN, fontSize).deriveFont(textSettings));
+      fonts.add(new Font(Font.MONOSPACED, Font.PLAIN, fontSize).deriveFont(textSettings));
     }
 
     GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -83,7 +95,7 @@ public class CaptchaGeneration {
             logger.info("Loading font " + fontFile);
             Font font = Font.createFont(Font.TRUETYPE_FONT, new File(fontFile));
             ge.registerFont(font);
-            fonts.add(font.deriveFont(Font.PLAIN).deriveFont((float) fontSize));
+            fonts.add(font.deriveFont(textSettings));
           }
         } catch (FontFormatException | IOException e) {
           e.printStackTrace();

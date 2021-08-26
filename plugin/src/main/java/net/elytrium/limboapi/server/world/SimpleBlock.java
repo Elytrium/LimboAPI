@@ -20,15 +20,14 @@ package net.elytrium.limboapi.server.world;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import com.velocitypowered.api.network.ProtocolVersion;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,25 +40,23 @@ public class SimpleBlock implements VirtualBlock {
   private static final Gson gson = new Gson();
   private static final HashMap<Short, SimpleBlock> legacyIDsMap = new HashMap<>();
 
-  static {
-    try {
-      URL file = ClassLoader.getSystemResource("mapping/blocks.json");
-      //noinspection unchecked
-      LinkedTreeMap<String, LinkedTreeMap<String, String>> map = gson.fromJson(
-          new InputStreamReader(file.openStream(), StandardCharsets.UTF_8), LinkedTreeMap.class);
+  public static void init() {
+    //noinspection unchecked,ConstantConditions
+    LinkedTreeMap<String, LinkedTreeMap<String, String>> map = gson.fromJson(
+        new InputStreamReader(
+            LimboAPI.getInstance().getClass()
+                .getClassLoader().getResourceAsStream("mapping/blocks.json"),
+            StandardCharsets.UTF_8), LinkedTreeMap.class);
 
-      map.forEach((legacyBlockId, versionMap) -> {
-        BlockInfo[] info = versionMap.entrySet().stream()
-            .map(e -> BlockInfo.info(Version.parse(e.getKey()), Integer.parseInt(e.getValue())))
-            .toArray(BlockInfo[]::new);
+    map.forEach((legacyBlockId, versionMap) -> {
+      BlockInfo[] info = versionMap.entrySet().stream()
+          .map(e -> BlockInfo.info(Version.parse(e.getKey()), Integer.parseInt(e.getValue())))
+          .toArray(BlockInfo[]::new);
 
-        legacyIDsMap.put(Short.valueOf(legacyBlockId), solid(info));
-      });
+      legacyIDsMap.put(Short.valueOf(legacyBlockId), solid(info));
+    });
 
-      legacyIDsMap.put((short) 0, AIR);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    legacyIDsMap.put((short) 0, AIR);
   }
 
   @Getter

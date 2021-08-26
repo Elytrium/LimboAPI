@@ -47,8 +47,8 @@ import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.config.Settings;
-import net.elytrium.limboapi.injection.PreparedPacketEncoder;
 import net.elytrium.limboapi.injection.packet.PreparedPacket;
+import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
@@ -123,12 +123,11 @@ public class LimboImpl implements Limbo {
 
     connection.eventLoop().execute(() -> {
       ChannelPipeline pipeline = connection.getChannel().pipeline();
-      pipeline.names().forEach(System.out::println);
 
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
         limboAPI.getLogger().info(
             player.getUsername() + " (" + player.getRemoteAddress()
-                + ") has connected to VirtualServer " + handler.getClass().getSimpleName());
+                + ") has connected to the " + handler.getClass().getSimpleName() + " Limbo");
       }
 
       if (!pipeline.names().contains("prepared-encoder")) {
@@ -136,7 +135,7 @@ public class LimboImpl implements Limbo {
             "prepared-encoder", new PreparedPacketEncoder(connection.getProtocolVersion()));
       }
 
-      limboAPI.setVirtualServerJoined(player);
+      limboAPI.setLimboJoined(player);
 
       if (connection.getState() != LimboProtocol.getLimboRegistry()) {
         connection.setState(LimboProtocol.getLimboRegistry());
@@ -145,7 +144,7 @@ public class LimboImpl implements Limbo {
         }
       }
 
-      if (limboAPI.isVirtualServerJoined(player)) {
+      if (limboAPI.isLimboJoined(player)) {
         if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
           connection.delayedWrite(getSafeRejoinPackets());
         } else {

@@ -17,6 +17,7 @@
 
 package net.elytrium.limbofilter.config;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -126,6 +127,7 @@ public class Config {
    *
    * @param file file
    */
+  @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
   public void save(File file) {
     try {
       File parent = file.getParentFile();

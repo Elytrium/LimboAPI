@@ -41,16 +41,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.config.helpers.Configuration;
 import net.elytrium.limboapi.config.helpers.ConfigurationProvider;
 import net.elytrium.limboapi.config.helpers.YamlConfiguration;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
 public class Config {
 
-  private final Logger logger = LogManager.getLogger("LimboAPI > Config");
+  private final Logger logger = LimboAPI.getInstance().getLogger();
 
   public Config() {
     save(new ArrayList<>(), getClass(), this, 0);
@@ -107,13 +107,13 @@ public class Config {
 
   public boolean load(File file) {
     if (!file.exists()) {
-      logger.error("*** FIRST LAUNCH ***********************");
+      logger.warn("*** FIRST LAUNCH ***********************");
       logger.warn("Thanks for installing LimboAPI!");
       logger.warn("(c) 2021 Elytrium");
       logger.warn("");
       logger.warn("Check out our plugins here: https://ely.su/github <3");
       logger.warn("Discord: https://ely.su/discord");
-      logger.error("****************************************");
+      logger.warn("****************************************");
       return false;
     }
     Configuration yml;
@@ -135,6 +135,7 @@ public class Config {
    *
    * @param file file
    */
+  @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
   public void save(File file) {
     try {
       File parent = file.getParentFile();

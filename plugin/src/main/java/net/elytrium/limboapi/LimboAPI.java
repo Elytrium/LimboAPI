@@ -35,12 +35,27 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import lombok.Getter;
+import net.elytrium.limboapi.api.Limbo;
+import net.elytrium.limboapi.api.LimboFactory;
+import net.elytrium.limboapi.api.chunk.Dimension;
+import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import net.elytrium.limboapi.api.chunk.VirtualWorld;
+import net.elytrium.limboapi.api.material.Block;
+import net.elytrium.limboapi.api.material.Item;
+import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.config.Settings;
-import net.elytrium.limboapi.injection.DisconnectListener;
-import net.elytrium.limboapi.injection.HandshakeListener;
+import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
+import net.elytrium.limboapi.injection.login.LoginListener;
+import net.elytrium.limboapi.injection.login.LoginTasksQueue;
+import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.server.CachedPackets;
+import net.elytrium.limboapi.server.LimboImpl;
+import net.elytrium.limboapi.server.world.SimpleBlock;
+import net.elytrium.limboapi.server.world.SimpleItem;
+import net.elytrium.limboapi.server.world.SimpleWorld;
 import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
@@ -54,7 +69,8 @@ import org.slf4j.Logger;
 )
 
 @Getter
-public class LimboAPI {
+@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
+public class LimboAPI implements LimboFactory {
 
   private static LimboAPI instance;
   private final VelocityServer server;
@@ -62,6 +78,7 @@ public class LimboAPI {
   private final Metrics.Factory metricsFactory;
   private final Path dataDirectory;
   private final List<Player> players;
+  private final HashMap<Player, LoginTasksQueue> loginQueue;
 
   private CachedPackets packets;
 
@@ -75,6 +92,14 @@ public class LimboAPI {
     this.metricsFactory = metricsFactory;
     this.dataDirectory = dataDirectory;
     this.players = new ArrayList<>();
+    this.loginQueue = new HashMap<>();
+
+    logger.info("Initializing Simple Virtual Block system...");
+    SimpleBlock.init();
+    logger.info("Initializing Simple Virtual Item system...");
+    SimpleItem.init();
+    logger.info("Initializing LimboProtocol...");
+    LimboProtocol.init();
   }
 
   @Subscribe
@@ -89,9 +114,11 @@ public class LimboAPI {
 
   public void reload() {
     Settings.IMP.reload(new File(dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
+    logger.info("Creating and preparing packets...");
     packets.createPackets();
-    server.getEventManager().register(this, new HandshakeListener(this));
+    server.getEventManager().register(this, new LoginListener(this, server));
     server.getEventManager().register(this, new DisconnectListener(this));
+    logger.info("Loaded!");
   }
 
   @SuppressFBWarnings("NP_IMMEDIATE_DEREFERENCE_OF_READLINE")
@@ -116,16 +143,63 @@ public class LimboAPI {
     }
   }
 
-  public void setVirtualServerJoined(Player player) {
+  @Override
+  public VirtualBlock createSimpleBlock(Block block) {
+    return SimpleBlock
+        .fromLegacyId((short) block.getId())
+        .setData(block.getData());
+  }
+
+  @Override
+  public VirtualBlock createSimpleBlock(short legacyId, byte data) {
+    return SimpleBlock
+        .fromLegacyId(legacyId)
+        .setData(data);
+  }
+
+  @Override
+  public VirtualBlock createSimpleBlock(
+      boolean solid, boolean air, boolean motionBlocking, SimpleBlock.BlockInfo... blockInfos) {
+    return new SimpleBlock(solid, air, motionBlocking, blockInfos);
+  }
+
+  @Override
+  public VirtualItem getItem(Item item) {
+    return SimpleItem.fromItem(item);
+  }
+
+  @Override
+  public Limbo createLimbo(VirtualWorld world) {
+    return new LimboImpl(this, world);
+  }
+
+  @Override
+  public VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch) {
+    return new SimpleWorld(dimension, x, y, z, yaw, pitch);
+  }
+
+  public void setLimboJoined(Player player) {
     players.add(player);
   }
 
-  public void unsetVirtualServerJoined(Player player) {
+  public void unsetLimboJoined(Player player) {
     players.remove(player);
   }
 
-  public boolean isVirtualServerJoined(Player player) {
+  public boolean isLimboJoined(Player player) {
     return players.contains(player);
+  }
+
+  public LoginTasksQueue getLoginQueue(Player player) {
+    return loginQueue.get(player);
+  }
+
+  public void addQueue(Player player, LoginTasksQueue q) {
+    loginQueue.put(player, q);
+  }
+
+  public void removeQueue(Player player) {
+    loginQueue.remove(player);
   }
 
   public static LimboAPI getInstance() {

@@ -34,6 +34,7 @@ public class Settings extends Config {
 
   public static class MAIN {
     public boolean ONLINE_MODE_NEED_AUTH = true;
+    public boolean ONLINE_UUID_IF_POSSIBLE = true;
     @Comment(
         "Available dimensions: OVERWORLD, NETHER, THE_END"
     )
@@ -57,9 +58,9 @@ public class Settings extends Config {
     public String WORLD_FILE_PATH = "world.schematic";
 
     @Create
-    public MAIN.VIRTUAL_COORDS VIRTUAL_COORDS;
+    public Settings.MAIN.WORLD_COORDS WORLD_COORDS;
 
-    public static class VIRTUAL_COORDS {
+    public static class WORLD_COORDS {
       public int X = 0;
       public int Y = 0;
       public int Z = 0;
@@ -91,6 +92,7 @@ public class Settings extends Config {
       public String TOTP_QR = "{PRFX} Click to open 2FA QR code in browser. ";
       public String TOTP_TOKEN = "{PRFX} Your TOTP token (Click to copy): ";
       public String TOTP_RECOVERY = "{PRFX} Your recovey codes: ";
+      public String DB_FAILURE = "Unable to connect to database.";
     }
 
     @Create
@@ -105,25 +107,26 @@ public class Settings extends Config {
     }
   }
 
-  public void reload(File file) {
-    load(file);
-    save(file);
-  }
   @Create
   public DATABASE DATABASE;
 
   @Comment("Database settings")
   public static class DATABASE {
-    @Comment("Database type: mysql, postgre, h2, or sqlite")
+    @Comment("Database type: mysql, postgresql, h2, or sqlite")
     public String STORAGE_TYPE = "h2";
 
     @Comment("Settings for File-based databases (Like H2, SQLite): ")
-    public String FILENAME = "elytraproxy.db";
+    public String FILENAME = "./limboauth.db";
 
-    @Comment("Settings for Network-based database (like MySQL): ")
+    @Comment("Settings for Network-based database (like MySQL, PostgreSQL): ")
     public String HOSTNAME = "127.0.0.1:3306";
     public String USER = "user";
     public String PASSWORD = "password";
-    public String DATABASE = "elytraproxy";
+    public String DATABASE = "limboauth";
+  }
+
+  public void reload(File file) {
+    load(file);
+    save(file);
   }
 }

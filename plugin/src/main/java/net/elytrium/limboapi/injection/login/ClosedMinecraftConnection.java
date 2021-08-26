@@ -15,24 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.injection;
+package net.elytrium.limboapi.injection.login;
 
-import com.velocitypowered.api.network.ProtocolVersion;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToMessageEncoder;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import net.elytrium.limboapi.injection.packet.PreparedPacket;
+import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.connection.MinecraftConnection;
+import io.netty.channel.Channel;
 
-@AllArgsConstructor
-public class PreparedPacketEncoder extends MessageToMessageEncoder<PreparedPacket> {
-  private final ProtocolVersion protocolVersion;
+public class ClosedMinecraftConnection extends MinecraftConnection {
+
+  public ClosedMinecraftConnection(Channel channel, VelocityServer server) {
+    super(channel, server);
+  }
 
   @Override
-  protected void encode(ChannelHandlerContext ctx, PreparedPacket msg, List<Object> out)
-      throws Exception {
-    if (msg.hasPacketsFor(protocolVersion)) {
-      out.addAll(msg.getPackets(protocolVersion));
-    }
+  public boolean isClosed() {
+    return true;
   }
 }

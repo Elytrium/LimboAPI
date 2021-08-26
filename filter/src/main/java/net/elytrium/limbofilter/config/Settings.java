@@ -18,7 +18,6 @@
 package net.elytrium.limbofilter.config;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 public class Settings extends Config {
@@ -35,23 +34,21 @@ public class Settings extends Config {
   public MAIN MAIN;
 
   public static class MAIN {
-    public boolean ENABLE = true;
-    public boolean LOGGING_ENABLED = true;
     public boolean CHECK_CLIENT_SETTINGS = true;
+    public boolean CHECK_CLIENT_BRAND = true;
     @Comment({
         "Verify Online Mode connection before AntiBot.",
         "False: verify after antibot, online mode player needs to reconnect",
         "True: verify before antibot, consumes more cpu and network on attack"
     })
     public boolean ONLINE_MODE_VERIFY = false;
-    public boolean CHECK_CLIENT_BRAND = true;
     public long PURGE_CACHE_MILLIS = 3600000;
     public int CAPTCHA_ATTEMPTS = 2;
     public int NON_VALID_POSITION_XZ_ATTEMPTS = 10;
     public int NON_VALID_POSITION_Y_ATTEMPTS = 10;
     public int FALLING_CHECK_TICKS = 128;
     public double MAX_VALID_POSITION_DIFFERENCE = 0.01;
-    public String BRAND = "ElytraProxy BotFilter";
+    public String BRAND = "LimboFilter";
     @Comment({
         "If the player needs to reconnect after passing AntiBot check.",
         "If ONLINE_MODE_NEED_AUTH here and online-mode in velocity.toml is set, then premium players need to reconnect"
@@ -60,13 +57,20 @@ public class Settings extends Config {
 
     @Comment("Available - ONLY_POSITION, ONLY_CAPTCHA, CAPTCHA_POSITION, CAPTCHA_ON_POSITION_FAILED, SUCCESSFULLY")
     public String CHECK_STATE = "CAPTCHA_POSITION";
-    @Comment({
-        "If the player's nickname contains something from this list, hes connection will be rejected",
-        "In lowercase"
-    })
-    public List<String> BANNED_NICK_PATTERNS = Arrays.asList(
-        "dropbot", "mcspam", "mcdrop", "mcrage", "mcstorm", "extremebot", "cipher", "biboran"
-    );
+
+    public boolean LOAD_WORLD = false;
+    @Comment("World file type: schematic")
+    public String WORLD_FILE_TYPE = "schematic";
+    public String WORLD_FILE_PATH = "world.schematic";
+
+    @Create
+    public Settings.MAIN.WORLD_COORDS WORLD_COORDS;
+
+    public static class WORLD_COORDS {
+      public int X = 0;
+      public int Y = 0;
+      public int Z = 0;
+    }
 
     @Create
     public MAIN.CAPTCHA_GENERATOR CAPTCHA_GENERATOR;
@@ -78,11 +82,14 @@ public class Settings extends Config {
       public List<String> FONTS_PATH = List.of("");
       @Comment("Use standard fonts(SANS_SERIF/SERIF/MONOSPACED), use false only if you provide fonts path")
       public boolean USE_STANDARD_FONTS = true;
+      public double LETTER_SPACING = 1.5;
       public int FONT_SIZE = 50;
-      public boolean FONT_OUTLINE = true;
+      public boolean FONT_OUTLINE = false;
       public boolean FONT_ROTATE = true;
       public boolean FONT_RIPPLE = true;
       public boolean FONT_BLUR = true;
+      public boolean STRIKETHROUGH = false;
+      public boolean UNDERLINE = true;
       public String PATTERN = "abcdefghijklmnopqrtuvwxyz1234567890";
       public int LENGTH = 3;
     }
@@ -91,7 +98,6 @@ public class Settings extends Config {
         "Available dimensions: OVERWORLD, NETHER, THE_END"
     )
     public String BOTFILTER_DIMENSION = "THE_END";
-    public boolean HARDCORE_HEARTS = true;
 
     @Create
     public MAIN.STRINGS STRINGS;
@@ -104,6 +110,14 @@ public class Settings extends Config {
       public String CAPTCHA_FAILED = "{PRFX} You've mistaken in captcha check. Please, rejoin the server.";
       public String TOO_BIG_PACKET = "{PRFX} Your client sent too big packet.";
       public String FALLING_CHECK_FAILED = "{PRFX} Falling Check was failed. Please, rejoin the server.";
+      public String ALREADY_CONNECTED = "{PRFX} You are already connected.";
+      public String STATS_FORMAT = "&c&lTotal Blocked: &6&l{0} &c&l| Connections Per Second: &6&l{1} &c&l| Pings Per Second: &6&l{2} &c&l| Total Connections Per Second: &6&l{3} &c&l| Ping: &6&l{4}";
+      public String STATS_ENABLED = "{PRFX} &fNow you see statistics in your action bar.";
+      public String STATS_DISABLED = "{PRFX} &fYou're no longer see statistics in your action bar.";
+      public String KICK_CLIENT_CHECK_SETTINGS = "&cYour client doesn't send settings packets.";
+      public String KICK_CLIENT_CHECK_SETTINGS_CHAT_COLOR = "&cPlease enable colors in chat settings to join the server.{NL}&eOptions > Chat Settings";
+      public String KICK_CLIENT_CHECK_SETTINGS_SKIN_PARTS = "&cPlease enable any option from the skin customization to join the server.{NL}&eOptions > Skin Customization";
+      public String KICK_CLIENT_CHECK_BRAND = "&cYour client doesn't send brand packets.";
     }
 
     @Create
@@ -121,22 +135,5 @@ public class Settings extends Config {
   public void reload(File file) {
     load(file);
     save(file);
-  }
-  @Create
-  public DATABASE DATABASE;
-
-  @Comment("Database settings")
-  public static class DATABASE {
-    @Comment("Database type: mysql, postgre, h2, or sqlite")
-    public String STORAGE_TYPE = "h2";
-
-    @Comment("Settings for File-based databases (Like H2, SQLite): ")
-    public String FILENAME = "elytraproxy.db";
-
-    @Comment("Settings for Network-based database (like MySQL): ")
-    public String HOSTNAME = "127.0.0.1:3306";
-    public String USER = "user";
-    public String PASSWORD = "password";
-    public String DATABASE = "elytraproxy";
   }
 }

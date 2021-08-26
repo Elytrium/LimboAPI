@@ -238,12 +238,12 @@ public class ChunkData implements MinecraftPacket {
     throw new UnsupportedOperationException("cant be called");
   }
 
-  @SuppressWarnings({"FieldMayBeFinal", "MismatchedReadAndWriteOfArray"}) // TODO: Implement biomes
+  @SuppressWarnings({"MismatchedReadAndWriteOfArray"})
   @Getter
   private static class BiomeData {
 
-    private byte[] pre115Biomes = new byte[256];
-    private int[] post115Biomes = new int[1024];
+    private final byte[] pre115Biomes = new byte[256];
+    private final int[] post115Biomes = new int[1024];
 
     public BiomeData(ChunkSnapshot chunk) {
       VirtualBiome[] biomes = chunk.getBiomes();

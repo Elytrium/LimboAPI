@@ -25,17 +25,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Statistics {
 
   private final AtomicLong blockedConnections = new AtomicLong(0L);
-  private final AtomicLong blockedBots = new AtomicLong(0L);
   private final AtomicInteger connectionsPerSecond = new AtomicInteger();
   private final AtomicInteger pingsPerSecond = new AtomicInteger();
-  private final AtomicInteger totalConnectionsPerSecond = new AtomicInteger();
 
   public void addBlockedConnection() {
     blockedConnections.incrementAndGet();
-  }
-
-  public void addBlockedBots() {
-    blockedBots.incrementAndGet();
   }
 
   public void addConnectionPerSecond() {
@@ -46,16 +40,8 @@ public class Statistics {
     pingsPerSecond.incrementAndGet();
   }
 
-  public void addTotalConnectionPerSecond() {
-    totalConnectionsPerSecond.incrementAndGet();
-  }
-
   public long getBlockedConnections() {
     return blockedConnections.longValue();
-  }
-
-  public long getBlockedBots() {
-    return blockedBots.longValue();
   }
 
   public int getConnectionsPerSecond() {
@@ -67,14 +53,13 @@ public class Statistics {
   }
 
   public int getTotalConnectionsPerSecond() {
-    return totalConnectionsPerSecond.get();
+    return pingsPerSecond.get() + connectionsPerSecond.get();
   }
 
   public void startUpdating() {
     new Timer().scheduleAtFixedRate(new TimerTask() {
       int cpsBefore = 0;
       int ppsBefore = 0;
-      int totalBefore = 0;
 
       public void run() {
         int currentCps = connectionsPerSecond.get();
@@ -87,12 +72,6 @@ public class Statistics {
         if (currentPps > 0) {
           pingsPerSecond.set(pingsPerSecond.get() - ppsBefore);
           ppsBefore = pingsPerSecond.get();
-        }
-
-        int total = totalConnectionsPerSecond.get();
-        if (total > 0) {
-          totalConnectionsPerSecond.set(totalConnectionsPerSecond.get() - totalBefore);
-          totalBefore = totalConnectionsPerSecond.get();
         }
 
       }

@@ -19,17 +19,27 @@ package net.elytrium.limbofilter;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,12 +49,18 @@ import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
+import net.elytrium.limboapi.api.file.SchematicFile;
+import net.elytrium.limboapi.api.file.WorldFile;
+import net.elytrium.limbofilter.cache.CachedPackets;
+import net.elytrium.limbofilter.commands.FilterCommand;
 import net.elytrium.limbofilter.config.Settings;
 import net.elytrium.limbofilter.handler.BotFilterSessionHandler;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.elytrium.limbofilter.listener.FilterListener;
+import net.elytrium.limbofilter.stats.Statistics;
 import org.slf4j.Logger;
 
 @Plugin(
@@ -57,24 +73,32 @@ import org.slf4j.Logger;
 )
 
 @Getter
+@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class FilterPlugin {
   private static FilterPlugin instance;
   private final Path dataDirectory;
   private final Logger logger;
   private final ProxyServer server;
   private final LimboFactory factory;
+  private final CachedPackets packets;
+  private final Statistics statistics;
   private Map<String, CachedUser> cachedFilterChecks;
   private ScheduledExecutorService scheduler;
+  private Limbo filterServer;
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Inject
   public FilterPlugin(ProxyServer server,
                     Logger logger,
-                    @Named("limboapi") LimboFactory factory,
+                    @Named("limboapi") PluginContainer factory,
                     @DataDirectory Path dataDirectory) {
     this.server = server;
     this.logger = logger;
     this.dataDirectory = dataDirectory;
-    this.factory = factory;
+    this.factory = (LimboFactory) factory.getInstance().get();
+    this.packets = new CachedPackets();
+    this.statistics = new Statistics();
+    statistics.startUpdating();
   }
 
   @Subscribe
@@ -85,7 +109,11 @@ public class FilterPlugin {
 
   @SneakyThrows
   public void reload() {
+    checkForUpdates();
     Settings.IMP.reload(new File(dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
+
+    CaptchaGeneration.init();
+    packets.createPackets();
 
     cachedFilterChecks = new ConcurrentHashMap<>();
 
@@ -95,7 +123,7 @@ public class FilterPlugin {
         captchaCoords.X, captchaCoords.Y, captchaCoords.Z,
         (float) captchaCoords.YAW, (float) captchaCoords.PITCH);
 
-    if (Settings.IMP.MAIN.) {
+    if (Settings.IMP.MAIN.LOAD_WORLD) {
       try {
         Path path = dataDirectory.resolve(Settings.IMP.MAIN.WORLD_FILE_PATH);
         WorldFile file;
@@ -109,21 +137,16 @@ public class FilterPlugin {
             return;
         }
 
-        Settings.MAIN.VIRTUAL_COORDS coords = Settings.IMP.MAIN.VIRTUAL_COORDS;
+        Settings.MAIN.WORLD_COORDS coords = Settings.IMP.MAIN.WORLD_COORDS;
         file.toWorld(factory, authWorld, coords.X, coords.Y, coords.Z);
       } catch (IOException e) {
         e.printStackTrace();
       }
     }
 
-    authServer = factory.createVirtualServer(authWorld);
+    filterServer = factory.createLimbo(authWorld);
 
-    nicknameInvalid = LegacyComponentSerializer.legacyAmpersand()
-        .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_INVALID);
-    nicknamePremium = LegacyComponentSerializer.legacyAmpersand()
-        .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_PREMIUM);
-
-    server.getEventManager().register(this, new AuthListener());
+    server.getEventManager().register(this, new FilterListener(this));
 
     scheduler =
         Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
@@ -133,23 +156,64 @@ public class FilterPlugin {
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         TimeUnit.MILLISECONDS);
+
+    CommandManager manager = server.getCommandManager();
+    manager.unregister("limbofilter");
+    manager.register("limbofilter",
+        new FilterCommand((VelocityServer) server, this),
+        "lf", "botfilter", "bf");
   }
 
-  public void cacheAuthUser(Player player) {
+  public void cacheFilterUser(Player player) {
     String username = player.getUsername();
     cachedFilterChecks.remove(username);
     InetSocketAddress adr = player.getRemoteAddress();
     cachedFilterChecks.put(username, new CachedUser(adr.getAddress(), System.currentTimeMillis()));
   }
 
+  public boolean shouldCheck(ConnectedPlayer player) {
+    InetSocketAddress adr = (InetSocketAddress) player.getConnection().getRemoteAddress();
+    return shouldCheck(player.getUsername(), adr.getAddress());
+  }
+
+  public boolean shouldCheck(String nickname, InetAddress ip) {
+    if (cachedFilterChecks.containsKey(nickname)) {
+      return !ip.equals(cachedFilterChecks.get(nickname).getInetAddress());
+    } else {
+      return true;
+    }
+  }
+
   public void filter(Player player) {
     try {
       BotFilterSessionHandler botFilterSessionHandler =
-          new BotFilterSessionHandler(player.getUsername());
+          new BotFilterSessionHandler((ConnectedPlayer) player, this);
 
       filterServer.spawnPlayer(player, botFilterSessionHandler);
     } catch (Throwable t) {
       logger.error("Error", t);
+    }
+  }
+
+  @SuppressFBWarnings("NP_IMMEDIATE_DEREFERENCE_OF_READLINE")
+  private void checkForUpdates() {
+    try {
+      URL url = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION");
+      URLConnection conn = url.openConnection();
+      conn.setConnectTimeout(1200);
+      conn.setReadTimeout(1200);
+      try (BufferedReader in = new BufferedReader(
+          new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+        if (!Settings.IMP.VERSION.contains("-DEV")) {
+          if (!in.readLine().trim().equalsIgnoreCase(net.elytrium.limboapi.config.Settings.IMP.VERSION)) {
+            logger.error("****************************************");
+            logger.warn("The new update was found, please update.");
+            logger.error("****************************************");
+          }
+        }
+      }
+    } catch (IOException ex) {
+      logger.warn("Unable to check for updates.", ex);
     }
   }
 

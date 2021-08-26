@@ -15,8 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.injection;
+package net.elytrium.limboapi.injection.disconnect;
 
+import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import lombok.RequiredArgsConstructor;
 import net.elytrium.limboapi.LimboAPI;
@@ -25,7 +26,8 @@ import net.elytrium.limboapi.LimboAPI;
 public class DisconnectListener {
   private final LimboAPI limboAPI;
 
+  @Subscribe
   public void onDisconnect(DisconnectEvent e) {
-    limboAPI.unsetVirtualServerJoined(e.getPlayer());
+    limboAPI.unsetLimboJoined(e.getPlayer());
   }
 }

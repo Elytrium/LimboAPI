@@ -7,6 +7,7 @@
 
 package net.elytrium.limboapi.api;
 
+import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 
 public interface LimboSessionHandler {
@@ -36,7 +37,7 @@ public interface LimboSessionHandler {
 
   }
 
-  default void onTooBigPacket() {
+  default void onGeneric(MinecraftPacket packet) {
 
   }
 

@@ -34,7 +34,7 @@ public interface LimboFactory {
    * @param world Virtual world
    * @return new virtual server.
    */
-  Limbo createVirtualServer(VirtualWorld world);
+  Limbo createLimbo(VirtualWorld world);
 
   /**
    * Creates new virtual block from Block enum

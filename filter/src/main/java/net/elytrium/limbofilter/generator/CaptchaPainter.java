@@ -1,7 +1,5 @@
 /*
- * This file is part of Velocity-BotFilter, licensed under the AGPLv3 License (AGPLv3).
- *
- * Copyright (C) 2021 Vjatšeslav Maspanov <Leymooo>
+ * Copyright (C) 2021 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +17,12 @@
 
 package net.elytrium.limbofilter.generator;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -28,7 +31,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ConvolveOp;
 import java.awt.image.Kernel;
 import java.util.Random;
-import net.elytrium.elytraproxy.config.Settings;
+import net.elytrium.limbofilter.config.Settings;
 
 public class CaptchaPainter {
 

@@ -19,6 +19,7 @@ package net.elytrium.limboapi.protocol;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.Chat;
 import com.velocitypowered.proxy.protocol.packet.ClientSettings;
@@ -53,6 +54,7 @@ import net.elytrium.limboapi.protocol.packet.SetSlot;
 import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
 import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
+import sun.misc.Unsafe;
 
 @SuppressWarnings("SameParameterValue")
 public class LimboProtocol {
@@ -68,11 +70,27 @@ public class LimboProtocol {
 
   private static Field packetClassToId;
 
+  public static Field clientbound;
+  public static Field serverbound;
+
   static {
     try {
-      Constructor<StateRegistry> localCtor = StateRegistry.class.getDeclaredConstructor();
+      Constructor<?> unsafeCtor = Unsafe.class.getDeclaredConstructors()[0];
+      unsafeCtor.setAccessible(true);
+      Unsafe unsafe = (Unsafe) unsafeCtor.newInstance();
+      limboRegistry = (StateRegistry) unsafe.allocateInstance(StateRegistry.class);
+
+      Constructor<StateRegistry.PacketRegistry> localCtor =
+          StateRegistry.PacketRegistry.class.getDeclaredConstructor(ProtocolUtils.Direction.class);
       localCtor.setAccessible(true);
-      limboRegistry = localCtor.newInstance();
+
+      clientbound = StateRegistry.class.getDeclaredField("clientbound");
+      clientbound.setAccessible(true);
+      clientbound.set(limboRegistry, localCtor.newInstance(ProtocolUtils.Direction.CLIENTBOUND));
+
+      serverbound = StateRegistry.class.getDeclaredField("serverbound");
+      serverbound.setAccessible(true);
+      serverbound.set(limboRegistry, localCtor.newInstance(ProtocolUtils.Direction.SERVERBOUND));
 
       getProtocolRegistry = StateRegistry.PacketRegistry.class
           .getDeclaredMethod("getProtocolRegistry", ProtocolVersion.class);

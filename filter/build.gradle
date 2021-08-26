@@ -1,7 +1,7 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
-    id 'java-library'
+    id 'java'
     id 'checkstyle'
 }
 
@@ -17,7 +17,9 @@ license {
 }
 
 dependencies {
-    api project(':limboapi-plugin')
+    compileOnly project(':limboapi-api')
+    compileOnly project(':limboapi-plugin')
+    compileOnly files('../libs/3.0.0.jar')
 
     annotationProcessor 'com.velocitypowered:velocity-api:3.0.0-SNAPSHOT'
 
@@ -39,6 +41,12 @@ task processSources(type: Sync) {
 
 tasks.withType(Checkstyle) {
     exclude('**/net/elytrium/limbofilter/config/Settings.java')
+    exclude('**/net/elytrium/limbofilter/generator/CaptchaPainter.java') // Parameter Name
+    exclude('**/net/elytrium/limbofilter/handler/FallingCheckHandler.java') // Member Name
+}
+
+artifacts {
+    archives shadowJar
 }
 
 compileJava.source = processSources.outputs

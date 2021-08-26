@@ -27,36 +27,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import net.elytrium.elytraproxy.ElytraProxy;
-import net.elytrium.elytraproxy.api.virtual.chunk.Dimension;
-import net.elytrium.elytraproxy.api.virtual.chunk.VirtualChunk;
-import net.elytrium.elytraproxy.api.virtual.material.Item;
-import net.elytrium.elytraproxy.api.virtual.material.VirtualItem;
-import net.elytrium.elytraproxy.botfilter.handler.BotFilterSessionHandler;
-import net.elytrium.elytraproxy.config.Settings;
-import net.elytrium.elytraproxy.virtual.protocol.cache.PreparedPacket;
-import net.elytrium.elytraproxy.virtual.protocol.packet.PlayerAbilities;
-import net.elytrium.elytraproxy.virtual.protocol.packet.PlayerPositionAndLook;
-import net.elytrium.elytraproxy.virtual.protocol.packet.SetExp;
-import net.elytrium.elytraproxy.virtual.protocol.packet.SetSlot;
-import net.elytrium.elytraproxy.virtual.protocol.packet.UpdateViewPosition;
-import net.elytrium.elytraproxy.virtual.protocol.packet.world.ChunkData;
-import net.elytrium.elytraproxy.virtual.server.world.SimpleItem;
-import net.elytrium.elytraproxy.virtual.server.world.SimpleWorld;
+import net.elytrium.limboapi.api.chunk.VirtualChunk;
+import net.elytrium.limboapi.api.material.Item;
+import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.injection.packet.PreparedPacket;
+import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
+import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
+import net.elytrium.limboapi.protocol.packet.SetExp;
+import net.elytrium.limboapi.protocol.packet.SetSlot;
+import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
+import net.elytrium.limboapi.protocol.packet.world.ChunkData;
+import net.elytrium.limboapi.server.world.SimpleItem;
+import net.elytrium.limbofilter.config.Settings;
+import net.elytrium.limbofilter.handler.BotFilterSessionHandler;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 @Getter
-@RequiredArgsConstructor
 public class CachedPackets {
 
-  private final ElytraProxy elytraProxy;
-
-  private final String hardcodedBrandString = Settings.IMP.ANTIBOT.BRAND + " (ely.su/github)";
-  private VirtualServerImpl antiBotVirtualServerImpl;
+  private String hardcodedBrandString;
   private PreparedPacket alreadyConnected;
   private PreparedPacket tooBigPacket;
   private PreparedPacket captchaFailed;
@@ -65,6 +57,10 @@ public class CachedPackets {
   private PreparedPacket resetSlot;
   private PreparedPacket checkingChat;
   private PreparedPacket checkingCaptchaChat;
+  private PreparedPacket kickClientCheckSettings;
+  private PreparedPacket kickClientCheckSettingsChat;
+  private PreparedPacket kickClientCheckSettingsSkin;
+  private PreparedPacket kickClientCheckBrand;
   private PreparedPacket successfulBotFilterChat;
   private PreparedPacket successfulBotFilterDisconnect;
   private PreparedPacket captchaPosition;
@@ -73,27 +69,26 @@ public class CachedPackets {
   private List<SetExp> experience;
 
   public void createPackets() {
-    Settings.ANTIBOT.CAPTCHA_COORDS captchaCoords = Settings.IMP.ANTIBOT.CAPTCHA_COORDS;
-    SimpleWorld antiBotVirtualWorld = new SimpleWorld(
-        Dimension.valueOf(Settings.IMP.ANTIBOT.BOTFILTER_DIMENSION),
-        captchaCoords.X, captchaCoords.Y, captchaCoords.Z,
-        (float) captchaCoords.YAW, (float) captchaCoords.PITCH);
+    hardcodedBrandString = Settings.IMP.MAIN.BRAND + " (ely.su/github)";
+    Settings.MAIN.CAPTCHA_COORDS captchaCoords = Settings.IMP.MAIN.CAPTCHA_COORDS;
 
     experience = createExpPackets();
     captchaPosition = new PreparedPacket()
         .prepare(createPlayerPosAndLookPacket(
-            captchaCoords.X, captchaCoords.Y, captchaCoords.Z, (float) captchaCoords.YAW, (float) captchaCoords.PITCH))
-        .prepare(createUpdateViewPosition((int) captchaCoords.X, (int) captchaCoords.Z), ProtocolVersion.MINECRAFT_1_14);
+            captchaCoords.X, captchaCoords.Y, captchaCoords.Z,
+            (float) captchaCoords.YAW, (float) captchaCoords.PITCH))
+        .prepare(createUpdateViewPosition((int) captchaCoords.X,
+            (int) captchaCoords.Z), ProtocolVersion.MINECRAFT_1_14);
 
     noAbilities = prepare(createAbilitiesPacket());
     alreadyConnected = prepare((version) ->
-        createDisconnectPacket(Settings.IMP.MESSAGES.VELOCITY.ERROR.ALREADY_CONNECTED_PROXY, version));
+        createDisconnectPacket(Settings.IMP.MAIN.STRINGS.ALREADY_CONNECTED, version));
     tooBigPacket = prepare((version) ->
-        createDisconnectPacket(Settings.IMP.ANTIBOT.STRINGS.TOO_BIG_PACKET, version));
+        createDisconnectPacket(Settings.IMP.MAIN.STRINGS.TOO_BIG_PACKET, version));
     captchaFailed = prepare((version) ->
-        createDisconnectPacket(Settings.IMP.ANTIBOT.STRINGS.CAPTCHA_FAILED, version));
+        createDisconnectPacket(Settings.IMP.MAIN.STRINGS.CAPTCHA_FAILED, version));
     fallingCheckFailed = prepare((version) ->
-        createDisconnectPacket(Settings.IMP.ANTIBOT.STRINGS.FALLING_CHECK_FAILED, version));
+        createDisconnectPacket(Settings.IMP.MAIN.STRINGS.FALLING_CHECK_FAILED, version));
 
     setSlot = new PreparedPacket()
         .prepare(createSetSlotPacket(0, 36, SimpleItem.fromItem(Item.FILLED_MAP), 1, 0, null),
@@ -102,17 +97,24 @@ public class CachedPackets {
             CompoundBinaryTag.builder().put("map", IntBinaryTag.of(0)).build()), ProtocolVersion.MINECRAFT_1_17);
 
     resetSlot = prepare(createSetSlotPacket(0, 36, SimpleItem.fromItem(Item.AIR), 0, 0, null));
-    checkingChat = createChatPacket(Settings.IMP.ANTIBOT.STRINGS.CHECKING);
-    checkingCaptchaChat = createChatPacket(Settings.IMP.ANTIBOT.STRINGS.CHECKING_CAPTCHA);
-    successfulBotFilterChat = createChatPacket(Settings.IMP.ANTIBOT.STRINGS.SUCCESSFUL_CRACKED);
+    checkingChat = createChatPacket(Settings.IMP.MAIN.STRINGS.CHECKING);
+    checkingCaptchaChat = createChatPacket(Settings.IMP.MAIN.STRINGS.CHECKING_CAPTCHA);
+    successfulBotFilterChat = createChatPacket(Settings.IMP.MAIN.STRINGS.SUCCESSFUL_CRACKED);
     successfulBotFilterDisconnect = prepare((version) ->
-        createDisconnectPacket(Settings.IMP.ANTIBOT.STRINGS.SUCCESSFUL_PREMIUM, version));
+        createDisconnectPacket(Settings.IMP.MAIN.STRINGS.SUCCESSFUL_PREMIUM, version));
     antiBotTitle = createTitlePacket(
-        Settings.IMP.ANTIBOT.BRAND,
-        Settings.IMP.ANTIBOT.STRINGS.CHECKING_CAPTCHA,
+        Settings.IMP.MAIN.BRAND,
+        Settings.IMP.MAIN.STRINGS.CHECKING_CAPTCHA,
         10, 50, 10);
 
-    antiBotVirtualServerImpl = new VirtualServerImpl(elytraProxy, antiBotVirtualWorld);
+    kickClientCheckSettings = prepare(version ->
+        createDisconnectPacket(Settings.IMP.MAIN.STRINGS.KICK_CLIENT_CHECK_SETTINGS, version));
+    kickClientCheckSettingsChat = prepare(version ->
+        createDisconnectPacket(Settings.IMP.MAIN.STRINGS.KICK_CLIENT_CHECK_SETTINGS_CHAT_COLOR, version));
+    kickClientCheckSettingsSkin = prepare(version ->
+        createDisconnectPacket(Settings.IMP.MAIN.STRINGS.KICK_CLIENT_CHECK_SETTINGS_SKIN_PARTS, version));
+    kickClientCheckBrand = prepare(version ->
+        createDisconnectPacket(Settings.IMP.MAIN.STRINGS.KICK_CLIENT_CHECK_BRAND, version));
   }
 
   private PlayerAbilities createAbilitiesPacket() {
@@ -126,9 +128,10 @@ public class CachedPackets {
   private List<SetExp> createExpPackets() {
     List<SetExp> packets = new ArrayList<>();
     long ticks = BotFilterSessionHandler.TOTAL_TICKS;
-    float expInterval = 1f / (float) ticks;
+    float expInterval = 0.01f;
     for (int i = 0; i < ticks; ++i) {
-      packets.add(new SetExp(i * expInterval, i, 0));
+      int percentage = (int) (i * 100 / ticks);
+      packets.add(new SetExp(percentage * expInterval, percentage, 0));
     }
     return packets;
   }
@@ -142,7 +145,8 @@ public class CachedPackets {
     return new UpdateViewPosition(x >> 4, z >> 4);
   }
 
-  private SetSlot createSetSlotPacket(int windowId, int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt) {
+  private SetSlot createSetSlotPacket(
+      int windowId, int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt) {
     return new SetSlot(windowId, slot, item, count, data, nbt);
   }
 
@@ -193,19 +197,22 @@ public class CachedPackets {
     Component subtitleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(subtitle);
 
     preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
+      GenericTitlePacket packet = GenericTitlePacket
+          .constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
       packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(titleComponent));
       return packet;
     }, ProtocolVersion.MINECRAFT_1_8);
 
     preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_SUBTITLE, version);
+      GenericTitlePacket packet = GenericTitlePacket
+          .constructTitlePacket(GenericTitlePacket.ActionType.SET_SUBTITLE, version);
       packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(subtitleComponent));
       return packet;
     }, ProtocolVersion.MINECRAFT_1_8);
 
     preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TIMES, version);
+      GenericTitlePacket packet = GenericTitlePacket
+          .constructTitlePacket(GenericTitlePacket.ActionType.SET_TIMES, version);
       packet.setFadeIn(fadeIn);
       packet.setStay(stay);
       packet.setFadeOut(fadeOut);

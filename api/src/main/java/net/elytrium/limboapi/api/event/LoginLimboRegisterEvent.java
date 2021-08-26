@@ -9,9 +9,8 @@ package net.elytrium.limboapi.api.event;
 
 import com.google.common.base.Preconditions;
 import com.velocitypowered.api.proxy.Player;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * This event is fired during login process before the player has been authenticated, e.g. to enable or disable
@@ -20,11 +19,11 @@ import java.util.concurrent.CompletableFuture;
 public final class LoginLimboRegisterEvent {
 
   private final Player player;
-  private final List<CompletableFuture<Void>> callbacks;
+  private final Queue<Runnable> callbacks;
 
   public LoginLimboRegisterEvent(Player player) {
     this.player = Preconditions.checkNotNull(player, "player");
-    this.callbacks = new ArrayList<>();
+    this.callbacks = new LinkedBlockingQueue<>();
   }
 
   public Player getPlayer() {
@@ -38,11 +37,11 @@ public final class LoginLimboRegisterEvent {
         + '}';
   }
 
-  public List<CompletableFuture<Void>> getCallbacks() {
+  public Queue<Runnable> getCallbacks() {
     return this.callbacks;
   }
 
-  public void addCallback(CompletableFuture<Void> callback) {
+  public void addCallback(Runnable callback) {
     this.callbacks.add(callback);
   }
 }

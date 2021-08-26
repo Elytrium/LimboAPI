@@ -1,7 +1,5 @@
 /*
- * This file is part of Velocity-BotFilter, licensed under the AGPLv3 License (AGPLv3).
- *
- * Copyright (C) 2021 Vjatšeslav Maspanov <Leymooo>
+ * Copyright (C) 2021 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,16 +17,28 @@
 
 package net.elytrium.limbofilter.handler;
 
+import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.packet.ClientSettings;
+import com.velocitypowered.proxy.protocol.packet.PluginMessage;
+import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Objects;
-import java.util.logging.Logger;
 import lombok.Getter;
 import lombok.Setter;
+import net.elytrium.limboapi.api.Limbo;
+import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.elytrium.limboapi.protocol.packet.SetExp;
+import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.elytrium.limbofilter.FilterPlugin;
+import net.elytrium.limbofilter.cache.CachedCaptcha;
 import net.elytrium.limbofilter.cache.CachedPackets;
 import net.elytrium.limbofilter.cache.CaptchaHandler;
 import net.elytrium.limbofilter.config.Settings;
 import net.elytrium.limbofilter.stats.Statistics;
+import org.slf4j.Logger;
 
 @Getter
 public class BotFilterSessionHandler extends FallingCheckHandler {
@@ -56,6 +66,8 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   private int nonValidPacketsSize = 0;
   @Getter
   private CheckState state = CheckState.valueOf(Settings.IMP.MAIN.CHECK_STATE);
+  private boolean checkedBySettings = false;
+  private boolean checkedByBrand = false;
   private Limbo server;
 
   public BotFilterSessionHandler(ConnectedPlayer player, FilterPlugin plugin) {
@@ -77,6 +89,41 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   }
 
   @Override
+  public void onGeneric(MinecraftPacket packet) {
+    if (packet instanceof PluginMessage) {
+      PluginMessage pluginMessage = (PluginMessage) packet;
+      if (PluginMessageUtil.isMcBrand(pluginMessage) && !checkedByBrand) {
+        logger.info("{} has client brand {}", player,
+            PluginMessageUtil.readBrandMessage(pluginMessage.content()));
+        checkedByBrand = true;
+      }
+    } else if (packet instanceof ClientSettings) {
+      ClientSettings clientSettings = (ClientSettings) packet;
+      if ((!checkedBySettings) && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
+        if (packet.toString().contains("null")) {
+          logger.error("{} -> " + packet, player);
+          connection.closeWith(packets.getKickClientCheckSettings());
+          logger.error("{} has null in settings packet", player);
+          statistics.addBlockedConnection();
+        } else if (!clientSettings.isChatColors()) {
+          logger.error("{} -> " + packet, player);
+          connection.closeWith(packets.getKickClientCheckSettingsChat());
+          logger.error("{} doesn't send isChatColors packet",
+              player);
+          statistics.addBlockedConnection();
+        } else if (clientSettings.getSkinParts() == 0) {
+          logger.error("{} -> " + packet, player);
+          connection.closeWith(packets.getKickClientCheckSettingsSkin());
+          logger.error("{} doesn't send skin parts packet",
+              player);
+          statistics.addBlockedConnection();
+        }
+      }
+      checkedBySettings = true;
+    }
+  }
+
+  @Override
   public void onChat(String message) {
     if ((state == CheckState.CAPTCHA_POSITION || state == CheckState.ONLY_CAPTCHA) && message.length() <= 256) {
       if (message.equals(captchaAnswer)) {
@@ -85,7 +132,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       } else if (--attempts != 0) {
         sendCaptcha();
       } else {
-        statistics.addBlockedBots();
+        statistics.addBlockedConnection();
         connection.closeWith(packets.getCaptchaFailed());
       }
     }
@@ -100,18 +147,28 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         if (state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
           changeStateToCaptcha();
         } else {
-          statistics.addBlockedBots();
+          statistics.addBlockedConnection();
           connection.closeWith(packets.getFallingCheckFailed());
         }
       }
       return;
     }
-    state = CheckState.SUCCESSFULLY;
-    elytraProxy.cacheSucceedUser(player);
+
+    if ((!checkedBySettings) && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
+      connection.closeWith(packets.getKickClientCheckSettings());
+      statistics.addBlockedConnection();
+    }
+    if ((!checkedByBrand) && Settings.IMP.MAIN.CHECK_CLIENT_BRAND) {
+      connection.closeWith(packets.getKickClientCheckBrand());
+      statistics.addBlockedConnection();
+    }
+
+    state = CheckState.SUCCESSFUL;
+    plugin.cacheFilterUser(player);
 
     if (Settings.IMP.MAIN.ONLINE_MODE_VERIFY && !Settings.IMP.MAIN.NEED_TO_RECONNECT) {
       connection.write(packets.getSuccessfulBotFilterChat());
-      virtualServerPlayer.disconnect();
+      limboPlayer.disconnect();
     } else {
       connection.closeWith(packets.getSuccessfulBotFilterDisconnect());
     }
@@ -119,6 +176,11 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
   @Override
   public void onMove() {
+    // System.out.println("lastY=" + lastY + "; y=" + y + "; diff=" + (lastY - y) + ";"
+    //     + " need=" + getLoadedChunkSpeed(ticks) + "; ticks=" + ticks
+    //     + "; x=" + x + "; z=" + z + "; vx=" + validX + "; vz=" + validZ
+    //     + "; startedListening=" + startedListening + "; state=" + state
+    //     + "; onGround=" + onGround);
     if (!startedListening && state != CheckState.ONLY_CAPTCHA) {
       if (x == validX && z == validZ) {
         startedListening = true;
@@ -153,9 +215,6 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         }
         return;
       }
-      // System.out.println("lastY=" + lastY + "; y=" + y + "; diff=" + (lastY - y) + ";" +
-      //    " need=" + getLoadedChunkSpeed(ticks) + "; ticks=" + ticks +
-      //    "; x=" + x + "; z=" + z + "; vx=" + validX + "; vz=" + validZ);
       if (ignoredTicks > Settings.IMP.MAIN.NON_VALID_POSITION_Y_ATTEMPTS) {
         fallingCheckFailed();
         return;
@@ -178,9 +237,9 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   }
 
   @Override
-  public void onSpawn(VirtualServer server, VirtualServerPlayer player) {
+  public void onSpawn(Limbo server, LimboPlayer player) {
     this.server = server;
-    this.virtualServerPlayer = player;
+    this.limboPlayer = player;
     if (state == CheckState.ONLY_CAPTCHA) {
       sendCaptcha();
     } else if (state == CheckState.CAPTCHA_POSITION) {
@@ -195,7 +254,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
   private void sendFallingCheckPackets() {
     connection.delayedWrite(fallingCheckPos);
-    if (connection.getProtocolVersion().isAfterOrEq(ProtocolVersion.MINECRAFT_1_14)) {
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
       connection.delayedWrite(fallingCheckView);
     }
     connection.delayedWrite(fallingCheckChunk);
@@ -208,6 +267,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     connection.delayedWrite(packets.getSetSlot());
     connection.delayedWrite(captchaHandler.getMap());
     connection.delayedWrite(packets.getCheckingCaptchaChat());
+    connection.flush();
   }
 
   private boolean checkY() {
@@ -220,7 +280,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       changeStateToCaptcha();
       return;
     }
-    statistics.addBlockedBots();
+    statistics.addBlockedConnection();
     connection.closeWith(packets.getFallingCheckFailed());
   }
 
@@ -263,7 +323,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     ONLY_CAPTCHA,
     CAPTCHA_POSITION,
     CAPTCHA_ON_POSITION_FAILED,
-    SUCCESSFULLY,
+    SUCCESSFUL,
     FAILED
   }
 }

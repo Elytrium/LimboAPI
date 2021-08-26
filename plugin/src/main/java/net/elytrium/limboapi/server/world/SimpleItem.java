@@ -20,9 +20,7 @@ package net.elytrium.limboapi.server.world;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import com.velocitypowered.api.network.ProtocolVersion;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -31,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 
@@ -53,20 +52,19 @@ public class SimpleItem implements VirtualItem {
     return versionIDs.get(version);
   }
 
-  static {
-    try {
-      URL file = ClassLoader.getSystemResource("mapping/items.json");
-      LinkedTreeMap<String, LinkedTreeMap<String, String>> map = gson.fromJson(
-          new InputStreamReader(file.openStream(), StandardCharsets.UTF_8), LinkedTreeMap.class);
+  public static void init() {
+    //noinspection unchecked,ConstantConditions
+    LinkedTreeMap<String, LinkedTreeMap<String, String>> map = gson.fromJson(
+        new InputStreamReader(
+            LimboAPI.getInstance().getClass()
+                .getClassLoader().getResourceAsStream("mapping/items.json"),
+            StandardCharsets.UTF_8), LinkedTreeMap.class);
 
-      for (Item item : Item.values()) {
-        SimpleItem simpleItem = new SimpleItem();
-        map.get(String.valueOf(item.getId()))
-            .forEach((key, value) -> simpleItem.getVersionIDs().put(Version.parse(key), Short.parseShort(value)));
-        legacyIdMap.put(item, simpleItem);
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
+    for (Item item : Item.values()) {
+      SimpleItem simpleItem = new SimpleItem();
+      map.get(String.valueOf(item.getId()))
+          .forEach((key, value) -> simpleItem.getVersionIDs().put(Version.parse(key), Short.parseShort(value)));
+      legacyIdMap.put(item, simpleItem);
     }
   }
 

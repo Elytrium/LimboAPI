@@ -28,17 +28,24 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
@@ -77,6 +84,7 @@ import org.slf4j.Logger;
 )
 
 @Getter
+@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class AuthPlugin {
   private final HttpClient client = HttpClient.newHttpClient();
   private static AuthPlugin instance;
@@ -92,15 +100,16 @@ public class AuthPlugin {
   private Component nicknameInvalid;
   private Component nicknamePremium;
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Inject
   public AuthPlugin(ProxyServer server,
                     Logger logger,
-                    @Named("limboapi") LimboFactory factory,
+                    @Named("limboapi") PluginContainer factory,
                     @DataDirectory Path dataDirectory) {
     this.server = server;
     this.logger = logger;
     this.dataDirectory = dataDirectory;
-    this.factory = factory;
+    this.factory = (LimboFactory) factory.getInstance().get();
   }
 
   @Subscribe
@@ -111,19 +120,44 @@ public class AuthPlugin {
 
   @SneakyThrows
   public void reload() {
+    checkForUpdates();
     Settings.IMP.reload(new File(dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
 
     cachedAuthChecks = new ConcurrentHashMap<>();
 
-    CommandManager manager = server.getCommandManager();
-    JdbcPooledConnectionSource connectionSource
-        = new JdbcPooledConnectionSource("jdbc:h2:mem:myDb"); // TODO for @mdxd44: Switch db
+    Settings.DATABASE dbConfig = Settings.IMP.DATABASE;
+    JdbcPooledConnectionSource connectionSource;
+    switch (dbConfig.STORAGE_TYPE) {
+      case "sqlite":
+        Class.forName("org.sqlite.JDBC");
+        connectionSource = new JdbcPooledConnectionSource("jdbc:sqlite:" + dbConfig.FILENAME);
+        break;
+      case "h2":
+        connectionSource = new JdbcPooledConnectionSource("jdbc:h2:" + dbConfig.FILENAME);
+        break;
+      case "mysql":
+        connectionSource = new JdbcPooledConnectionSource(
+            "jdbc:mysql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE
+            + "?autoReconnect=true&initialTimeout=1&useSSL=false",
+            dbConfig.USER, dbConfig.PASSWORD);
+        break;
+      case "postgresql":
+        connectionSource = new JdbcPooledConnectionSource(
+            "jdbc:postgresql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE
+            + "?autoReconnect=true", dbConfig.USER, dbConfig.PASSWORD);
+        break;
+      default:
+        logger.error(Settings.IMP.MAIN.STRINGS.DB_FAILURE);
+        server.shutdown();
+        return;
+    }
 
     TableUtils.createTableIfNotExists(connectionSource, RegisteredPlayer.class);
 
     playerDao
         = DaoManager.createDao(connectionSource, RegisteredPlayer.class);
 
+    CommandManager manager = server.getCommandManager();
     manager.unregister("unregister");
     manager.unregister("changepass");
     manager.unregister("2fa");
@@ -154,14 +188,14 @@ public class AuthPlugin {
             return;
         }
 
-        Settings.MAIN.VIRTUAL_COORDS coords = Settings.IMP.MAIN.VIRTUAL_COORDS;
+        Settings.MAIN.WORLD_COORDS coords = Settings.IMP.MAIN.WORLD_COORDS;
         file.toWorld(factory, authWorld, coords.X, coords.Y, coords.Z);
       } catch (IOException e) {
         e.printStackTrace();
       }
     }
 
-    authServer = factory.createVirtualServer(authWorld);
+    authServer = factory.createLimbo(authWorld);
 
     nicknameInvalid = LegacyComponentSerializer.legacyAmpersand()
         .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_INVALID);
@@ -178,6 +212,28 @@ public class AuthPlugin {
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         TimeUnit.MILLISECONDS);
+  }
+
+  @SuppressFBWarnings("NP_IMMEDIATE_DEREFERENCE_OF_READLINE")
+  private void checkForUpdates() {
+    try {
+      URL url = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION");
+      URLConnection conn = url.openConnection();
+      conn.setConnectTimeout(1200);
+      conn.setReadTimeout(1200);
+      try (BufferedReader in = new BufferedReader(
+          new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+        if (!Settings.IMP.VERSION.contains("-DEV")) {
+          if (!in.readLine().trim().equalsIgnoreCase(Settings.IMP.VERSION)) {
+            logger.error("****************************************");
+            logger.warn("The new update was found, please update.");
+            logger.error("****************************************");
+          }
+        }
+      }
+    } catch (IOException ex) {
+      logger.warn("Unable to check for updates.", ex);
+    }
   }
 
   public void cacheAuthUser(Player player) {
@@ -217,7 +273,7 @@ public class AuthPlugin {
   private void sendToAuthServer(Player player, String nickname) {
     try {
       AuthSessionHandler authSessionHandler =
-          new AuthSessionHandler(playerDao, nickname);
+          new AuthSessionHandler(playerDao, player, nickname);
 
       authServer.spawnPlayer(player, authSessionHandler);
     } catch (Throwable t) {

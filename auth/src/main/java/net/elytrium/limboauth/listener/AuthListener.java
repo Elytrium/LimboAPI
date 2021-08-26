@@ -19,7 +19,8 @@ package net.elytrium.limboauth.listener;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
-import java.util.concurrent.CompletableFuture;
+import com.velocitypowered.api.event.player.GameProfileRequestEvent;
+import com.velocitypowered.api.util.UuidUtils;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboauth.AuthPlugin;
 import net.elytrium.limboauth.config.Settings;
@@ -38,7 +39,16 @@ public class AuthListener {
   @Subscribe
   public void onLogin(LoginLimboRegisterEvent e) {
     if (AuthPlugin.getInstance().needAuth(e.getPlayer())) {
-      e.addCallback(CompletableFuture.runAsync(() -> AuthPlugin.getInstance().auth(e.getPlayer())));
+      e.addCallback(() -> AuthPlugin.getInstance().auth(e.getPlayer()));
+    }
+  }
+
+  @Subscribe
+  public void onProfile(GameProfileRequestEvent e) {
+    if (!Settings.IMP.MAIN.ONLINE_UUID_IF_POSSIBLE) {
+      e.setGameProfile(
+          e.getOriginalProfile().withId(
+              UuidUtils.generateOfflinePlayerUuid(e.getUsername())));
     }
   }
 }

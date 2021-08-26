@@ -35,8 +35,8 @@ Velocity | Offline Mode | 2 sec | 55%
 
 ## Features of LimboAPI
 
-- Send to Limbo during login process
-- Send to Limbo during play process
+- Send to the Limbo server during login process
+- Send to the Limbo server during play process
 - Send maps, items to player's virtual inventory
 - Display player's XP
 - Send Title, Chat, ActionBar
@@ -46,8 +46,8 @@ Velocity | Offline Mode | 2 sec | 55%
 ## How to
 
 - Include ``limboapi-api`` to your Maven/Gradle project as compile-only
-- Subscribe to ``LoginLimboRegisterEvent`` to send players to Limbo during login process 
-- Use ``LimboFactory`` to send players to Limbo during play process
+- Subscribe to ``LoginLimboRegisterEvent`` to send players to the Limbo server during login process 
+- Use ``LimboFactory`` to send players to the Limbo server during play process
 
 ### Demo
 

@@ -20,6 +20,7 @@ package net.elytrium.limboapi.server;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.Chat;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
@@ -29,7 +30,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.config.Settings;
-import net.elytrium.limboapi.injection.PreparedPacketEncoder;
+import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
 import net.elytrium.limboapi.protocol.packet.Player;
 import net.elytrium.limboapi.protocol.packet.PlayerPosition;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
@@ -95,13 +96,18 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
   }
 
+  @Override
+  public void handleGeneric(MinecraftPacket packet) {
+    callback.onGeneric(packet);
+  }
+
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void disconnected() {
     callback.onDisconnect();
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
       limboAPI.getLogger().info(
           player.getUsername() + " (" + player.getRemoteAddress()
-              + ") has disconnected from VirtualServer");
+              + ") has disconnected from the Limbo");
     }
     player.getConnection().setSessionHandler(originalHandler);
     ChannelPipeline pipeline = player.getConnection().getChannel().pipeline();
