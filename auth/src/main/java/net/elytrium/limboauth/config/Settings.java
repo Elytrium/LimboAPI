@@ -72,6 +72,7 @@ public class Settings extends Config {
 
     public static class STRINGS {
       public String RELOAD = "{PRFX} Reloaded successfully";
+      public String LOGIN_SUCCESS = "{PRFX} Successfully logged in";
       public String LOGIN = "{PRFX} Please, login using &a/l password";
       public String TOTP = "{PRFX} Please, enter your 2FA key using &a/2fa key";
       public String PASSWORD_WRONG = "{PRFX} Password is wrong";
@@ -129,5 +130,6 @@ public class Settings extends Config {
   public void reload(File file) {
     this.load(file);
     this.save(file);
+    this.load(file);
   }
 }

@@ -190,11 +190,15 @@ public class LimboAPI implements LimboFactory {
     return this.loginQueue.get(player);
   }
 
-  public void addQueue(Player player, LoginTasksQueue q) {
+  public boolean hasLoginQueue(Player player) {
+    return this.loginQueue.containsKey(player);
+  }
+
+  public void addLoginQueue(Player player, LoginTasksQueue q) {
     this.loginQueue.put(player, q);
   }
 
-  public void removeQueue(Player player) {
+  public void removeLoginQueue(Player player) {
     this.loginQueue.remove(player);
   }
 

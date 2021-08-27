@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.injection.login;
+package net.elytrium.limboapi.injection.dummy;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -30,9 +30,12 @@ import io.netty.channel.EventLoop;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import java.net.SocketAddress;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+@RequiredArgsConstructor
 public class ClosedChannel implements Channel {
+  private final EventLoop dummy;
 
   @Override
   public ChannelId id() {
@@ -41,7 +44,7 @@ public class ClosedChannel implements Channel {
 
   @Override
   public EventLoop eventLoop() {
-    return null;
+    return dummy;
   }
 
   @Override

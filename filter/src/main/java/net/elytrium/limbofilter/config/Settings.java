@@ -135,5 +135,6 @@ public class Settings extends Config {
   public void reload(File file) {
     load(file);
     save(file);
+    load(file);
   }
 }
