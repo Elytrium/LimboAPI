@@ -20,6 +20,7 @@ package net.elytrium.limboapi.server;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.Chat;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -106,10 +107,13 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
       this.limboAPI.getLogger().info(
           this.player.getUsername() + " (" + this.player.getRemoteAddress()
-              + ") has disconnected from the Limbo");
+              + ") has disconnected from the " + callback.getClass().getSimpleName() + " Limbo");
     }
 
-    this.player.getConnection().setSessionHandler(this.originalHandler);
+    if (!(this.originalHandler instanceof LoginSessionHandler)
+        && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
+      this.player.getConnection().setSessionHandler(this.originalHandler);
+    }
     ChannelPipeline pipeline = this.player.getConnection().getChannel().pipeline();
     if (pipeline.names().contains("prepared-encoder")) {
       pipeline.remove(PreparedPacketEncoder.class);

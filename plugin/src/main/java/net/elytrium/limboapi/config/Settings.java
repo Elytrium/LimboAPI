@@ -47,5 +47,6 @@ public class Settings extends Config {
   public void reload(File file) {
     this.load(file);
     this.save(file);
+    this.load(file);
   }
 }

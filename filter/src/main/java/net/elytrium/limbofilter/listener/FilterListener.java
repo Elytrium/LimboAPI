@@ -41,8 +41,6 @@ public class FilterListener {
         && !plugin.shouldCheck(
             e.getUsername(), e.getConnection().getRemoteAddress().getAddress())) {
       e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
-    } else {
-      e.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
     }
   }
 

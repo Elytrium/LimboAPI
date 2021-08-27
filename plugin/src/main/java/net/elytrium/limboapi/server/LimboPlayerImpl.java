@@ -21,7 +21,6 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -107,14 +106,10 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (handler != null) {
       handler.disconnected();
 
-      this.player.getConnection().setSessionHandler(handler.getOriginalHandler());
-
-      if (handler.getOriginalHandler() instanceof LoginSessionHandler) {
+      if (LimboAPI.getInstance().hasLoginQueue(this.player)) {
         LimboAPI.getInstance().getLoginQueue(this.player).next();
-      } else {
-        if (handler.getPreviousServer() != null) {
-          this.player.createConnectionRequest(handler.getPreviousServer()).fireAndForget();
-        }
+      } else if (handler.getPreviousServer() != null) {
+        this.player.createConnectionRequest(handler.getPreviousServer()).fireAndForget();
       }
     }
   }
@@ -126,12 +121,12 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (handler != null) {
       handler.disconnected();
 
-      if (handler.getOriginalHandler() instanceof LoginSessionHandler) {
+      if (LimboAPI.getInstance().hasLoginQueue(this.player)) {
         throw new IllegalArgumentException("Cannot send to server while login");
       } else {
-        this.player.getConnection().eventLoop().execute(() -> {
-          this.player.createConnectionRequest(server).fireAndForget();
-        });
+        this.player.getConnection()
+            .eventLoop()
+            .execute(this.player.createConnectionRequest(server)::fireAndForget);
       }
     }
   }

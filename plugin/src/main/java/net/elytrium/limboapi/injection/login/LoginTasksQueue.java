@@ -70,6 +70,7 @@ public class LoginTasksQueue {
   private static Method setPermissionFunction;
   private static Method connectToInitialServer;
   private final LimboAPI limboAPI;
+  private final LoginSessionHandler handler;
   private final VelocityServer server;
   private final ConnectedPlayer player;
   private final Queue<Runnable> queue;
@@ -114,12 +115,9 @@ public class LoginTasksQueue {
   }
 
   private void finish() {
+    this.limboAPI.removeLoginQueue(this.player);
     MinecraftConnection connection = this.player.getConnection();
-    LoginSessionHandler handler = (LoginSessionHandler) connection.getSessionHandler();
     try {
-      // go back i want to be ~~monke~~ original mcConnection
-      loginConnectionField.set(handler, connection);
-
       // ported from Velocity
       this.server.getEventManager()
           .fire(new PermissionsSetupEvent(player, (PermissionProvider) defaultPermissions.get(null)))
@@ -141,7 +139,7 @@ public class LoginTasksQueue {
                     .error("Exception while completing injection to {}", this.player, ex);
               }
             }
-            initialize(connection, this.player, handler);
+            initialize(connection);
           });
     } catch (IllegalAccessException ex) {
       this.limboAPI.getLogger()
@@ -151,41 +149,42 @@ public class LoginTasksQueue {
 
   // Ported from Velocity
   @SneakyThrows
-  private void initialize(MinecraftConnection connection,
-      ConnectedPlayer player, LoginSessionHandler handler) {
+  private void initialize(MinecraftConnection connection) {
     state.set(connection, StateRegistry.PLAY);
     connection.getChannel().pipeline().get(MinecraftEncoder.class).setState(StateRegistry.PLAY);
     connection.getChannel().pipeline().get(MinecraftDecoder.class).setState(StateRegistry.PLAY);
-    association.set(connection, player);
+    association.set(connection, this.player);
 
-    this.server.getEventManager().fire(new LoginEvent(player))
+    this.server.getEventManager().fire(new LoginEvent(this.player))
         .thenAcceptAsync(event -> {
           if (connection.isClosed()) {
             // The player was disconnected
-            this.server.getEventManager().fireAndForget(new DisconnectEvent(player,
+            this.server.getEventManager().fireAndForget(new DisconnectEvent(this.player,
                 DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE));
             return;
           }
 
           Optional<Component> reason = event.getResult().getReasonComponent();
           if (reason.isPresent()) {
-            player.disconnect0(reason.get(), true);
+            this.player.disconnect0(reason.get(), true);
           } else {
-            if (!this.server.registerConnection(player)) {
-              player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"),
+            if (!this.server.registerConnection(this.player)) {
+              this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"),
                   true);
               return;
             }
 
             try {
-              connection.setSessionHandler(initialCtor.newInstance(player));
-              this.server.getEventManager().fire(new PostLoginEvent(player))
+              connection.setSessionHandler(initialCtor.newInstance(this.player));
+              this.server.getEventManager().fire(new PostLoginEvent(this.player))
                   .thenAccept((ignored) -> {
                     try {
-                      connectToInitialServer.invoke(handler, player);
+                      // go back i want to be ~~monke~~ original mcConnection
+                      loginConnectionField.set(this.handler, connection);
+                      connectToInitialServer.invoke(this.handler, this.player);
                     } catch (IllegalAccessException | InvocationTargetException ex) {
                       this.limboAPI.getLogger()
-                          .error("Exception while connecting {} to initial server", player, ex);
+                          .error("Exception while connecting {} to initial server", this.player, ex);
                     }
                   });
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
@@ -195,7 +194,7 @@ public class LoginTasksQueue {
         }, connection.eventLoop())
         .exceptionally((ex) -> {
           this.limboAPI.getLogger()
-              .error("Exception while completing login initialisation phase for {}", player, ex);
+              .error("Exception while completing login initialisation phase for {}", this.player, ex);
           return null;
         });
   }
