@@ -33,9 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SimpleBlock implements VirtualBlock {
 
-  public static final SimpleBlock AIR = air(
-      BlockInfo.info(Version.LEGACY, 0)
-  );
+  public static final SimpleBlock AIR = air(BlockInfo.info(Version.LEGACY, 0));
 
   private static final Gson gson = new Gson();
   private static final HashMap<Short, SimpleBlock> legacyIDsMap = new HashMap<>();
@@ -85,7 +83,7 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   public short getId(Version version) {
-    return blockInfos.get(version).getId();
+    return this.blockInfos.get(version).getId();
   }
 
   public short getId(ProtocolVersion version) {
@@ -93,12 +91,12 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   public SimpleBlock setData(byte data) {
-    blockInfos.forEach((e, k) -> k.setData(data));
+    this.blockInfos.forEach((e, k) -> k.setData(data));
     return this;
   }
 
   public byte getData(Version version) {
-    return blockInfos.get(version).getData();
+    return this.blockInfos.get(version).getData();
   }
 
   public byte getData(ProtocolVersion version) {
@@ -106,15 +104,15 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   public boolean isSolid() {
-    return solid;
+    return this.solid;
   }
 
   public boolean isAir() {
-    return air;
+    return this.air;
   }
 
   public boolean isMotionBlocking() {
-    return motionBlocking;
+    return this.motionBlocking;
   }
 
   public static @NotNull SimpleBlock solid(BlockInfo... infos) {
@@ -140,5 +138,4 @@ public class SimpleBlock implements VirtualBlock {
   public static @NotNull SimpleBlock air(BlockInfo... infos) {
     return new SimpleBlock(false, true, false, infos);
   }
-
 }

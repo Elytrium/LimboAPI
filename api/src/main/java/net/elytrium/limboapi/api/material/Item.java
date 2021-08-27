@@ -8,6 +8,7 @@
 package net.elytrium.limboapi.api.material;
 
 public enum Item {
+
   AIR(0),
   STONE(1),
   GRASS(2),
@@ -352,6 +353,6 @@ public enum Item {
   }
 
   public int getId() {
-    return id;
+    return this.id;
   }
 }

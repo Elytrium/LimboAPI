@@ -83,8 +83,8 @@ public class LimboAPI implements LimboFactory {
   private CachedPackets packets;
 
   @Inject
-  public LimboAPI(
-      ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
+  public LimboAPI(ProxyServer server, Logger logger,
+      Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
     instance = this;
 
     this.server = (VelocityServer) server;
@@ -94,31 +94,31 @@ public class LimboAPI implements LimboFactory {
     this.players = new ArrayList<>();
     this.loginQueue = new HashMap<>();
 
-    logger.info("Initializing Simple Virtual Block system...");
+    this.logger.info("Initializing Simple Virtual Block system...");
     SimpleBlock.init();
-    logger.info("Initializing Simple Virtual Item system...");
+    this.logger.info("Initializing Simple Virtual Item system...");
     SimpleItem.init();
-    logger.info("Initializing LimboProtocol...");
+    this.logger.info("Initializing LimboProtocol...");
     LimboProtocol.init();
   }
 
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
-    metricsFactory.make(this, 12530);
-    packets = new CachedPackets(this);
-    players.clear();
+    this.metricsFactory.make(this, 12530);
+    this.packets = new CachedPackets(this);
+    this.players.clear();
 
-    reload();
-    checkForUpdates();
+    this.reload();
+    this.checkForUpdates();
   }
 
   public void reload() {
-    Settings.IMP.reload(new File(dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
-    logger.info("Creating and preparing packets...");
-    packets.createPackets();
-    server.getEventManager().register(this, new LoginListener(this, server));
-    server.getEventManager().register(this, new DisconnectListener(this));
-    logger.info("Loaded!");
+    Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
+    this.logger.info("Creating and preparing packets...");
+    this.packets.createPackets();
+    this.server.getEventManager().register(this, new LoginListener(this, this.server));
+    this.server.getEventManager().register(this, new DisconnectListener(this));
+    this.logger.info("Loaded!");
   }
 
   @SuppressFBWarnings("NP_IMMEDIATE_DEREFERENCE_OF_READLINE")
@@ -128,38 +128,34 @@ public class LimboAPI implements LimboFactory {
       URLConnection conn = url.openConnection();
       conn.setConnectTimeout(1200);
       conn.setReadTimeout(1200);
-      try (BufferedReader in = new BufferedReader(
-          new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+      try (BufferedReader in = new BufferedReader(new InputStreamReader(
+          conn.getInputStream(), StandardCharsets.UTF_8))) {
         if (!Settings.IMP.VERSION.contains("-DEV")) {
           if (!in.readLine().trim().equalsIgnoreCase(Settings.IMP.VERSION)) {
-            logger.error("****************************************");
-            logger.warn("The new update was found, please update.");
-            logger.error("****************************************");
+            this.logger.error("****************************************");
+            this.logger.warn("The new update was found, please update.");
+            this.logger.error("****************************************");
           }
         }
       }
     } catch (IOException ex) {
-      logger.warn("Unable to check for updates.", ex);
+      this.logger.warn("Unable to check for updates.", ex);
     }
   }
 
   @Override
   public VirtualBlock createSimpleBlock(Block block) {
-    return SimpleBlock
-        .fromLegacyId((short) block.getId())
-        .setData(block.getData());
+    return SimpleBlock.fromLegacyId((short) block.getId()).setData(block.getData());
   }
 
   @Override
   public VirtualBlock createSimpleBlock(short legacyId, byte data) {
-    return SimpleBlock
-        .fromLegacyId(legacyId)
-        .setData(data);
+    return SimpleBlock.fromLegacyId(legacyId).setData(data);
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(
-      boolean solid, boolean air, boolean motionBlocking, SimpleBlock.BlockInfo... blockInfos) {
+  public VirtualBlock createSimpleBlock(boolean solid, boolean air,
+      boolean motionBlocking, SimpleBlock.BlockInfo... blockInfos) {
     return new SimpleBlock(solid, air, motionBlocking, blockInfos);
   }
 
@@ -179,27 +175,27 @@ public class LimboAPI implements LimboFactory {
   }
 
   public void setLimboJoined(Player player) {
-    players.add(player);
+    this.players.add(player);
   }
 
   public void unsetLimboJoined(Player player) {
-    players.remove(player);
+    this.players.remove(player);
   }
 
   public boolean isLimboJoined(Player player) {
-    return players.contains(player);
+    return this.players.contains(player);
   }
 
   public LoginTasksQueue getLoginQueue(Player player) {
-    return loginQueue.get(player);
+    return this.loginQueue.get(player);
   }
 
   public void addQueue(Player player, LoginTasksQueue q) {
-    loginQueue.put(player, q);
+    this.loginQueue.put(player, q);
   }
 
   public void removeQueue(Player player) {
-    loginQueue.remove(player);
+    this.loginQueue.remove(player);
   }
 
   public static LimboAPI getInstance() {

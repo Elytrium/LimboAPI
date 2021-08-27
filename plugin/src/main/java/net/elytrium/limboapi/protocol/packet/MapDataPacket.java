@@ -59,11 +59,11 @@ public class MapDataPacket implements MinecraftPacket {
     } else {
       ProtocolUtils.writeVarInt(buf, 0);
     }
-    buf.writeByte(data.getColumns());
-    buf.writeByte(data.getRows());
-    buf.writeByte(data.getX());
-    buf.writeByte(data.getY());
-    ProtocolUtils.writeByteArray(buf, data.getData());
+    buf.writeByte(this.data.getColumns());
+    buf.writeByte(this.data.getRows());
+    buf.writeByte(this.data.getX());
+    buf.writeByte(this.data.getY());
+    ProtocolUtils.writeByteArray(buf, this.data.getData());
   }
 
   @Override

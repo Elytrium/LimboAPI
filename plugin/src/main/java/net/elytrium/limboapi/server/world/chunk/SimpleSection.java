@@ -42,25 +42,25 @@ public class SimpleSection implements BlockSection {
   }
 
   public VirtualBlock getBlockAt(int x, int y, int z) {
-    checkIndexes(x, y, z);
-    return blocks.get(x, y, z);
+    this.checkIndexes(x, y, z);
+    return this.blocks.get(x, y, z);
   }
 
   public void setBlockAt(int x, int y, int z, @Nullable VirtualBlock block) {
-    checkIndexes(x, y, z);
-    blocks.set(x, y, z, block == null ? SimpleBlock.AIR : block);
-    lastUpdate = System.nanoTime();
+    this.checkIndexes(x, y, z);
+    this.blocks.set(x, y, z, block == null ? SimpleBlock.AIR : block);
+    this.lastUpdate = System.nanoTime();
   }
 
   public SimpleSection getSnapshot() {
     BlockStorage blockStorage = this.blocks.copy();
-    return new SimpleSection(blockStorage, lastUpdate);
+    return new SimpleSection(blockStorage, this.lastUpdate);
   }
 
   private void checkIndexes(int x, int y, int z) {
-    Preconditions.checkArgument(checkIndex(x), "x should be between 0 and 15");
-    Preconditions.checkArgument(checkIndex(y), "y should be between 0 and 15");
-    Preconditions.checkArgument(checkIndex(z), "z should be between 0 and 15");
+    Preconditions.checkArgument(this.checkIndex(x), "x should be between 0 and 15");
+    Preconditions.checkArgument(this.checkIndex(y), "y should be between 0 and 15");
+    Preconditions.checkArgument(this.checkIndex(z), "z should be between 0 and 15");
   }
 
   private boolean checkIndex(int i) {

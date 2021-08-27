@@ -83,9 +83,7 @@ public class Config {
         }
       }
     }
-    logger.warn("Failed to set config option: {}: {} | {} ", new Object[] {
-        key, value, instance
-    });
+    logger.warn("Failed to set config option: {}: {} | {} ", key, value, instance);
   }
 
   public void set(Configuration yml, String oldPath) {
@@ -281,9 +279,8 @@ public class Config {
       return field;
     } catch (IllegalAccessException | NoSuchFieldException | SecurityException
         | NoSuchMethodException | InvocationTargetException e) {
-      logger.warn("Invalid config field: {} for {}", new Object[] {
-          String.join(".", split), toNodeName(instance.getClass().getSimpleName())
-      });
+      logger.warn("Invalid config field: {} for {}", String.join(".", split),
+          toNodeName(instance.getClass().getSimpleName()));
       return null;
     }
   }

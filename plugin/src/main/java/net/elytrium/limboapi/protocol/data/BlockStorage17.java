@@ -43,44 +43,44 @@ public class BlockStorage17 implements BlockStorage {
 
   @Override
   public void set(int x, int y, int z, @NonNull VirtualBlock block) {
-    blocks[BlockStorage.index(x, y, z)] = block;
+    this.blocks[BlockStorage.index(x, y, z)] = block;
   }
 
   @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
   @Override
   public @NotNull VirtualBlock get(int x, int y, int z) {
-    VirtualBlock block = blocks[BlockStorage.index(x, y, z)];
+    VirtualBlock block = this.blocks[BlockStorage.index(x, y, z)];
     return block == null ? SimpleBlock.AIR : block;
   }
 
   @Override
   public void write(ByteBuf buf, ProtocolVersion version) {
-    if (pass == 0) {
+    if (this.pass == 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-        writeBlocks17(buf);
+        this.writeBlocks17(buf);
       } else {
-        writeBlocks18(buf);
+        this.writeBlocks18(buf);
       }
-      pass++;
-    } else if (pass == 1) {
+      this.pass++;
+    } else if (this.pass == 1) {
       NibbleArray3d metadata = new NibbleArray3d(16 * 16 * 16);
-      for (int i = 0; i < blocks.length; i++) {
-        metadata.set(i, blocks[i] == null ? 0 : blocks[i].getData(ProtocolVersion.MINECRAFT_1_7_2));
+      for (int i = 0; i < this.blocks.length; i++) {
+        metadata.set(i, this.blocks[i] == null ? 0 : this.blocks[i].getData(ProtocolVersion.MINECRAFT_1_7_2));
       }
       buf.writeBytes(metadata.getData());
-      pass = 0;
+      this.pass = 0;
     }
   }
 
   @Override
   public BlockStorage copy() {
-    return new BlockStorage17(Arrays.copyOf(blocks, blocks.length));
+    return new BlockStorage17(Arrays.copyOf(this.blocks, this.blocks.length));
   }
 
   private void writeBlocks17(ByteBuf buf) {
-    byte[] raw = new byte[blocks.length];
-    for (int i = 0; i < blocks.length; i++) {
-      VirtualBlock block = blocks[i];
+    byte[] raw = new byte[this.blocks.length];
+    for (int i = 0; i < this.blocks.length; i++) {
+      VirtualBlock block = this.blocks[i];
       raw[i] = (byte) (block == null ? 0 : block.getId(ProtocolVersion.MINECRAFT_1_7_2));
     }
     buf.writeBytes(raw);
@@ -90,7 +90,8 @@ public class BlockStorage17 implements BlockStorage {
     short[] raw = new short[blocks.length];
     for (int i = 0; i < blocks.length; i++) {
       VirtualBlock block = blocks[i];
-      raw[i] = (short) (block == null ? 0
+      raw[i] = (short) (block == null
+          ? 0
           : (block.getId(ProtocolVersion.MINECRAFT_1_8) << 4 | block.getData(ProtocolVersion.MINECRAFT_1_8)));
     }
     for (Short s : raw) {
@@ -101,9 +102,9 @@ public class BlockStorage17 implements BlockStorage {
   @Override
   public int getDataLength(ProtocolVersion version) {
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      return blocks.length + (SimpleChunk.MAX_BLOCKS_PER_SECTION >> 1);
+      return this.blocks.length + (SimpleChunk.MAX_BLOCKS_PER_SECTION >> 1);
     } else {
-      return blocks.length * 2;
+      return this.blocks.length * 2;
     }
   }
 }

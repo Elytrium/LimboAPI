@@ -27,7 +27,7 @@ public final class LoginLimboRegisterEvent {
   }
 
   public Player getPlayer() {
-    return player;
+    return this.player;
   }
 
   @Override

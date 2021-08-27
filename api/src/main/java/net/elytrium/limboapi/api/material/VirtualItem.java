@@ -10,5 +10,6 @@ package net.elytrium.limboapi.api.material;
 import com.velocitypowered.api.network.ProtocolVersion;
 
 public interface VirtualItem {
+
   short getId(ProtocolVersion version);
 }

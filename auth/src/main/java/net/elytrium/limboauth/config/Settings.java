@@ -43,12 +43,13 @@ public class Settings extends Config {
     @Comment({
         "QR Generator URL, set {data} placeholder"
     })
-    public String QR_GENERATOR_URL = "https://api.qrserver.com/v1/create-qr-code/?data={data}&size=200x200&ecc=M&margin=30";
+    public String QR_GENERATOR_URL =
+        "https://api.qrserver.com/v1/create-qr-code/?data={data}&size=200x200&ecc=M&margin=30";
     public String TOTP_ISSUER = "LimboAuth by Elytrium";
     public int BCRYPT_COST = 10;
     public int LOGIN_ATTEMPTS = 3;
     public int IP_LIMIT_REGISTRATIONS = 3;
-    @Comment("Time in milliseconds, when ip limit works")
+    @Comment("Time in milliseconds, when ip limit works, set to 0 for disable")
     public long IP_LIMIT_VALID_TIME = 21600000;
     public String ALLOWED_NICKNAME_CHARS = "abcdefghijklmnopqrstuvwxyz_0123456789";
 
@@ -71,6 +72,7 @@ public class Settings extends Config {
 
     public static class STRINGS {
       public String RELOAD = "{PRFX} Reloaded successfully";
+      public String RELOAD_FAILED = "{PRFX} &cReload failed, check console for details.";
       public String LOGIN = "{PRFX} Please, login using &a/l password";
       public String TOTP = "{PRFX} Please, enter your 2FA key using &a/2fa key";
       public String PASSWORD_WRONG = "{PRFX} Password is wrong";
@@ -126,7 +128,7 @@ public class Settings extends Config {
   }
 
   public void reload(File file) {
-    load(file);
-    save(file);
+    this.load(file);
+    this.save(file);
   }
 }

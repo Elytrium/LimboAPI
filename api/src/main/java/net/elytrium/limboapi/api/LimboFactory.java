@@ -15,15 +15,16 @@ import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 
 public interface LimboFactory {
+
   /**
    * Creates new virtual world
    *
    * @param dimension World dimension
-   * @param x Spawn location (X)
-   * @param y Spawn location (Y)
-   * @param z Spawn location (Z)
-   * @param yaw Spawn rotation (Yaw)
-   * @param pitch Spawn rotation (Pitch)
+   * @param x         Spawn location (X)
+   * @param y         Spawn location (Y)
+   * @param z         Spawn location (Z)
+   * @param yaw       Spawn rotation (Yaw)
+   * @param pitch     Spawn rotation (Pitch)
    * @return new virtual world.
    */
   VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch);
@@ -48,7 +49,7 @@ public interface LimboFactory {
    * Creates new virtual block from Id and Data
    *
    * @param legacyId Legacy block id (1.12.2 and lower)
-   * @param data Block data
+   * @param data     Block data
    * @return new virtual block.
    */
   VirtualBlock createSimpleBlock(short legacyId, byte data);
@@ -58,8 +59,8 @@ public interface LimboFactory {
    *
    * @return new virtual server.
    */
-  VirtualBlock createSimpleBlock(
-      boolean solid, boolean air, boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
+  VirtualBlock createSimpleBlock(boolean solid, boolean air,
+      boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
 
   /**
    * Creates new virtual item from Item enum

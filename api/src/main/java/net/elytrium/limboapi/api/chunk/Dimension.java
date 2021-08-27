@@ -8,6 +8,7 @@
 package net.elytrium.limboapi.api.chunk;
 
 public enum Dimension {
+
   OVERWORLD("minecraft:overworld", 0, 0),
   NETHER("minecraft:nether", 2, 2),
   THE_END("minecraft:the_end", 1, 3);
@@ -23,14 +24,14 @@ public enum Dimension {
   }
 
   public String getKey() {
-    return key;
+    return this.key;
   }
 
   public int getLegacyId() {
-    return legacyId;
+    return this.legacyId;
   }
 
   public int getModernId() {
-    return modernId;
+    return this.modernId;
   }
 }

@@ -84,9 +84,7 @@ public class Config {
         }
       }
     }
-    logger.warn("Failed to set config option: {}: {} | {} ", new Object[] {
-        key, value, instance
-    });
+    logger.warn("Failed to set config option: {}: {} | {} ", key, value, instance);
   }
 
   public void set(Configuration yml, String oldPath) {
@@ -97,23 +95,23 @@ public class Config {
         set((Configuration) value, newPath);
         continue;
       } else if (value instanceof String) {
-        set(newPath, ((String) value).replace("{NL}", "\n")
+        this.set(newPath, ((String) value).replace("{NL}", "\n")
             .replace("{PRFX}", Settings.IMP.MESSAGES.PREFIX));
         continue;
       }
-      set(newPath, value);
+      this.set(newPath, value);
     }
   }
 
   public boolean load(File file) {
     if (!file.exists()) {
-      logger.warn("*** FIRST LAUNCH ***********************");
-      logger.warn("Thanks for installing LimboAPI!");
-      logger.warn("(c) 2021 Elytrium");
-      logger.warn("");
-      logger.warn("Check out our plugins here: https://ely.su/github <3");
-      logger.warn("Discord: https://ely.su/discord");
-      logger.warn("****************************************");
+      this.logger.warn("*** FIRST LAUNCH ***********************");
+      this.logger.warn("Thanks for installing LimboAPI!");
+      this.logger.warn("(c) 2021 Elytrium");
+      this.logger.warn("");
+      this.logger.warn("Check out our plugins here: https://ely.su/github <3");
+      this.logger.warn("Discord: https://ely.su/discord");
+      this.logger.warn("****************************************");
       return false;
     }
     Configuration yml;
@@ -289,9 +287,8 @@ public class Config {
       return field;
     } catch (IllegalAccessException | NoSuchFieldException | SecurityException
         | NoSuchMethodException | InvocationTargetException e) {
-      logger.warn("Invalid config field: {} for {}", new Object[] {
-          String.join(".", split), toNodeName(instance.getClass().getSimpleName())
-      });
+      logger.warn("Invalid config field: {} for {}", String.join(".", split),
+          toNodeName(instance.getClass().getSimpleName()));
       return null;
     }
   }
@@ -398,10 +395,6 @@ public class Config {
   }
 
   private String repeat(final String s, final int n) {
-    final StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < n; i++) {
-      sb.append(s);
-    }
-    return sb.toString();
+    return String.valueOf(s).repeat(Math.max(0, n));
   }
 }

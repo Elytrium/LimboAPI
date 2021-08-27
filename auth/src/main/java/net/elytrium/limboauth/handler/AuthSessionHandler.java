@@ -42,6 +42,7 @@ import net.elytrium.limboauth.model.RegisteredPlayer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class AuthSessionHandler implements LimboSessionHandler {
+
   private static final TimeProvider timeProvider = new SystemTimeProvider();
   private static final CodeGenerator codeGenerator = new DefaultCodeGenerator();
   @Getter
@@ -143,34 +144,41 @@ public class AuthSessionHandler implements LimboSessionHandler {
 
   @SneakyThrows
   private void checkIp() {
-    List<RegisteredPlayer> alreadyRegistered = playerDao.queryForEq("ip", ip);
+    List<RegisteredPlayer> alreadyRegistered = this.playerDao.queryForEq("ip", ip);
 
     AtomicInteger sizeOfValid = new AtomicInteger(alreadyRegistered.size());
-    long checkDate = System.currentTimeMillis() - Settings.IMP.MAIN.IP_LIMIT_VALID_TIME;
 
-    alreadyRegistered.stream()
-        .filter(e -> e.regdate < checkDate)
-        .forEach(e -> {
-          try {
-            e.ip = "";
-            playerDao.update(e);
-            sizeOfValid.decrementAndGet();
-          } catch (SQLException ex) {
-            ex.printStackTrace();
-          }
-        });
+    if (Settings.IMP.MAIN.IP_LIMIT_VALID_TIME != 0) {
+      long checkDate = System.currentTimeMillis() - Settings.IMP.MAIN.IP_LIMIT_VALID_TIME;
+
+      alreadyRegistered.stream()
+          .filter(e -> e.regdate < checkDate)
+          .forEach(e -> {
+            try {
+              e.ip = "";
+              playerDao.update(e);
+              sizeOfValid.decrementAndGet();
+            } catch (SQLException ex) {
+              ex.printStackTrace();
+            }
+          });
+    }
 
     if (sizeOfValid.get() >= Settings.IMP.MAIN.IP_LIMIT_REGISTRATIONS) {
-      proxyPlayer.disconnect(
-          LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.IP_LIMIT)
+      this.proxyPlayer.disconnect(
+          LegacyComponentSerializer
+              .legacyAmpersand()
+              .deserialize(Settings.IMP.MAIN.STRINGS.IP_LIMIT)
       );
     }
   }
 
   private void checkCase() {
-    if (!proxyPlayer.getUsername().equals(playerInfo.nickname)) {
-      proxyPlayer.disconnect(
-          LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.WRONG_NICKNAME_CASE));
+    if (!this.proxyPlayer.getUsername().equals(this.playerInfo.nickname)) {
+      this.proxyPlayer.disconnect(
+          LegacyComponentSerializer
+              .legacyAmpersand()
+              .deserialize(Settings.IMP.MAIN.STRINGS.WRONG_NICKNAME_CASE));
     }
   }
 
