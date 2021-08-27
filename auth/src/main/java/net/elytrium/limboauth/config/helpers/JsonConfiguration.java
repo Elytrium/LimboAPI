@@ -61,7 +61,7 @@ public class JsonConfiguration extends ConfigurationProvider {
       .registerTypeAdapter(Configuration.class, new JsonSerializer<Configuration>() {
         @Override
         public JsonElement serialize(Configuration src, Type typeOfSrc, JsonSerializationContext context) {
-          return context.serialize(((Configuration) src).self);
+          return context.serialize(src.self);
         }
       }).create();
 

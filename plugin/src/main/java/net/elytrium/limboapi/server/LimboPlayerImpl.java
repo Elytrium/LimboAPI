@@ -40,6 +40,7 @@ import net.kyori.adventure.text.Component;
 
 @RequiredArgsConstructor
 public class LimboPlayerImpl implements LimboPlayer {
+
   private final ConnectedPlayer player;
   private final LimboImpl server;
 
@@ -52,46 +53,49 @@ public class LimboPlayerImpl implements LimboPlayer {
       canvas[i] = (byte) toWrite[i];
     }
 
-    player.getConnection().write(
+    this.player.getConnection().write(
         new MapDataPacket(mapId, (byte) 0, new MapDataPacket.MapData(128, 128, 0, 0, canvas))
     );
   }
 
   @Override
   public void setInventory(int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt) {
-    player.getConnection().write(
+    this.player.getConnection().write(
         new SetSlot(0, slot, item, count, data, nbt)
     );
   }
 
   @Override
-  public void sendTitle(
-      Component title, Component subtitle, ProtocolVersion version, int fadeIn, int stay, int fadeOut) {
+  public void sendTitle(Component title, Component subtitle,
+      ProtocolVersion version, int fadeIn, int stay, int fadeOut) {
     {
-      GenericTitlePacket packet =
-          GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
+      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(
+          GenericTitlePacket.ActionType.SET_TITLE, version);
+
       packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(title));
-      player.getConnection().write(packet);
+      this.player.getConnection().write(packet);
     }
     {
-      GenericTitlePacket packet =
-          GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_SUBTITLE, version);
+      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(
+          GenericTitlePacket.ActionType.SET_SUBTITLE, version);
+
       packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(subtitle));
-      player.getConnection().write(packet);
+      this.player.getConnection().write(packet);
     }
     {
-      GenericTitlePacket packet =
-          GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TIMES, version);
+      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(
+          GenericTitlePacket.ActionType.SET_TIMES, version);
+
       packet.setFadeIn(fadeIn);
       packet.setStay(stay);
       packet.setFadeOut(fadeOut);
-      player.getConnection().write(packet);
+      this.player.getConnection().write(packet);
     }
   }
 
   @Override
   public void teleport(double x, double y, double z, float yaw, float pitch) {
-    player.getConnection().write(
+    this.player.getConnection().write(
         new PlayerPositionAndLook(x, y, z, yaw, pitch, -133, false, true)
     );
   }
@@ -99,17 +103,17 @@ public class LimboPlayerImpl implements LimboPlayer {
   @Override
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void disconnect() {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) player.getConnection().getSessionHandler();
+    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.player.getConnection().getSessionHandler();
     if (handler != null) {
       handler.disconnected();
 
-      player.getConnection().setSessionHandler(handler.getOriginalHandler());
+      this.player.getConnection().setSessionHandler(handler.getOriginalHandler());
 
       if (handler.getOriginalHandler() instanceof LoginSessionHandler) {
-        LimboAPI.getInstance().getLoginQueue(player).next();
+        LimboAPI.getInstance().getLoginQueue(this.player).next();
       } else {
         if (handler.getPreviousServer() != null) {
-          player.createConnectionRequest(handler.getPreviousServer()).fireAndForget();
+          this.player.createConnectionRequest(handler.getPreviousServer()).fireAndForget();
         }
       }
     }
@@ -118,15 +122,15 @@ public class LimboPlayerImpl implements LimboPlayer {
   @Override
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void disconnect(RegisteredServer server) {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) player.getConnection().getSessionHandler();
+    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.player.getConnection().getSessionHandler();
     if (handler != null) {
       handler.disconnected();
 
       if (handler.getOriginalHandler() instanceof LoginSessionHandler) {
         throw new IllegalArgumentException("Cannot send to server while login");
       } else {
-        player.getConnection().eventLoop().execute(() -> {
-          player.createConnectionRequest(server).fireAndForget();
+        this.player.getConnection().eventLoop().execute(() -> {
+          this.player.createConnectionRequest(server).fireAndForget();
         });
       }
     }
@@ -134,11 +138,11 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public Limbo getServer() {
-    return server;
+    return this.server;
   }
 
   @Override
   public Player getProxyPlayer() {
-    return player;
+    return this.player;
   }
 }

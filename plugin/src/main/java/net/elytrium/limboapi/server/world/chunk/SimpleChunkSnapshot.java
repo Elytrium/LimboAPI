@@ -37,7 +37,7 @@ public class SimpleChunkSnapshot implements ChunkSnapshot {
   private final VirtualBiome[] biomes;
 
   public VirtualBlock getBlock(int x, int y, int z) {
-    SimpleSection section = sections[y / 16];
+    SimpleSection section = this.sections[y / 16];
     return section == null ? SimpleBlock.AIR : section.getBlockAt(x, y % 16, z);
   }
 }

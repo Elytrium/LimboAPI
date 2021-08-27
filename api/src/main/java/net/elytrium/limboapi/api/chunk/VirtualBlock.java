@@ -49,29 +49,38 @@ public interface VirtualBlock {
     MINECRAFT_1_16_2(EnumSet.range(ProtocolVersion.MINECRAFT_1_16_2, ProtocolVersion.MINECRAFT_1_16_4)),
     MINECRAFT_1_17(EnumSet.range(ProtocolVersion.MINECRAFT_1_17, ProtocolVersion.MINECRAFT_1_17_1));
 
-    private static final EnumMap<ProtocolVersion, Version> mcVersionToBlockVersions = new EnumMap<>(
-        ProtocolVersion.class);
+    private static final EnumMap<ProtocolVersion, Version>
+        mcVersionToBlockVersions = new EnumMap<>(ProtocolVersion.class);
 
     public static Version parse(String from) {
       switch (from) {
-        case "1.12":
+        case "1.12": {
           return MINECRAFT_1_12;
-        case "1.13":
+        }
+        case "1.13": {
           return MINECRAFT_1_13;
-        case "1.13.2":
+        }
+        case "1.13.2": {
           return MINECRAFT_1_13_2;
-        case "1.14":
+        }
+        case "1.14": {
           return MINECRAFT_1_14;
-        case "1.15":
+        }
+        case "1.15": {
           return MINECRAFT_1_15;
-        case "1.16":
+        }
+        case "1.16": {
           return MINECRAFT_1_16;
-        case "1.16.2":
+        }
+        case "1.16.2": {
           return MINECRAFT_1_16_2;
-        case "1.17":
+        }
+        case "1.17": {
           return MINECRAFT_1_17;
-        default:
+        }
+        default: {
           return LEGACY;
+        }
       }
     }
 
@@ -110,7 +119,7 @@ public interface VirtualBlock {
     }
 
     public Set<ProtocolVersion> getVersions() {
-      return versions;
+      return this.versions;
     }
 
     public static Version map(ProtocolVersion protocolVersion) {
@@ -119,6 +128,7 @@ public interface VirtualBlock {
   }
 
   class BlockInfo {
+
     @NotNull
     private final Version version;
     private final short id;
@@ -140,16 +150,17 @@ public interface VirtualBlock {
       this.fallback = fallback;
     }
 
+    @NotNull
     public Version getVersion() {
-      return version;
+      return this.version;
     }
 
     public short getId() {
-      return fallback == null ? id : fallback.getId();
+      return this.fallback == null ? this.id : this.fallback.getId();
     }
 
     public byte getData() {
-      return fallback == null ? data : fallback.getData();
+      return this.fallback == null ? this.data : this.fallback.getData();
     }
 
     public void setData(byte data) {

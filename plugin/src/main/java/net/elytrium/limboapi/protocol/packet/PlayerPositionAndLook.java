@@ -57,13 +57,13 @@ public class PlayerPositionAndLook implements MinecraftPacket {
       buf.writeByte(0x00);
     }
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_9) >= 0) {
-      ProtocolUtils.writeVarInt(buf, teleportId);
+      ProtocolUtils.writeVarInt(buf, this.teleportId);
     }
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      buf.writeBoolean(onGround);
+      buf.writeBoolean(this.onGround);
     }
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
-      buf.writeBoolean(dismountVehicle);
+      buf.writeBoolean(this.dismountVehicle);
     }
   }
 

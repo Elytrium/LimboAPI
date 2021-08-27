@@ -25,13 +25,14 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class PreparedPacketEncoder extends MessageToMessageEncoder<PreparedPacket> {
+
   private final ProtocolVersion protocolVersion;
 
   @Override
   protected void encode(ChannelHandlerContext ctx, PreparedPacket msg, List<Object> out)
       throws Exception {
-    if (msg.hasPacketsFor(protocolVersion)) {
-      out.addAll(msg.getPackets(protocolVersion));
+    if (msg.hasPacketsFor(this.protocolVersion)) {
+      out.addAll(msg.getPackets(this.protocolVersion));
     }
   }
 }

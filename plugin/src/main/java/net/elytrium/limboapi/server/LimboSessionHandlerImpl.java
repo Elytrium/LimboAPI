@@ -38,6 +38,7 @@ import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
 
 @Getter
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
+
   private final LimboAPI limboAPI;
   private final ConnectedPlayer player;
   private final LimboSessionHandler callback;
@@ -45,72 +46,71 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private RegisteredServer previousServer;
 
   public LimboSessionHandlerImpl(
-      LimboAPI limboAPI,
-      ConnectedPlayer player,
-      LimboSessionHandler callback,
-      MinecraftSessionHandler originalHandler) {
+      LimboAPI limboAPI, ConnectedPlayer player,
+      LimboSessionHandler callback, MinecraftSessionHandler originalHandler) {
     this.limboAPI = limboAPI;
     this.player = player;
     this.callback = callback;
     this.originalHandler = originalHandler;
 
-    player.getCurrentServer().ifPresent(e -> previousServer = e.getServer());
+    this.player.getCurrentServer().ifPresent(e -> this.previousServer = e.getServer());
   }
 
   public void onSpawn(LimboImpl server, LimboPlayer player) {
-    callback.onSpawn(server, player);
+    this.callback.onSpawn(server, player);
   }
 
   public boolean handle(Player packet) {
-    callback.onGround(packet.isOnGround());
+    this.callback.onGround(packet.isOnGround());
     return true;
   }
 
   public boolean handle(PlayerPosition packet) {
-    callback.onMove(packet.getX(), packet.getY(), packet.getZ());
-    callback.onGround(packet.isOnGround());
+    this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
+    this.callback.onGround(packet.isOnGround());
     return true;
   }
 
   public boolean handle(PlayerPositionAndLook packet) {
-    callback.onMove(packet.getX(), packet.getY(), packet.getZ());
-    callback.onRotate(packet.getYaw(), packet.getPitch());
-    callback.onGround(packet.isOnGround());
+    this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
+    this.callback.onRotate(packet.getYaw(), packet.getPitch());
+    this.callback.onGround(packet.isOnGround());
     return true;
   }
 
   public boolean handle(TeleportConfirm packet) {
-    callback.onTeleport(packet.getTeleportId());
+    this.callback.onTeleport(packet.getTeleportId());
     return true;
   }
 
   public boolean handle(Chat packet) {
-    callback.onChat(packet.getMessage());
+    this.callback.onChat(packet.getMessage());
     return true;
   }
 
   @Override
   public void handleUnknown(ByteBuf packet) {
     if (packet.readableBytes() > 2048) {
-      player.getConnection().closeWith(limboAPI.getPackets().getTooBigPacket());
+      this.player.getConnection().closeWith(this.limboAPI.getPackets().getTooBigPacket());
     }
   }
 
   @Override
   public void handleGeneric(MinecraftPacket packet) {
-    callback.onGeneric(packet);
+    this.callback.onGeneric(packet);
   }
 
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void disconnected() {
-    callback.onDisconnect();
+    this.callback.onDisconnect();
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-      limboAPI.getLogger().info(
-          player.getUsername() + " (" + player.getRemoteAddress()
+      this.limboAPI.getLogger().info(
+          this.player.getUsername() + " (" + this.player.getRemoteAddress()
               + ") has disconnected from the Limbo");
     }
-    player.getConnection().setSessionHandler(originalHandler);
-    ChannelPipeline pipeline = player.getConnection().getChannel().pipeline();
+
+    this.player.getConnection().setSessionHandler(this.originalHandler);
+    ChannelPipeline pipeline = this.player.getConnection().getChannel().pipeline();
     if (pipeline.names().contains("prepared-encoder")) {
       pipeline.remove(PreparedPacketEncoder.class);
     }

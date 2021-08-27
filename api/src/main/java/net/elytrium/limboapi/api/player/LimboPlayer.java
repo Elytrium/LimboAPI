@@ -17,6 +17,7 @@ import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.Component;
 
 public interface LimboPlayer {
+
   void sendImage(int mapId, BufferedImage image);
 
   void setInventory(int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt);

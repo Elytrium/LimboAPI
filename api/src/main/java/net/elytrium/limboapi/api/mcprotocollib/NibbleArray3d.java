@@ -30,7 +30,7 @@ import java.util.Arrays;
 @SuppressFBWarnings("MALICIOUS_CODE")
 public class NibbleArray3d {
 
-  private byte[] data;
+  private final byte[] data;
 
   public NibbleArray3d(int size) {
     this.data = new byte[size >> 1];
@@ -38,7 +38,7 @@ public class NibbleArray3d {
 
   public NibbleArray3d(int size, int defValue) {
     this.data = new byte[size >> 1];
-    fill(defValue);
+    this.fill(defValue);
   }
 
   public NibbleArray3d(byte[] array) {
@@ -58,7 +58,7 @@ public class NibbleArray3d {
 
   public void set(int x, int y, int z, int val) {
     int key = y << 8 | z << 4 | x;
-    set(key, val);
+    this.set(key, val);
   }
 
   public void set(int key, int val) {
@@ -73,11 +73,11 @@ public class NibbleArray3d {
 
   public void fill(int val) {
     for (int index = 0; index < this.data.length << 1; index++) {
-      set(index, val);
+      this.set(index, val);
     }
   }
 
   public NibbleArray3d copy() {
-    return new NibbleArray3d(Arrays.copyOf(data, data.length));
+    return new NibbleArray3d(Arrays.copyOf(this.data, this.data.length));
   }
 }

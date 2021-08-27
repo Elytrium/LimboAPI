@@ -48,13 +48,13 @@ public class BlockStorage19 implements BlockStorage {
   public BlockStorage19(ProtocolVersion version) {
     this.version = version;
     this.storage = createStorage(4);
-    palette.add(SimpleBlock.AIR);
-    rawToBlock.put(toRaw(SimpleBlock.AIR, version), SimpleBlock.AIR);
+    this.palette.add(SimpleBlock.AIR);
+    this.rawToBlock.put(toRaw(SimpleBlock.AIR, version), SimpleBlock.AIR);
   }
 
   public void set(int x, int y, int z, @NonNull VirtualBlock block) {
     int id = getIndex(block);
-    storage.set(index(x, y, z), id);
+    this.storage.set(index(x, y, z), id);
   }
 
   @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
@@ -63,70 +63,70 @@ public class BlockStorage19 implements BlockStorage {
   }
 
   private VirtualBlock get(int index) {
-    int id = storage.get(index);
+    int id = this.storage.get(index);
 
-    if (storage.getBitsPerEntry() > 8) {
-      return rawToBlock.get(id);
+    if (this.storage.getBitsPerEntry() > 8) {
+      return this.rawToBlock.get(id);
     } else {
-      return palette.get(id);
+      return this.palette.get(id);
     }
   }
 
   @Override
   public void write(ByteBuf buf, ProtocolVersion version) {
-    buf.writeByte(storage.getBitsPerEntry());
-    if (storage.getBitsPerEntry() > 8) {
+    buf.writeByte(this.storage.getBitsPerEntry());
+    if (this.storage.getBitsPerEntry() > 8) {
       if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
         ProtocolUtils.writeVarInt(buf, 0);
       }
     } else {
-      ProtocolUtils.writeVarInt(buf, palette.size());
-      for (VirtualBlock state : palette) {
+      ProtocolUtils.writeVarInt(buf, this.palette.size());
+      for (VirtualBlock state : this.palette) {
         ProtocolUtils.writeVarInt(buf, toRaw(state, this.version));
       }
     }
-    storage.write(buf, version);
+    this.storage.write(buf, version);
   }
 
   @Override
   public int getDataLength(ProtocolVersion version) {
     int length = 1;
-    if (storage.getBitsPerEntry() > 8) {
+    if (this.storage.getBitsPerEntry() > 8) {
       if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
         length += 1;
       }
     } else {
-      length += ProtocolUtils.varIntBytes(palette.size());
-      for (VirtualBlock state : palette) {
+      length += ProtocolUtils.varIntBytes(this.palette.size());
+      for (VirtualBlock state : this.palette) {
         length += ProtocolUtils.varIntBytes(toRaw(state, this.version));
       }
     }
-    return length + storage.getDataLength();
+    return length + this.storage.getDataLength();
   }
 
 
   private int getIndex(VirtualBlock block) {
-    if (storage.getBitsPerEntry() > 8) {
-      int raw = toRaw(block, version);
-      rawToBlock.put(raw, block);
+    if (this.storage.getBitsPerEntry() > 8) {
+      int raw = toRaw(block, this.version);
+      this.rawToBlock.put(raw, block);
       return raw;
     }
-    int id = palette.indexOf(block);
+    int id = this.palette.indexOf(block);
     if (id == -1) {
-      if (palette.size() >= (1 << storage.getBitsPerEntry())) {
-        resize(storage.getBitsPerEntry() + 1);
+      if (this.palette.size() >= (1 << this.storage.getBitsPerEntry())) {
+        resize(this.storage.getBitsPerEntry() + 1);
         return getIndex(block);
       }
-      palette.add(block);
-      id = palette.size() - 1;
+      this.palette.add(block);
+      id = this.palette.size() - 1;
     }
     return id;
   }
 
   @Override
   public BlockStorage copy() {
-    return new BlockStorage19(version, new ArrayList<>(palette), new HashMap<>(rawToBlock),
-        storage.copy());
+    return new BlockStorage19(this.version, new ArrayList<>(this.palette), new HashMap<>(this.rawToBlock),
+        this.storage.copy());
   }
 
   private void resize(int newSize) {
@@ -134,7 +134,7 @@ public class BlockStorage19 implements BlockStorage {
     CompactStorage newStorage = createStorage(newSize);
 
     for (int i = 0; i < SimpleChunk.MAX_BLOCKS_PER_SECTION; i++) {
-      int newId = newSize > 8 ? toRaw(palette.get(storage.get(i)), version) : storage.get(i);
+      int newId = newSize > 8 ? toRaw(this.palette.get(this.storage.get(i)), this.version) : this.storage.get(i);
       newStorage.set(i, newId);
     }
     this.storage = newStorage;
@@ -145,9 +145,9 @@ public class BlockStorage19 implements BlockStorage {
       return 4;
     } else if (newSize < 9) {
       return newSize;
-    } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
+    } else if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
       return 13;
-    } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_4) < 0) {
+    } else if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_16_4) < 0) {
       return 14;
     } else {
       return 15;
@@ -155,7 +155,7 @@ public class BlockStorage19 implements BlockStorage {
   }
 
   private CompactStorage createStorage(int bits) {
-    return version.compareTo(ProtocolVersion.MINECRAFT_1_16) < 0
+    return this.version.compareTo(ProtocolVersion.MINECRAFT_1_16) < 0
         ? new BitStorage19(bits, SimpleChunk.MAX_BLOCKS_PER_SECTION)
         : new BitStorage116(bits, SimpleChunk.MAX_BLOCKS_PER_SECTION);
   }
@@ -163,10 +163,10 @@ public class BlockStorage19 implements BlockStorage {
   @Override
   public String toString() {
     return "BlockStorage19{"
-        + "version=" + version
-        + ", palette=" + palette
-        + ", rawToBlock=" + rawToBlock
-        + ", storage=" + storage
+        + "version=" + this.version
+        + ", palette=" + this.palette
+        + ", rawToBlock=" + this.rawToBlock
+        + ", storage=" + this.storage
         + '}';
   }
 

@@ -72,12 +72,12 @@ public class PreparedPacket {
       Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to) {
     for (ProtocolVersion protocolVersion : EnumSet.range(from, to)) {
       ByteBuf buf = encodePacket(packet.apply(protocolVersion), protocolVersion);
-      if (packets.containsKey(protocolVersion)) {
-        packets.get(protocolVersion).add(buf);
+      if (this.packets.containsKey(protocolVersion)) {
+        this.packets.get(protocolVersion).add(buf);
       } else {
         List<ByteBuf> list = new ArrayList<>();
         list.add(buf);
-        packets.put(protocolVersion, list);
+        this.packets.put(protocolVersion, list);
       }
     }
 
@@ -85,18 +85,17 @@ public class PreparedPacket {
   }
 
   public List<ByteBuf> getPackets(ProtocolVersion version) {
-    return packets.get(version).stream().map(ByteBuf::copy).collect(Collectors.toList());
+    return this.packets.get(version).stream().map(ByteBuf::copy).collect(Collectors.toList());
   }
 
   public boolean hasPacketsFor(ProtocolVersion version) {
-    return packets.containsKey(version);
+    return this.packets.containsKey(version);
   }
 
   private <T extends MinecraftPacket> ByteBuf encodePacket(T packet, ProtocolVersion version) {
     int id = getPacketId(packet, version);
     if (id == Integer.MIN_VALUE) {
-      LimboAPI.getInstance().getLogger()
-          .error("Bad packet id. {}", packet.getClass().getSimpleName());
+      LimboAPI.getInstance().getLogger().error("Bad packet id. {}", packet.getClass().getSimpleName());
     }
     ByteBuf byteBuf = Unpooled.buffer();
     ProtocolUtils.writeVarInt(byteBuf, id);

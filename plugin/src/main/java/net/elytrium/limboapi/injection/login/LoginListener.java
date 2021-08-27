@@ -70,6 +70,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 @RequiredArgsConstructor
 public class LoginListener {
+
   private static final ClosedMinecraftConnection closed;
   private static Constructor<ConnectedPlayer> ctor;
   private static Field craftConnectionField;
@@ -104,15 +105,15 @@ public class LoginListener {
   @Subscribe(order = PostOrder.LAST)
   public void hookPreLogin(PreLoginEvent e) {
     PreLoginEvent.PreLoginComponentResult result = e.getResult();
-    if (!result.isForceOfflineMode() && (server.getConfiguration().isOnlineMode() || result
+    if (!result.isForceOfflineMode() && (this.server.getConfiguration().isOnlineMode() || result
         .isOnlineModeAllowed())) {
-      onlineMode.add(e.getUsername());
+      this.onlineMode.add(e.getUsername());
     }
   }
 
   @Subscribe
   public void onDisconnect(DisconnectEvent e) {
-    limboAPI.removeQueue(e.getPlayer());
+    this.limboAPI.removeQueue(e.getPlayer());
   }
 
   @SneakyThrows
@@ -128,13 +129,11 @@ public class LoginListener {
       try {
         // Initiate a regular connection and move over to it.
         ConnectedPlayer player = ctor.newInstance(
-            server,
-            e.getGameProfile(),
-            connection,
+            this.server, e.getGameProfile(), connection,
             e.getConnection().getVirtualHost().orElse(null),
-            onlineMode.contains(e.getUsername()));
+            this.onlineMode.contains(e.getUsername()));
 
-        if (!server.canRegisterConnection(player)) {
+        if (!this.server.canRegisterConnection(player)) {
           // TODO: Prepare this packet. Хм. Или не нужно?
           player.disconnect0(Component.translatable("velocity.error.already-connected-proxy",
               NamedTextColor.RED), true);
@@ -142,13 +141,13 @@ public class LoginListener {
         }
 
         // Completing the Login process
-        int threshold = server.getConfiguration().getCompressionThreshold();
+        int threshold = this.server.getConfiguration().getCompressionThreshold();
         if (threshold >= 0 && connection.getProtocolVersion().compareTo(MINECRAFT_1_8) >= 0) {
           connection.write(new SetCompression(threshold));
           connection.setCompressionThreshold(threshold);
         }
 
-        VelocityConfiguration configuration = server.getConfiguration();
+        VelocityConfiguration configuration = this.server.getConfiguration();
         UUID playerUniqueId = player.getUniqueId();
         if (configuration.getPlayerInfoForwardingMode() == PlayerInfoForwarding.NONE) {
           playerUniqueId = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
@@ -158,17 +157,17 @@ public class LoginListener {
         success.setUuid(playerUniqueId);
         connection.write(success);
 
-        server.getEventManager()
+        this.server.getEventManager()
             .fire(new LoginLimboRegisterEvent(player))
             .thenAcceptAsync(limboEvent -> {
               LoginTasksQueue queue =
-                  new LoginTasksQueue(limboAPI, server, player, limboEvent.getCallbacks());
+                  new LoginTasksQueue(this.limboAPI, this.server, player, limboEvent.getCallbacks());
 
-              limboAPI.addQueue(player, queue);
+              this.limboAPI.addQueue(player, queue);
               queue.next();
             }, connection.eventLoop());
       } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
-        limboAPI.getLogger()
+        this.limboAPI.getLogger()
             .error("Exception while completing injection to {}", e.getUsername(), ex);
       }
     });
@@ -181,11 +180,11 @@ public class LoginListener {
 
     connection.eventLoop().execute(() -> {
       if (!(connection.getSessionHandler() instanceof ClientPlaySessionHandler)) {
-        ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(server, player);
+        ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
         try {
-          spawned.set(playHandler, limboAPI.isLimboJoined(player));
+          spawned.set(playHandler, this.limboAPI.isLimboJoined(player));
         } catch (IllegalAccessException ex) {
-          limboAPI.getLogger()
+          this.limboAPI.getLogger()
               .error("Exception while hooking into ClientPlaySessionHandler of {}", player, ex);
         }
         connection.setSessionHandler(playHandler);

@@ -120,44 +120,49 @@ public class AuthPlugin {
 
   @SneakyThrows
   public void reload() {
-    checkForUpdates();
-    Settings.IMP.reload(new File(dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
+    this.checkForUpdates();
+    Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
 
-    cachedAuthChecks = new ConcurrentHashMap<>();
+    this.cachedAuthChecks = new ConcurrentHashMap<>();
 
     Settings.DATABASE dbConfig = Settings.IMP.DATABASE;
     JdbcPooledConnectionSource connectionSource;
     switch (dbConfig.STORAGE_TYPE) {
-      case "sqlite":
+      case "sqlite": {
         Class.forName("org.sqlite.JDBC");
         connectionSource = new JdbcPooledConnectionSource("jdbc:sqlite:" + dbConfig.FILENAME);
         break;
-      case "h2":
+      }
+      case "h2": {
         connectionSource = new JdbcPooledConnectionSource("jdbc:h2:" + dbConfig.FILENAME);
         break;
-      case "mysql":
+      }
+      case "mysql": {
         connectionSource = new JdbcPooledConnectionSource(
             "jdbc:mysql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE
-            + "?autoReconnect=true&initialTimeout=1&useSSL=false",
+                + "?autoReconnect=true&initialTimeout=1&useSSL=false",
             dbConfig.USER, dbConfig.PASSWORD);
         break;
-      case "postgresql":
+      }
+      case "postgresql": {
         connectionSource = new JdbcPooledConnectionSource(
             "jdbc:postgresql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE
-            + "?autoReconnect=true", dbConfig.USER, dbConfig.PASSWORD);
+                + "?autoReconnect=true", dbConfig.USER, dbConfig.PASSWORD);
         break;
-      default:
-        logger.error(Settings.IMP.MAIN.STRINGS.DB_FAILURE);
-        server.shutdown();
+      }
+      default: {
+        this.logger.error(Settings.IMP.MAIN.STRINGS.DB_FAILURE);
+        this.server.shutdown();
         return;
+      }
     }
 
     TableUtils.createTableIfNotExists(connectionSource, RegisteredPlayer.class);
 
-    playerDao
+    this.playerDao
         = DaoManager.createDao(connectionSource, RegisteredPlayer.class);
 
-    CommandManager manager = server.getCommandManager();
+    CommandManager manager = this.server.getCommandManager();
     manager.unregister("unregister");
     manager.unregister("changepass");
     manager.unregister("2fa");
@@ -178,36 +183,34 @@ public class AuthPlugin {
       try {
         Path path = dataDirectory.resolve(Settings.IMP.MAIN.WORLD_FILE_PATH);
         WorldFile file;
-        switch (Settings.IMP.MAIN.WORLD_FILE_TYPE) {
-          case "schematic":
-            file = new SchematicFile(path);
-            break;
-          default:
-            logger.error("Incorrect world file type.");
-            server.shutdown();
-            return;
+        if ("schematic".equals(Settings.IMP.MAIN.WORLD_FILE_TYPE)) {
+          file = new SchematicFile(path);
+        } else {
+          this.logger.error("Incorrect world file type.");
+          this.server.shutdown();
+          return;
         }
 
         Settings.MAIN.WORLD_COORDS coords = Settings.IMP.MAIN.WORLD_COORDS;
-        file.toWorld(factory, authWorld, coords.X, coords.Y, coords.Z);
+        file.toWorld(this.factory, authWorld, coords.X, coords.Y, coords.Z);
       } catch (IOException e) {
         e.printStackTrace();
       }
     }
 
-    authServer = factory.createLimbo(authWorld);
+    this.authServer = this.factory.createLimbo(authWorld);
 
-    nicknameInvalid = LegacyComponentSerializer.legacyAmpersand()
+    this.nicknameInvalid = LegacyComponentSerializer.legacyAmpersand()
         .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_INVALID);
-    nicknamePremium = LegacyComponentSerializer.legacyAmpersand()
+    this.nicknamePremium = LegacyComponentSerializer.legacyAmpersand()
         .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_PREMIUM);
 
-    server.getEventManager().register(this, new AuthListener());
+    this.server.getEventManager().register(this, new AuthListener());
 
-    scheduler =
+    this.scheduler =
         Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
 
-    scheduler.scheduleAtFixedRate(
+    this.scheduler.scheduleAtFixedRate(
         () -> checkCache(cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,

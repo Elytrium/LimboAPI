@@ -16,6 +16,7 @@ import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
 public class SchematicFile implements WorldFile {
+
   private short width;
   private short height;
   private short length;
@@ -25,54 +26,54 @@ public class SchematicFile implements WorldFile {
 
   public SchematicFile(Path file) throws IOException {
     CompoundBinaryTag tag = BinaryTagIO.reader().read(file, BinaryTagIO.Compression.GZIP);
-    fromNBT(tag);
+    this.fromNBT(tag);
   }
 
   public SchematicFile(InputStream stream) throws IOException {
     CompoundBinaryTag tag = BinaryTagIO.reader().read(stream, BinaryTagIO.Compression.GZIP);
-    fromNBT(tag);
+    this.fromNBT(tag);
   }
 
   public SchematicFile(CompoundBinaryTag tag) {
-    fromNBT(tag);
+    this.fromNBT(tag);
   }
 
   @Override
   public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ) {
-    short[] blockIds = new short[blocks.length];
+    short[] blockIds = new short[this.blocks.length];
 
-    for (int index = 0; index < blocks.length; index++) {
-      if ((index >> 1) >= addBlocks.length) {
-        blockIds[index] = (short) (blocks[index] & 0xFF);
+    for (int index = 0; index < this.blocks.length; index++) {
+      if ((index >> 1) >= this.addBlocks.length) {
+        blockIds[index] = (short) (this.blocks[index] & 0xFF);
       } else {
         if ((index & 1) == 0) {
-          blockIds[index] = (short) (((addBlocks[index >> 1] & 0x0F) << 8) + (addBlocks[index] & 0xFF));
+          blockIds[index] = (short) (((this.addBlocks[index >> 1] & 0x0F) << 8) + (this.addBlocks[index] & 0xFF));
         } else {
-          blockIds[index] = (short) (((addBlocks[index >> 1] & 0xF0) << 4) + (addBlocks[index] & 0xFF));
+          blockIds[index] = (short) (((this.addBlocks[index >> 1] & 0xF0) << 4) + (this.addBlocks[index] & 0xFF));
         }
       }
     }
 
-    for (int x = 0; x < width; ++x) {
-      for (int y = 0; y < height; ++y) {
-        for (int z = 0; z < length; ++z) {
-          int index = (y * length + z) * width + x;
+    for (int x = 0; x < this.width; ++x) {
+      for (int y = 0; y < this.height; ++y) {
+        for (int z = 0; z < this.length; ++z) {
+          int index = (y * this.length + z) * this.width + x;
           world.setBlock(x + offsetX, y + offsetY, z + offsetZ,
-              factory.createSimpleBlock(blockIds[index], blocksData[index]));
+              factory.createSimpleBlock(blockIds[index], this.blocksData[index]));
         }
       }
     }
   }
 
   private void fromNBT(CompoundBinaryTag tag) {
-    width = tag.getShort("Width");
-    height = tag.getShort("Height");
-    length = tag.getShort("Length");
-    blocks = tag.getByteArray("Blocks");
-    blocksData = tag.getByteArray("Data");
+    this.width = tag.getShort("Width");
+    this.height = tag.getShort("Height");
+    this.length = tag.getShort("Length");
+    this.blocks = tag.getByteArray("Blocks");
+    this.blocksData = tag.getByteArray("Data");
 
     if (tag.keySet().contains("AddBlocks")) {
-      addBlocks = tag.getByteArray("AddBlocks");
+      this.addBlocks = tag.getByteArray("AddBlocks");
     }
   }
 }

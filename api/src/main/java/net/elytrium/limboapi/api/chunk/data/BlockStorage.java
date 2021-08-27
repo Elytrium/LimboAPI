@@ -16,7 +16,8 @@ public interface BlockStorage {
 
   void set(int x, int y, int z, @NotNull VirtualBlock block);
 
-  @NotNull VirtualBlock get(int x, int y, int z);
+  @NotNull
+  VirtualBlock get(int x, int y, int z);
 
   void write(ByteBuf buf, ProtocolVersion version);
 

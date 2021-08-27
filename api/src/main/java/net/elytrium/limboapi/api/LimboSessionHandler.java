@@ -11,6 +11,7 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 
 public interface LimboSessionHandler {
+
   default void onSpawn(Limbo server, LimboPlayer player) {
 
   }

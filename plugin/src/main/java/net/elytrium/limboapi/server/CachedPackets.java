@@ -38,12 +38,12 @@ public class CachedPackets {
   private PreparedPacket tooBigPacket;
 
   public void createPackets() {
-    alreadyConnected = new PreparedPacket()
+    this.alreadyConnected = new PreparedPacket()
         .prepare((Function<ProtocolVersion, Disconnect>) (version) ->
-          createDisconnectPacket(Settings.IMP.MESSAGES.ALREADY_CONNECTED, version));
-    tooBigPacket = new PreparedPacket()
+            this.createDisconnectPacket(Settings.IMP.MESSAGES.ALREADY_CONNECTED, version));
+    this.tooBigPacket = new PreparedPacket()
         .prepare((Function<ProtocolVersion, Disconnect>) (version) ->
-          createDisconnectPacket(Settings.IMP.MESSAGES.TOO_BIG_PACKET, version));
+            this.createDisconnectPacket(Settings.IMP.MESSAGES.TOO_BIG_PACKET, version));
   }
 
   private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {

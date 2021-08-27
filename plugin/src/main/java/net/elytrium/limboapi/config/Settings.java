@@ -27,7 +27,6 @@ public class Settings extends Config {
   @Final
   public String VERSION = "1.0.0";
 
-
   @Create
   public MESSAGES MESSAGES;
 
@@ -46,7 +45,7 @@ public class Settings extends Config {
   }
 
   public void reload(File file) {
-    load(file);
-    save(file);
+    this.load(file);
+    this.save(file);
   }
 }
