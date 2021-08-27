@@ -65,6 +65,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
+import net.elytrium.limboapi.injection.dummy.ClosedChannel;
+import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
+import net.elytrium.limboapi.injection.dummy.DummyEventPool;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -78,7 +81,9 @@ public class LoginListener {
   private static Field spawned;
 
   static {
-    closed = new ClosedMinecraftConnection(new ClosedChannel(), LimboAPI.getInstance().getServer());
+    closed = new ClosedMinecraftConnection(
+        new ClosedChannel(new DummyEventPool()),
+        LimboAPI.getInstance().getServer());
 
     try {
       ctor = ConnectedPlayer.class.getDeclaredConstructor(
@@ -113,7 +118,7 @@ public class LoginListener {
 
   @Subscribe
   public void onDisconnect(DisconnectEvent e) {
-    this.limboAPI.removeQueue(e.getPlayer());
+    this.limboAPI.removeLoginQueue(e.getPlayer());
     this.onlineMode.remove(e.getPlayer().getUsername());
   }
 
@@ -162,9 +167,10 @@ public class LoginListener {
             .fire(new LoginLimboRegisterEvent(player))
             .thenAcceptAsync(limboEvent -> {
               LoginTasksQueue queue =
-                  new LoginTasksQueue(this.limboAPI, this.server, player, limboEvent.getCallbacks());
+                  new LoginTasksQueue(
+                      this.limboAPI, handler, this.server, player, limboEvent.getCallbacks());
 
-              this.limboAPI.addQueue(player, queue);
+              this.limboAPI.addLoginQueue(player, queue);
               queue.next();
             }, connection.eventLoop());
       } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {

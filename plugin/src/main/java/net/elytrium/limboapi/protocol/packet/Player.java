@@ -48,7 +48,9 @@ public class Player implements MinecraftPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    ((LimboSessionHandlerImpl) handler).handle(this);
+    if (handler instanceof LimboSessionHandlerImpl) {
+      return ((LimboSessionHandlerImpl) handler).handle(this);
+    }
     return false;
   }
 }
