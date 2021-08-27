@@ -41,8 +41,6 @@ import net.elytrium.limbofilter.stats.Statistics;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class FilterCommand implements SimpleCommand {
 
@@ -140,7 +138,6 @@ public class FilterCommand implements SimpleCommand {
 
   private static class Reload implements SubCommand {
 
-    private static final Logger logger = LogManager.getLogger(Reload.class);
     private final FilterPlugin plugin;
 
     private Reload(FilterPlugin plugin) {
