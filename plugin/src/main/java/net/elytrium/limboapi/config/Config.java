@@ -42,9 +42,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.config.helpers.Configuration;
-import net.elytrium.limboapi.config.helpers.ConfigurationProvider;
-import net.elytrium.limboapi.config.helpers.YamlConfiguration;
+import net.elytrium.limboapi.api.config.Configuration;
+import net.elytrium.limboapi.api.config.ConfigurationProvider;
+import net.elytrium.limboapi.api.config.YamlConfiguration;
 import org.slf4j.Logger;
 
 @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
