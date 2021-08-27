@@ -6,15 +6,17 @@
 [![Proxy Stats](https://img.shields.io/bstats/players/12530?logo=minecraft&label=Players)](https://bstats.org/plugin/velocity/ElytraProxy/12271)
 
 Library for sending players to virtual servers (called limbo)<br>
-[Описание и обсуждение на русском языке (spigotmc.ru)](https://spigotmc.ru/resources/elytraproxy.715/) <br>
-[Описание и обсуждение на русском языке (rubukkit.org)](http://rubukkit.org/threads/antibot-elytraproxy-proksi-server-fork-velocity-s-avtorizaciej-i-zaschitoj-ot-botov-1-7-1-17-1.177904/)
+[MC-Market](https://www.mc-market.org/resources/21097/) <br>
+[SpigotMC.org](https://www.spigotmc.org/resources/limboapi-limboauth-limbofilter.95748/) <br>
+[Описание и обсуждение на русском языке (spigotmc.ru)](https://spigotmc.ru/resources/limboapi-limboauth-limbofilter-virtualnye-servera-dlja-velocity.715/) <br>
+[Описание и обсуждение на русском языке (rubukkit.org)](http://rubukkit.org/threads/limboapi-limboauth-limbofilter-virtualnye-servera-dlja-velocity.177904/)
 
 Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
 
 ## See also
 
-- [LimboAuth](https://github.com/Elytrium/LimboAPI/tree/master/net.elytrium.auth) - Auth System built in virtual server (Limbo). Uses BCrypt, has TOTP 2FA feature. Supports literally any database due to OrmLite.
-- [LimboFilter](https://github.com/Elytrium/Limbo/tree/master/net.elytrium.auth) - Most powerful bot filtering solution for Minecraft proxies. Built with LimboAPI.
+- [LimboAuth](https://github.com/Elytrium/LimboAPI/tree/master/auth) - Auth System built in virtual server (Limbo). Uses BCrypt, has TOTP 2FA feature. Supports literally any database due to OrmLite.
+- [LimboFilter](https://github.com/Elytrium/LimboAPI/tree/master/filter) - Most powerful bot filtering solution for Minecraft proxies. Built with LimboAPI.
 
 ### LimboFilter /vs/ popular antibot solutions:
 
@@ -51,8 +53,8 @@ Velocity | Offline Mode | 2 sec | 55%
 
 ### Demo
 
-- [LimboAuth](https://github.com/Elytrium/LimboAPI/tree/master/net.elytrium.auth) - Simple usage, using special api
-- [LimboFilter](https://github.com/Elytrium/Limbo/tree/master/net.elytrium.auth) - Advanced usage, using plugin's api
+- [LimboAuth](https://github.com/Elytrium/LimboAPI/tree/master/auth) - Simple usage, using special api
+- [LimboFilter](https://github.com/Elytrium/LimboAPI/tree/master/filter) - Advanced usage, using plugin's api
 
 ## Donation
 
