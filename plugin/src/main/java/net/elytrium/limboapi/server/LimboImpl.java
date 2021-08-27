@@ -110,7 +110,8 @@ public class LimboImpl implements Limbo {
     this.chunks = new PreparedPacket().prepare(this.createChunksPackets());
     this.spawnPosition = new PreparedPacket()
         .prepare(this.createPlayerPosAndLookPacket(
-            this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), getWorld().getYaw(), getWorld().getPitch()))
+            this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(),
+            getWorld().getYaw(), getWorld().getPitch()))
         .prepare(this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()),
             ProtocolVersion.MINECRAFT_1_14);
   }

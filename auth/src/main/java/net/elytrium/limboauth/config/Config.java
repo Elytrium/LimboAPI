@@ -41,10 +41,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import net.elytrium.limboauth.AuthPlugin;
 import net.elytrium.limboapi.api.config.Configuration;
 import net.elytrium.limboapi.api.config.ConfigurationProvider;
 import net.elytrium.limboapi.api.config.YamlConfiguration;
+import net.elytrium.limboauth.AuthPlugin;
 import org.slf4j.Logger;
 
 public class Config {
