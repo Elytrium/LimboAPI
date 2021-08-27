@@ -10,9 +10,6 @@ apply from: '../gradle/checkstyle.gradle'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 license {
-    matching(includes: ['**/limboapi/config/helpers/**']) {
-        header = project.rootProject.file('HEADER_BUNGEECORD.txt')
-    }
     matching(includes: ['**/mcprotocollib/**']) {
         header = project.rootProject.file('HEADER_MCPROTOCOLLIB.txt')
     }

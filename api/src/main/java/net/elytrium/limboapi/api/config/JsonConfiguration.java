@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.elytrium.limboapi.config.helpers;
+package net.elytrium.limboapi.api.config;
 
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
@@ -48,15 +48,19 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class JsonConfiguration extends ConfigurationProvider {
 
-  private final Gson json = new GsonBuilder().serializeNulls().setPrettyPrinting()
-      .registerTypeAdapter(Configuration.class,
-          (JsonSerializer<Configuration>) (src, typeOfSrc, context) -> context.serialize(src.self)).create();
+  private final Gson json = new GsonBuilder()
+      .serializeNulls()
+      .setPrettyPrinting()
+      .registerTypeAdapter(
+          Configuration.class,
+          (JsonSerializer<Configuration>) (src, typeOfSrc, context) -> context.serialize(src.self))
+      .create();
+
+  JsonConfiguration() {
+  }
 
   @Override
   public void save(Configuration config, File file) throws IOException {
@@ -104,7 +108,7 @@ public class JsonConfiguration extends ConfigurationProvider {
 
   @Override
   public Configuration load(InputStream is, Configuration defaults) {
-    return load(new InputStreamReader(is, Charsets.UTF_8), defaults);
+    return this.load(new InputStreamReader(is, Charsets.UTF_8), defaults);
   }
 
   @Override

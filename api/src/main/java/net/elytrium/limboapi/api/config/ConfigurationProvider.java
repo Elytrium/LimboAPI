@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.elytrium.limboauth.config.helpers;
+package net.elytrium.limboapi.api.config;
 
 import java.io.File;
 import java.io.IOException;
