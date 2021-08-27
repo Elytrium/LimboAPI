@@ -166,12 +166,12 @@ public class AuthPlugin {
     manager.unregister("unregister");
     manager.unregister("changepass");
     manager.unregister("2fa");
-    manager.unregister("reload");
+    manager.unregister("authreload");
 
     manager.register("unregister", new UnregisterCommand(this.playerDao));
     manager.register("changepass", new ChangePasswordCommand(this.playerDao));
     manager.register("2fa", new TotpCommand(this.playerDao));
-    manager.register("reload", new AuthReloadCommand());
+    manager.register("authreload", new AuthReloadCommand());
 
     Settings.MAIN.AUTH_COORDS authCoords = Settings.IMP.MAIN.AUTH_COORDS;
     VirtualWorld authWorld = this.factory.createVirtualWorld(
