@@ -33,7 +33,7 @@ public final class LoginLimboRegisterEvent {
   @Override
   public String toString() {
     return "LoginLimboRegisterEvent{"
-        + "player=" + player
+        + "player=" + this.player
         + '}';
   }
 

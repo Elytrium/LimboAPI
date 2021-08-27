@@ -118,7 +118,7 @@ public class Settings extends Config {
     public String STORAGE_TYPE = "h2";
 
     @Comment("Settings for File-based databases (Like H2, SQLite): ")
-    public String FILENAME = "./limboauth.db";
+    public String FILENAME = "limboauth.db";
 
     @Comment("Settings for Network-based database (like MySQL, PostgreSQL): ")
     public String HOSTNAME = "127.0.0.1:3306";

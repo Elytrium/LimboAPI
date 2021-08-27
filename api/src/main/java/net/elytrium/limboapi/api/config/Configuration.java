@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.elytrium.limboauth.config.helpers;
+package net.elytrium.limboapi.api.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,8 +63,8 @@ public final class Configuration {
       String key = (entry.getKey() == null) ? "null" : entry.getKey().toString();
 
       if (entry.getValue() instanceof Map) {
-        this.self
-            .put(key, new Configuration((Map) entry.getValue(), (defaults == null) ? null : defaults.getSection(key)));
+        this.self.put(key, new Configuration(
+            (Map) entry.getValue(), (defaults == null) ? null : defaults.getSection(key)));
       } else {
         this.self.put(key, entry.getValue());
       }
@@ -78,10 +78,10 @@ public final class Configuration {
     }
 
     String root = path.substring(0, index);
-    Object section = self.get(root);
+    Object section = this.self.get(root);
     if (section == null) {
-      section = new Configuration((defaults == null) ? null : defaults.getSection(root));
-      self.put(root, section);
+      section = new Configuration((this.defaults == null) ? null : this.defaults.getSection(root));
+      this.self.put(root, section);
     }
 
     return (Configuration) section;
@@ -95,56 +95,56 @@ public final class Configuration {
   /*------------------------------------------------------------------------*/
   @SuppressWarnings("unchecked")
   public <T> T get(String path, T def) {
-    Configuration section = getSectionFor(path);
+    Configuration section = this.getSectionFor(path);
     Object val;
     if (section == this) {
-      val = self.get(path);
+      val = this.self.get(path);
     } else {
-      val = section.get(getChild(path), def);
+      val = section.get(this.getChild(path), def);
     }
 
     if (val == null && def instanceof Configuration) {
-      self.put(path, def);
+      this.self.put(path, def);
     }
 
     return (val != null) ? (T) val : def;
   }
 
   public Object get(String path) {
-    return get(path, getDefault(path));
+    return this.get(path, this.getDefault(path));
   }
 
   public boolean contains(String path) {
-    return get(path, null) != null;
+    return this.get(path, null) != null;
   }
 
   public Object getDefault(String path) {
-    return (defaults == null) ? null : defaults.get(path);
+    return (this.defaults == null) ? null : this.defaults.get(path);
   }
 
   public void set(String path, Object value) {
     if (value instanceof Map) {
-      value = new Configuration((Map) value, (defaults == null) ? null : defaults.getSection(path));
+      value = new Configuration((Map) value, (this.defaults == null) ? null : this.defaults.getSection(path));
     }
 
-    Configuration section = getSectionFor(path);
+    Configuration section = this.getSectionFor(path);
     if (section == this) {
       if (value == null) {
-        self.remove(path);
+        this.self.remove(path);
       } else {
-        self.put(path, value);
+        this.self.put(path, value);
       }
     } else {
-      section.set(getChild(path), value);
+      section.set(this.getChild(path), value);
     }
   }
 
   /*------------------------------------------------------------------------*/
   public Configuration getSection(String path) {
-    Object def = getDefault(path);
-    return (Configuration) get(path, (def instanceof Configuration)
+    Object def = this.getDefault(path);
+    return (Configuration) this.get(path, (def instanceof Configuration)
         ? def
-        : new Configuration((defaults == null) ? null : defaults.getSection(path)));
+        : new Configuration((this.defaults == null) ? null : this.defaults.getSection(path)));
   }
 
   /**
@@ -153,22 +153,22 @@ public final class Configuration {
    * @return top level keys for this section
    */
   public Collection<String> getKeys() {
-    return new LinkedHashSet<>(self.keySet());
+    return new LinkedHashSet<>(this.self.keySet());
   }
 
   /*------------------------------------------------------------------------*/
   public byte getByte(String path) {
-    Object def = getDefault(path);
-    return getByte(path, (def instanceof Number) ? ((Number) def).byteValue() : 0);
+    Object def = this.getDefault(path);
+    return this.getByte(path, (def instanceof Number) ? ((Number) def).byteValue() : 0);
   }
 
   public byte getByte(String path, byte def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof Number) ? ((Number) val).byteValue() : def;
   }
 
   public List<Byte> getByteList(String path) {
-    List<?> list = getList(path);
+    List<?> list = this.getList(path);
     List<Byte> result = new ArrayList<>();
 
     for (Object object : list) {
@@ -181,17 +181,17 @@ public final class Configuration {
   }
 
   public short getShort(String path) {
-    Object def = getDefault(path);
-    return getShort(path, (def instanceof Number) ? ((Number) def).shortValue() : 0);
+    Object def = this.getDefault(path);
+    return this.getShort(path, (def instanceof Number) ? ((Number) def).shortValue() : 0);
   }
 
   public short getShort(String path, short def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof Number) ? ((Number) val).shortValue() : def;
   }
 
   public List<Short> getShortList(String path) {
-    List<?> list = getList(path);
+    List<?> list = this.getList(path);
     List<Short> result = new ArrayList<>();
 
     for (Object object : list) {
@@ -204,17 +204,17 @@ public final class Configuration {
   }
 
   public int getInt(String path) {
-    Object def = getDefault(path);
+    Object def = this.getDefault(path);
     return getInt(path, (def instanceof Number) ? ((Number) def).intValue() : 0);
   }
 
   public int getInt(String path, int def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof Number) ? ((Number) val).intValue() : def;
   }
 
   public List<Integer> getIntList(String path) {
-    List<?> list = getList(path);
+    List<?> list = this.getList(path);
     List<Integer> result = new ArrayList<>();
 
     for (Object object : list) {
@@ -227,17 +227,17 @@ public final class Configuration {
   }
 
   public long getLong(String path) {
-    Object def = getDefault(path);
-    return getLong(path, (def instanceof Number) ? ((Number) def).longValue() : 0);
+    Object def = this.getDefault(path);
+    return this.getLong(path, (def instanceof Number) ? ((Number) def).longValue() : 0);
   }
 
   public long getLong(String path, long def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof Number) ? ((Number) val).longValue() : def;
   }
 
   public List<Long> getLongList(String path) {
-    List<?> list = getList(path);
+    List<?> list = this.getList(path);
     List<Long> result = new ArrayList<>();
 
     for (Object object : list) {
@@ -250,17 +250,17 @@ public final class Configuration {
   }
 
   public float getFloat(String path) {
-    Object def = getDefault(path);
-    return getFloat(path, (def instanceof Number) ? ((Number) def).floatValue() : 0);
+    Object def = this.getDefault(path);
+    return this.getFloat(path, (def instanceof Number) ? ((Number) def).floatValue() : 0);
   }
 
   public float getFloat(String path, float def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof Number) ? ((Number) val).floatValue() : def;
   }
 
   public List<Float> getFloatList(String path) {
-    List<?> list = getList(path);
+    List<?> list = this.getList(path);
     List<Float> result = new ArrayList<>();
 
     for (Object object : list) {
@@ -273,17 +273,17 @@ public final class Configuration {
   }
 
   public double getDouble(String path) {
-    Object def = getDefault(path);
-    return getDouble(path, (def instanceof Number) ? ((Number) def).doubleValue() : 0);
+    Object def = this.getDefault(path);
+    return this.getDouble(path, (def instanceof Number) ? ((Number) def).doubleValue() : 0);
   }
 
   public double getDouble(String path, double def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof Number) ? ((Number) val).doubleValue() : def;
   }
 
   public List<Double> getDoubleList(String path) {
-    List<?> list = getList(path);
+    List<?> list = this.getList(path);
     List<Double> result = new ArrayList<>();
 
     for (Object object : list) {
@@ -296,17 +296,17 @@ public final class Configuration {
   }
 
   public boolean getBoolean(String path) {
-    Object def = getDefault(path);
-    return getBoolean(path, (def instanceof Boolean) ? (Boolean) def : false);
+    Object def = this.getDefault(path);
+    return this.getBoolean(path, (def instanceof Boolean) ? (Boolean) def : false);
   }
 
   public boolean getBoolean(String path, boolean def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof Boolean) ? (Boolean) val : def;
   }
 
   public List<Boolean> getBooleanList(String path) {
-    List<?> list = getList(path);
+    List<?> list = this.getList(path);
     List<Boolean> result = new ArrayList<>();
 
     for (Object object : list) {
@@ -319,17 +319,17 @@ public final class Configuration {
   }
 
   public char getChar(String path) {
-    Object def = getDefault(path);
-    return getChar(path, (def instanceof Character) ? (Character) def : '\u0000');
+    Object def = this.getDefault(path);
+    return this.getChar(path, (def instanceof Character) ? (Character) def : '\u0000');
   }
 
   public char getChar(String path, char def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof Character) ? (Character) val : def;
   }
 
   public List<Character> getCharList(String path) {
-    List<?> list = getList(path);
+    List<?> list = this.getList(path);
     List<Character> result = new ArrayList<>();
 
     for (Object object : list) {
@@ -342,17 +342,17 @@ public final class Configuration {
   }
 
   public String getString(String path) {
-    Object def = getDefault(path);
-    return getString(path, (def instanceof String) ? (String) def : "");
+    Object def = this.getDefault(path);
+    return this.getString(path, (def instanceof String) ? (String) def : "");
   }
 
   public String getString(String path, String def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof String) ? (String) val : def;
   }
 
   public List<String> getStringList(String path) {
-    List<?> list = getList(path);
+    List<?> list = this.getList(path);
     List<String> result = new ArrayList<>();
 
     for (Object object : list) {
@@ -366,12 +366,12 @@ public final class Configuration {
 
   /*------------------------------------------------------------------------*/
   public List<?> getList(String path) {
-    Object def = getDefault(path);
-    return getList(path, (def instanceof List<?>) ? (List<?>) def : Collections.EMPTY_LIST);
+    Object def = this.getDefault(path);
+    return this.getList(path, (def instanceof List<?>) ? (List<?>) def : Collections.EMPTY_LIST);
   }
 
   public List<?> getList(String path, List<?> def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof List<?>) ? (List<?>) val : def;
   }
 }

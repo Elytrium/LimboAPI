@@ -86,6 +86,7 @@ import org.slf4j.Logger;
 @Getter
 @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class AuthPlugin {
+
   private final HttpClient client = HttpClient.newHttpClient();
   private static AuthPlugin instance;
   private final Path dataDirectory;
@@ -103,9 +104,7 @@ public class AuthPlugin {
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Inject
   public AuthPlugin(ProxyServer server,
-                    Logger logger,
-                    @Named("limboapi") PluginContainer factory,
-                    @DataDirectory Path dataDirectory) {
+      Logger logger, @Named("limboapi") PluginContainer factory, @DataDirectory Path dataDirectory) {
     this.server = server;
     this.logger = logger;
     this.dataDirectory = dataDirectory;
@@ -130,11 +129,13 @@ public class AuthPlugin {
     switch (dbConfig.STORAGE_TYPE) {
       case "sqlite": {
         Class.forName("org.sqlite.JDBC");
-        connectionSource = new JdbcPooledConnectionSource("jdbc:sqlite:" + dbConfig.FILENAME);
+        connectionSource = new JdbcPooledConnectionSource(
+            "jdbc:sqlite:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + dbConfig.FILENAME);
         break;
       }
       case "h2": {
-        connectionSource = new JdbcPooledConnectionSource("jdbc:h2:" + dbConfig.FILENAME);
+        connectionSource = new JdbcPooledConnectionSource(
+            "jdbc:h2:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + dbConfig.FILENAME);
         break;
       }
       case "mysql": {
@@ -159,8 +160,7 @@ public class AuthPlugin {
 
     TableUtils.createTableIfNotExists(connectionSource, RegisteredPlayer.class);
 
-    this.playerDao
-        = DaoManager.createDao(connectionSource, RegisteredPlayer.class);
+    this.playerDao = DaoManager.createDao(connectionSource, RegisteredPlayer.class);
 
     CommandManager manager = this.server.getCommandManager();
     manager.unregister("unregister");
@@ -168,20 +168,20 @@ public class AuthPlugin {
     manager.unregister("2fa");
     manager.unregister("reload");
 
-    manager.register("unregister", new UnregisterCommand(playerDao));
-    manager.register("changepass", new ChangePasswordCommand(playerDao));
-    manager.register("2fa", new TotpCommand(playerDao));
+    manager.register("unregister", new UnregisterCommand(this.playerDao));
+    manager.register("changepass", new ChangePasswordCommand(this.playerDao));
+    manager.register("2fa", new TotpCommand(this.playerDao));
     manager.register("reload", new AuthReloadCommand());
 
     Settings.MAIN.AUTH_COORDS authCoords = Settings.IMP.MAIN.AUTH_COORDS;
-    VirtualWorld authWorld = factory.createVirtualWorld(
+    VirtualWorld authWorld = this.factory.createVirtualWorld(
         Dimension.valueOf(Settings.IMP.MAIN.DIMENSION),
         authCoords.X, authCoords.Y, authCoords.Z,
         (float) authCoords.YAW, (float) authCoords.PITCH);
 
     if (Settings.IMP.MAIN.LOAD_WORLD) {
       try {
-        Path path = dataDirectory.resolve(Settings.IMP.MAIN.WORLD_FILE_PATH);
+        Path path = this.dataDirectory.resolve(Settings.IMP.MAIN.WORLD_FILE_PATH);
         WorldFile file;
         if ("schematic".equals(Settings.IMP.MAIN.WORLD_FILE_TYPE)) {
           file = new SchematicFile(path);
@@ -200,18 +200,19 @@ public class AuthPlugin {
 
     this.authServer = this.factory.createLimbo(authWorld);
 
-    this.nicknameInvalid = LegacyComponentSerializer.legacyAmpersand()
+    this.nicknameInvalid = LegacyComponentSerializer
+        .legacyAmpersand()
         .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_INVALID);
-    this.nicknamePremium = LegacyComponentSerializer.legacyAmpersand()
+    this.nicknamePremium = LegacyComponentSerializer
+        .legacyAmpersand()
         .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_PREMIUM);
 
     this.server.getEventManager().register(this, new AuthListener());
 
-    this.scheduler =
-        Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
+    this.scheduler = Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
 
     this.scheduler.scheduleAtFixedRate(
-        () -> checkCache(cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
+        () -> this.checkCache(this.cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         TimeUnit.MILLISECONDS);
@@ -241,9 +242,9 @@ public class AuthPlugin {
 
   public void cacheAuthUser(Player player) {
     String username = player.getUsername();
-    cachedAuthChecks.remove(username);
+    this.cachedAuthChecks.remove(username);
     InetSocketAddress adr = player.getRemoteAddress();
-    cachedAuthChecks.put(username, new CachedUser(adr.getAddress(), System.currentTimeMillis()));
+    this.cachedAuthChecks.put(username, new CachedUser(adr.getAddress(), System.currentTimeMillis()));
   }
 
   public boolean needAuth(Player player) {
@@ -253,45 +254,44 @@ public class AuthPlugin {
       return false;
     }
 
-    if (!cachedAuthChecks.containsKey(username)) {
+    if (!this.cachedAuthChecks.containsKey(username)) {
       return true;
     }
 
     InetSocketAddress adr = player.getRemoteAddress();
-    return !cachedAuthChecks.get(username).getInetAddress().equals(adr.getAddress());
+    return !this.cachedAuthChecks.get(username).getInetAddress().equals(adr.getAddress());
   }
 
   public void auth(Player player) {
     String nickname = player.getUsername().toLowerCase(Locale.ROOT);
     for (char character : nickname.toCharArray()) {
       if (!Settings.IMP.MAIN.ALLOWED_NICKNAME_CHARS.contains(String.valueOf(character))) {
-        player.disconnect(nicknameInvalid);
+        player.disconnect(this.nicknameInvalid);
         return;
       }
     }
 
-    sendToAuthServer(player, nickname);
+    this.sendToAuthServer(player, nickname);
   }
 
   private void sendToAuthServer(Player player, String nickname) {
     try {
-      AuthSessionHandler authSessionHandler =
-          new AuthSessionHandler(playerDao, player, nickname);
+      AuthSessionHandler authSessionHandler = new AuthSessionHandler(this.playerDao, player, nickname);
 
-      authServer.spawnPlayer(player, authSessionHandler);
+      this.authServer.spawnPlayer(player, authSessionHandler);
     } catch (Throwable t) {
-      logger.error("Error", t);
+      this.logger.error("Error", t);
     }
   }
 
   public boolean isPremium(String nickname) {
     try {
-      HttpRequest request = HttpRequest.newBuilder()
-          .uri(URI.create("https://api.mojang.com/users/profiles/minecraft/" + nickname)).build();
+      HttpRequest request = HttpRequest.newBuilder().uri(
+          URI.create("https://api.mojang.com/users/profiles/minecraft/" + nickname)).build();
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
       return response.statusCode() == 200;
     } catch (IOException | InterruptedException e) {
-      logger.error("Unable to authenticate with Mojang", e);
+      this.logger.error("Unable to authenticate with Mojang", e);
       return true;
     }
   }

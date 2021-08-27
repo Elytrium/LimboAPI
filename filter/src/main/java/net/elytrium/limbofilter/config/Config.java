@@ -42,9 +42,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import net.elytrium.limbofilter.FilterPlugin;
-import net.elytrium.limbofilter.config.helpers.Configuration;
-import net.elytrium.limbofilter.config.helpers.ConfigurationProvider;
-import net.elytrium.limbofilter.config.helpers.YamlConfiguration;
+import net.elytrium.limboapi.api.config.Configuration;
+import net.elytrium.limboapi.api.config.ConfigurationProvider;
+import net.elytrium.limboapi.api.config.YamlConfiguration;
 import org.slf4j.Logger;
 
 public class Config {
