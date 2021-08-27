@@ -48,6 +48,9 @@ public class TeleportConfirm implements MinecraftPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    return ((LimboSessionHandlerImpl) handler).handle(this);
+    if (handler instanceof LimboSessionHandlerImpl) {
+      return ((LimboSessionHandlerImpl) handler).handle(this);
+    }
+    return false;
   }
 }

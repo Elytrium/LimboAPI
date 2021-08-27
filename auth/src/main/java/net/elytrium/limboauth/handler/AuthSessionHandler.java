@@ -208,8 +208,11 @@ public class AuthSessionHandler implements LimboSessionHandler {
   }
 
   private void finish() {
-    player.disconnect();
+    proxyPlayer.sendMessage(
+        LegacyComponentSerializer.legacyAmpersand()
+            .deserialize(Settings.IMP.MAIN.STRINGS.LOGIN_SUCCESS));
     AuthPlugin.getInstance().cacheAuthUser(proxyPlayer);
+    player.disconnect();
   }
 
   private void sendMessage() {
