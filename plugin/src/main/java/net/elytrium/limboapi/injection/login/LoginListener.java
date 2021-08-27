@@ -114,6 +114,7 @@ public class LoginListener {
   @Subscribe
   public void onDisconnect(DisconnectEvent e) {
     this.limboAPI.removeQueue(e.getPlayer());
+    this.onlineMode.remove(e.getPlayer().getUsername());
   }
 
   @SneakyThrows
