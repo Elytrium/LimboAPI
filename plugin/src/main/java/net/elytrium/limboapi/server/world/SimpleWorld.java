@@ -63,47 +63,47 @@ public class SimpleWorld implements VirtualWorld {
     this.yaw = yaw;
     this.pitch = pitch;
 
-    getChunkOrNew((int) x, (int) z);
+    this.getChunkOrNew((int) x, (int) z);
   }
 
   public void setBlock(int x, int y, int z, @Nullable VirtualBlock block) {
-    getChunkOrNew(x, z).setBlock(getChunkCoordinate(x), y, getChunkCoordinate(z), block);
+    this.getChunkOrNew(x, z).setBlock(getChunkCoordinate(x), y, getChunkCoordinate(z), block);
   }
 
   @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
   @NotNull
   public VirtualBlock getBlock(int x, int y, int z) {
-    return chunkAction(x, z, (c) -> c.getBlock(getChunkCoordinate(x), y, getChunkCoordinate(z)),
+    return this.chunkAction(x, z, (c) -> c.getBlock(getChunkCoordinate(x), y, getChunkCoordinate(z)),
         () -> SimpleBlock.AIR);
   }
 
   public void setBiome2d(int x, int z, @NonNull VirtualBiome biome) {
-    getChunkOrNew(x, z).setBiome2d(getChunkCoordinate(x), getChunkCoordinate(z), biome);
+    this.getChunkOrNew(x, z).setBiome2d(getChunkCoordinate(x), getChunkCoordinate(z), biome);
   }
 
   public void setBiome3d(int x, int y, int z, @NonNull VirtualBiome biome) {
-    getChunkOrNew(x, z).setBiome3d(getChunkCoordinate(x), y, getChunkCoordinate(z), biome);
+    this.getChunkOrNew(x, z).setBiome3d(getChunkCoordinate(x), y, getChunkCoordinate(z), biome);
   }
 
   public VirtualBiome getBiome(int x, int y, int z) {
-    return chunkAction(x, z, (c) -> c.getBiome(x, y, z), () -> Biome.PLAINS);
+    return this.chunkAction(x, z, (c) -> c.getBiome(x, y, z), () -> Biome.PLAINS);
   }
 
   public byte getBlockLight(int x, int y, int z) {
-    return chunkAction(x, z,
+    return this.chunkAction(x, z,
         (c) -> c.getBlockLight(getChunkCoordinate(x), y, getChunkCoordinate(z)), () -> (byte) 0);
   }
 
   public void setBlockLight(int x, int y, int z, byte light) {
-    getChunkOrNew(x, z).setBlockLight(getChunkCoordinate(x), y, getChunkCoordinate(z), light);
+    this.getChunkOrNew(x, z).setBlockLight(getChunkCoordinate(x), y, getChunkCoordinate(z), light);
   }
 
   public List<VirtualChunk> getChunks() {
-    return ImmutableList.copyOf(chunks.values());
+    return ImmutableList.copyOf(this.chunks.values());
   }
 
   private <T> T chunkAction(int x, int z, Function<SimpleChunk, T> function, Supplier<T> ifNull) {
-    SimpleChunk chunk = getChunk(x, z);
+    SimpleChunk chunk = this.getChunk(x, z);
     if (chunk == null) {
       return ifNull.get();
     }
@@ -112,16 +112,16 @@ public class SimpleWorld implements VirtualWorld {
 
   @Nullable
   public SimpleChunk getChunk(int x, int z) {
-    return chunks.get(getChunkIndex(getChunkXZ(x), getChunkXZ(z)));
+    return this.chunks.get(getChunkIndex(getChunkXZ(x), getChunkXZ(z)));
   }
 
   public SimpleChunk getChunkOrNew(int x, int z) {
     x = getChunkXZ(x);
     z = getChunkXZ(z);
     long index = getChunkIndex(x, z);
-    SimpleChunk simpleChunk = chunks.get(index);
+    SimpleChunk simpleChunk = this.chunks.get(index);
     if (simpleChunk == null) {
-      chunks.put(index, simpleChunk = new SimpleChunk(x, z));
+      this.chunks.put(index, simpleChunk = new SimpleChunk(x, z));
     }
     return simpleChunk;
   }

@@ -139,25 +139,25 @@ public class BitStorage116 implements CompactStorage {
 
   @Override
   public void write(ByteBuf buf, ProtocolVersion version) {
-    ProtocolUtils.writeVarInt(buf, data.length);
-    for (long l : data) {
+    ProtocolUtils.writeVarInt(buf, this.data.length);
+    for (long l : this.data) {
       buf.writeLong(l);
     }
   }
 
   @Override
   public int getDataLength() {
-    return ProtocolUtils.varIntBytes(data.length) + data.length * 8;
+    return ProtocolUtils.varIntBytes(this.data.length) + this.data.length * 8;
   }
 
   @Override
   public CompactStorage copy() {
-    return new BitStorage116(bitsPerEntry, size, Arrays.copyOf(data, data.length));
+    return new BitStorage116(this.bitsPerEntry, this.size, Arrays.copyOf(this.data, this.data.length));
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public long[] getData() {
-    return data;
+    return this.data;
   }
 }

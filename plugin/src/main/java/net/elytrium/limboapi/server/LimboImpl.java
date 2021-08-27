@@ -17,8 +17,6 @@
 
 package net.elytrium.limboapi.server;
 
-import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_16;
-
 import com.google.common.collect.ImmutableSet;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
@@ -59,6 +57,7 @@ import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 @Setter
 @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
 public class LimboImpl implements Limbo {
+
   private static Field partialHashedSeed;
   private static Field currentDimensionData;
 
@@ -87,33 +86,32 @@ public class LimboImpl implements Limbo {
     this.limboAPI = limboAPI;
     this.world = world;
 
-    refresh();
+    this.refresh();
   }
 
   public void refresh() {
     JoinGame legacyJoinGame = createLegacyJoinGamePacket();
     JoinGame joinGame = createJoinGamePacket();
 
-    joinPackets = new PreparedPacket()
+    this.joinPackets = new PreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16);
 
-    fastRejoinPackets = new PreparedPacket();
+    this.fastRejoinPackets = new PreparedPacket();
     createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
         .forEach(minecraftPacket ->
-            fastRejoinPackets.prepare(
-                minecraftPacket, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
+            this.fastRejoinPackets.prepare(minecraftPacket,
+                ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
     createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_16)
-        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16));
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16));
 
-    safeRejoinPackets = new PreparedPacket()
-        .prepare(createSafeClientServerSwitch(legacyJoinGame));
+    this.safeRejoinPackets = new PreparedPacket().prepare(createSafeClientServerSwitch(legacyJoinGame));
 
-    chunks = new PreparedPacket().prepare(createChunksPackets());
-    spawnPosition = new PreparedPacket()
-        .prepare(createPlayerPosAndLookPacket(
-            world.getSpawnX(), world.getSpawnY(), world.getSpawnZ(), getWorld().getYaw(), getWorld().getPitch()))
-        .prepare(createUpdateViewPosition((int) world.getSpawnX(), (int) world.getSpawnZ()),
+    this.chunks = new PreparedPacket().prepare(this.createChunksPackets());
+    this.spawnPosition = new PreparedPacket()
+        .prepare(this.createPlayerPosAndLookPacket(
+            this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), getWorld().getYaw(), getWorld().getPitch()))
+        .prepare(this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()),
             ProtocolVersion.MINECRAFT_1_14);
   }
 
@@ -125,17 +123,17 @@ public class LimboImpl implements Limbo {
       ChannelPipeline pipeline = connection.getChannel().pipeline();
 
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-        limboAPI.getLogger().info(
+        this.limboAPI.getLogger().info(
             player.getUsername() + " (" + player.getRemoteAddress()
                 + ") has connected to the " + handler.getClass().getSimpleName() + " Limbo");
       }
 
       if (!pipeline.names().contains("prepared-encoder")) {
-        pipeline.addAfter(Connections.MINECRAFT_ENCODER,
-            "prepared-encoder", new PreparedPacketEncoder(connection.getProtocolVersion()));
+        pipeline.addAfter(Connections.MINECRAFT_ENCODER, "prepared-encoder",
+            new PreparedPacketEncoder(connection.getProtocolVersion()));
       }
 
-      limboAPI.setLimboJoined(player);
+      this.limboAPI.setLimboJoined(player);
 
       if (connection.getState() != LimboProtocol.getLimboRegistry()) {
         connection.setState(LimboProtocol.getLimboRegistry());
@@ -144,18 +142,18 @@ public class LimboImpl implements Limbo {
         }
       }
 
-      if (limboAPI.isLimboJoined(player)) {
+      if (this.limboAPI.isLimboJoined(player)) {
         if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
-          connection.delayedWrite(getSafeRejoinPackets());
+          connection.delayedWrite(this.getSafeRejoinPackets());
         } else {
-          connection.delayedWrite(getFastRejoinPackets());
+          connection.delayedWrite(this.getFastRejoinPackets());
         }
       } else {
-        connection.delayedWrite(getJoinPackets());
+        connection.delayedWrite(this.getJoinPackets());
       }
 
-      LimboSessionHandlerImpl limboSessionHandlerImpl =
-          new LimboSessionHandlerImpl(limboAPI, player, handler, connection.getSessionHandler());
+      LimboSessionHandlerImpl limboSessionHandlerImpl = new LimboSessionHandlerImpl(
+          this.limboAPI, player, handler, connection.getSessionHandler());
 
       connection.setSessionHandler(limboSessionHandlerImpl);
 
@@ -182,7 +180,7 @@ public class LimboImpl implements Limbo {
 
   @SneakyThrows
   private JoinGame createJoinGamePacket() {
-    Dimension dimension = world.getDimension();
+    Dimension dimension = this.world.getDimension();
 
     JoinGame joinGame = new JoinGame();
     joinGame.setEntityId(0);
@@ -210,19 +208,19 @@ public class LimboImpl implements Limbo {
 
   private JoinGame createLegacyJoinGamePacket() {
     JoinGame joinGame = createJoinGamePacket();
-    joinGame.setDimension(world.getDimension().getLegacyId());
+    joinGame.setDimension(this.world.getDimension().getLegacyId());
     return joinGame;
   }
 
   private List<ChunkData> createChunksPackets() {
     List<ChunkData> packets = new ArrayList<>();
-    for (VirtualChunk chunk : world.getChunks()) {
-      packets.add(createChunkDataPacket(chunk, (int) world.getSpawnY()));
+    for (VirtualChunk chunk : this.world.getChunks()) {
+      packets.add(this.createChunkDataPacket(chunk, (int) this.world.getSpawnY()));
     }
     return packets;
   }
 
-  // Ported from Velocity
+  // Velocity backport
   public static List<MinecraftPacket> createFastClientServerSwitch(JoinGame joinGame, ProtocolVersion version) {
     // In order to handle switching to another server, you will need to send two packets:
     //
@@ -234,7 +232,7 @@ public class LimboImpl implements Limbo {
     // improving compatibility with mods.
     List<MinecraftPacket> packets = new ArrayList<>();
     int sentOldDim = joinGame.getDimension();
-    if (version.compareTo(MINECRAFT_1_16) < 0) {
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) < 0) {
       // Before Minecraft 1.16, we could not switch to the same dimension without sending an
       // additional respawn. On older versions of Minecraft this forces the client to perform
       // garbage collection which adds additional latency.

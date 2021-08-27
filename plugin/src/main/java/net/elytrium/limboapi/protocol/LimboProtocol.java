@@ -117,12 +117,12 @@ public class LimboProtocol {
   public static void init() {
     register.invoke(limboRegistry.serverbound,
         TeleportConfirm.class, (Supplier<Object>) TeleportConfirm::new,
-        new StateRegistry.PacketMapping[]{
+        new StateRegistry.PacketMapping[] {
             map(0x00, ProtocolVersion.MINECRAFT_1_9, true)
         });
     register.invoke(limboRegistry.serverbound,
         PlayerPositionAndLook.class, (Supplier<Object>) PlayerPositionAndLook::new,
-        new StateRegistry.PacketMapping[]{
+        new StateRegistry.PacketMapping[] {
             map(0x06, ProtocolVersion.MINECRAFT_1_7_2, false),
             map(0x06, ProtocolVersion.MINECRAFT_1_8, false),
             map(0x0D, ProtocolVersion.MINECRAFT_1_9, false),
@@ -135,118 +135,118 @@ public class LimboProtocol {
         });
     register.invoke(limboRegistry.serverbound,
         PlayerPosition.class, (Supplier<Object>) PlayerPosition::new,
-        new StateRegistry.PacketMapping[]{
-          map(0x0B, ProtocolVersion.MINECRAFT_1_7_2, false),
-          map(0x04, ProtocolVersion.MINECRAFT_1_7_6, false),
-          map(0x04, ProtocolVersion.MINECRAFT_1_8, false),
-          map(0x0C, ProtocolVersion.MINECRAFT_1_9, false),
-          map(0x0E, ProtocolVersion.MINECRAFT_1_12, false),
-          map(0x0D, ProtocolVersion.MINECRAFT_1_12_1, false),
-          map(0x10, ProtocolVersion.MINECRAFT_1_13, false),
-          map(0x11, ProtocolVersion.MINECRAFT_1_14, false),
-          map(0x12, ProtocolVersion.MINECRAFT_1_16, false),
-          map(0x11, ProtocolVersion.MINECRAFT_1_17, false)
+        new StateRegistry.PacketMapping[] {
+            map(0x0B, ProtocolVersion.MINECRAFT_1_7_2, false),
+            map(0x04, ProtocolVersion.MINECRAFT_1_7_6, false),
+            map(0x04, ProtocolVersion.MINECRAFT_1_8, false),
+            map(0x0C, ProtocolVersion.MINECRAFT_1_9, false),
+            map(0x0E, ProtocolVersion.MINECRAFT_1_12, false),
+            map(0x0D, ProtocolVersion.MINECRAFT_1_12_1, false),
+            map(0x10, ProtocolVersion.MINECRAFT_1_13, false),
+            map(0x11, ProtocolVersion.MINECRAFT_1_14, false),
+            map(0x12, ProtocolVersion.MINECRAFT_1_16, false),
+            map(0x11, ProtocolVersion.MINECRAFT_1_17, false)
         });
     register.invoke(limboRegistry.serverbound,
         Player.class, (Supplier<Object>) Player::new,
-        new StateRegistry.PacketMapping[]{
-          map(0x03, ProtocolVersion.MINECRAFT_1_7_2, false),
-          map(0x03, ProtocolVersion.MINECRAFT_1_8, false),
-          map(0x0F, ProtocolVersion.MINECRAFT_1_9, false),
-          map(0x0D, ProtocolVersion.MINECRAFT_1_12, false),
-          map(0x0C, ProtocolVersion.MINECRAFT_1_12_1, false),
-          map(0x0F, ProtocolVersion.MINECRAFT_1_13, false),
-          map(0x14, ProtocolVersion.MINECRAFT_1_14, false),
-          map(0x15, ProtocolVersion.MINECRAFT_1_16, false),
-          map(0x14, ProtocolVersion.MINECRAFT_1_17, false)
+        new StateRegistry.PacketMapping[] {
+            map(0x03, ProtocolVersion.MINECRAFT_1_7_2, false),
+            map(0x03, ProtocolVersion.MINECRAFT_1_8, false),
+            map(0x0F, ProtocolVersion.MINECRAFT_1_9, false),
+            map(0x0D, ProtocolVersion.MINECRAFT_1_12, false),
+            map(0x0C, ProtocolVersion.MINECRAFT_1_12_1, false),
+            map(0x0F, ProtocolVersion.MINECRAFT_1_13, false),
+            map(0x14, ProtocolVersion.MINECRAFT_1_14, false),
+            map(0x15, ProtocolVersion.MINECRAFT_1_16, false),
+            map(0x14, ProtocolVersion.MINECRAFT_1_17, false)
         });
     register.invoke(limboRegistry.clientbound,
         PlayerPositionAndLook.class, (Supplier<Object>) PlayerPositionAndLook::new,
-        new StateRegistry.PacketMapping[]{
-          map(0x08, ProtocolVersion.MINECRAFT_1_7_2, true),
-          map(0x2E, ProtocolVersion.MINECRAFT_1_9, true),
-          map(0x2F, ProtocolVersion.MINECRAFT_1_12_1, true),
-          map(0x32, ProtocolVersion.MINECRAFT_1_13, true),
-          map(0x35, ProtocolVersion.MINECRAFT_1_14, true),
-          map(0x36, ProtocolVersion.MINECRAFT_1_15, true),
-          map(0x35, ProtocolVersion.MINECRAFT_1_16, true),
-          map(0x34, ProtocolVersion.MINECRAFT_1_16_2, true),
-          map(0x38, ProtocolVersion.MINECRAFT_1_17, true)
+        new StateRegistry.PacketMapping[] {
+            map(0x08, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x2E, ProtocolVersion.MINECRAFT_1_9, true),
+            map(0x2F, ProtocolVersion.MINECRAFT_1_12_1, true),
+            map(0x32, ProtocolVersion.MINECRAFT_1_13, true),
+            map(0x35, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x36, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x35, ProtocolVersion.MINECRAFT_1_16, true),
+            map(0x34, ProtocolVersion.MINECRAFT_1_16_2, true),
+            map(0x38, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register.invoke(limboRegistry.clientbound,
         ChunkData.class, (Supplier<Object>) ChunkData::new,
-        new StateRegistry.PacketMapping[]{
-          map(0x21, ProtocolVersion.MINECRAFT_1_7_2, true),
-          map(0x21, ProtocolVersion.MINECRAFT_1_8, true),
-          map(0x20, ProtocolVersion.MINECRAFT_1_9, true),
-          map(0x22, ProtocolVersion.MINECRAFT_1_13, true),
-          map(0x21, ProtocolVersion.MINECRAFT_1_14, true),
-          map(0x22, ProtocolVersion.MINECRAFT_1_15, true),
-          map(0x21, ProtocolVersion.MINECRAFT_1_16, true),
-          map(0x20, ProtocolVersion.MINECRAFT_1_16_2, true),
-          map(0x22, ProtocolVersion.MINECRAFT_1_17, true)
+        new StateRegistry.PacketMapping[] {
+            map(0x21, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x21, ProtocolVersion.MINECRAFT_1_8, true),
+            map(0x20, ProtocolVersion.MINECRAFT_1_9, true),
+            map(0x22, ProtocolVersion.MINECRAFT_1_13, true),
+            map(0x21, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x22, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x21, ProtocolVersion.MINECRAFT_1_16, true),
+            map(0x20, ProtocolVersion.MINECRAFT_1_16_2, true),
+            map(0x22, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register.invoke(limboRegistry.clientbound,
         SetSlot.class, (Supplier<Object>) SetSlot::new,
-        new StateRegistry.PacketMapping[]{
-          map(0x2F, ProtocolVersion.MINECRAFT_1_7_2, true),
-          map(0x2F, ProtocolVersion.MINECRAFT_1_8, true),
-          map(0x16, ProtocolVersion.MINECRAFT_1_9, true),
-          map(0x17, ProtocolVersion.MINECRAFT_1_13, true),
-          map(0x16, ProtocolVersion.MINECRAFT_1_14, true),
-          map(0x17, ProtocolVersion.MINECRAFT_1_15, true),
-          map(0x16, ProtocolVersion.MINECRAFT_1_16, true),
-          map(0x15, ProtocolVersion.MINECRAFT_1_16_2, true),
-          map(0x16, ProtocolVersion.MINECRAFT_1_17, true)
+        new StateRegistry.PacketMapping[] {
+            map(0x2F, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x2F, ProtocolVersion.MINECRAFT_1_8, true),
+            map(0x16, ProtocolVersion.MINECRAFT_1_9, true),
+            map(0x17, ProtocolVersion.MINECRAFT_1_13, true),
+            map(0x16, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x17, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x16, ProtocolVersion.MINECRAFT_1_16, true),
+            map(0x15, ProtocolVersion.MINECRAFT_1_16_2, true),
+            map(0x16, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register.invoke(limboRegistry.clientbound,
         MapDataPacket.class, (Supplier<Object>) MapDataPacket::new,
-        new StateRegistry.PacketMapping[]{
-          map(0x34, ProtocolVersion.MINECRAFT_1_7_2, true),
-          map(0x34, ProtocolVersion.MINECRAFT_1_8, true),
-          map(0x24, ProtocolVersion.MINECRAFT_1_9, true),
-          map(0x26, ProtocolVersion.MINECRAFT_1_13, true),
-          map(0x26, ProtocolVersion.MINECRAFT_1_14, true),
-          map(0x27, ProtocolVersion.MINECRAFT_1_15, true),
-          map(0x26, ProtocolVersion.MINECRAFT_1_16, true),
-          map(0x25, ProtocolVersion.MINECRAFT_1_16_2, true),
-          map(0x27, ProtocolVersion.MINECRAFT_1_17, true)
+        new StateRegistry.PacketMapping[] {
+            map(0x34, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x34, ProtocolVersion.MINECRAFT_1_8, true),
+            map(0x24, ProtocolVersion.MINECRAFT_1_9, true),
+            map(0x26, ProtocolVersion.MINECRAFT_1_13, true),
+            map(0x26, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x27, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x26, ProtocolVersion.MINECRAFT_1_16, true),
+            map(0x25, ProtocolVersion.MINECRAFT_1_16_2, true),
+            map(0x27, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register.invoke(limboRegistry.clientbound,
         PlayerAbilities.class, (Supplier<Object>) PlayerAbilities::new,
-        new StateRegistry.PacketMapping[]{
-          map(0x39, ProtocolVersion.MINECRAFT_1_7_2, true),
-          map(0x39, ProtocolVersion.MINECRAFT_1_8, true),
-          map(0x2B, ProtocolVersion.MINECRAFT_1_9, true),
-          map(0x2C, ProtocolVersion.MINECRAFT_1_12_1, true),
-          map(0x2E, ProtocolVersion.MINECRAFT_1_13, true),
-          map(0x31, ProtocolVersion.MINECRAFT_1_14, true),
-          map(0x32, ProtocolVersion.MINECRAFT_1_15, true),
-          map(0x31, ProtocolVersion.MINECRAFT_1_16, true),
-          map(0x30, ProtocolVersion.MINECRAFT_1_16_2, true),
-          map(0x32, ProtocolVersion.MINECRAFT_1_17, true)
+        new StateRegistry.PacketMapping[] {
+            map(0x39, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x39, ProtocolVersion.MINECRAFT_1_8, true),
+            map(0x2B, ProtocolVersion.MINECRAFT_1_9, true),
+            map(0x2C, ProtocolVersion.MINECRAFT_1_12_1, true),
+            map(0x2E, ProtocolVersion.MINECRAFT_1_13, true),
+            map(0x31, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x32, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x31, ProtocolVersion.MINECRAFT_1_16, true),
+            map(0x30, ProtocolVersion.MINECRAFT_1_16_2, true),
+            map(0x32, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register.invoke(limboRegistry.clientbound,
         SetExp.class, (Supplier<Object>) SetExp::new,
-        new StateRegistry.PacketMapping[]{
-          map(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
-          map(0x1F, ProtocolVersion.MINECRAFT_1_8, true),
-          map(0x3D, ProtocolVersion.MINECRAFT_1_9, true),
-          map(0x3F, ProtocolVersion.MINECRAFT_1_12, true),
-          map(0x40, ProtocolVersion.MINECRAFT_1_12_1, true),
-          map(0x43, ProtocolVersion.MINECRAFT_1_13, true),
-          map(0x47, ProtocolVersion.MINECRAFT_1_14, true),
-          map(0x48, ProtocolVersion.MINECRAFT_1_15, true),
-          map(0x51, ProtocolVersion.MINECRAFT_1_17, true)
+        new StateRegistry.PacketMapping[] {
+            map(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x1F, ProtocolVersion.MINECRAFT_1_8, true),
+            map(0x3D, ProtocolVersion.MINECRAFT_1_9, true),
+            map(0x3F, ProtocolVersion.MINECRAFT_1_12, true),
+            map(0x40, ProtocolVersion.MINECRAFT_1_12_1, true),
+            map(0x43, ProtocolVersion.MINECRAFT_1_13, true),
+            map(0x47, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x48, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x51, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register.invoke(limboRegistry.clientbound,
         UpdateViewPosition.class, (Supplier<Object>) UpdateViewPosition::new,
-        new StateRegistry.PacketMapping[]{
-          map(0x40, ProtocolVersion.MINECRAFT_1_7_2, true),
-          map(0x40, ProtocolVersion.MINECRAFT_1_14, true),
-          map(0x41, ProtocolVersion.MINECRAFT_1_15, true),
-          map(0x40, ProtocolVersion.MINECRAFT_1_16_1, true),
-          map(0x49, ProtocolVersion.MINECRAFT_1_17, true)
+        new StateRegistry.PacketMapping[] {
+            map(0x40, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x40, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x41, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x40, ProtocolVersion.MINECRAFT_1_16_1, true),
+            map(0x49, ProtocolVersion.MINECRAFT_1_17, true)
         });
 
     register.invoke(limboRegistry.serverbound,
@@ -311,14 +311,13 @@ public class LimboProtocol {
 
   private static StateRegistry.PacketMapping[] getMappingsForPacket(
       StateRegistry.PacketRegistry registry, Class<? extends MinecraftPacket> packet, boolean encodeOnly) {
-    return getMappingsForPacket(
-        registry, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION, packet, encodeOnly);
+    return getMappingsForPacket(registry, ProtocolVersion.MINIMUM_VERSION,
+        ProtocolVersion.MAXIMUM_VERSION, packet, encodeOnly);
   }
 
   private static StateRegistry.PacketMapping[] getMappingsForPacket(
       StateRegistry.PacketRegistry registry, ProtocolVersion from,
       Class<? extends MinecraftPacket> packet, boolean encodeOnly) {
-
     return getMappingsForPacket(registry, from, ProtocolVersion.MAXIMUM_VERSION, packet, encodeOnly);
   }
 

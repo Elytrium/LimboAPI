@@ -34,11 +34,11 @@ import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 @EqualsAndHashCode(callSuper = false)
 public class TeleportConfirm implements MinecraftPacket {
 
-  int teleportId;
+  private int teleportId;
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    teleportId = ProtocolUtils.readVarInt(buf);
+    this.teleportId = ProtocolUtils.readVarInt(buf);
   }
 
   @Override

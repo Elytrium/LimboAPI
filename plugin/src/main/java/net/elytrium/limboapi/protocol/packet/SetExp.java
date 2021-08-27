@@ -33,9 +33,9 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = false)
 public class SetExp implements MinecraftPacket {
 
-  float expBar;
-  int level;
-  int totalExp;
+  private float expBar;
+  private int level;
+  private int totalExp;
 
   @Override
   public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {

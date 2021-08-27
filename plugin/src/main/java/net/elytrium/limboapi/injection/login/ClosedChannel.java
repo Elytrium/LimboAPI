@@ -33,6 +33,7 @@ import java.net.SocketAddress;
 import org.jetbrains.annotations.NotNull;
 
 public class ClosedChannel implements Channel {
+
   @Override
   public ChannelId id() {
     return null;
@@ -145,8 +146,7 @@ public class ClosedChannel implements Channel {
 
   @Override
   public ChannelFuture connect(SocketAddress socketAddress,
-                               SocketAddress socketAddress1,
-                               ChannelPromise channelPromise) {
+      SocketAddress socketAddress1, ChannelPromise channelPromise) {
     return null;
   }
 

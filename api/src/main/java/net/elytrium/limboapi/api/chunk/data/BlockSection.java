@@ -19,5 +19,4 @@ public interface BlockSection {
   void setBlockAt(int x, int y, int z, @Nullable VirtualBlock block);
 
   BlockSection getSnapshot();
-
 }

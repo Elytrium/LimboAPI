@@ -19,6 +19,7 @@ license {
     matching(includes: ['**/LoginListener.java', '**/LoginTasksQueue.java']) {
         header = project.rootProject.file('HEADER_MIXED.txt')
     }
+
     header = project.rootProject.file('HEADER.txt')
 }
 

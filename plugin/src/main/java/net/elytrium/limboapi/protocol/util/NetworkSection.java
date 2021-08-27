@@ -44,14 +44,14 @@ public class NetworkSection {
   }
 
   public BlockStorage ensureCreated(ProtocolVersion version) {
-    BlockStorage storage = storages.get(version);
+    BlockStorage storage = this.storages.get(version);
     if (storage == null) {
-      synchronized (storages) {
+      synchronized (this.storages) {
         VirtualBlock.Version bVersion = VirtualBlock.Version.map(version);
-        BlockStorage blockStorage = create(version);
-        fillBlocks(blockStorage);
+        BlockStorage blockStorage = this.create(version);
+        this.fillBlocks(blockStorage);
         for (ProtocolVersion pVersion : bVersion.getVersions()) {
-          storages.put(pVersion, blockStorage);
+          this.storages.put(pVersion, blockStorage);
         }
         storage = blockStorage;
       }
@@ -60,14 +60,14 @@ public class NetworkSection {
   }
 
   public int getDataLength(ProtocolVersion version) {
-    BlockStorage blockStorage = ensureCreated(version);
+    BlockStorage blockStorage = this.ensureCreated(version);
 
     int dataLength = blockStorage.getDataLength(version);
 
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) < 0) {
-      dataLength += blockLight.getData().length;
-      if (skyLight != null) {
-        dataLength += skyLight.getData().length;
+      dataLength += this.blockLight.getData().length;
+      if (this.skyLight != null) {
+        dataLength += this.skyLight.getData().length;
       }
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
@@ -79,18 +79,18 @@ public class NetworkSection {
 
   public void writeData(ByteBuf data, int pass, ProtocolVersion version) {
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_9) < 0) {
-      BlockStorage storage = ensureCreated(version);
+      BlockStorage storage = this.ensureCreated(version);
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-        write17Data(data, pass, storage);
+        this.write17Data(data, pass, storage);
       } else {
-        write18Data(data, pass, storage);
+        this.write18Data(data, pass, storage);
       }
     } else if (pass == 0) {
-      BlockStorage storage = ensureCreated(version);
+      BlockStorage storage = this.ensureCreated(version);
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) < 0) {
-        write19Data(data, storage, version);
+        this.write19Data(data, storage, version);
       } else {
-        write114Data(data, storage, version);
+        this.write114Data(data, storage, version);
       }
     }
   }

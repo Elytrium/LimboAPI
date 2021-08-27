@@ -16,7 +16,8 @@ license {
     matching(includes: ['**/mcprotocollib/**']) {
         header = project.rootProject.file('HEADER_MCPROTOCOLLIB.txt')
     }
-    header = project.rootProject.file('HEADER_API.txt')
+
+    header = project.file('HEADER.txt')
 }
 
 dependencies {
@@ -68,11 +69,11 @@ javadoc {
     options.charSet = 'UTF-8'
     options.source = '8'
     options.links(
-            'http://www.slf4j.org/apidocs/',
-            'https://google.github.io/guava/releases/25.1-jre/api/docs/',
-            'https://google.github.io/guice/api-docs/5.0.1/javadoc/',
-            'https://docs.oracle.com/en/java/javase/11/docs/api/',
-            'https://jd.adventure.kyori.net/api/4.7.0/'
+       'http://www.slf4j.org/apidocs/',
+       'https://google.github.io/guava/releases/25.1-jre/api/docs/',
+       'https://google.github.io/guice/api-docs/5.0.1/javadoc/',
+       'https://docs.oracle.com/en/java/javase/11/docs/api/',
+       'https://jd.adventure.kyori.net/api/4.7.0/'
     )
 
     // Disable the crazy super-strict doclint tool in Java 8

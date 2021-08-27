@@ -161,21 +161,21 @@ public final class MapPalette {
 
     @Override
     public int hashCode() {
-      return (red << 16) | (green << 8) | (blue);
+      return (this.red << 16) | (this.green << 8) | (this.blue);
     }
 
     @Override
     public boolean equals(Object otherColor) {
       if (otherColor instanceof Color) {
         Color checkColor = (Color) otherColor;
-        return checkColor.red == red && checkColor.blue == blue && checkColor.green == green;
+        return checkColor.red == this.red && checkColor.blue == this.blue && checkColor.green == this.green;
       } else {
         return false;
       }
     }
 
     public java.awt.Color toJava() {
-      return new java.awt.Color(red, green, blue);
+      return new java.awt.Color(this.red, this.green, this.blue);
     }
   }
 }

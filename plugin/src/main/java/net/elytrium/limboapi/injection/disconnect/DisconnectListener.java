@@ -24,10 +24,11 @@ import net.elytrium.limboapi.LimboAPI;
 
 @RequiredArgsConstructor
 public class DisconnectListener {
+
   private final LimboAPI limboAPI;
 
   @Subscribe
   public void onDisconnect(DisconnectEvent e) {
-    limboAPI.unsetLimboJoined(e.getPlayer());
+    this.limboAPI.unsetLimboJoined(e.getPlayer());
   }
 }

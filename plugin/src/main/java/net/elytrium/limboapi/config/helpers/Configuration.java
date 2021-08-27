@@ -366,12 +366,12 @@ public final class Configuration {
 
   /*------------------------------------------------------------------------*/
   public List<?> getList(String path) {
-    Object def = getDefault(path);
-    return getList(path, (def instanceof List<?>) ? (List<?>) def : Collections.EMPTY_LIST);
+    Object def = this.getDefault(path);
+    return this.getList(path, (def instanceof List<?>) ? (List<?>) def : Collections.EMPTY_LIST);
   }
 
   public List<?> getList(String path, List<?> def) {
-    Object val = get(path, def);
+    Object val = this.get(path, def);
     return (val instanceof List<?>) ? (List<?>) val : def;
   }
 }

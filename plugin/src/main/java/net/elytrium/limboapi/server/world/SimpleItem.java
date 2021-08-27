@@ -45,11 +45,11 @@ public class SimpleItem implements VirtualItem {
   private final Map<Version, Short> versionIDs = new EnumMap<>(Version.class);
 
   public short getId(ProtocolVersion version) {
-    return getId(Version.map(version));
+    return this.getId(Version.map(version));
   }
 
   public short getId(Version version) {
-    return versionIDs.get(version);
+    return this.versionIDs.get(version);
   }
 
   public static void init() {
@@ -82,27 +82,35 @@ public class SimpleItem implements VirtualItem {
     MINECRAFT_1_16_2(EnumSet.range(ProtocolVersion.MINECRAFT_1_16_2, ProtocolVersion.MINECRAFT_1_16_4)),
     MINECRAFT_1_17(EnumSet.range(ProtocolVersion.MINECRAFT_1_17, ProtocolVersion.MINECRAFT_1_17_1));
 
-    private static final EnumMap<ProtocolVersion, Version> mcVersionToItemVersions = new EnumMap<>(
-        ProtocolVersion.class);
+    private static final EnumMap<ProtocolVersion, Version>
+        mcVersionToItemVersions = new EnumMap<>(ProtocolVersion.class);
 
     public static Version parse(String from) {
       switch (from) {
-        case "1.13":
+        case "1.13": {
           return MINECRAFT_1_13;
-        case "1.13.2":
+        }
+        case "1.13.2": {
           return MINECRAFT_1_13_2;
-        case "1.14":
+        }
+        case "1.14": {
           return MINECRAFT_1_14;
-        case "1.15":
+        }
+        case "1.15": {
           return MINECRAFT_1_15;
-        case "1.16":
+        }
+        case "1.16": {
           return MINECRAFT_1_16;
-        case "1.16.2":
+        }
+        case "1.16.2": {
           return MINECRAFT_1_16_2;
-        case "1.17":
+        }
+        case "1.17": {
           return MINECRAFT_1_17;
-        default:
+        }
+        default: {
           return LEGACY;
+        }
       }
     }
 
@@ -125,7 +133,7 @@ public class SimpleItem implements VirtualItem {
     }
 
     public Set<ProtocolVersion> getVersions() {
-      return versions;
+      return this.versions;
     }
 
     public static Version map(ProtocolVersion protocolVersion) {

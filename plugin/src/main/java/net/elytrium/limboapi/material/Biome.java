@@ -66,9 +66,9 @@ public enum Biome implements VirtualBiome {
 
   public CompoundBinaryTag encodeBiome() {
     return CompoundBinaryTag.builder()
-        .putString("name", name)
-        .putInt("id", id)
-        .put("element", element.encode()).build();
+        .putString("name", this.name)
+        .putInt("id", this.id)
+        .put("element", this.element.encode()).build();
   }
 
   public static CompoundBinaryTag getRegistry() {
@@ -91,7 +91,7 @@ public enum Biome implements VirtualBiome {
     public final Effects effects;
 
     public Element(String precipitation, float depth, float temperature,
-                   float scale, float downfall, String category, Effects effects) {
+        float scale, float downfall, String category, Effects effects) {
       this.precipitation = precipitation;
       this.depth = depth;
       this.temperature = temperature;
@@ -103,13 +103,13 @@ public enum Biome implements VirtualBiome {
 
     public CompoundBinaryTag encode() {
       return CompoundBinaryTag.builder()
-          .putString("precipitation", precipitation)
-          .putFloat("depth", depth)
-          .putFloat("temperature", temperature)
-          .putFloat("scale", scale)
-          .putFloat("downfall", downfall)
-          .putString("category", category)
-          .put("effects", effects.encode()).build();
+          .putString("precipitation", this.precipitation)
+          .putFloat("depth", this.depth)
+          .putFloat("temperature", this.temperature)
+          .putFloat("scale", this.scale)
+          .putFloat("downfall", this.downfall)
+          .putString("category", this.category)
+          .put("effects", this.effects.encode()).build();
     }
   }
 
@@ -140,31 +140,31 @@ public enum Biome implements VirtualBiome {
 
     public CompoundBinaryTag encode() {
       Builder result = CompoundBinaryTag.builder();
-      result.putInt("sky_color", skyColor)
-          .putInt("water_fog_color", waterColor)
-          .putInt("fog_color", fogColor)
-          .putInt("water_color", waterColor);
+      result.putInt("sky_color", this.skyColor)
+          .putInt("water_fog_color", this.waterColor)
+          .putInt("fog_color", this.fogColor)
+          .putInt("water_color", this.waterColor);
 
-      if (foliageColor != null) {
-        result.putInt("foliage_color", foliageColor);
+      if (this.foliageColor != null) {
+        result.putInt("foliage_color", this.foliageColor);
       }
-      if (grassColorModifier != null) {
-        result.putString("grass_color_modifier", grassColorModifier);
+      if (this.grassColorModifier != null) {
+        result.putString("grass_color_modifier", this.grassColorModifier);
       }
-      if (music != null) {
-        result.put("music", music.encode());
+      if (this.music != null) {
+        result.put("music", this.music.encode());
       }
-      if (ambientSound != null) {
-        result.putString("ambient_sound", ambientSound);
+      if (this.ambientSound != null) {
+        result.putString("ambient_sound", this.ambientSound);
       }
-      if (additionsSound != null) {
-        result.put("additions_sound", additionsSound.encode());
+      if (this.additionsSound != null) {
+        result.put("additions_sound", this.additionsSound.encode());
       }
-      if (moodSound != null) {
-        result.put("mood_sound", moodSound.encode());
+      if (this.moodSound != null) {
+        result.put("mood_sound", this.moodSound.encode());
       }
-      if (particle != null) {
-        result.put("particle", particle.encode());
+      if (this.particle != null) {
+        result.put("particle", this.particle.encode());
       }
       return result.build();
     }
@@ -186,10 +186,10 @@ public enum Biome implements VirtualBiome {
 
       public CompoundBinaryTag encode() {
         return CompoundBinaryTag.builder()
-            .putInt("tick_delay", tickDelay)
-            .putDouble("offset", offset)
-            .putInt("block_search_extent", blockSearchExtent)
-            .putString("sound", sound).build();
+            .putInt("tick_delay", this.tickDelay)
+            .putDouble("offset", this.offset)
+            .putInt("block_search_extent", this.blockSearchExtent)
+            .putString("sound", this.sound).build();
       }
     }
 
@@ -205,10 +205,10 @@ public enum Biome implements VirtualBiome {
 
       public CompoundBinaryTag encode() {
         return CompoundBinaryTag.builder()
-            .putBoolean("replace_current_music", replaceCurrentMusic)
-            .putString("sound", sound)
-            .putInt("max_delay", maxDelay)
-            .putInt("min_delay", minDelay).build();
+            .putBoolean("replace_current_music", this.replaceCurrentMusic)
+            .putString("sound", this.sound)
+            .putInt("max_delay", this.maxDelay)
+            .putInt("min_delay", this.minDelay).build();
       }
     }
 
@@ -222,8 +222,8 @@ public enum Biome implements VirtualBiome {
 
       public CompoundBinaryTag encode() {
         return CompoundBinaryTag.builder()
-            .putString("sound", sound)
-            .putDouble("tick_chance", tickChance).build();
+            .putString("sound", this.sound)
+            .putDouble("tick_chance", this.tickChance).build();
       }
     }
 
@@ -237,8 +237,8 @@ public enum Biome implements VirtualBiome {
 
       public CompoundBinaryTag encode() {
         return CompoundBinaryTag.builder()
-            .putFloat("probability", probability)
-            .put("options", options.encode()).build();
+            .putFloat("probability", this.probability)
+            .put("options", this.options.encode()).build();
       }
 
       @Data
@@ -250,7 +250,7 @@ public enum Biome implements VirtualBiome {
 
         public CompoundBinaryTag encode() {
           return CompoundBinaryTag.builder()
-              .putString("type", type).build();
+              .putString("type", this.type).build();
         }
       }
     }

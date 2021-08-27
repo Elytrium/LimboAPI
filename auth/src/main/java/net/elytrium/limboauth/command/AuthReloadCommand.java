@@ -17,6 +17,7 @@
 
 package net.elytrium.limboauth.command;
 
+import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import net.elytrium.limboauth.AuthPlugin;
 import net.elytrium.limboauth.config.Settings;
@@ -26,9 +27,21 @@ public class AuthReloadCommand implements SimpleCommand {
 
   @Override
   public void execute(final Invocation invocation) {
-    AuthPlugin.getInstance().reload();
-    invocation.source().sendMessage(
-        LegacyComponentSerializer.legacyAmpersand()
+    final CommandSource source = invocation.source();
+
+    try {
+      AuthPlugin.getInstance().reload();
+    } catch (Exception e) {
+      e.printStackTrace();
+      source.sendMessage(
+          LegacyComponentSerializer
+              .legacyAmpersand()
+              .deserialize(Settings.IMP.MAIN.STRINGS.RELOAD));
+    }
+
+    source.sendMessage(
+        LegacyComponentSerializer
+            .legacyAmpersand()
             .deserialize(Settings.IMP.MAIN.STRINGS.RELOAD));
   }
 
