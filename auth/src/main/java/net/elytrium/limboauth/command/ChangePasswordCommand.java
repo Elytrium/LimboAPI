@@ -22,7 +22,7 @@ import com.j256.ormlite.stmt.UpdateBuilder;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
-import lombok.SneakyThrows;
+import java.sql.SQLException;
 import net.elytrium.limboauth.config.Settings;
 import net.elytrium.limboauth.handler.AuthSessionHandler;
 import net.elytrium.limboauth.model.RegisteredPlayer;
@@ -36,27 +36,43 @@ public class ChangePasswordCommand implements SimpleCommand {
     this.playerDao = playerDao;
   }
 
-  @SneakyThrows
   @Override
   public void execute(final Invocation invocation) {
     final CommandSource source = invocation.source();
     final String[] args = invocation.arguments();
 
-    if (args.length != 1 || !(source instanceof Player)) {
+    if (!(source instanceof Player)) {
+      source.sendMessage(
+          LegacyComponentSerializer
+              .legacyAmpersand()
+              .deserialize(Settings.IMP.MAIN.STRINGS.NOT_PLAYER));
+      return;
+    }
+
+    if (args.length != 1) {
       source.sendMessage(
           LegacyComponentSerializer
               .legacyAmpersand()
               .deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_USAGE));
     } else {
-      UpdateBuilder<RegisteredPlayer, String> updateBuilder = playerDao.updateBuilder();
-      updateBuilder.where().eq("nickname", ((Player) source).getUsername());
-      updateBuilder.updateColumnValue("hash", AuthSessionHandler.genHash(args[0]));
-      updateBuilder.update();
+      try {
+        UpdateBuilder<RegisteredPlayer, String> updateBuilder = this.playerDao.updateBuilder();
+        updateBuilder.where().eq("nickname", ((Player) source).getUsername());
+        updateBuilder.updateColumnValue("hash", AuthSessionHandler.genHash(args[0]));
+        updateBuilder.update();
 
-      source.sendMessage(
-          LegacyComponentSerializer
-              .legacyAmpersand()
-              .deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_SUCCESSFUL));
+        source.sendMessage(
+            LegacyComponentSerializer
+                .legacyAmpersand()
+                .deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_SUCCESSFUL));
+      } catch (SQLException e) {
+        e.printStackTrace();
+
+        source.sendMessage(
+            LegacyComponentSerializer
+                .legacyAmpersand()
+                .deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
+      }
     }
   }
 }
