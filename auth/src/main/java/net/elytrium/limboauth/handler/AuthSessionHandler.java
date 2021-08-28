@@ -56,8 +56,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
 
   private int attempts = Settings.IMP.MAIN.LOGIN_ATTEMPTS;
 
-  public AuthSessionHandler(
-      Dao<RegisteredPlayer, String> playerDao, Player proxyPlayer, String lowercaseNickname) {
+  public AuthSessionHandler(Dao<RegisteredPlayer, String> playerDao, Player proxyPlayer, String lowercaseNickname) {
     this.playerDao = playerDao;
     this.proxyPlayer = proxyPlayer;
     this.playerInfo = fetchInfo(lowercaseNickname);
@@ -70,43 +69,47 @@ public class AuthSessionHandler implements LimboSessionHandler {
         case "/reg":
         case "/register":
         case "/r":
-          if (args.length >= 3 && !totp && playerInfo == null && args[1].equals(args[2])) {
-            register(args[1]);
-            finish();
+          if (args.length >= 3 && !this.totp && this.playerInfo == null && args[1].equals(args[2])) {
+            this.register(args[1]);
+            this.finish();
           } else {
-            sendMessage();
+            this.sendMessage();
           }
           break;
         case "/log":
         case "/login":
         case "/l":
-          if (args.length >= 2 && !totp && playerInfo != null) {
-            if (checkPassword(args[1])) {
-              finishOrTotp();
-            } else if (attempts-- != 0) {
-              proxyPlayer.sendMessage(
-                  LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+          if (args.length >= 2 && !this.totp && this.playerInfo != null) {
+            if (this.checkPassword(args[1])) {
+              this.finishOrTotp();
+            } else if (this.attempts-- != 0) {
+              this.proxyPlayer.sendMessage(
+                  LegacyComponentSerializer
+                      .legacyAmpersand()
+                      .deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
             } else {
-              proxyPlayer.disconnect(
-                  LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+              this.proxyPlayer.disconnect(
+                  LegacyComponentSerializer
+                      .legacyAmpersand()
+                      .deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
             }
           } else {
-            sendMessage();
+            this.sendMessage();
           }
           break;
         case "/2fa":
           if (args.length >= 2 && totp) {
-            if (verifier.isValidCode(playerInfo.totpToken, args[1])) {
-              finish();
+            if (verifier.isValidCode(this.playerInfo.totpToken, args[1])) {
+              this.finish();
             } else {
-              sendMessage();
+              this.sendMessage();
             }
           } else {
-            sendMessage();
+            this.sendMessage();
           }
           break;
         default:
-          sendMessage();
+          this.sendMessage();
           break;
       }
     }
@@ -115,14 +118,14 @@ public class AuthSessionHandler implements LimboSessionHandler {
   @Override
   public void onSpawn(Limbo server, LimboPlayer player) {
     this.player = player;
-    this.ip = proxyPlayer.getRemoteAddress().getAddress().getHostAddress();
+    this.ip = this.proxyPlayer.getRemoteAddress().getAddress().getHostAddress();
 
-    if (playerInfo == null) {
-      checkIp();
+    if (this.playerInfo == null) {
+      this.checkIp();
     } else {
-      checkCase();
+      this.checkCase();
     }
-    sendMessage();
+    this.sendMessage();
   }
 
   @SneakyThrows
@@ -132,19 +135,19 @@ public class AuthSessionHandler implements LimboSessionHandler {
   }
 
   private RegisteredPlayer fetchInfo(String nickname) {
-    return fetchInfo(playerDao, nickname);
+    return fetchInfo(this.playerDao, nickname);
   }
 
   private boolean checkPassword(String password) {
     return BCrypt.verifyer().verify(
         password.getBytes(StandardCharsets.UTF_8),
-        playerInfo.hash.getBytes(StandardCharsets.UTF_8)
+        this.playerInfo.hash.getBytes(StandardCharsets.UTF_8)
     ).verified;
   }
 
   @SneakyThrows
   private void checkIp() {
-    List<RegisteredPlayer> alreadyRegistered = this.playerDao.queryForEq("ip", ip);
+    List<RegisteredPlayer> alreadyRegistered = this.playerDao.queryForEq("ip", this.ip);
 
     AtomicInteger sizeOfValid = new AtomicInteger(alreadyRegistered.size());
 
@@ -152,11 +155,11 @@ public class AuthSessionHandler implements LimboSessionHandler {
       long checkDate = System.currentTimeMillis() - Settings.IMP.MAIN.IP_LIMIT_VALID_TIME;
 
       alreadyRegistered.stream()
-          .filter(e -> e.regdate < checkDate)
+          .filter(e -> e.regDate < checkDate)
           .forEach(e -> {
             try {
               e.ip = "";
-              playerDao.update(e);
+              this.playerDao.update(e);
               sizeOfValid.decrementAndGet();
             } catch (SQLException ex) {
               ex.printStackTrace();
@@ -184,47 +187,52 @@ public class AuthSessionHandler implements LimboSessionHandler {
 
   @SneakyThrows
   private void register(String password) {
-    String hash = genHash(password);
-
     RegisteredPlayer registeredPlayer = new RegisteredPlayer(
-        proxyPlayer.getUsername(),
-        proxyPlayer.getUsername().toLowerCase(Locale.ROOT),
-        hash,
-        ip,
+        this.proxyPlayer.getUsername(),
+        this.proxyPlayer.getUsername().toLowerCase(Locale.ROOT),
+        genHash(password),
+        this.ip,
         "",
         System.currentTimeMillis()
     );
 
-    playerDao.create(registeredPlayer);
+    this.playerDao.create(registeredPlayer);
   }
 
   private void finishOrTotp() {
-    if (playerInfo.totpToken.isEmpty()) {
-      finish();
+    if (this.playerInfo.totpToken.isEmpty()) {
+      this.finish();
     } else {
-      totp = true;
-      sendMessage();
+      this.totp = true;
+      this.sendMessage();
     }
   }
 
   private void finish() {
-    proxyPlayer.sendMessage(
-        LegacyComponentSerializer.legacyAmpersand()
+    this.proxyPlayer.sendMessage(
+        LegacyComponentSerializer
+            .legacyAmpersand()
             .deserialize(Settings.IMP.MAIN.STRINGS.LOGIN_SUCCESS));
-    AuthPlugin.getInstance().cacheAuthUser(proxyPlayer);
-    player.disconnect();
+    AuthPlugin.getInstance().cacheAuthUser(this.proxyPlayer);
+    this.player.disconnect();
   }
 
   private void sendMessage() {
-    if (totp) {
-      proxyPlayer.sendMessage(
-          LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP));
-    } else if (playerInfo == null) {
-      proxyPlayer.sendMessage(
-          LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.REGISTER));
+    if (this.totp) {
+      this.proxyPlayer.sendMessage(
+          LegacyComponentSerializer
+              .legacyAmpersand()
+              .deserialize(Settings.IMP.MAIN.STRINGS.TOTP));
+    } else if (this.playerInfo == null) {
+      this.proxyPlayer.sendMessage(
+          LegacyComponentSerializer
+              .legacyAmpersand()
+              .deserialize(Settings.IMP.MAIN.STRINGS.REGISTER));
     } else {
-      proxyPlayer.sendMessage(
-          LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.LOGIN));
+      this.proxyPlayer.sendMessage(
+          LegacyComponentSerializer
+              .legacyAmpersand()
+              .deserialize(Settings.IMP.MAIN.STRINGS.LOGIN));
     }
   }
 
