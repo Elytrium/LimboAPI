@@ -17,10 +17,7 @@
 
 package net.elytrium.limbofilter;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontFormatException;
-import java.awt.GraphicsEnvironment;
+import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -38,7 +35,6 @@ import lombok.experimental.UtilityClass;
 import net.elytrium.limboapi.protocol.map.CraftMapCanvas;
 import net.elytrium.limboapi.protocol.map.MapPalette;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
-import net.elytrium.limbofilter.cache.CachedCaptcha;
 import net.elytrium.limbofilter.config.Settings;
 import net.elytrium.limbofilter.generator.CaptchaPainter;
 import org.slf4j.Logger;
@@ -51,6 +47,7 @@ import org.slf4j.Logger;
 public class CaptchaGeneration {
 
   private static final CraftMapCanvas cachedBackgroundMap = new CraftMapCanvas();
+  private final FilterPlugin plugin = FilterPlugin.getInstance();
   private final Logger logger = FilterPlugin.getInstance().getLogger();
   private final CaptchaPainter painter = new CaptchaPainter();
   private final List<Font> fonts = new ArrayList<>();
@@ -138,7 +135,7 @@ public class CaptchaGeneration {
         painter.draw(fonts.get(fontNumber), randomNotWhiteColor(), answer);
     map.drawImage(0, 0, image);
     MapDataPacket packet = new MapDataPacket(0, (byte) 0, map.getMapData());
-    CachedCaptcha.createCaptchaPacket(packet, answer);
+    plugin.getCachedCaptcha().createCaptchaPacket(packet, answer);
   }
 
   private Color randomNotWhiteColor() {

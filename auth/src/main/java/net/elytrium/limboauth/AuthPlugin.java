@@ -114,6 +114,7 @@ public class AuthPlugin {
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
     instance = this;
+    this.server.getEventManager().register(this, new AuthListener());
     this.reload();
   }
 
@@ -206,8 +207,6 @@ public class AuthPlugin {
     this.nicknamePremium = LegacyComponentSerializer
         .legacyAmpersand()
         .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_PREMIUM);
-
-    this.server.getEventManager().register(this, new AuthListener());
 
     this.scheduler = Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
 
