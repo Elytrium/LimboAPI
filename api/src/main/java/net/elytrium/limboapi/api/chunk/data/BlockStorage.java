@@ -8,15 +8,15 @@
 package net.elytrium.limboapi.api.chunk.data;
 
 import com.velocitypowered.api.network.ProtocolVersion;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import org.jetbrains.annotations.NotNull;
 
 public interface BlockStorage {
 
-  void set(int x, int y, int z, @NotNull VirtualBlock block);
+  void set(int x, int y, int z, @NonNull VirtualBlock block);
 
-  @NotNull
+  @NonNull
   VirtualBlock get(int x, int y, int z);
 
   void write(ByteBuf buf, ProtocolVersion version);

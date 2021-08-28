@@ -35,8 +35,7 @@ import net.elytrium.limboapi.protocol.LimboProtocol;
 
 public class PreparedPacket {
 
-  private final Map<ProtocolVersion, List<ByteBuf>> packets =
-      new ConcurrentHashMap<>();
+  private final Map<ProtocolVersion, List<ByteBuf>> packets = new ConcurrentHashMap<>();
 
   public <T extends MinecraftPacket> PreparedPacket prepare(T packet) {
     return prepare((Function<ProtocolVersion, T>) (version) ->
@@ -68,8 +67,8 @@ public class PreparedPacket {
     return prepare(packet, from, ProtocolVersion.MAXIMUM_VERSION);
   }
 
-  public <T extends MinecraftPacket> PreparedPacket prepare(
-      Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to) {
+  public <T extends MinecraftPacket> PreparedPacket prepare(Function<ProtocolVersion, T> packet,
+      ProtocolVersion from, ProtocolVersion to) {
     for (ProtocolVersion protocolVersion : EnumSet.range(from, to)) {
       ByteBuf buf = encodePacket(packet.apply(protocolVersion), protocolVersion);
       if (this.packets.containsKey(protocolVersion)) {

@@ -19,6 +19,7 @@ package net.elytrium.limboapi.protocol.data;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.BlockStorage;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
@@ -35,7 +35,6 @@ import net.elytrium.limboapi.mcprotocollib.BitStorage116;
 import net.elytrium.limboapi.mcprotocollib.BitStorage19;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
-import org.jetbrains.annotations.NotNull;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BlockStorage19 implements BlockStorage {
@@ -58,7 +57,7 @@ public class BlockStorage19 implements BlockStorage {
   }
 
   @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
-  public @NotNull VirtualBlock get(int x, int y, int z) {
+  public @NonNull VirtualBlock get(int x, int y, int z) {
     return get(index(x, y, z));
   }
 

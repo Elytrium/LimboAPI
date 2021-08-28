@@ -17,12 +17,12 @@
 
 package net.elytrium.limboapi.material;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.material.Biome.Effects.MoodSound;
@@ -75,8 +75,7 @@ public enum Biome implements VirtualBiome {
     return CompoundBinaryTag.builder()
         .putString("type", "minecraft:worldgen/biome")
         .put("value", ListBinaryTag
-            .from(Arrays.stream(Biome.values()).map(Biome::encodeBiome)
-                .collect(Collectors.toList()))).build();
+            .from(Arrays.stream(Biome.values()).map(Biome::encodeBiome).collect(Collectors.toList()))).build();
   }
 
   @Getter

@@ -77,8 +77,7 @@ public class LoginTasksQueue {
 
   static {
     try {
-      initialCtor
-          = InitialConnectSessionHandler.class.getDeclaredConstructor(ConnectedPlayer.class);
+      initialCtor = InitialConnectSessionHandler.class.getDeclaredConstructor(ConnectedPlayer.class);
       initialCtor.setAccessible(true);
 
       loginConnectionField = LoginSessionHandler.class.getDeclaredField("mcConnection");
@@ -120,7 +119,7 @@ public class LoginTasksQueue {
     try {
       // ported from Velocity
       this.server.getEventManager()
-          .fire(new PermissionsSetupEvent(player, (PermissionProvider) defaultPermissions.get(null)))
+          .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) defaultPermissions.get(null)))
           .thenAcceptAsync(event -> {
             // wait for permissions to load, then set the players permission function
             final PermissionFunction function = event.createFunction(this.player);
@@ -135,15 +134,13 @@ public class LoginTasksQueue {
               try {
                 setPermissionFunction.invoke(this.player, function);
               } catch (IllegalAccessException | InvocationTargetException ex) {
-                this.limboAPI.getLogger()
-                    .error("Exception while completing injection to {}", this.player, ex);
+                this.limboAPI.getLogger().error("Exception while completing injection to {}", this.player, ex);
               }
             }
-            initialize(connection);
+            this.initialize(connection);
           });
     } catch (IllegalAccessException ex) {
-      this.limboAPI.getLogger()
-          .error("Exception while completing injection to {}", this.player, ex);
+      this.limboAPI.getLogger().error("Exception while completing injection to {}", this.player, ex);
     }
   }
 
@@ -169,8 +166,7 @@ public class LoginTasksQueue {
             this.player.disconnect0(reason.get(), true);
           } else {
             if (!this.server.registerConnection(this.player)) {
-              this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"),
-                  true);
+              this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), true);
               return;
             }
 

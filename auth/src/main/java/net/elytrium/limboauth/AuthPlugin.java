@@ -153,6 +153,7 @@ public class AuthPlugin {
       }
       default: {
         this.logger.error("WRONG DATABASE TYPE.");
+        this.server.shutdown();
         return;
       }
     }

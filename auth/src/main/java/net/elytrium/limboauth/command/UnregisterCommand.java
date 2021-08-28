@@ -22,7 +22,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import java.sql.SQLException;
 import java.util.Locale;
-import lombok.SneakyThrows;
 import net.elytrium.limboauth.config.Settings;
 import net.elytrium.limboauth.model.RegisteredPlayer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;

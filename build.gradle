@@ -18,17 +18,6 @@ allprojects {
     version = '1.0.0'
 
     ext {
-        // dependency versions
-        textVersion = '3.0.4'
-        adventureVersion = '4.8.1'
-        junitVersion = '5.7.0'
-        slf4jVersion = '1.7.30'
-        log4jVersion = '2.13.3'
-        nettyVersion = '4.1.58.Final'
-        guavaVersion = '25.1-jre'
-        checkerFrameworkVersion = '3.6.1'
-        configurateVersion = '3.7.1'
-
         getCurrentShortRevision = {
             new ByteArrayOutputStream().withStream { os ->
                 exec {
@@ -41,6 +30,10 @@ allprojects {
         }
     }
 
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
     java {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -49,11 +42,6 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-
-        // for kyoripowered dependencies
-        maven {
-            url 'https://oss.sonatype.org/content/groups/public/'
-        }
 
         maven {
             name = 'velocitypowered-repo'
@@ -69,16 +57,6 @@ allprojects {
             name = 'spongepowered-repo'
             url = 'https://repo.spongepowered.org/maven'
         }
-    }
-
-    test {
-        reports {
-            junitXml.enabled = true
-        }
-    }
-
-    tasks.withType(JavaCompile) {
-        options.encoding = 'UTF-8'
     }
 
     tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {

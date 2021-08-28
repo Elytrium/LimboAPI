@@ -18,10 +18,10 @@
 package net.elytrium.limboapi.protocol.util;
 
 import com.velocitypowered.api.network.ProtocolVersion;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import java.util.EnumMap;
 import java.util.Map;
-import lombok.NonNull;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.BlockSection;
 import net.elytrium.limboapi.api.chunk.data.BlockStorage;
@@ -101,9 +101,9 @@ public class NetworkSection {
     } else if (pass == 1) {
       storage.write(data, ProtocolVersion.MINECRAFT_1_7_2);
     } else if (pass == 2) {
-      data.writeBytes(blockLight.getData());
-    } else if (pass == 3 && skyLight != null) {
-      data.writeBytes(skyLight.getData());
+      data.writeBytes(this.blockLight.getData());
+    } else if (pass == 3 && this.skyLight != null) {
+      data.writeBytes(this.skyLight.getData());
     }
   }
 
@@ -111,22 +111,22 @@ public class NetworkSection {
     if (pass == 0) {
       storage.write(data, ProtocolVersion.MINECRAFT_1_8);
     } else if (pass == 1) {
-      data.writeBytes(blockLight.getData());
-    } else if (pass == 2 && skyLight != null) {
-      data.writeBytes(skyLight.getData());
+      data.writeBytes(this.blockLight.getData());
+    } else if (pass == 2 && this.skyLight != null) {
+      data.writeBytes(this.skyLight.getData());
     }
   }
 
   private void write19Data(ByteBuf data, BlockStorage storage, ProtocolVersion version) {
     storage.write(data, version);
-    data.writeBytes(blockLight.getData());
-    if (skyLight != null) {
-      data.writeBytes(skyLight.getData());
+    data.writeBytes(this.blockLight.getData());
+    if (this.skyLight != null) {
+      data.writeBytes(this.skyLight.getData());
     }
   }
 
   private void write114Data(ByteBuf data, BlockStorage storage, ProtocolVersion version) {
-    data.writeShort(blockCount);
+    data.writeShort(this.blockCount);
     storage.write(data, version);
   }
 
@@ -135,7 +135,7 @@ public class NetworkSection {
     for (int y = 0; y < 16; y++) {
       for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
-          VirtualBlock block = section.getBlockAt(x, y, z);
+          VirtualBlock block = this.section.getBlockAt(x, y, z);
           if (block.isAir()) {
             continue;
           }

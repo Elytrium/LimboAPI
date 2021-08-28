@@ -29,8 +29,7 @@ public class PreparedPacketEncoder extends MessageToMessageEncoder<PreparedPacke
   private final ProtocolVersion protocolVersion;
 
   @Override
-  protected void encode(ChannelHandlerContext ctx, PreparedPacket msg, List<Object> out)
-      throws Exception {
+  protected void encode(ChannelHandlerContext ctx, PreparedPacket msg, List<Object> out) throws Exception {
     if (msg.hasPacketsFor(this.protocolVersion)) {
       out.addAll(msg.getPackets(this.protocolVersion));
     }

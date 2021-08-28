@@ -7,9 +7,9 @@
 
 package net.elytrium.limboapi.api.chunk;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface VirtualWorld {
 
@@ -29,9 +29,9 @@ public interface VirtualWorld {
 
   VirtualBlock getBlock(int x, int y, int z);
 
-  void setBiome2d(int x, int z, @NotNull VirtualBiome biome);
+  void setBiome2d(int x, int z, @NonNull VirtualBiome biome);
 
-  void setBiome3d(int x, int y, int z, @NotNull VirtualBiome biome);
+  void setBiome3d(int x, int y, int z, @NonNull VirtualBiome biome);
 
   VirtualBiome getBiome(int x, int y, int z);
 

@@ -17,6 +17,7 @@
 
 package net.elytrium.limboapi.injection.dummy;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -33,11 +34,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("ConstantConditions")
-@SuppressFBWarnings(value = "NP_NONNULL_RETURN_VIOLATION",
-    justification = "This is dummy class.")
+@SuppressFBWarnings(value = "NP_NONNULL_RETURN_VIOLATION", justification = "This is dummy class.")
 public class DummyEventPool implements EventLoop {
 
   @Override
@@ -116,7 +115,7 @@ public class DummyEventPool implements EventLoop {
   }
 
   @Override
-  public boolean awaitTermination(long l, @NotNull TimeUnit timeUnit) {
+  public boolean awaitTermination(long l, @NonNull TimeUnit timeUnit) {
     return false;
   }
 
@@ -145,31 +144,27 @@ public class DummyEventPool implements EventLoop {
     return null;
   }
 
-  @NotNull
+  @NonNull
   @Override
-  public <T> List<java.util.concurrent.Future<T>> invokeAll(
-      @NotNull Collection<? extends Callable<T>> collection) {
+  public <T> List<java.util.concurrent.Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> collection) {
     return null;
   }
 
-  @NotNull
+  @NonNull
   @Override
-  public <T> List<java.util.concurrent.Future<T>> invokeAll(
-      @NotNull Collection<? extends Callable<T>> collection,
-      long l,
-      @NotNull TimeUnit timeUnit) {
+  public <T> List<java.util.concurrent.Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> collection,
+      long l, @NonNull TimeUnit timeUnit) {
     return null;
   }
 
-  @NotNull
+  @NonNull
   @Override
-  public <T> T invokeAny(@NotNull Collection<? extends Callable<T>> collection) {
+  public <T> T invokeAny(@NonNull Collection<? extends Callable<T>> collection) {
     return null;
   }
 
   @Override
-  public <T> T invokeAny(
-      @NotNull Collection<? extends Callable<T>> collection, long l, @NotNull TimeUnit timeUnit) {
+  public <T> T invokeAny(@NonNull Collection<? extends Callable<T>> collection, long l, @NonNull TimeUnit timeUnit) {
     return null;
   }
 
@@ -209,7 +204,7 @@ public class DummyEventPool implements EventLoop {
   }
 
   @Override
-  public void execute(@NotNull Runnable runnable) {
+  public void execute(@NonNull Runnable runnable) {
 
   }
 }
