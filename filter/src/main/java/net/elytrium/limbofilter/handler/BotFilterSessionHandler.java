@@ -33,7 +33,6 @@ import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.protocol.packet.SetExp;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.elytrium.limbofilter.FilterPlugin;
-import net.elytrium.limbofilter.cache.CachedCaptcha;
 import net.elytrium.limbofilter.cache.CachedPackets;
 import net.elytrium.limbofilter.cache.CaptchaHandler;
 import net.elytrium.limbofilter.config.Settings;
@@ -261,7 +260,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   }
 
   private void sendCaptcha() {
-    CaptchaHandler captchaHandler = CachedCaptcha.randomCaptcha();
+    CaptchaHandler captchaHandler = plugin.getCachedCaptcha().randomCaptcha();
     String captchaAnswer = captchaHandler.getAnswer();
     setCaptchaAnswer(captchaAnswer);
     connection.delayedWrite(packets.getSetSlot());

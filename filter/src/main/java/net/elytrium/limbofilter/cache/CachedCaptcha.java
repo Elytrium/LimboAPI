@@ -28,14 +28,14 @@ import net.elytrium.limboapi.protocol.packet.MapDataPacket;
  */
 public class CachedCaptcha {
 
-  private static final List<CaptchaHandler> captchas = new ArrayList<>();
-  private static final AtomicInteger counterAtomic = new AtomicInteger(0);
+  private final List<CaptchaHandler> captchas = new ArrayList<>();
+  private final AtomicInteger counterAtomic = new AtomicInteger(0);
 
-  public static void createCaptchaPacket(MapDataPacket map, String answer) {
+  public void createCaptchaPacket(MapDataPacket map, String answer) {
     captchas.add(new CaptchaHandler(map, answer));
   }
 
-  public static CaptchaHandler randomCaptcha() {
+  public CaptchaHandler randomCaptcha() {
     int counter = counterAtomic.incrementAndGet();
     if (counter >= captchas.size()) {
       counter = 0;
