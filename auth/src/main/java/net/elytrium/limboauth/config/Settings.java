@@ -35,6 +35,7 @@ public class Settings extends Config {
   public static class MAIN {
     public boolean ONLINE_MODE_NEED_AUTH = true;
     public boolean ONLINE_UUID_IF_POSSIBLE = true;
+    public boolean ENABLE_TOTP = true;
     @Comment("Available dimensions: OVERWORLD, NETHER, THE_END")
     public String DIMENSION = "THE_END";
     public long PURGE_CACHE_MILLIS = 3600000;
