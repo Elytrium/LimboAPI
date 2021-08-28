@@ -22,6 +22,7 @@ dependencies {
     implementation 'com.h2database:h2:1.4.200'
     implementation 'mysql:mysql-connector-java:8.0.26'
     implementation 'org.xerial:sqlite-jdbc:3.36.0.1'
+    implementation 'org.postgresql:postgresql:42.2.23'
 
     annotationProcessor 'com.velocitypowered:velocity-api:3.0.0-SNAPSHOT'
 
