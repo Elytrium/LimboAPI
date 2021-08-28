@@ -19,6 +19,7 @@ package net.elytrium.limboapi.server.world.chunk;
 
 import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,6 @@ import net.elytrium.limboapi.api.chunk.data.BlockSection;
 import net.elytrium.limboapi.api.chunk.data.BlockStorage;
 import net.elytrium.limboapi.protocol.data.BlockStorage19;
 import net.elytrium.limboapi.server.world.SimpleBlock;
-import org.jetbrains.annotations.Nullable;
 
 @RequiredArgsConstructor
 @AllArgsConstructor()

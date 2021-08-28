@@ -34,13 +34,13 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-import lombok.NonNull;
 import net.elytrium.limbofilter.FilterPlugin;
 import net.elytrium.limbofilter.config.Settings;
 import net.elytrium.limbofilter.stats.Statistics;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class FilterCommand implements SimpleCommand {
 

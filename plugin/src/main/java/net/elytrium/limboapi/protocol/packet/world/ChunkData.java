@@ -132,8 +132,7 @@ public class ChunkData implements MinecraftPacket {
     ByteBuf data = this.createChunkData(version);
     try {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-        buf.ensureWritable(
-            data.readableBytes() + ProtocolUtils.varIntBytes(data.readableBytes()) + 1);
+        buf.ensureWritable(data.readableBytes() + ProtocolUtils.varIntBytes(data.readableBytes()) + 1);
         ProtocolUtils.writeVarInt(buf, data.readableBytes());
         buf.writeBytes(data);
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_9_4) >= 0) {
@@ -172,9 +171,8 @@ public class ChunkData implements MinecraftPacket {
     }
 
     if (dataLength != data.readableBytes()) {
-      System.out.println(
-          "Data length missmatch: " + dataLength + " != " + data.readableBytes() + ". Version: "
-              + version);
+      System.out.println("Data length missmatch: " + dataLength
+          + " != " + data.readableBytes() + ". Version: " + version);
     }
     return data;
   }

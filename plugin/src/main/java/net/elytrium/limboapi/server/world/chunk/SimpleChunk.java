@@ -17,12 +17,13 @@
 
 package net.elytrium.limboapi.server.world.chunk;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.Getter;
-import lombok.NonNull;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
@@ -30,8 +31,6 @@ import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.server.world.SimpleBlock;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
 public class SimpleChunk implements VirtualChunk {
@@ -59,12 +58,12 @@ public class SimpleChunk implements VirtualChunk {
     section.setBlockAt(x, y % 16, z, block);
   }
 
-  @NotNull
+  @NonNull
   public VirtualBlock getBlock(int x, int y, int z) {
     return this.sectionAction(y, (s) -> s.getBlockAt(x, y % 16, z), () -> SimpleBlock.AIR);
   }
 
-  @NotNull
+  @NonNull
   public VirtualBiome getBiome(int x, int y, int z) {
     return this.biomes[getBiomeIndex(x, y, z)];
   }

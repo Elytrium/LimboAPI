@@ -7,9 +7,9 @@
 
 package net.elytrium.limboapi.api.chunk;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface VirtualChunk {
 
@@ -19,15 +19,15 @@ public interface VirtualChunk {
 
   void setBlock(int x, int y, int z, @Nullable VirtualBlock block);
 
-  @NotNull
+  @NonNull
   VirtualBlock getBlock(int x, int y, int z);
 
-  @NotNull
+  @NonNull
   VirtualBiome getBiome(int x, int y, int z);
 
-  void setBiome2d(int x, int z, @NotNull VirtualBiome biome);
+  void setBiome2d(int x, int z, @NonNull VirtualBiome biome);
 
-  void setBiome3d(int x, int y, int z, @NotNull VirtualBiome biome);
+  void setBiome3d(int x, int y, int z, @NonNull VirtualBiome biome);
 
   byte getBlockLight(int x, int y, int z);
 

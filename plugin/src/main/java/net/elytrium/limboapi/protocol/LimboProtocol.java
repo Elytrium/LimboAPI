@@ -104,8 +104,7 @@ public class LimboProtocol {
           .getDeclaredConstructor(int.class, ProtocolVersion.class, ProtocolVersion.class, boolean.class);
       ctor.setAccessible(true);
 
-      packetClassToId = StateRegistry.PacketRegistry.ProtocolRegistry.class
-          .getDeclaredField("packetClassToId");
+      packetClassToId = StateRegistry.PacketRegistry.ProtocolRegistry.class.getDeclaredField("packetClassToId");
       packetClassToId.setAccessible(true);
     } catch (NoSuchMethodException | InstantiationException
         | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
