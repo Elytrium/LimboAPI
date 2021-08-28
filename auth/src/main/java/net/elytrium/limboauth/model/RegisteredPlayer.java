@@ -43,5 +43,5 @@ public class RegisteredPlayer {
   public String totpToken;
 
   @DatabaseField
-  public Long regdate;
+  public Long regDate;
 }
