@@ -29,10 +29,12 @@ public class AuthListener {
 
   @Subscribe
   public void onProxyConnect(PreLoginEvent e) {
-    if (Settings.IMP.MAIN.ONLINE_MODE_NEED_AUTH || !AuthPlugin.getInstance().isPremium(e.getUsername())) {
-      e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
-    } else {
-      e.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
+    if (!e.getResult().isForceOfflineMode()) {
+      if (Settings.IMP.MAIN.ONLINE_MODE_NEED_AUTH || !AuthPlugin.getInstance().isPremium(e.getUsername())) {
+        e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
+      } else {
+        e.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
+      }
     }
   }
 
