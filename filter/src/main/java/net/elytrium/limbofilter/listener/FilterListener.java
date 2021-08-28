@@ -35,7 +35,7 @@ public class FilterListener {
   private final FilterPlugin plugin;
 
   @SneakyThrows
-  @Subscribe(order = PostOrder.LATE)
+  @Subscribe(order = PostOrder.FIRST)
   public void onProxyConnect(PreLoginEvent e) {
     if (!Settings.IMP.MAIN.ONLINE_MODE_VERIFY
         && !plugin.shouldCheck(
