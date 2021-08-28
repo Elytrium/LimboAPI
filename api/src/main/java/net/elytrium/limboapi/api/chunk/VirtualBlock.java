@@ -8,12 +8,12 @@
 package net.elytrium.limboapi.api.chunk;
 
 import com.velocitypowered.api.network.ProtocolVersion;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
-import org.jetbrains.annotations.NotNull;
 
 public interface VirtualBlock {
 
@@ -129,7 +129,7 @@ public interface VirtualBlock {
 
   class BlockInfo {
 
-    @NotNull
+    @NonNull
     private final Version version;
     private final short id;
     private byte data;
@@ -139,18 +139,18 @@ public interface VirtualBlock {
       this(version, id, data, null);
     }
 
-    public BlockInfo(Version version, @NotNull BlockInfo fallback) {
+    public BlockInfo(Version version, @NonNull BlockInfo fallback) {
       this(version, (short) 0, (byte) 0, fallback);
     }
 
-    private BlockInfo(@NotNull Version version, short id, byte data, BlockInfo fallback) {
+    private BlockInfo(@NonNull Version version, short id, byte data, BlockInfo fallback) {
       this.version = version;
       this.id = id;
       this.data = data;
       this.fallback = fallback;
     }
 
-    @NotNull
+    @NonNull
     public Version getVersion() {
       return this.version;
     }

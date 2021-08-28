@@ -86,8 +86,7 @@ public class BitStorage116 implements CompactStorage {
     int expectedLength = (size + this.valuesPerLong - 1) / this.valuesPerLong;
     if (data != null) {
       if (data.length != expectedLength) {
-        throw new IllegalArgumentException(
-            "Expected " + expectedLength + " longs but got " + data.length + " longs");
+        throw new IllegalArgumentException("Expected " + expectedLength + " longs but got " + data.length + " longs");
       }
 
       this.data = Arrays.copyOf(data, data.length);

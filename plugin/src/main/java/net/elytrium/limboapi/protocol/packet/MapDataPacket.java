@@ -74,6 +74,7 @@ public class MapDataPacket implements MinecraftPacket {
   @AllArgsConstructor
   @Getter
   public static class MapData {
+
     private final int columns;
     private final int rows;
     private final int x;

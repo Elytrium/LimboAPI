@@ -78,9 +78,8 @@ public class BitStorage19 implements CompactStorage {
       return (int) (this.data[startIndex] >>> startBitSubIndex & this.maxEntryValue);
     } else {
       int endBitSubIndex = 64 - startBitSubIndex;
-      return (int) (
-          (this.data[startIndex] >>> startBitSubIndex | this.data[endIndex] << endBitSubIndex)
-              & this.maxEntryValue);
+      return (int) ((this.data[startIndex] >>> startBitSubIndex
+          | this.data[endIndex] << endBitSubIndex) & this.maxEntryValue);
     }
   }
 

@@ -1,5 +1,3 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-
 plugins {
     id 'java'
     id 'checkstyle'
@@ -10,9 +8,6 @@ apply from: '../gradle/checkstyle.gradle'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 license {
-    matching(includes: ['**/limboauth/config/helpers/**']) {
-        header = project.rootProject.file('HEADER_BUNGEECORD.txt')
-    }
     header = project.rootProject.file('HEADER.txt')
 }
 
@@ -36,22 +31,14 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok:1.18.20'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
 
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.1.2'
-}
-
-task processSources(type: Sync) {
-    from sourceSets.main.java.srcDirs
-    inputs.property 'version', version
-    filter ReplaceTokens, tokens: [version: version]
-    into "$buildDir/src"
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.4.0'
 }
 
 tasks.withType(Checkstyle) {
     exclude('**/net/elytrium/limboauth/config/Settings.java')
 }
 
+// TODO: Replace non shaded jar by shaded
 artifacts {
     archives shadowJar
 }
-
-compileJava.source = processSources.outputs

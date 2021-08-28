@@ -33,9 +33,9 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = false)
 public class PlayerAbilities implements MinecraftPacket {
 
-  byte flags;
-  float speed;
-  float field;
+  private byte flags;
+  private float speed;
+  private float field;
 
   @Override
   public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
