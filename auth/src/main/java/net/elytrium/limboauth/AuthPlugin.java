@@ -114,7 +114,7 @@ public class AuthPlugin {
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
     instance = this;
-    reload();
+    this.reload();
   }
 
   @SneakyThrows
@@ -152,8 +152,7 @@ public class AuthPlugin {
         break;
       }
       default: {
-        this.logger.error(Settings.IMP.MAIN.STRINGS.DB_FAILURE);
-        this.server.shutdown();
+        this.logger.error("WRONG DATABASE TYPE.");
         return;
       }
     }
@@ -229,14 +228,14 @@ public class AuthPlugin {
           new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
         if (!Settings.IMP.VERSION.contains("-DEV")) {
           if (!in.readLine().trim().equalsIgnoreCase(Settings.IMP.VERSION)) {
-            logger.error("****************************************");
-            logger.warn("The new update was found, please update.");
-            logger.error("****************************************");
+            this.logger.error("****************************************");
+            this.logger.warn("The new update was found, please update.");
+            this.logger.error("****************************************");
           }
         }
       }
     } catch (IOException ex) {
-      logger.warn("Unable to check for updates.", ex);
+      this.logger.warn("Unable to check for updates.", ex);
     }
   }
 
@@ -288,7 +287,7 @@ public class AuthPlugin {
     try {
       HttpRequest request = HttpRequest.newBuilder().uri(
           URI.create("https://api.mojang.com/users/profiles/minecraft/" + nickname)).build();
-      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> response = this.client.send(request, HttpResponse.BodyHandlers.ofString());
       return response.statusCode() == 200;
     } catch (IOException | InterruptedException e) {
       this.logger.error("Unable to authenticate with Mojang", e);

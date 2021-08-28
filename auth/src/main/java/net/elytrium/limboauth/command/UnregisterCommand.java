@@ -20,6 +20,7 @@ package net.elytrium.limboauth.command;
 import com.j256.ormlite.dao.Dao;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
+import java.sql.SQLException;
 import java.util.Locale;
 import lombok.SneakyThrows;
 import net.elytrium.limboauth.config.Settings;
@@ -34,7 +35,6 @@ public class UnregisterCommand implements SimpleCommand {
     this.playerDao = playerDao;
   }
 
-  @SneakyThrows
   @Override
   public void execute(final Invocation invocation) {
     final CommandSource source = invocation.source();
@@ -46,11 +46,21 @@ public class UnregisterCommand implements SimpleCommand {
               .legacyAmpersand()
               .deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_USAGE));
     } else {
-      playerDao.deleteById(args[0].toLowerCase(Locale.ROOT));
-      source.sendMessage(
-          LegacyComponentSerializer
-              .legacyAmpersand()
-              .deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_SUCCESSFUL));
+      try {
+        this.playerDao.deleteById(args[0].toLowerCase(Locale.ROOT));
+
+        source.sendMessage(
+            LegacyComponentSerializer
+                .legacyAmpersand()
+                .deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_SUCCESSFUL));
+      } catch (SQLException e) {
+        e.printStackTrace();
+
+        source.sendMessage(
+            LegacyComponentSerializer
+                .legacyAmpersand()
+                .deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
+      }
     }
   }
 
