@@ -55,6 +55,7 @@ import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.file.SchematicFile;
 import net.elytrium.limboapi.api.file.WorldFile;
+import net.elytrium.limbofilter.cache.CachedCaptcha;
 import net.elytrium.limbofilter.cache.CachedPackets;
 import net.elytrium.limbofilter.commands.FilterCommand;
 import net.elytrium.limbofilter.config.Settings;
@@ -84,6 +85,7 @@ public class FilterPlugin {
   private final Statistics statistics;
   private Map<String, CachedUser> cachedFilterChecks;
   private ScheduledExecutorService scheduler;
+  private CachedCaptcha cachedCaptcha;
   private Limbo filterServer;
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -104,6 +106,7 @@ public class FilterPlugin {
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
     instance = this;
+    server.getEventManager().register(this, new FilterListener(this));
     reload();
   }
 
@@ -112,6 +115,7 @@ public class FilterPlugin {
     checkForUpdates();
     Settings.IMP.reload(new File(dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
 
+    cachedCaptcha = new CachedCaptcha();
     CaptchaGeneration.init();
     packets.createPackets();
 
@@ -145,8 +149,6 @@ public class FilterPlugin {
     }
 
     filterServer = factory.createLimbo(authWorld);
-
-    server.getEventManager().register(this, new FilterListener(this));
 
     scheduler =
         Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
