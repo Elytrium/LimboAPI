@@ -171,7 +171,9 @@ public class AuthPlugin {
 
     manager.register("unregister", new UnregisterCommand(this.playerDao));
     manager.register("changepass", new ChangePasswordCommand(this.playerDao));
-    manager.register("2fa", new TotpCommand(this.playerDao));
+    if (Settings.IMP.MAIN.ENABLE_TOTP) {
+      manager.register("2fa", new TotpCommand(this.playerDao));
+    }
     manager.register("authreload", new AuthReloadCommand());
 
     Settings.MAIN.AUTH_COORDS authCoords = Settings.IMP.MAIN.AUTH_COORDS;
