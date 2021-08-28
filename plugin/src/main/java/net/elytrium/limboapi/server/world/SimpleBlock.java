@@ -20,6 +20,7 @@ package net.elytrium.limboapi.server.world;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import com.velocitypowered.api.network.ProtocolVersion;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumMap;
@@ -29,7 +30,6 @@ import java.util.Map;
 import lombok.Getter;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import org.jetbrains.annotations.NotNull;
 
 public class SimpleBlock implements VirtualBlock {
 
@@ -115,27 +115,33 @@ public class SimpleBlock implements VirtualBlock {
     return this.motionBlocking;
   }
 
-  public static @NotNull SimpleBlock solid(BlockInfo... infos) {
+  @NonNull
+  public static SimpleBlock solid(BlockInfo... infos) {
     return solid(true, infos);
   }
 
-  public static @NotNull SimpleBlock solid(boolean motionBlocking, BlockInfo... infos) {
+  @NonNull
+  public static SimpleBlock solid(boolean motionBlocking, BlockInfo... infos) {
     return new SimpleBlock(true, false, motionBlocking, infos);
   }
 
-  public static @NotNull SimpleBlock nonSolid(BlockInfo... infos) {
+  @NonNull
+  public static SimpleBlock nonSolid(BlockInfo... infos) {
     return nonSolid(true, infos);
   }
 
-  public static @NotNull SimpleBlock nonSolid(boolean motionBlocking, BlockInfo... infos) {
+  @NonNull
+  public static SimpleBlock nonSolid(boolean motionBlocking, BlockInfo... infos) {
     return new SimpleBlock(false, false, motionBlocking, infos);
   }
 
-  public static @NotNull SimpleBlock fromLegacyId(short id) {
+  @NonNull
+  public static SimpleBlock fromLegacyId(short id) {
     return legacyIDsMap.get(id);
   }
 
-  public static @NotNull SimpleBlock air(BlockInfo... infos) {
+  @NonNull
+  public static SimpleBlock air(BlockInfo... infos) {
     return new SimpleBlock(false, true, false, infos);
   }
 }

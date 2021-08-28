@@ -17,6 +17,7 @@
 
 package net.elytrium.limboapi.injection.dummy;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelConfig;
@@ -31,10 +32,10 @@ import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import java.net.SocketAddress;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 
 @RequiredArgsConstructor
 public class ClosedChannel implements Channel {
+
   private final EventLoop dummy;
 
   @Override
@@ -44,7 +45,7 @@ public class ClosedChannel implements Channel {
 
   @Override
   public EventLoop eventLoop() {
-    return dummy;
+    return this.dummy;
   }
 
   @Override
@@ -249,7 +250,7 @@ public class ClosedChannel implements Channel {
   }
 
   @Override
-  public int compareTo(@NotNull Channel channel) {
+  public int compareTo(@NonNull Channel channel) {
     return 0;
   }
 

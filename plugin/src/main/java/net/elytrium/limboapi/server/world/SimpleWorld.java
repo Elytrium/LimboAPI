@@ -18,6 +18,8 @@
 package net.elytrium.limboapi.server.world;
 
 import com.google.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +27,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.Getter;
-import lombok.NonNull;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
@@ -33,8 +34,6 @@ import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class SimpleWorld implements VirtualWorld {
 
@@ -71,7 +70,7 @@ public class SimpleWorld implements VirtualWorld {
   }
 
   @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
-  @NotNull
+  @NonNull
   public VirtualBlock getBlock(int x, int y, int z) {
     return this.chunkAction(x, z, (c) -> c.getBlock(getChunkCoordinate(x), y, getChunkCoordinate(z)),
         () -> SimpleBlock.AIR);

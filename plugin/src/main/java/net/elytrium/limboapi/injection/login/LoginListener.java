@@ -82,8 +82,7 @@ public class LoginListener {
 
   static {
     closed = new ClosedMinecraftConnection(
-        new ClosedChannel(new DummyEventPool()),
-        LimboAPI.getInstance().getServer());
+        new ClosedChannel(new DummyEventPool()), LimboAPI.getInstance().getServer());
 
     try {
       ctor = ConnectedPlayer.class.getDeclaredConstructor(
@@ -110,8 +109,8 @@ public class LoginListener {
   @Subscribe(order = PostOrder.LAST)
   public void hookPreLogin(PreLoginEvent e) {
     PreLoginEvent.PreLoginComponentResult result = e.getResult();
-    if (!result.isForceOfflineMode() && (this.server.getConfiguration().isOnlineMode() || result
-        .isOnlineModeAllowed())) {
+    if (!result.isForceOfflineMode() && (this.server.getConfiguration().isOnlineMode()
+        || result.isOnlineModeAllowed())) {
       this.onlineMode.add(e.getUsername());
     }
   }
@@ -141,8 +140,8 @@ public class LoginListener {
 
         if (!this.server.canRegisterConnection(player)) {
           // TODO: Prepare this packet. Хм. Или не нужно?
-          player.disconnect0(Component.translatable("velocity.error.already-connected-proxy",
-              NamedTextColor.RED), true);
+          player.disconnect0(
+              Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
           return;
         }
 
@@ -158,6 +157,7 @@ public class LoginListener {
         if (configuration.getPlayerInfoForwardingMode() == PlayerInfoForwarding.NONE) {
           playerUniqueId = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
         }
+
         ServerLoginSuccess success = new ServerLoginSuccess();
         success.setUsername(player.getUsername());
         success.setUuid(playerUniqueId);
@@ -166,16 +166,14 @@ public class LoginListener {
         this.server.getEventManager()
             .fire(new LoginLimboRegisterEvent(player))
             .thenAcceptAsync(limboEvent -> {
-              LoginTasksQueue queue =
-                  new LoginTasksQueue(
-                      this.limboAPI, handler, this.server, player, limboEvent.getCallbacks());
+              LoginTasksQueue queue = new LoginTasksQueue(
+                  this.limboAPI, handler, this.server, player, limboEvent.getCallbacks());
 
               this.limboAPI.addLoginQueue(player, queue);
               queue.next();
             }, connection.eventLoop());
       } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
-        this.limboAPI.getLogger()
-            .error("Exception while completing injection to {}", e.getUsername(), ex);
+        this.limboAPI.getLogger().error("Exception while completing injection to {}", e.getUsername(), ex);
       }
     });
   }
@@ -191,8 +189,7 @@ public class LoginListener {
         try {
           spawned.set(playHandler, this.limboAPI.isLimboJoined(player));
         } catch (IllegalAccessException ex) {
-          this.limboAPI.getLogger()
-              .error("Exception while hooking into ClientPlaySessionHandler of {}", player, ex);
+          this.limboAPI.getLogger().error("Exception while hooking into ClientPlaySessionHandler of {}", player, ex);
         }
         connection.setSessionHandler(playHandler);
       }
