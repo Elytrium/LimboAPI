@@ -18,7 +18,6 @@
 package net.elytrium.limbofilter.handler;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.ThreadLocalRandom;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboSessionHandler;
@@ -44,6 +43,7 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
   public int validX;
   public int validY;
   public int validZ;
+  public int validTeleportId;
   public int ticks = 1;
 
   public final ProtocolVersion version;
@@ -53,6 +53,7 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
     this.validX = ThreadLocalRandom.current().nextInt(16384) + 256;
     this.validY = ThreadLocalRandom.current().nextInt(256);
     this.validZ = ThreadLocalRandom.current().nextInt(16384) + 256;
+    this.validTeleportId = ThreadLocalRandom.current().nextInt(65535);
 
     this.x = this.validX;
     this.y = this.validY;
@@ -73,7 +74,7 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
   public void onMove(double x, double y, double z) {
     if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_8) <= 0
         && x == this.validX && y == this.validY && z == this.validZ
-        && this.waitingTeleportId == 9876) {
+        && this.waitingTeleportId == validTeleportId) {
       this.ticks = 1;
       this.y = -1;
       this.waitingTeleportId = -1;
@@ -99,7 +100,6 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
   }
 
   public static double getLoadedChunkSpeed(int ticks) {
-    System.out.println(ticks);
     if (ticks == -1) {
       return 0;
     }
