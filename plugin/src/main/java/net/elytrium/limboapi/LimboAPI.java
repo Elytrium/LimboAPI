@@ -62,7 +62,7 @@ import org.slf4j.Logger;
 @Plugin(
     id = "limboapi",
     name = "LimboAPI",
-    version = "@version@",
+    version = "1.0.0",
     description = "Velocity plugin for making virtual servers ",
     url = "ely.su",
     authors = {"hevav", "mdxd44"}

@@ -47,6 +47,8 @@ public class Settings extends Config {
   public void reload(File file) {
     this.load(file);
     this.save(file);
+
+    // Placeholders fix
     this.load(file);
   }
 }
