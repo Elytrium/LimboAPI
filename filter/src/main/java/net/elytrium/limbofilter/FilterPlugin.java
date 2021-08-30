@@ -115,6 +115,8 @@ public class FilterPlugin {
     checkForUpdates();
     Settings.IMP.reload(new File(dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
 
+    BotFilterSessionHandler.reload();
+
     cachedCaptcha = new CachedCaptcha();
     CaptchaGeneration.init();
     packets.createPackets();
@@ -174,6 +176,10 @@ public class FilterPlugin {
   }
 
   public boolean shouldCheck(ConnectedPlayer player) {
+    if (Settings.IMP.MAIN.ONLINE_MODE_BYPASS && player.isOnlineMode()) {
+      return false;
+    }
+
     InetSocketAddress adr = (InetSocketAddress) player.getConnection().getRemoteAddress();
     return shouldCheck(player.getUsername(), adr.getAddress());
   }

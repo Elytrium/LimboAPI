@@ -67,15 +67,15 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   public boolean handle(PlayerPosition packet) {
-    this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
     this.callback.onGround(packet.isOnGround());
+    this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
     return true;
   }
 
   public boolean handle(PlayerPositionAndLook packet) {
-    this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
-    this.callback.onRotate(packet.getYaw(), packet.getPitch());
     this.callback.onGround(packet.isOnGround());
+    this.callback.onRotate(packet.getYaw(), packet.getPitch());
+    this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
     return true;
   }
 

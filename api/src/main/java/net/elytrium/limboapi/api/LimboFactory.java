@@ -7,12 +7,16 @@
 
 package net.elytrium.limboapi.api;
 
+import com.velocitypowered.proxy.protocol.StateRegistry;
+import java.util.function.Supplier;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.material.Block;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.api.protocol.PacketDirection;
+import net.elytrium.limboapi.api.protocol.PreparedPacket;
 
 public interface LimboFactory {
 
@@ -60,7 +64,14 @@ public interface LimboFactory {
    * @return new virtual server.
    */
   VirtualBlock createSimpleBlock(boolean solid, boolean air,
-      boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
+                                 boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
+
+  /**
+   * Creates new prepared packet builder
+   *
+   * @return new prepared packet.
+   */
+  PreparedPacket createPreparedPacket();
 
   /**
    * Creates new virtual item from Item enum
@@ -69,4 +80,17 @@ public interface LimboFactory {
    * @return new virtual item.
    */
   VirtualItem getItem(Item item);
+
+  /**
+   * Registers self-made packet
+   *
+   * @param direction      Packet direction
+   * @param packetClass    Packet class
+   * @param packetSupplier Packet supplier to make a new instance (::new)
+   * @param packetMappings Packet id mappings
+   */
+  void registerPacket(PacketDirection direction,
+                      Class packetClass,
+                      Supplier packetSupplier,
+                      StateRegistry.PacketMapping[] packetMappings);
 }
