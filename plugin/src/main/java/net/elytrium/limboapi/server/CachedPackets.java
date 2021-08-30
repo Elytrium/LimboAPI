@@ -23,8 +23,9 @@ import java.util.function.Function;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.config.Settings;
-import net.elytrium.limboapi.injection.packet.PreparedPacket;
+import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
@@ -38,10 +39,10 @@ public class CachedPackets {
   private PreparedPacket tooBigPacket;
 
   public void createPackets() {
-    this.alreadyConnected = new PreparedPacket()
+    this.alreadyConnected = new PreparedPacketImpl()
         .prepare((Function<ProtocolVersion, Disconnect>) (version) ->
             this.createDisconnectPacket(Settings.IMP.MESSAGES.ALREADY_CONNECTED, version));
-    this.tooBigPacket = new PreparedPacket()
+    this.tooBigPacket = new PreparedPacketImpl()
         .prepare((Function<ProtocolVersion, Disconnect>) (version) ->
             this.createDisconnectPacket(Settings.IMP.MESSAGES.TOO_BIG_PACKET, version));
   }

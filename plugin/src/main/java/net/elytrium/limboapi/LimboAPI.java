@@ -25,6 +25,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.protocol.StateRegistry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,6 +38,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Supplier;
 import lombok.Getter;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
@@ -46,10 +48,13 @@ import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.material.Block;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.api.protocol.PacketDirection;
+import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.config.Settings;
 import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
+import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.server.CachedPackets;
 import net.elytrium.limboapi.server.LimboImpl;
@@ -84,7 +89,7 @@ public class LimboAPI implements LimboFactory {
 
   @Inject
   public LimboAPI(ProxyServer server, Logger logger,
-      Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
+                  Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
     instance = this;
 
     this.server = (VelocityServer) server;
@@ -155,7 +160,7 @@ public class LimboAPI implements LimboFactory {
 
   @Override
   public VirtualBlock createSimpleBlock(boolean solid, boolean air,
-      boolean motionBlocking, SimpleBlock.BlockInfo... blockInfos) {
+                                        boolean motionBlocking, SimpleBlock.BlockInfo... blockInfos) {
     return new SimpleBlock(solid, air, motionBlocking, blockInfos);
   }
 
@@ -172,6 +177,18 @@ public class LimboAPI implements LimboFactory {
   @Override
   public VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch) {
     return new SimpleWorld(dimension, x, y, z, yaw, pitch);
+  }
+
+  public PreparedPacket createPreparedPacket() {
+    return new PreparedPacketImpl();
+  }
+
+  public void registerPacket(
+      PacketDirection direction,
+      Class packetClass,
+      Supplier packetSupplier,
+      StateRegistry.PacketMapping[] packetMappings) {
+    LimboProtocol.register(direction, packetClass, packetSupplier, packetMappings);
   }
 
   public void setLimboJoined(Player player) {
