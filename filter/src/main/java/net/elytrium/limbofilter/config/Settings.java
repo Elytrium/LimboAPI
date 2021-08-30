@@ -42,12 +42,20 @@ public class Settings extends Config {
         "True: verify before antibot, consumes more cpu and network on attack"
     })
     public boolean ONLINE_MODE_VERIFY = false;
+    @Comment({
+        "Toggle to make online mode players to bypass this check",
+        "Doesn't work with online-mode-verify: false"
+    })
+    public boolean ONLINE_MODE_BYPASS = false;
     public long PURGE_CACHE_MILLIS = 3600000;
     public int CAPTCHA_ATTEMPTS = 2;
     public int NON_VALID_POSITION_XZ_ATTEMPTS = 10;
     public int NON_VALID_POSITION_Y_ATTEMPTS = 10;
     public int FALLING_CHECK_TICKS = 128;
     public double MAX_VALID_POSITION_DIFFERENCE = 0.01;
+    public boolean FALLING_CHECK_DEBUG = false;
+    public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 2048;
+    public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
     public String BRAND = "LimboFilter";
     @Comment({
         "If the player needs to reconnect after passing AntiBot check.",

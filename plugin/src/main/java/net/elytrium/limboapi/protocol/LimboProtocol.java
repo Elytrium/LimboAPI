@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.Player;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
@@ -114,12 +115,12 @@ public class LimboProtocol {
 
   @SneakyThrows
   public static void init() {
-    register.invoke(limboRegistry.serverbound,
+    register(PacketDirection.SERVERBOUND,
         TeleportConfirm.class, (Supplier<Object>) TeleportConfirm::new,
         new StateRegistry.PacketMapping[] {
-            map(0x00, ProtocolVersion.MINECRAFT_1_9, true)
+            map(0x00, ProtocolVersion.MINECRAFT_1_9, false)
         });
-    register.invoke(limboRegistry.serverbound,
+    register(PacketDirection.SERVERBOUND,
         PlayerPositionAndLook.class, (Supplier<Object>) PlayerPositionAndLook::new,
         new StateRegistry.PacketMapping[] {
             map(0x06, ProtocolVersion.MINECRAFT_1_7_2, false),
@@ -132,7 +133,7 @@ public class LimboProtocol {
             map(0x13, ProtocolVersion.MINECRAFT_1_16, false),
             map(0x12, ProtocolVersion.MINECRAFT_1_17, false)
         });
-    register.invoke(limboRegistry.serverbound,
+    register(PacketDirection.SERVERBOUND,
         PlayerPosition.class, (Supplier<Object>) PlayerPosition::new,
         new StateRegistry.PacketMapping[] {
             map(0x0B, ProtocolVersion.MINECRAFT_1_7_2, false),
@@ -146,7 +147,7 @@ public class LimboProtocol {
             map(0x12, ProtocolVersion.MINECRAFT_1_16, false),
             map(0x11, ProtocolVersion.MINECRAFT_1_17, false)
         });
-    register.invoke(limboRegistry.serverbound,
+    register(PacketDirection.SERVERBOUND,
         Player.class, (Supplier<Object>) Player::new,
         new StateRegistry.PacketMapping[] {
             map(0x03, ProtocolVersion.MINECRAFT_1_7_2, false),
@@ -159,7 +160,7 @@ public class LimboProtocol {
             map(0x15, ProtocolVersion.MINECRAFT_1_16, false),
             map(0x14, ProtocolVersion.MINECRAFT_1_17, false)
         });
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         PlayerPositionAndLook.class, (Supplier<Object>) PlayerPositionAndLook::new,
         new StateRegistry.PacketMapping[] {
             map(0x08, ProtocolVersion.MINECRAFT_1_7_2, true),
@@ -172,7 +173,7 @@ public class LimboProtocol {
             map(0x34, ProtocolVersion.MINECRAFT_1_16_2, true),
             map(0x38, ProtocolVersion.MINECRAFT_1_17, true)
         });
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         ChunkData.class, (Supplier<Object>) ChunkData::new,
         new StateRegistry.PacketMapping[] {
             map(0x21, ProtocolVersion.MINECRAFT_1_7_2, true),
@@ -185,7 +186,7 @@ public class LimboProtocol {
             map(0x20, ProtocolVersion.MINECRAFT_1_16_2, true),
             map(0x22, ProtocolVersion.MINECRAFT_1_17, true)
         });
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         SetSlot.class, (Supplier<Object>) SetSlot::new,
         new StateRegistry.PacketMapping[] {
             map(0x2F, ProtocolVersion.MINECRAFT_1_7_2, true),
@@ -198,7 +199,7 @@ public class LimboProtocol {
             map(0x15, ProtocolVersion.MINECRAFT_1_16_2, true),
             map(0x16, ProtocolVersion.MINECRAFT_1_17, true)
         });
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         MapDataPacket.class, (Supplier<Object>) MapDataPacket::new,
         new StateRegistry.PacketMapping[] {
             map(0x34, ProtocolVersion.MINECRAFT_1_7_2, true),
@@ -211,7 +212,7 @@ public class LimboProtocol {
             map(0x25, ProtocolVersion.MINECRAFT_1_16_2, true),
             map(0x27, ProtocolVersion.MINECRAFT_1_17, true)
         });
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         PlayerAbilities.class, (Supplier<Object>) PlayerAbilities::new,
         new StateRegistry.PacketMapping[] {
             map(0x39, ProtocolVersion.MINECRAFT_1_7_2, true),
@@ -225,7 +226,7 @@ public class LimboProtocol {
             map(0x30, ProtocolVersion.MINECRAFT_1_16_2, true),
             map(0x32, ProtocolVersion.MINECRAFT_1_17, true)
         });
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         SetExp.class, (Supplier<Object>) SetExp::new,
         new StateRegistry.PacketMapping[] {
             map(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
@@ -238,7 +239,7 @@ public class LimboProtocol {
             map(0x48, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x51, ProtocolVersion.MINECRAFT_1_17, true)
         });
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         UpdateViewPosition.class, (Supplier<Object>) UpdateViewPosition::new,
         new StateRegistry.PacketMapping[] {
             map(0x40, ProtocolVersion.MINECRAFT_1_7_2, true),
@@ -248,55 +249,76 @@ public class LimboProtocol {
             map(0x49, ProtocolVersion.MINECRAFT_1_17, true)
         });
 
-    register.invoke(limboRegistry.serverbound,
+    register(PacketDirection.SERVERBOUND,
         Chat.class, (Supplier<Object>) Chat::new,
         getMappingsForPacket(StateRegistry.PLAY.serverbound, Chat.class, false));
-    register.invoke(limboRegistry.serverbound,
+    register(PacketDirection.SERVERBOUND,
         ClientSettings.class, (Supplier<Object>) ClientSettings::new,
         getMappingsForPacket(StateRegistry.PLAY.serverbound, ClientSettings.class, false));
-    register.invoke(limboRegistry.serverbound,
+    register(PacketDirection.SERVERBOUND,
         PluginMessage.class, (Supplier<Object>) PluginMessage::new,
         getMappingsForPacket(StateRegistry.PLAY.serverbound, PluginMessage.class, false));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         Chat.class, (Supplier<Object>) Chat::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound, Chat.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         JoinGame.class, (Supplier<Object>) JoinGame::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound, JoinGame.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         Disconnect.class, (Supplier<Object>) Disconnect::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound, Disconnect.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         PluginMessage.class, (Supplier<Object>) PluginMessage::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound, PluginMessage.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         Respawn.class, (Supplier<Object>) Respawn::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound, Respawn.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         TitleActionbarPacket.class, (Supplier<Object>) TitleActionbarPacket::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound,
             ProtocolVersion.MINECRAFT_1_17, TitleActionbarPacket.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         TitleClearPacket.class, (Supplier<Object>) TitleClearPacket::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound,
             ProtocolVersion.MINECRAFT_1_17, TitleClearPacket.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         TitleSubtitlePacket.class, (Supplier<Object>) TitleSubtitlePacket::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound,
             ProtocolVersion.MINECRAFT_1_17, TitleSubtitlePacket.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         TitleTextPacket.class, (Supplier<Object>) TitleTextPacket::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound,
             ProtocolVersion.MINECRAFT_1_17, TitleTextPacket.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         TitleTimesPacket.class, (Supplier<Object>) TitleTimesPacket::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound,
             ProtocolVersion.MINECRAFT_1_17, TitleTimesPacket.class, true));
-    register.invoke(limboRegistry.clientbound,
+    register(PacketDirection.CLIENTBOUND,
         LegacyTitlePacket.class, (Supplier<Object>) LegacyTitlePacket::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound,
             ProtocolVersion.MINECRAFT_1_8, ProtocolVersion.MINECRAFT_1_16_4, LegacyTitlePacket.class, true));
   }
+  
+  @SneakyThrows
+  public static void register(
+      PacketDirection direction,
+      Class packetClass,
+      Supplier packetSupplier,
+      StateRegistry.PacketMapping[] packetMappings) {
+    StateRegistry.PacketRegistry registry;
+    switch (direction) {
+      case CLIENTBOUND:
+        registry = limboRegistry.clientbound;
+        break;
+      case SERVERBOUND:
+        registry = limboRegistry.serverbound;
+        break;
+      default:
+        throw new IllegalArgumentException();
+    }
+    
+    register.invoke(registry, packetClass, packetSupplier, packetMappings);
+  } 
 
   private static StateRegistry.PacketMapping map(int id, ProtocolVersion version, boolean encodeOnly) {
     return map(id, version, null, encodeOnly);

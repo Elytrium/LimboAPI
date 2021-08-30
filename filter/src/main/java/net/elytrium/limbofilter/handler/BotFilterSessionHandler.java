@@ -42,8 +42,9 @@ import org.slf4j.Logger;
 @Getter
 public class BotFilterSessionHandler extends FallingCheckHandler {
 
-  public static final long TOTAL_TICKS = Settings.IMP.MAIN.FALLING_CHECK_TICKS;
-  private static final long TOTAL_TIME = (TOTAL_TICKS * 50) - 100;
+  public static long TOTAL_TICKS;
+  private static double CAPTCHA_Y;
+  private static long TOTAL_TIME;
 
   private final Statistics statistics;
   private final FilterPlugin plugin;
@@ -54,7 +55,6 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   private final MinecraftPacket fallingCheckPos;
   private final MinecraftPacket fallingCheckChunk;
   private final MinecraftPacket fallingCheckView;
-  private final double captchaY = Settings.IMP.MAIN.CAPTCHA_COORDS.Y;
   @Setter
   private String captchaAnswer;
   private LimboPlayer limboPlayer;
@@ -67,6 +67,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   private CheckState state = CheckState.valueOf(Settings.IMP.MAIN.CHECK_STATE);
   private boolean checkedBySettings = false;
   private boolean checkedByBrand = false;
+  private int genericBytes = 0;
   private Limbo server;
 
   public BotFilterSessionHandler(ConnectedPlayer player, FilterPlugin plugin) {
@@ -91,6 +92,15 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   public void onGeneric(MinecraftPacket packet) {
     if (packet instanceof PluginMessage) {
       PluginMessage pluginMessage = (PluginMessage) packet;
+      int singleLength = pluginMessage.content().readableBytes();
+      singleLength += pluginMessage.getChannel().length() * 4;
+      this.genericBytes += singleLength;
+      if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH
+          || this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
+        connection.closeWith(packets.getTooBigPacket());
+        logger.error("{} sent too big packet", player);
+        statistics.addBlockedConnection();
+      }
       if (PluginMessageUtil.isMcBrand(pluginMessage) && !checkedByBrand) {
         logger.info("{} has client brand {}", player,
             PluginMessageUtil.readBrandMessage(pluginMessage.content()));
@@ -100,20 +110,17 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       ClientSettings clientSettings = (ClientSettings) packet;
       if ((!checkedBySettings) && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
         if (packet.toString().contains("null")) {
-          logger.error("{} -> " + packet, player);
           connection.closeWith(packets.getKickClientCheckSettings());
           logger.error("{} has null in settings packet", player);
           statistics.addBlockedConnection();
         } else if (!clientSettings.isChatColors()) {
-          logger.error("{} -> " + packet, player);
           connection.closeWith(packets.getKickClientCheckSettingsChat());
-          logger.error("{} doesn't send isChatColors packet",
+          logger.error("{} didn't send isChatColors packet",
               player);
           statistics.addBlockedConnection();
         } else if (clientSettings.getSkinParts() == 0) {
-          logger.error("{} -> " + packet, player);
           connection.closeWith(packets.getKickClientCheckSettingsSkin());
-          logger.error("{} doesn't send skin parts packet",
+          logger.error("{} didn't send skin parts packet",
               player);
           statistics.addBlockedConnection();
         }
@@ -188,7 +195,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       nonValidPacketsSize++;
     }
     if (startedListening) {
-      if (lastY == captchaY || onGround) {
+      if (lastY == CAPTCHA_Y || onGround) {
         return;
       }
       if (state == CheckState.ONLY_CAPTCHA) {
@@ -209,11 +216,13 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         }
         return;
       }
-      System.out.println("lastY=" + lastY + "; y=" + y + "; diff=" + (lastY - y) + ";"
-          + " need=" + getLoadedChunkSpeed(ticks) + "; ticks=" + ticks
-          + "; x=" + x + "; z=" + z + "; validX=" + validX + "; validZ=" + validZ
-          + "; startedListening=" + startedListening + "; state=" + state
-          + "; onGround=" + onGround);
+      if (Settings.IMP.MAIN.FALLING_CHECK_DEBUG) {
+        System.out.println("lastY=" + lastY + "; y=" + y + "; diff=" + (lastY - y) + ";"
+            + " need=" + getLoadedChunkSpeed(ticks) + "; ticks=" + ticks
+            + "; x=" + x + "; z=" + z + "; validX=" + validX + "; validZ=" + validZ
+            + "; startedListening=" + startedListening + "; state=" + state
+            + "; onGround=" + onGround);
+      }
       if (ignoredTicks > Settings.IMP.MAIN.NON_VALID_POSITION_Y_ATTEMPTS) {
         fallingCheckFailed();
         return;
@@ -221,9 +230,6 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       if ((x != validX && z != validZ) || checkY()) {
         fallingCheckFailed();
         return;
-      }
-      if (state == CheckState.CAPTCHA_POSITION && waitingTeleportId == -1) {
-        setCaptchaPosition(false);
       }
       if ((state == CheckState.CAPTCHA_ON_POSITION_FAILED || state == CheckState.ONLY_POSITION)) {
         SetExp expBuf = packets.getExperience().get(ticks);
@@ -242,8 +248,8 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     if (state == CheckState.ONLY_CAPTCHA) {
       sendCaptcha();
     } else if (state == CheckState.CAPTCHA_POSITION) {
-      sendCaptcha();
       sendFallingCheckPackets();
+      sendCaptcha();
     } else if (state == CheckState.ONLY_POSITION
         || state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
       sendFallingCheckPackets();
@@ -288,12 +294,13 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     if (disableFall) {
       connection.write(packets.getNoAbilities());
     }
-    waitingTeleportId = 9876;
+
+    waitingTeleportId = validTeleportId;
   }
 
   private void changeStateToCaptcha() {
     state = CheckState.ONLY_CAPTCHA;
-    joinTime = System.currentTimeMillis() + 3500;
+    joinTime = System.currentTimeMillis() + TOTAL_TIME;
     setCaptchaPosition(true);
     if (captchaAnswer == null) {
       sendCaptcha();
@@ -315,6 +322,12 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   @Override
   public int hashCode() {
     return Objects.hash(player.getUsername());
+  }
+
+  public static void reload() {
+    TOTAL_TICKS = Settings.IMP.MAIN.FALLING_CHECK_TICKS;
+    TOTAL_TIME = (TOTAL_TICKS * 50) - 100;
+    CAPTCHA_Y = Settings.IMP.MAIN.CAPTCHA_COORDS.Y;
   }
 
   public enum CheckState {

@@ -30,7 +30,7 @@ import lombok.Getter;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
-import net.elytrium.limboapi.injection.packet.PreparedPacket;
+import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.SetExp;
@@ -38,6 +38,7 @@ import net.elytrium.limboapi.protocol.packet.SetSlot;
 import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 import net.elytrium.limboapi.server.world.SimpleItem;
+import net.elytrium.limbofilter.FilterPlugin;
 import net.elytrium.limbofilter.config.Settings;
 import net.elytrium.limbofilter.handler.BotFilterSessionHandler;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -48,7 +49,6 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 @Getter
 public class CachedPackets {
 
-  private String hardcodedBrandString;
   private PreparedPacket alreadyConnected;
   private PreparedPacket tooBigPacket;
   private PreparedPacket captchaFailed;
@@ -63,22 +63,12 @@ public class CachedPackets {
   private PreparedPacket kickClientCheckBrand;
   private PreparedPacket successfulBotFilterChat;
   private PreparedPacket successfulBotFilterDisconnect;
-  private PreparedPacket captchaPosition;
   private PreparedPacket noAbilities;
   private PreparedPacket antiBotTitle;
   private List<SetExp> experience;
 
   public void createPackets() {
-    hardcodedBrandString = Settings.IMP.MAIN.BRAND + " (ely.su/github)";
-    Settings.MAIN.CAPTCHA_COORDS captchaCoords = Settings.IMP.MAIN.CAPTCHA_COORDS;
-
     experience = createExpPackets();
-    captchaPosition = new PreparedPacket()
-        .prepare(createPlayerPosAndLookPacket(
-            captchaCoords.X, captchaCoords.Y, captchaCoords.Z,
-            (float) captchaCoords.YAW, (float) captchaCoords.PITCH))
-        .prepare(createUpdateViewPosition((int) captchaCoords.X,
-            (int) captchaCoords.Z), ProtocolVersion.MINECRAFT_1_14);
 
     noAbilities = prepare(createAbilitiesPacket());
     alreadyConnected = prepare((version) ->
@@ -90,7 +80,7 @@ public class CachedPackets {
     fallingCheckFailed = prepare((version) ->
         createDisconnectPacket(Settings.IMP.MAIN.STRINGS.FALLING_CHECK_FAILED, version));
 
-    setSlot = new PreparedPacket()
+    setSlot = FilterPlugin.getInstance().getFactory().createPreparedPacket()
         .prepare(createSetSlotPacket(0, 36, SimpleItem.fromItem(Item.FILLED_MAP), 1, 0, null),
             ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_16_4)
         .prepare(createSetSlotPacket(0, 36, SimpleItem.fromItem(Item.FILLED_MAP), 1, 0,
@@ -151,12 +141,12 @@ public class CachedPackets {
   }
 
   private <T extends MinecraftPacket> PreparedPacket prepare(Function<ProtocolVersion, T> packets) {
-    return new PreparedPacket().prepare(packets);
+    return FilterPlugin.getInstance().getFactory().createPreparedPacket().prepare(packets);
   }
 
   @SafeVarargs
   private <T extends MinecraftPacket> PreparedPacket prepare(T... packets) {
-    PreparedPacket preparedPacket = new PreparedPacket();
+    PreparedPacket preparedPacket = FilterPlugin.getInstance().getFactory().createPreparedPacket();
 
     for (T packet : packets) {
       preparedPacket.prepare(packet);
@@ -166,7 +156,7 @@ public class CachedPackets {
   }
 
   private PreparedPacket createChatPacket(String text) {
-    return new PreparedPacket()
+    return FilterPlugin.getInstance().getFactory().createPreparedPacket()
         .prepare(new Chat(
             ProtocolUtils.getJsonChatSerializer(ProtocolVersion.MINIMUM_VERSION).serialize(
                 LegacyComponentSerializer
@@ -191,7 +181,7 @@ public class CachedPackets {
   private PreparedPacket createTitlePacket(
       String title, String subtitle, int fadeIn, int stay, int fadeOut) {
 
-    PreparedPacket preparedPacket = new PreparedPacket();
+    PreparedPacket preparedPacket = FilterPlugin.getInstance().getFactory().createPreparedPacket();
 
     Component titleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(title);
     Component subtitleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(subtitle);
