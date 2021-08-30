@@ -175,11 +175,6 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
   @Override
   public void onMove() {
-    // System.out.println("lastY=" + lastY + "; y=" + y + "; diff=" + (lastY - y) + ";"
-    //     + " need=" + getLoadedChunkSpeed(ticks) + "; ticks=" + ticks
-    //     + "; x=" + x + "; z=" + z + "; vx=" + validX + "; vz=" + validZ
-    //     + "; startedListening=" + startedListening + "; state=" + state
-    //     + "; onGround=" + onGround);
     if (!startedListening && state != CheckState.ONLY_CAPTCHA) {
       if (x == validX && z == validZ) {
         startedListening = true;
@@ -214,6 +209,11 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         }
         return;
       }
+      System.out.println("lastY=" + lastY + "; y=" + y + "; diff=" + (lastY - y) + ";"
+          + " need=" + getLoadedChunkSpeed(ticks) + "; ticks=" + ticks
+          + "; x=" + x + "; z=" + z + "; validX=" + validX + "; validZ=" + validZ
+          + "; startedListening=" + startedListening + "; state=" + state
+          + "; onGround=" + onGround);
       if (ignoredTicks > Settings.IMP.MAIN.NON_VALID_POSITION_Y_ATTEMPTS) {
         fallingCheckFailed();
         return;
