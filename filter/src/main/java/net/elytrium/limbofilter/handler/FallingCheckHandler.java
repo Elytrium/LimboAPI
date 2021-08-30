@@ -25,9 +25,8 @@ import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limbofilter.config.Settings;
 
-@SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD",
-    justification = "ща пока teleportId не юзается но скорее всего потом заюзаем")
 public abstract class FallingCheckHandler implements LimboSessionHandler {
+
   private static final double[] loadedChunkSpeedCache = new double[Settings.IMP.MAIN.FALLING_CHECK_TICKS];
 
   static {
@@ -40,11 +39,7 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
   public double y;
   public double z;
   public boolean onGround = false;
-
-  public int teleportId = -1;
-
   public int waitingTeleportId = 9876;
-
   public double lastY;
   public int validX;
   public int validY;
@@ -55,13 +50,13 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
 
   public FallingCheckHandler(ProtocolVersion version) {
     this.version = version;
-    validX = ThreadLocalRandom.current().nextInt(16384) + 256;
-    validY = ThreadLocalRandom.current().nextInt(256);
-    validZ = ThreadLocalRandom.current().nextInt(16384) + 256;
+    this.validX = ThreadLocalRandom.current().nextInt(16384) + 256;
+    this.validY = ThreadLocalRandom.current().nextInt(256);
+    this.validZ = ThreadLocalRandom.current().nextInt(16384) + 256;
 
-    x = validX;
-    y = validY;
-    z = validZ;
+    this.x = this.validX;
+    this.y = this.validY;
+    this.z = this.validZ;
   }
 
   @Override
@@ -76,34 +71,35 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
 
   @Override
   public void onMove(double x, double y, double z) {
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) <= 0
-        && x == validX && y == validY && z == validZ
-        && waitingTeleportId == 9876) {
-      ticks = 0;
-      y = -1;
-      waitingTeleportId = -1;
+    if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_8) <= 0
+        && x == this.validX && y == this.validY && z == this.validZ
+        && this.waitingTeleportId == 9876) {
+      this.ticks = 1;
+      this.y = -1;
+      this.waitingTeleportId = -1;
     }
 
     this.x = x;
-    lastY = this.y;
+    this.lastY = this.y;
     this.y = y;
     this.z = z;
-    onMove();
+    this.onMove();
   }
 
   public abstract void onMove();
 
   @Override
   public void onTeleport(int teleportId) {
-    if (teleportId == waitingTeleportId) {
-      ticks = 0;
-      y = -1;
-      lastY = -1;
-      waitingTeleportId = -1;
+    if (teleportId == this.waitingTeleportId) {
+      this.ticks = 1;
+      this.y = -1;
+      this.lastY = -1;
+      this.waitingTeleportId = -1;
     }
   }
 
   public static double getLoadedChunkSpeed(int ticks) {
+    System.out.println(ticks);
     if (ticks == -1) {
       return 0;
     }
