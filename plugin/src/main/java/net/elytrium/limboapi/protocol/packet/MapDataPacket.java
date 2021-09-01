@@ -63,6 +63,7 @@ public class MapDataPacket implements MinecraftPacket {
     buf.writeByte(this.data.getRows());
     buf.writeByte(this.data.getX());
     buf.writeByte(this.data.getY());
+    buf.ensureWritable(3 + data.getData().length);
     ProtocolUtils.writeByteArray(buf, this.data.getData());
   }
 
