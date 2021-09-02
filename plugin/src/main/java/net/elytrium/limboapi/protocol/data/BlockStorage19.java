@@ -56,8 +56,9 @@ public class BlockStorage19 implements BlockStorage {
     this.storage.set(index(x, y, z), id);
   }
 
+  @NonNull
   @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
-  public @NonNull VirtualBlock get(int x, int y, int z) {
+  public VirtualBlock get(int x, int y, int z) {
     return get(index(x, y, z));
   }
 

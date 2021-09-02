@@ -57,8 +57,8 @@ public class Config {
   }
 
   /**
-   * Set the value of a specific node<br>
-   * Probably throws some error if you supply non existing keys or invalid
+   * Set the value of a specific node.<br>
+   * Probably throws some error if you supply non existing keys or invalid.
    * values
    *
    * @param key   config node
@@ -129,7 +129,7 @@ public class Config {
   }
 
   /**
-   * Set all values in the file (load first to avoid overwriting)
+   * Set all values in the file (load first to avoid overwriting).
    *
    * @param file file
    */
@@ -208,7 +208,7 @@ public class Config {
   }
 
   /**
-   * Indicates that a field should be instantiated / created
+   * Indicates that a field should be instantiated / created.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.FIELD})
@@ -216,7 +216,7 @@ public class Config {
   }
 
   /**
-   * Indicates that a field cannot be modified
+   * Indicates that a field cannot be modified.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.FIELD)
@@ -224,7 +224,7 @@ public class Config {
   }
 
   /**
-   * Creates a comment
+   * Creates a comment.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.FIELD, ElementType.TYPE})
@@ -233,7 +233,7 @@ public class Config {
   }
 
   /**
-   * Any field or class with is not part of the config
+   * Any field or class with is not part of the config.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.FIELD, ElementType.TYPE})
@@ -273,8 +273,8 @@ public class Config {
   }
 
   /**
-   * Get the field for a specific config node and instance<br>
-   * Note: As expiry can have multiple blocks there will be multiple instances
+   * Get the field for a specific config node and instance.<br>
+   * Note: As expiry can have multiple blocks there will be multiple instances.
    *
    * @param split    the node (split by period)
    * @param instance the instance
@@ -294,7 +294,7 @@ public class Config {
   }
 
   /**
-   * Get the instance for a specific config node
+   * Get the instance for a specific config node.
    *
    * @param split the node (split by period)
    * @param root  the root class
@@ -342,7 +342,7 @@ public class Config {
   }
 
   /**
-   * Translate a node to a java field name
+   * Translate a node to a java field name.
    *
    * @param node node to translate
    * @return java field name
@@ -352,7 +352,7 @@ public class Config {
   }
 
   /**
-   * Translate a field to a config node
+   * Translate a field to a config node.
    *
    * @param field to translate
    * @return config node name
@@ -362,7 +362,7 @@ public class Config {
   }
 
   /**
-   * Set some field to be accesible
+   * Set some field to be accesible.
    *
    * @param field to be accesible
    * @throws NoSuchFieldException   ...

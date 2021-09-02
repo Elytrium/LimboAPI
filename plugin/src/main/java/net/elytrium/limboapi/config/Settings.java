@@ -18,6 +18,7 @@
 package net.elytrium.limboapi.config;
 
 import java.io.File;
+import net.elytrium.limboapi.BuildConstants;
 
 public class Settings extends Config {
 
@@ -25,7 +26,7 @@ public class Settings extends Config {
   public static final Settings IMP = new Settings();
 
   @Final
-  public String VERSION = "1.0.0";
+  public String VERSION = BuildConstants.LIMBO_VERSION;
 
   @Create
   public MESSAGES MESSAGES;

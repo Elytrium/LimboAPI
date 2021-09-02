@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.elytrium.limboapi.BuildConstants;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limboapi.api.chunk.Dimension;
@@ -67,7 +68,7 @@ import org.slf4j.Logger;
 @Plugin(
     id = "limbofilter",
     name = "LimboFilter",
-    version = "1.0.0",
+    version = BuildConstants.LIMBO_VERSION,
     url = "ely.su",
     authors = {"hevav", "mdxd44"},
     dependencies = {@Dependency(id = "limboapi")}
@@ -76,6 +77,7 @@ import org.slf4j.Logger;
 @Getter
 @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class FilterPlugin {
+
   private static FilterPlugin instance;
   private final Path dataDirectory;
   private final Logger logger;
@@ -123,11 +125,11 @@ public class FilterPlugin {
 
     cachedFilterChecks = new ConcurrentHashMap<>();
 
-    Settings.MAIN.CAPTCHA_COORDS captchaCoords = Settings.IMP.MAIN.CAPTCHA_COORDS;
+    Settings.MAIN.COORDS captchaCoords = Settings.IMP.MAIN.COORDS;
     VirtualWorld authWorld = factory.createVirtualWorld(
         Dimension.valueOf(Settings.IMP.MAIN.BOTFILTER_DIMENSION),
-        captchaCoords.X, captchaCoords.Y, captchaCoords.Z,
-        (float) captchaCoords.YAW, (float) captchaCoords.PITCH);
+        captchaCoords.CAPTCHA_X, captchaCoords.CAPTCHA_Y, captchaCoords.CAPTCHA_Z,
+        (float) captchaCoords.CAPTCHA_YAW, (float) captchaCoords.CAPTCHA_PITCH);
 
     if (Settings.IMP.MAIN.LOAD_WORLD) {
       try {
