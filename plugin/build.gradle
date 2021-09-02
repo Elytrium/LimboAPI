@@ -24,7 +24,7 @@ dependencies {
     compileOnly files('../libs/3.0.0.jar')
 
     implementation 'org.bstats:bstats-velocity:2.2.1'
-    annotationProcessor 'com.velocitypowered:velocity-api:3.0.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:3.0.2-SNAPSHOT'
 
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
@@ -37,14 +37,6 @@ dependencies {
 
 shadowJar {
     relocate 'org.bstats', 'net.elytrium.limboapi.bstats'
-}
-
-tasks.withType(Checkstyle) {
-    exclude('**/net/elytrium/limboapi/config/Settings.java')
-
-    exclude('**/net/elytrium/limboapi/protocol/packet/**') // Member Name
-    exclude('**/net/elytrium/limboapi/protocol/util/**') // Local Variable Name
-    exclude('**/net/elytrium/limboapi/server/world/chunk/**') // Local Variable Name
 }
 
 // TODO: Replace non shaded jar by shaded

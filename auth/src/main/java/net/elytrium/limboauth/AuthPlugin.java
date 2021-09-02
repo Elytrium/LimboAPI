@@ -56,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.elytrium.limboapi.BuildConstants;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limboapi.api.chunk.Dimension;
@@ -77,7 +78,7 @@ import org.slf4j.Logger;
 @Plugin(
     id = "limboauth",
     name = "LimboAuth",
-    version = "1.0.0",
+    version = BuildConstants.LIMBO_VERSION,
     url = "ely.su",
     authors = {"hevav", "mdxd44"},
     dependencies = {@Dependency(id = "limboapi")}
