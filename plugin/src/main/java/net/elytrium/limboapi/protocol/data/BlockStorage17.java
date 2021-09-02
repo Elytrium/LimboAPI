@@ -45,9 +45,10 @@ public class BlockStorage17 implements BlockStorage {
     this.blocks[BlockStorage.index(x, y, z)] = block;
   }
 
-  @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
   @Override
-  public @NonNull VirtualBlock get(int x, int y, int z) {
+  @NonNull
+  @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
+  public VirtualBlock get(int x, int y, int z) {
     VirtualBlock block = this.blocks[BlockStorage.index(x, y, z)];
     return block == null ? SimpleBlock.AIR : block;
   }

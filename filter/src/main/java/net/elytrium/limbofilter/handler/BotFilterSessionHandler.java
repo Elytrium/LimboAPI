@@ -80,9 +80,9 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.packets = plugin.getPackets();
     this.connection = player.getConnection();
 
-    Settings.MAIN.CAPTCHA_COORDS captchaCoords = Settings.IMP.MAIN.CAPTCHA_COORDS;
+    Settings.MAIN.COORDS coords = Settings.IMP.MAIN.COORDS;
     this.fallingCheckPos = packets.createPlayerPosAndLookPacket(
-        validX, validY, validZ, (float) captchaCoords.YAW, (float) captchaCoords.PITCH);
+        validX, validY, validZ, (float) coords.FALLING_CHECK_YAW, (float) coords.FALLING_CHECK_PITCH);
     this.fallingCheckChunk = packets.createChunkDataPacket(
         new SimpleChunk(validX >> 4, validZ >> 4), validY);
     this.fallingCheckView = packets.createUpdateViewPosition(validX, validZ);
@@ -327,7 +327,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   public static void reload() {
     TOTAL_TICKS = Settings.IMP.MAIN.FALLING_CHECK_TICKS;
     TOTAL_TIME = (TOTAL_TICKS * 50) - 100;
-    CAPTCHA_Y = Settings.IMP.MAIN.CAPTCHA_COORDS.Y;
+    CAPTCHA_Y = Settings.IMP.MAIN.COORDS.CAPTCHA_Y;
   }
 
   public enum CheckState {

@@ -19,6 +19,7 @@ package net.elytrium.limbofilter.config;
 
 import java.io.File;
 import java.util.List;
+import net.elytrium.limboapi.BuildConstants;
 
 public class Settings extends Config {
 
@@ -26,7 +27,7 @@ public class Settings extends Config {
   public static final Settings IMP = new Settings();
 
   @Final
-  public String VERSION = "1.0.0";
+  public String VERSION = BuildConstants.LIMBO_VERSION;
 
   public String PREFIX = "&5&fLimboFilter &6>>&f";
 
@@ -129,14 +130,16 @@ public class Settings extends Config {
     }
 
     @Create
-    public MAIN.CAPTCHA_COORDS CAPTCHA_COORDS;
+    public COORDS COORDS;
 
-    public static class CAPTCHA_COORDS {
-      public double X = 0;
-      public double Y = 0;
-      public double Z = 0;
-      public double YAW = 0;
-      public double PITCH = 0;
+    public static class COORDS {
+      public double CAPTCHA_X = 0;
+      public double CAPTCHA_Y = 0;
+      public double CAPTCHA_Z = 0;
+      public double CAPTCHA_YAW = 90;
+      public double CAPTCHA_PITCH = 38;
+      public double FALLING_CHECK_YAW = 90;
+      public double FALLING_CHECK_PITCH = 10;
     }
   }
 

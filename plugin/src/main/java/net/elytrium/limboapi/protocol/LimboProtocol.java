@@ -298,7 +298,7 @@ public class LimboProtocol {
         getMappingsForPacket(StateRegistry.PLAY.clientbound,
             ProtocolVersion.MINECRAFT_1_8, ProtocolVersion.MINECRAFT_1_16_4, LegacyTitlePacket.class, true));
   }
-  
+
   @SneakyThrows
   public static void register(
       PacketDirection direction,
@@ -316,9 +316,9 @@ public class LimboProtocol {
       default:
         throw new IllegalArgumentException();
     }
-    
+
     register.invoke(registry, packetClass, packetSupplier, packetMappings);
-  } 
+  }
 
   private static StateRegistry.PacketMapping map(int id, ProtocolVersion version, boolean encodeOnly) {
     return map(id, version, null, encodeOnly);
