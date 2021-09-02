@@ -104,6 +104,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void disconnected() {
     this.callback.onDisconnect();
+    this.limboAPI.unsetCurrentlyJoined(this.player);
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
       this.limboAPI.getLogger().info(
           this.player.getUsername() + " (" + this.player.getRemoteAddress()

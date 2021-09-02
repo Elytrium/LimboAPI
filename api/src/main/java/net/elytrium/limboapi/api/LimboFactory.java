@@ -21,7 +21,7 @@ import net.elytrium.limboapi.api.protocol.PreparedPacket;
 public interface LimboFactory {
 
   /**
-   * Creates new virtual world
+   * Creates new virtual world.
    *
    * @param dimension World dimension
    * @param x         Spawn location (X)
@@ -34,7 +34,7 @@ public interface LimboFactory {
   VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch);
 
   /**
-   * Creates new virtual server
+   * Creates new virtual server.
    *
    * @param world Virtual world
    * @return new virtual server.
@@ -42,7 +42,7 @@ public interface LimboFactory {
   Limbo createLimbo(VirtualWorld world);
 
   /**
-   * Creates new virtual block from Block enum
+   * Creates new virtual block from Block enum.
    *
    * @param block Block from Block enum
    * @return new virtual block.
@@ -50,7 +50,7 @@ public interface LimboFactory {
   VirtualBlock createSimpleBlock(Block block);
 
   /**
-   * Creates new virtual block from Id and Data
+   * Creates new virtual block from Id and Data.
    *
    * @param legacyId Legacy block id (1.12.2 and lower)
    * @param data     Block data
@@ -59,22 +59,22 @@ public interface LimboFactory {
   VirtualBlock createSimpleBlock(short legacyId, byte data);
 
   /**
-   * Creates new virtual customizable block
+   * Creates new virtual customizable block.
    *
    * @return new virtual server.
    */
   VirtualBlock createSimpleBlock(boolean solid, boolean air,
-                                 boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
+      boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
 
   /**
-   * Creates new prepared packet builder
+   * Creates new prepared packet builder.
    *
    * @return new prepared packet.
    */
   PreparedPacket createPreparedPacket();
 
   /**
-   * Creates new virtual item from Item enum
+   * Creates new virtual item from Item enum.
    *
    * @param item Item from item enum
    * @return new virtual item.
@@ -82,7 +82,7 @@ public interface LimboFactory {
   VirtualItem getItem(Item item);
 
   /**
-   * Registers self-made packet
+   * Registers self-made packet.
    *
    * @param direction      Packet direction
    * @param packetClass    Packet class
@@ -90,7 +90,7 @@ public interface LimboFactory {
    * @param packetMappings Packet id mappings
    */
   void registerPacket(PacketDirection direction,
-                      Class packetClass,
-                      Supplier packetSupplier,
-                      StateRegistry.PacketMapping[] packetMappings);
+      Class packetClass,
+      Supplier packetSupplier,
+      StateRegistry.PacketMapping[] packetMappings);
 }
