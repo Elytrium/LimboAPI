@@ -83,14 +83,13 @@ public class LimboAPI implements LimboFactory {
   private final Metrics.Factory metricsFactory;
   private final Path dataDirectory;
   private final List<Player> players;
-  private final List<Player> currentlyJoinedPlayers;
   private final HashMap<Player, LoginTasksQueue> loginQueue;
 
   private CachedPackets packets;
 
   @Inject
   public LimboAPI(ProxyServer server, Logger logger,
-      Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
+                  Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
     instance = this;
 
     this.server = (VelocityServer) server;
@@ -98,7 +97,6 @@ public class LimboAPI implements LimboFactory {
     this.metricsFactory = metricsFactory;
     this.dataDirectory = dataDirectory;
     this.players = new ArrayList<>();
-    this.currentlyJoinedPlayers = new ArrayList<>();
     this.loginQueue = new HashMap<>();
 
     this.logger.info("Initializing Simple Virtual Block system...");
@@ -114,7 +112,6 @@ public class LimboAPI implements LimboFactory {
     this.metricsFactory.make(this, 12530);
     this.packets = new CachedPackets(this);
     this.players.clear();
-    this.currentlyJoinedPlayers.clear();
 
     this.reload();
     this.checkForUpdates();
@@ -131,23 +128,23 @@ public class LimboAPI implements LimboFactory {
 
   @SuppressFBWarnings("NP_IMMEDIATE_DEREFERENCE_OF_READLINE")
   private void checkForUpdates() {
-    try {
-      URL url = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION");
-      URLConnection conn = url.openConnection();
-      conn.setConnectTimeout(1200);
-      conn.setReadTimeout(1200);
-      try (BufferedReader in = new BufferedReader(new InputStreamReader(
-          conn.getInputStream(), StandardCharsets.UTF_8))) {
-        if (!Settings.IMP.VERSION.contains("-DEV")) {
+    if (!Settings.IMP.VERSION.contains("-DEV")) {
+      try {
+        URL url = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION");
+        URLConnection conn = url.openConnection();
+        conn.setConnectTimeout(1200);
+        conn.setReadTimeout(1200);
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(
+            conn.getInputStream(), StandardCharsets.UTF_8))) {
           if (!in.readLine().trim().equalsIgnoreCase(Settings.IMP.VERSION)) {
             this.logger.error("****************************************");
             this.logger.warn("The new update was found, please update.");
             this.logger.error("****************************************");
           }
         }
+      } catch (IOException ex) {
+        this.logger.warn("Unable to check for updates.", ex);
       }
-    } catch (IOException ex) {
-      this.logger.warn("Unable to check for updates.", ex);
     }
   }
 
@@ -196,11 +193,6 @@ public class LimboAPI implements LimboFactory {
 
   public void setLimboJoined(Player player) {
     this.players.add(player);
-    this.currentlyJoinedPlayers.add(player);
-  }
-
-  public void unsetCurrentlyJoined(Player player) {
-    this.currentlyJoinedPlayers.remove(player);
   }
 
   public void unsetLimboJoined(Player player) {
@@ -209,10 +201,6 @@ public class LimboAPI implements LimboFactory {
 
   public boolean isLimboJoined(Player player) {
     return this.players.contains(player);
-  }
-
-  public boolean isCurrentlyLimboJoined(Player player) {
-    return this.currentlyJoinedPlayers.contains(player);
   }
 
   public LoginTasksQueue getLoginQueue(Player player) {
