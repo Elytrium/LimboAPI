@@ -26,10 +26,7 @@ public class Settings extends Config {
   @Ignore
   public static final Settings IMP = new Settings();
 
-  @Final
-  public String VERSION = BuildConstants.LIMBO_VERSION;
-
-  public String PREFIX = "&5&fLimboFilter &6>>&f";
+  public String PREFIX = "LimboFilter &6>>&f";
 
   @Create
   public MAIN MAIN;
