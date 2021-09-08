@@ -42,6 +42,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
@@ -49,12 +50,14 @@ import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import com.velocitypowered.proxy.connection.client.ConnectedPlayerHook;
 import com.velocitypowered.proxy.connection.client.InitialInboundConnection;
 import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
 import com.velocitypowered.proxy.protocol.packet.SetCompression;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -72,6 +75,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 public class LoginListener {
 
   private static final ClosedMinecraftConnection closed;
+  private static Constructor<ConnectedPlayer> ctor;
   private static Field craftConnectionField;
   private static Field loginConnectionField;
   private static Field spawned;
@@ -81,6 +85,10 @@ public class LoginListener {
         new ClosedChannel(new DummyEventPool()), LimboAPI.getInstance().getServer());
 
     try {
+      ctor = ConnectedPlayer.class.getDeclaredConstructor(
+          VelocityServer.class, GameProfile.class, MinecraftConnection.class, InetSocketAddress.class, boolean.class);
+      ctor.setAccessible(true);
+
       craftConnectionField = InitialInboundConnection.class.getDeclaredField("connection");
       craftConnectionField.setAccessible(true);
 
@@ -89,7 +97,7 @@ public class LoginListener {
 
       spawned = ClientPlaySessionHandler.class.getDeclaredField("spawned");
       spawned.setAccessible(true);
-    } catch (NoSuchFieldException e) {
+    } catch (NoSuchFieldException | NoSuchMethodException e) {
       e.printStackTrace();
     }
   }
@@ -123,46 +131,50 @@ public class LoginListener {
     loginConnectionField.set(handler, closed);
 
     connection.eventLoop().execute(() -> {
-      // Initiate a regular connection and move over to it.
-      ConnectedPlayer player = new ConnectedPlayerHook(this.limboAPI,
-          this.server, e.getGameProfile(), connection,
-          e.getConnection().getVirtualHost().orElse(null),
-          this.onlineMode.contains(e.getUsername()));
+      try {
+        // Initiate a regular connection and move over to it.
+        ConnectedPlayer player = ctor.newInstance(
+            this.server, e.getGameProfile(), connection,
+            e.getConnection().getVirtualHost().orElse(null),
+            this.onlineMode.contains(e.getUsername()));
 
-      if (!this.server.canRegisterConnection(player)) {
-        // TODO: Prepare this packet. Хм. Или не нужно?
-        player.disconnect0(
-            Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
-        return;
+        if (!this.server.canRegisterConnection(player)) {
+          // TODO: Prepare this packet. Хм. Или не нужно?
+          player.disconnect0(
+              Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
+          return;
+        }
+
+        // Completing the Login process
+        int threshold = this.server.getConfiguration().getCompressionThreshold();
+        if (threshold >= 0 && connection.getProtocolVersion().compareTo(MINECRAFT_1_8) >= 0) {
+          connection.write(new SetCompression(threshold));
+          connection.setCompressionThreshold(threshold);
+        }
+
+        VelocityConfiguration configuration = this.server.getConfiguration();
+        UUID playerUniqueId = player.getUniqueId();
+        if (configuration.getPlayerInfoForwardingMode() == PlayerInfoForwarding.NONE) {
+          playerUniqueId = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
+        }
+
+        ServerLoginSuccess success = new ServerLoginSuccess();
+        success.setUsername(player.getUsername());
+        success.setUuid(playerUniqueId);
+        connection.write(success);
+
+        this.server.getEventManager()
+            .fire(new LoginLimboRegisterEvent(player))
+            .thenAcceptAsync(limboEvent -> {
+              LoginTasksQueue queue = new LoginTasksQueue(
+                  this.limboAPI, handler, this.server, player, limboEvent.getCallbacks());
+
+              this.limboAPI.addLoginQueue(player, queue);
+              queue.next();
+            }, connection.eventLoop());
+      } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+        ex.printStackTrace();
       }
-
-      // Completing the Login process
-      int threshold = this.server.getConfiguration().getCompressionThreshold();
-      if (threshold >= 0 && connection.getProtocolVersion().compareTo(MINECRAFT_1_8) >= 0) {
-        connection.write(new SetCompression(threshold));
-        connection.setCompressionThreshold(threshold);
-      }
-
-      VelocityConfiguration configuration = this.server.getConfiguration();
-      UUID playerUniqueId = player.getUniqueId();
-      if (configuration.getPlayerInfoForwardingMode() == PlayerInfoForwarding.NONE) {
-        playerUniqueId = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
-      }
-
-      ServerLoginSuccess success = new ServerLoginSuccess();
-      success.setUsername(player.getUsername());
-      success.setUuid(playerUniqueId);
-      connection.write(success);
-
-      this.server.getEventManager()
-          .fire(new LoginLimboRegisterEvent(player))
-          .thenAcceptAsync(limboEvent -> {
-            LoginTasksQueue queue = new LoginTasksQueue(
-                this.limboAPI, handler, this.server, player, limboEvent.getCallbacks());
-
-            this.limboAPI.addLoginQueue(player, queue);
-            queue.next();
-          }, connection.eventLoop());
     });
   }
 

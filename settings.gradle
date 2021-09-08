@@ -4,10 +4,12 @@ include(
     'api',
     'plugin',
     'auth',
-    'filter'
+    'filter',
+    'fallback'
 )
 
 findProject(':api')?.name = 'limboapi-api'
 findProject(':plugin')?.name = 'limboapi-plugin'
 findProject(':auth')?.name = 'limboauth'
 findProject(':filter')?.name = 'limbofilter'
+findProject(':fallback')?.name = 'limbofallback'
