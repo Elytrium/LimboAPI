@@ -33,19 +33,14 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
@@ -121,7 +116,6 @@ public class AuthPlugin {
 
   @SneakyThrows
   public void reload() {
-    this.checkForUpdates();
     Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
 
     this.cachedAuthChecks = new ConcurrentHashMap<>();
@@ -218,28 +212,6 @@ public class AuthPlugin {
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         TimeUnit.MILLISECONDS);
-  }
-
-  @SuppressFBWarnings("NP_IMMEDIATE_DEREFERENCE_OF_READLINE")
-  private void checkForUpdates() {
-    try {
-      URL url = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION");
-      URLConnection conn = url.openConnection();
-      conn.setConnectTimeout(1200);
-      conn.setReadTimeout(1200);
-      try (BufferedReader in = new BufferedReader(
-          new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-        if (!Settings.IMP.VERSION.contains("-DEV")) {
-          if (!in.readLine().trim().equalsIgnoreCase(Settings.IMP.VERSION)) {
-            this.logger.error("****************************************");
-            this.logger.warn("The new update was found, please update.");
-            this.logger.error("****************************************");
-          }
-        }
-      }
-    } catch (IOException ex) {
-      this.logger.warn("Unable to check for updates.", ex);
-    }
   }
 
   public void cacheAuthUser(Player player) {
