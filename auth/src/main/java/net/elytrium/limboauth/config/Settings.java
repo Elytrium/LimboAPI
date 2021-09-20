@@ -45,13 +45,14 @@ public class Settings extends Config {
     public int IP_LIMIT_REGISTRATIONS = 3;
     @Comment("Time in milliseconds, when ip limit works, set to 0 for disable")
     public long IP_LIMIT_VALID_TIME = 21600000;
-    @Comment("In lowercase")
-    public String ALLOWED_NICKNAME_CHARS = "abcdefghijklmnopqrstuvwxyz_0123456789";
+    public String ALLOWED_NICKNAME_REGEX = "^\\w{4,16}$";
 
     public boolean LOAD_WORLD = false;
     @Comment("World file type: schematic")
     public String WORLD_FILE_TYPE = "schematic";
     public String WORLD_FILE_PATH = "world.schematic";
+    @Comment("Custom isPremium URL")
+    public String ISPREMIUM_AUTH_URL = "https://api.mojang.com/users/profiles/minecraft/%s";
 
     @Create
     public Settings.MAIN.WORLD_COORDS WORLD_COORDS;
