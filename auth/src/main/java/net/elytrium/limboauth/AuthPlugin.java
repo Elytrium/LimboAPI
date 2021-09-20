@@ -261,7 +261,7 @@ public class AuthPlugin {
   public boolean isPremium(String nickname) {
     try {
       HttpRequest request = HttpRequest.newBuilder().uri(
-          URI.create("https://api.mojang.com/users/profiles/minecraft/" + nickname)).build();
+          URI.create(String.format(Settings.IMP.MAIN.ISPREMIUM_AUTH_URL, nickname))).build();
       HttpResponse<String> response = this.client.send(request, HttpResponse.BodyHandlers.ofString());
       return response.statusCode() == 200;
     } catch (IOException | InterruptedException e) {
