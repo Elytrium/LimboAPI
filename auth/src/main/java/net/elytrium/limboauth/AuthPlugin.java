@@ -69,6 +69,7 @@ import net.elytrium.limboauth.model.RegisteredPlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.slf4j.Logger;
+import java.util.regex.Pattern;
 
 @Plugin(
     id = "limboauth",
