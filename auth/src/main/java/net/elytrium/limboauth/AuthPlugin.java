@@ -97,6 +97,8 @@ public class AuthPlugin {
   private Component nicknameInvalid;
   private Component nicknamePremium;
 
+  private Pattern nicknameValidationPattern;
+
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Inject
   public AuthPlugin(ProxyServer server,
@@ -194,6 +196,8 @@ public class AuthPlugin {
       } catch (IOException e) {
         e.printStackTrace();
       }
+
+      nicknameValidationPattern = Pattern.compile(Settings.IMP.MAIN.ALLOWED_NICKNAME_REGEX);
     }
 
     this.authServer = this.factory.createLimbo(authWorld);
@@ -237,12 +241,10 @@ public class AuthPlugin {
   }
 
   public void auth(Player player) {
-    String nickname = player.getUsername().toLowerCase(Locale.ROOT);
-    for (char character : nickname.toCharArray()) {
-      if (!Settings.IMP.MAIN.ALLOWED_NICKNAME_CHARS.contains(String.valueOf(character))) {
-        player.disconnect(this.nicknameInvalid);
-        return;
-      }
+    String nickname = player.getUsername();
+    if (!nicknameValidationPattern.matcher(nickname).matches()) {
+      player.disconnect(this.nicknameInvalid);
+      return;
     }
 
     this.sendToAuthServer(player, nickname);
