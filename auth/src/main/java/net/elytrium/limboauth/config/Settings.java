@@ -52,6 +52,8 @@ public class Settings extends Config {
     @Comment("World file type: schematic")
     public String WORLD_FILE_TYPE = "schematic";
     public String WORLD_FILE_PATH = "world.schematic";
+    @Comment("Custom isPremium URL")
+    public String ISPREMIUM_AUTH_URL = "https://api.mojang.com/users/profiles/minecraft/%s";
 
     @Create
     public Settings.MAIN.WORLD_COORDS WORLD_COORDS;
