@@ -18,7 +18,6 @@
 package net.elytrium.limboauth.config;
 
 import java.io.File;
-import net.elytrium.limboapi.BuildConstants;
 
 public class Settings extends Config {
 
@@ -45,7 +44,7 @@ public class Settings extends Config {
     public int IP_LIMIT_REGISTRATIONS = 3;
     @Comment("Time in milliseconds, when ip limit works, set to 0 for disable")
     public long IP_LIMIT_VALID_TIME = 21600000;
-    public String ALLOWED_NICKNAME_REGEX = "^\\w{4,16}$";
+    public String ALLOWED_NICKNAME_REGEX = "^[A-Za-z0-9]{4,16}";
 
     public boolean LOAD_WORLD = false;
     @Comment("World file type: schematic")

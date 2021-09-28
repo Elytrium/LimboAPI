@@ -130,7 +130,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
 
   @SneakyThrows
   public static RegisteredPlayer fetchInfo(Dao<RegisteredPlayer, String> playerDao, String nickname) {
-    List<RegisteredPlayer> playerList = playerDao.queryForEq("nickname", nickname);
+    List<RegisteredPlayer> playerList = playerDao.queryForEq("NICKNAME", nickname);
     return playerList.size() == 0 ? null : playerList.get(0);
   }
 
@@ -147,7 +147,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
 
   @SneakyThrows
   private void checkIp() {
-    List<RegisteredPlayer> alreadyRegistered = this.playerDao.queryForEq("ip", this.ip);
+    List<RegisteredPlayer> alreadyRegistered = this.playerDao.queryForEq("IP", this.ip);
 
     AtomicInteger sizeOfValid = new AtomicInteger(alreadyRegistered.size());
 
