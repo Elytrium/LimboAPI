@@ -44,14 +44,26 @@ public class Settings extends Config {
     public int IP_LIMIT_REGISTRATIONS = 3;
     @Comment("Time in milliseconds, when ip limit works, set to 0 for disable")
     public long IP_LIMIT_VALID_TIME = 21600000;
-    public String ALLOWED_NICKNAME_REGEX = "^[A-Za-z0-9]{4,16}";
+    @Comment({
+        "Regex of allowed nicknames",
+        "^ means the start of the line, $ means the end of the line",
+        "[A-Za-z0-9_] is a character set of A-Z, a-z, 0-9 and _",
+        "{3,16} means that allowed length is from 3 to 16 chars"
+    })
+    public String ALLOWED_NICKNAME_REGEX = "^[A-Za-z0-9_]{3,16}$";
 
     public boolean LOAD_WORLD = false;
     @Comment("World file type: schematic")
     public String WORLD_FILE_TYPE = "schematic";
     public String WORLD_FILE_PATH = "world.schematic";
-    @Comment("Custom isPremium URL")
-    public String ISPREMIUM_AUTH_URL = "https://api.mojang.com/users/profiles/minecraft/%s";
+    @Comment({
+        "Custom isPremium URL",
+        "You can use Mojang one's API: https://api.mojang.com/users/profiles/minecraft/%s",
+        "Or CloudFlare one's (set by default)",
+        "Or use this code to make your own API: https://blog.cloudflare.com/minecraft-api-with-workers-coffeescript/",
+        "Or implement your own API, it should just respond with HTTP code 200 only if the player is premium"
+    })
+    public String ISPREMIUM_AUTH_URL = "https://api.ashcon.app/mojang/v1/user/%s";
 
     @Create
     public Settings.MAIN.WORLD_COORDS WORLD_COORDS;

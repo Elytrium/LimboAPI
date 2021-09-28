@@ -52,8 +52,12 @@ public class FilterListener {
     }
   }
 
-  @Subscribe
+  @Subscribe(order = PostOrder.LAST)
   public void onPing(ProxyPingEvent e) {
+    if (plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.DISABLE_MOTD_PICTURE)) {
+      e.setPing(e.getPing().asBuilder().clearFavicon().build());
+    }
+
     plugin.getStatistics().addPingPerSecond();
   }
 

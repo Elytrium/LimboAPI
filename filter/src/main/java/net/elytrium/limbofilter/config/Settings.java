@@ -70,19 +70,24 @@ public class Settings extends Config {
           "Online mode players will bypass all anti-bot checks",
           "Doesn't work with online-mode-verify: -1"
       })
-      public int ONLINE_MODE_BYPASS = 15;
+      public int ONLINE_MODE_BYPASS = 3;
 
       @Comment({
           "Verify Online Mode connection before AntiBot.",
           "If connections per second amount is bigger than the limit: online mode players will need to reconnect",
           "Else: Some attacks can consume more cpu and network, and can lead to long-lasting Mojang rate-limiting"
       })
-      public int ONLINE_MODE_VERIFY = 15;
+      public int ONLINE_MODE_VERIFY = 3;
 
       @Comment({
           "The player will need to reconnect after passing AntiBot check.",
       })
-      public int NEED_TO_RECONNECT = 150;
+      public int NEED_TO_RECONNECT = 15;
+
+      @Comment({
+          "Picture in the MOTD Server Ping packet will be disabled.",
+      })
+      public int DISABLE_MOTD_PICTURE = 15;
     }
 
     @Create
