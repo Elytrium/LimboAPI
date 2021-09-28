@@ -159,6 +159,7 @@ public class AuthPlugin {
     TableUtils.createTableIfNotExists(connectionSource, RegisteredPlayer.class);
 
     this.playerDao = DaoManager.createDao(connectionSource, RegisteredPlayer.class);
+    this.nicknameValidationPattern = Pattern.compile(Settings.IMP.MAIN.ALLOWED_NICKNAME_REGEX);
 
     CommandManager manager = this.server.getCommandManager();
     manager.unregister("unregister");
@@ -196,8 +197,6 @@ public class AuthPlugin {
       } catch (IOException e) {
         e.printStackTrace();
       }
-
-      nicknameValidationPattern = Pattern.compile(Settings.IMP.MAIN.ALLOWED_NICKNAME_REGEX);
     }
 
     this.authServer = this.factory.createLimbo(authWorld);
