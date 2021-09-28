@@ -172,12 +172,12 @@ public class FilterPlugin {
   }
 
   public boolean shouldCheck(ConnectedPlayer player) {
-    if (checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ALL_BYPASS)) {
+    if (!checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ALL_BYPASS)) {
       return false;
     }
 
     if (player.isOnlineMode()
-        && checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_BYPASS)) {
+        && !checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_BYPASS)) {
       return false;
     }
 
