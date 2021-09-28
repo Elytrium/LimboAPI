@@ -129,6 +129,9 @@ public class LoginListener {
     MinecraftConnection connection = (MinecraftConnection) craftConnectionField.get(e.getConnection());
     LoginSessionHandler handler = (LoginSessionHandler) connection.getSessionHandler();
     loginConnectionField.set(handler, closed);
+    if (connection.isClosed()) {
+      return;
+    }
 
     connection.eventLoop().execute(() -> {
       try {
@@ -142,6 +145,10 @@ public class LoginListener {
           // TODO: Prepare this packet. Хм. Или не нужно?
           player.disconnect0(
               Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
+          return;
+        }
+
+        if (connection.isClosed()) {
           return;
         }
 

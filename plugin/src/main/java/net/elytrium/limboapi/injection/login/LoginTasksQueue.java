@@ -106,6 +106,10 @@ public class LoginTasksQueue {
 
   @SuppressWarnings("ConstantConditions")
   public void next() {
+    if (this.player.getConnection().isClosed()) {
+      return;
+    }
+
     if (this.queue.size() == 0) {
       this.player.getConnection().eventLoop().execute(this::finish);
     } else {

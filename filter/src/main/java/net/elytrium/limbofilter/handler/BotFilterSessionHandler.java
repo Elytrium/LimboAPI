@@ -172,11 +172,12 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     state = CheckState.SUCCESSFUL;
     plugin.cacheFilterUser(player);
 
-    if (Settings.IMP.MAIN.ONLINE_MODE_VERIFY && !Settings.IMP.MAIN.NEED_TO_RECONNECT) {
+    if (plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_VERIFY)
+        || plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.NEED_TO_RECONNECT)) {
+      connection.closeWith(packets.getSuccessfulBotFilterDisconnect());
+    } else {
       connection.write(packets.getSuccessfulBotFilterChat());
       limboPlayer.disconnect();
-    } else {
-      connection.closeWith(packets.getSuccessfulBotFilterDisconnect());
     }
   }
 
