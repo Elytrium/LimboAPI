@@ -37,7 +37,7 @@ public class FilterListener {
   @SneakyThrows
   @Subscribe(order = PostOrder.FIRST)
   public void onProxyConnect(PreLoginEvent e) {
-    if (!Settings.IMP.MAIN.ONLINE_MODE_VERIFY
+    if (plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_VERIFY)
         && plugin.shouldCheck(
             e.getUsername(), e.getConnection().getRemoteAddress().getAddress())) {
       e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());

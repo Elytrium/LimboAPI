@@ -19,7 +19,6 @@ package net.elytrium.limbofilter.config;
 
 import java.io.File;
 import java.util.List;
-import net.elytrium.limboapi.BuildConstants;
 
 public class Settings extends Config {
 
@@ -34,17 +33,6 @@ public class Settings extends Config {
   public static class MAIN {
     public boolean CHECK_CLIENT_SETTINGS = true;
     public boolean CHECK_CLIENT_BRAND = true;
-    @Comment({
-        "Verify Online Mode connection before AntiBot.",
-        "False: verify after antibot, online mode player needs to reconnect",
-        "True: verify before antibot, consumes more cpu and network on attack"
-    })
-    public boolean ONLINE_MODE_VERIFY = false;
-    @Comment({
-        "Toggle to make online mode players to bypass this check",
-        "Doesn't work with online-mode-verify: false"
-    })
-    public boolean ONLINE_MODE_BYPASS = false;
     public long PURGE_CACHE_MILLIS = 3600000;
     public int CAPTCHA_ATTEMPTS = 2;
     public int NON_VALID_POSITION_XZ_ATTEMPTS = 10;
@@ -55,11 +43,6 @@ public class Settings extends Config {
     public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 2048;
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
     public String BRAND = "LimboFilter";
-    @Comment({
-        "If the player needs to reconnect after passing AntiBot check.",
-        "If ONLINE_MODE_NEED_AUTH here and online-mode in velocity.toml is set, then premium players need to reconnect"
-    })
-    public boolean NEED_TO_RECONNECT = false;
 
     @Comment("Available - ONLY_POSITION, ONLY_CAPTCHA, CAPTCHA_POSITION, CAPTCHA_ON_POSITION_FAILED, SUCCESSFULLY")
     public String CHECK_STATE = "CAPTCHA_POSITION";
@@ -68,6 +51,39 @@ public class Settings extends Config {
     @Comment("World file type: schematic")
     public String WORLD_FILE_TYPE = "schematic";
     public String WORLD_FILE_PATH = "world.schematic";
+
+    @Create
+    public Settings.MAIN.CONNECTION_LIMIT CONNECTION_LIMIT;
+
+    @Comment({
+        "Minimum total connections per second amount to toggle anti-bot checks",
+        "-1 to disable the check",
+        "0 to enable on any connections per second"
+    })
+    public static class CONNECTION_LIMIT {
+      @Comment({
+          "All players will bypass all anti-bot checks"
+      })
+      public int ALL_BYPASS = 15;
+
+      @Comment({
+          "Online mode players will bypass all anti-bot checks",
+          "Doesn't work with online-mode-verify: -1"
+      })
+      public int ONLINE_MODE_BYPASS = 15;
+
+      @Comment({
+          "Verify Online Mode connection before AntiBot.",
+          "If connections per second amount is bigger than the limit: online mode players will need to reconnect",
+          "Else: Some attacks can consume more cpu and network, and can lead to long-lasting Mojang rate-limiting"
+      })
+      public int ONLINE_MODE_VERIFY = 15;
+
+      @Comment({
+          "The player will need to reconnect after passing AntiBot check.",
+      })
+      public int NEED_TO_RECONNECT = 150;
+    }
 
     @Create
     public Settings.MAIN.WORLD_COORDS WORLD_COORDS;

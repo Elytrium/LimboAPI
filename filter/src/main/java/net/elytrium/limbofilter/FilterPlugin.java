@@ -172,7 +172,12 @@ public class FilterPlugin {
   }
 
   public boolean shouldCheck(ConnectedPlayer player) {
-    if (Settings.IMP.MAIN.ONLINE_MODE_BYPASS && player.isOnlineMode()) {
+    if (checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ALL_BYPASS)) {
+      return false;
+    }
+
+    if (player.isOnlineMode()
+        && checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_BYPASS)) {
       return false;
     }
 
@@ -204,6 +209,14 @@ public class FilterPlugin {
         .filter(u -> u.getValue().getCheckTime() + time <= System.currentTimeMillis())
         .map(Map.Entry::getKey)
         .forEach(userMap::remove);
+  }
+
+  public boolean checkLimit(int limit) {
+    if (limit == -1) {
+      return false;
+    }
+
+    return limit <= this.statistics.getConnectionsPerSecond();
   }
 
   public static FilterPlugin getInstance() {
