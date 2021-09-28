@@ -64,7 +64,7 @@ public class Settings extends Config {
       @Comment({
           "All players will bypass all anti-bot checks"
       })
-      public int ALL_BYPASS = 15;
+      public int ALL_BYPASS = -1;
 
       @Comment({
           "Online mode players will bypass all anti-bot checks",
