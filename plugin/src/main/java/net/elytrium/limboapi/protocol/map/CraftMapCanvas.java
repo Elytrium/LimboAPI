@@ -19,10 +19,8 @@ package net.elytrium.limboapi.protocol.map;
 
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
-import lombok.Getter;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 
-@Getter
 public class CraftMapCanvas {
 
   private final byte[] canvas;
@@ -62,5 +60,9 @@ public class CraftMapCanvas {
 
   public MapDataPacket.MapData getMapData() {
     return new MapDataPacket.MapData(128, 128, 0, 0, this.canvas);
+  }
+
+  public byte[] getCanvas() {
+    return this.canvas.clone();
   }
 }

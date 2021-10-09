@@ -60,6 +60,7 @@ public class JsonConfiguration extends ConfigurationProvider {
       .create();
 
   JsonConfiguration() {
+
   }
 
   @Override

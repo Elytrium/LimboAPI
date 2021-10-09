@@ -39,40 +39,36 @@ public class PreparedPacketImpl implements PreparedPacket {
   private final Map<ProtocolVersion, List<ByteBuf>> packets = new ConcurrentHashMap<>();
 
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(T packet) {
-    return prepare((Function<ProtocolVersion, T>) (version) ->
-        packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
+    return this.prepare((Function<ProtocolVersion, T>) (version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
   }
 
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(List<T> packets) {
     for (T packet : packets) {
-      prepare((Function<ProtocolVersion, T>) (version) ->
-          packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
+      this.prepare((Function<ProtocolVersion, T>) (version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
     }
 
     return this;
   }
 
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(T packet, ProtocolVersion from) {
-    return prepare((Function<ProtocolVersion, T>) (version) -> packet, from, ProtocolVersion.MAXIMUM_VERSION);
+    return this.prepare((Function<ProtocolVersion, T>) (version) -> packet, from, ProtocolVersion.MAXIMUM_VERSION);
   }
 
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(T packet, ProtocolVersion from, ProtocolVersion to) {
-    return prepare((Function<ProtocolVersion, T>) (version) -> packet, from, to);
+    return this.prepare((Function<ProtocolVersion, T>) (version) -> packet, from, to);
   }
 
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet) {
-    return prepare(packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
+    return this.prepare(packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
   }
 
-  public <T extends MinecraftPacket> PreparedPacketImpl prepare(
-      Function<ProtocolVersion, T> packet, ProtocolVersion from) {
-    return prepare(packet, from, ProtocolVersion.MAXIMUM_VERSION);
+  public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from) {
+    return this.prepare(packet, from, ProtocolVersion.MAXIMUM_VERSION);
   }
 
-  public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet,
-                                                                ProtocolVersion from, ProtocolVersion to) {
+  public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to) {
     for (ProtocolVersion protocolVersion : EnumSet.range(from, to)) {
-      ByteBuf buf = encodePacket(packet.apply(protocolVersion), protocolVersion);
+      ByteBuf buf = this.encodePacket(packet.apply(protocolVersion), protocolVersion);
       if (this.packets.containsKey(protocolVersion)) {
         this.packets.get(protocolVersion).add(buf);
       } else {
@@ -94,7 +90,7 @@ public class PreparedPacketImpl implements PreparedPacket {
   }
 
   private <T extends MinecraftPacket> ByteBuf encodePacket(T packet, ProtocolVersion version) {
-    int id = getPacketId(packet, version);
+    int id = this.getPacketId(packet, version);
     if (id == Integer.MIN_VALUE) {
       LimboAPI.getInstance().getLogger().error("Bad packet id. {}", packet.getClass().getSimpleName());
     }

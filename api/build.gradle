@@ -1,10 +1,10 @@
 plugins {
-    id 'java-library'
-    id 'checkstyle'
+    id "java-library"
+    id "checkstyle"
 }
 
-apply plugin: 'org.cadixdev.licenser'
-apply from: '../gradle/checkstyle.gradle'
+apply plugin: "org.cadixdev.licenser"
+apply from: "../gradle/checkstyle.gradle"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -12,24 +12,24 @@ java {
 }
 
 license {
-    matching(includes: ['**/limboapi/api/config/**']) {
-        header = project.rootProject.file('HEADER_BUNGEECORD.txt')
+    matching(includes: ["**/limboapi/api/config/**"]) {
+        header = project.rootProject.file("HEADER_BUNGEECORD.txt")
     }
-    matching(includes: ['**/mcprotocollib/**']) {
-        header = project.rootProject.file('HEADER_MCPROTOCOLLIB.txt')
+    matching(includes: ["**/mcprotocollib/**"]) {
+        header = project.rootProject.file("HEADER_MCPROTOCOLLIB.txt")
     }
 
-    header = project.file('HEADER.txt')
+    header = project.file("HEADER.txt")
 }
 
 dependencies {
-    compileOnly files('../libs/3.0.0.jar')
+    compileOnly files("../libs/3.0.0.jar")
 
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.4.0'
+    compileOnly "com.github.spotbugs:spotbugs-annotations:4.4.1"
 }
 
 task javadocJar(type: Jar) {
-    classifier 'javadoc'
+    classifier "javadoc"
     from javadoc
 }
 
@@ -38,35 +38,33 @@ artifacts {
 }
 
 javadoc {
-    options.encoding = 'UTF-8'
-    options.charSet = 'UTF-8'
-    options.source = '8'
+    options.encoding = "UTF-8"
+    options.charSet = "UTF-8"
+    options.source = "8"
     options.links(
-        'https://docs.oracle.com/en/java/javase/11/docs/api/'
+        "https://docs.oracle.com/en/java/javase/11/docs/api/"
     )
 
     // Disable the crazy super-strict doclint tool in Java 8
-    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption("Xdoclint:none", "-quiet")
 
     // Mark sources as Java 8 source compatible
-    options.source = '8'
+    options.source = "8"
 
-    // Remove 'undefined' from seach paths when generating javadoc for a non-modular project (JDK-8215291)
+    // Remove "undefined" from seach paths when generating javadoc for a non-modular project (JDK-8215291)
     if (JavaVersion.current() >= JavaVersion.VERSION_1_9 && JavaVersion.current() < JavaVersion.VERSION_12) {
-        options.addBooleanOption('-no-module-directories', true)
+        options.addBooleanOption("-no-module-directories", true)
     }
 }
 
-def templateSource = file('src/main/templates')
-def templateDest = layout.buildDirectory.dir('../build/generated/sources/templates')
-def generateTemplates = tasks.register('generateTemplates', Copy) { task ->
+def generateTemplates = tasks.register("generateTemplates", Copy) { task ->
     def props = [
-            'version': project.version
+        "version": project.version
     ]
     task.inputs.properties props
 
-    task.from templateSource
-    task.into templateDest
+    task.from file("src/main/templates")
+    task.into layout.buildDirectory.dir("../build/generated/sources/templates")
     task.expand props
 }
 

@@ -27,7 +27,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.Getter;
+import java.util.Objects;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 
@@ -38,13 +38,13 @@ public class SimpleBlock implements VirtualBlock {
   private static final Gson gson = new Gson();
   private static final HashMap<Short, SimpleBlock> legacyIDsMap = new HashMap<>();
 
+  @SuppressWarnings("unchecked")
   public static void init() {
-    //noinspection unchecked,ConstantConditions
     LinkedTreeMap<String, LinkedTreeMap<String, String>> map = gson.fromJson(
         new InputStreamReader(
-            LimboAPI.getInstance().getClass()
-                .getClassLoader().getResourceAsStream("mapping/blocks.json"),
-            StandardCharsets.UTF_8), LinkedTreeMap.class);
+            Objects.requireNonNull(LimboAPI.getInstance().getClass().getClassLoader().getResourceAsStream("mapping/blocks.json")),
+            StandardCharsets.UTF_8
+        ), LinkedTreeMap.class);
 
     map.forEach((legacyBlockId, versionMap) -> {
       BlockInfo[] info = versionMap.entrySet().stream()
@@ -57,7 +57,6 @@ public class SimpleBlock implements VirtualBlock {
     legacyIDsMap.put((short) 0, AIR);
   }
 
-  @Getter
   private final Map<Version, BlockInfo> blockInfos;
   private final boolean solid;
   private final boolean air;
@@ -87,7 +86,7 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   public short getId(ProtocolVersion version) {
-    return getId(Version.map(version));
+    return this.getId(Version.map(version));
   }
 
   public SimpleBlock setData(byte data) {
@@ -100,7 +99,7 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   public byte getData(ProtocolVersion version) {
-    return getData(Version.map(version));
+    return this.getData(Version.map(version));
   }
 
   public boolean isSolid() {
@@ -143,5 +142,9 @@ public class SimpleBlock implements VirtualBlock {
   @NonNull
   public static SimpleBlock air(BlockInfo... infos) {
     return new SimpleBlock(false, true, false, infos);
+  }
+
+  public Map<Version, BlockInfo> getBlockInfos() {
+    return this.blockInfos;
   }
 }

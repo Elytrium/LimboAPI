@@ -63,8 +63,7 @@ public interface LimboFactory {
    *
    * @return new virtual server.
    */
-  VirtualBlock createSimpleBlock(boolean solid, boolean air,
-      boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
+  VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
 
   /**
    * Creates new prepared packet builder.
@@ -89,8 +88,5 @@ public interface LimboFactory {
    * @param packetSupplier Packet supplier to make a new instance (::new)
    * @param packetMappings Packet id mappings
    */
-  void registerPacket(PacketDirection direction,
-      Class packetClass,
-      Supplier packetSupplier,
-      StateRegistry.PacketMapping[] packetMappings);
+  void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping[] packetMappings);
 }

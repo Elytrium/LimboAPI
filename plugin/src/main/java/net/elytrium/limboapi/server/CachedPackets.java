@@ -20,35 +20,28 @@ package net.elytrium.limboapi.server;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.packet.Disconnect;
 import java.util.function.Function;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.config.Settings;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-@Getter
-@RequiredArgsConstructor
 public class CachedPackets {
 
-  private final LimboAPI limboAPI;
-
-  private PreparedPacket alreadyConnected;
   private PreparedPacket tooBigPacket;
 
   public void createPackets() {
-    this.alreadyConnected = new PreparedPacketImpl()
-        .prepare((Function<ProtocolVersion, Disconnect>) (version) ->
-            this.createDisconnectPacket(Settings.IMP.MESSAGES.ALREADY_CONNECTED, version));
     this.tooBigPacket = new PreparedPacketImpl()
-        .prepare((Function<ProtocolVersion, Disconnect>) (version) ->
-            this.createDisconnectPacket(Settings.IMP.MESSAGES.TOO_BIG_PACKET, version));
+        .prepare((Function<ProtocolVersion, Disconnect>) (version) -> this.createDisconnectPacket(Settings.IMP.MESSAGES.TOO_BIG_PACKET, version));
   }
 
   private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {
-    Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(message);
-    return Disconnect.create(component, version);
+    return Disconnect.create(
+        LegacyComponentSerializer
+            .legacyAmpersand()
+            .deserialize(message), version);
+  }
+
+  public PreparedPacket getTooBigPacket() {
+    return this.tooBigPacket;
   }
 }

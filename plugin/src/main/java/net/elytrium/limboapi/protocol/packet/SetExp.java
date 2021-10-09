@@ -22,20 +22,22 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 public class SetExp implements MinecraftPacket {
 
   private float expBar;
   private int level;
   private int totalExp;
+
+  public SetExp(float expBar, int level, int totalExp) {
+    this.expBar = expBar;
+    this.level = level;
+    this.totalExp = totalExp;
+  }
+
+  public SetExp() {
+
+  }
 
   @Override
   public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
@@ -58,5 +60,38 @@ public class SetExp implements MinecraftPacket {
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     return true;
+  }
+
+  public float getExpBar() {
+    return this.expBar;
+  }
+
+  public int getLevel() {
+    return this.level;
+  }
+
+  public int getTotalExp() {
+    return this.totalExp;
+  }
+
+  public void setExpBar(float expBar) {
+    this.expBar = expBar;
+  }
+
+  public void setLevel(int level) {
+    this.level = level;
+  }
+
+  public void setTotalExp(int totalExp) {
+    this.totalExp = totalExp;
+  }
+
+  @Override
+  public String toString() {
+    return "SetExp{"
+        + "expBar=" + this.getExpBar()
+        + ", level=" + this.getLevel()
+        + ", totalExp=" + this.getTotalExp()
+        + "}";
   }
 }

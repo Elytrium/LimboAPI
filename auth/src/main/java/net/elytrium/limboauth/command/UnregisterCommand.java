@@ -40,25 +40,16 @@ public class UnregisterCommand implements SimpleCommand {
     final String[] args = invocation.arguments();
 
     if (args.length != 1) {
-      source.sendMessage(
-          LegacyComponentSerializer
-              .legacyAmpersand()
-              .deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_USAGE));
+      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_USAGE));
     } else {
       try {
         this.playerDao.deleteById(args[0].toLowerCase(Locale.ROOT));
 
-        source.sendMessage(
-            LegacyComponentSerializer
-                .legacyAmpersand()
-                .deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_SUCCESSFUL));
+        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_SUCCESSFUL));
       } catch (SQLException e) {
         e.printStackTrace();
 
-        source.sendMessage(
-            LegacyComponentSerializer
-                .legacyAmpersand()
-                .deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
+        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
       }
     }
   }

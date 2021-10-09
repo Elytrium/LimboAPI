@@ -23,18 +23,8 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@ToString
 public class PlayerPositionAndLook implements MinecraftPacket {
 
   private double x;
@@ -46,6 +36,21 @@ public class PlayerPositionAndLook implements MinecraftPacket {
   private boolean onGround;
   private boolean dismountVehicle;
 
+  public PlayerPositionAndLook(double x, double y, double z, float yaw, float pitch, int teleportId, boolean onGround, boolean dismountVehicle) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.yaw = yaw;
+    this.pitch = pitch;
+    this.teleportId = teleportId;
+    this.onGround = onGround;
+    this.dismountVehicle = dismountVehicle;
+  }
+
+  public PlayerPositionAndLook() {
+
+  }
+
   @Override
   public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     buf.writeDouble(this.x);
@@ -53,15 +58,19 @@ public class PlayerPositionAndLook implements MinecraftPacket {
     buf.writeDouble(this.z);
     buf.writeFloat(this.yaw);
     buf.writeFloat(this.pitch);
+
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
       buf.writeByte(0x00);
     }
+
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_9) >= 0) {
       ProtocolUtils.writeVarInt(buf, this.teleportId);
     }
+
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       buf.writeBoolean(this.onGround);
     }
+
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
       buf.writeBoolean(this.dismountVehicle);
     }
@@ -71,9 +80,11 @@ public class PlayerPositionAndLook implements MinecraftPacket {
   public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     this.x = buf.readDouble();
     this.y = buf.readDouble();
+
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       buf.readDouble(); //Skip HeadY
     }
+
     this.z = buf.readDouble();
     this.yaw = buf.readFloat();
     this.pitch = buf.readFloat();
@@ -85,6 +96,85 @@ public class PlayerPositionAndLook implements MinecraftPacket {
     if (handler instanceof LimboSessionHandlerImpl) {
       return ((LimboSessionHandlerImpl) handler).handle(this);
     }
+
     return false;
+  }
+
+  public double getX() {
+    return this.x;
+  }
+
+  public double getY() {
+    return this.y;
+  }
+
+  public double getZ() {
+    return this.z;
+  }
+
+  public float getYaw() {
+    return this.yaw;
+  }
+
+  public float getPitch() {
+    return this.pitch;
+  }
+
+  public int getTeleportId() {
+    return this.teleportId;
+  }
+
+  public boolean isOnGround() {
+    return this.onGround;
+  }
+
+  public boolean isDismountVehicle() {
+    return this.dismountVehicle;
+  }
+
+  public void setX(double x) {
+    this.x = x;
+  }
+
+  public void setY(double y) {
+    this.y = y;
+  }
+
+  public void setZ(double z) {
+    this.z = z;
+  }
+
+  public void setYaw(float yaw) {
+    this.yaw = yaw;
+  }
+
+  public void setPitch(float pitch) {
+    this.pitch = pitch;
+  }
+
+  public void setTeleportId(int teleportId) {
+    this.teleportId = teleportId;
+  }
+
+  public void setOnGround(boolean onGround) {
+    this.onGround = onGround;
+  }
+
+  public void setDismountVehicle(boolean dismountVehicle) {
+    this.dismountVehicle = dismountVehicle;
+  }
+
+  @Override
+  public String toString() {
+    return "PlayerPositionAndLook{"
+        + "x=" + this.getX()
+        + ", y=" + this.getY()
+        + ", z=" + this.getZ()
+        + ", yaw=" + this.getYaw()
+        + ", pitch=" + this.getPitch()
+        + ", teleportId=" + this.getTeleportId()
+        + ", onGround=" + this.isOnGround()
+        + ", dismountVehicle=" + this.isDismountVehicle()
+        + "}";
   }
 }

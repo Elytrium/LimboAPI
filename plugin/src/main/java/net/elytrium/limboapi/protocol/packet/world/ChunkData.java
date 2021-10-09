@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.Deflater;
-import lombok.Getter;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
@@ -61,11 +61,11 @@ public class ChunkData implements MinecraftPacket {
       if (chunkSnapshot.getSections()[i] != null) {
         mask |= 1 << i;
         LightSection light = chunkSnapshot.getLight()[i];
-        NetworkSection section = new NetworkSection(chunkSnapshot.getSections()[i],
-            light.getBlockLight(), skyLight ? light.getSkyLight() : null);
+        NetworkSection section = new NetworkSection(chunkSnapshot.getSections()[i], light.getBlockLight(), skyLight ? light.getSkyLight() : null);
         this.sections.add(section);
       }
     }
+
     this.mask = mask;
     this.heightmap114 = this.createHeightMap(true);
     this.heightmap116 = this.createHeightMap(false);
@@ -82,6 +82,7 @@ public class ChunkData implements MinecraftPacket {
       //1.17 supports only full chunks
       Preconditions.checkState(version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0);
     }
+
     buf.writeInt(this.chunk.getX());
     buf.writeInt(this.chunk.getZ());
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0) {
@@ -129,6 +130,7 @@ public class ChunkData implements MinecraftPacket {
         }
       }
     }
+
     ByteBuf data = this.createChunkData(version);
     try {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
@@ -136,7 +138,7 @@ public class ChunkData implements MinecraftPacket {
         ProtocolUtils.writeVarInt(buf, data.readableBytes());
         buf.writeBytes(data);
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_9_4) >= 0) {
-          ProtocolUtils.writeVarInt(buf, 0); //Tile entities currently doesnt supported
+          ProtocolUtils.writeVarInt(buf, 0); // Tile entities currently doesnt supported
         }
       } else {
         this.write17(buf, data);
@@ -171,9 +173,9 @@ public class ChunkData implements MinecraftPacket {
     }
 
     if (dataLength != data.readableBytes()) {
-      System.out.println("Data length missmatch: " + dataLength
-          + " != " + data.readableBytes() + ". Version: " + version);
+      LimboAPI.getInstance().getLogger().warn("Data length missmatch: " + dataLength + " != " + data.readableBytes() + ". Version: " + version);
     }
+
     return data;
   }
 
@@ -194,8 +196,11 @@ public class ChunkData implements MinecraftPacket {
         }
       }
     }
-    return CompoundBinaryTag.builder().putLongArray("MOTION_BLOCKING", motionBlocking.getData())
-        .putLongArray("WORLD_SURFACE", surface.getData()).build();
+
+    return CompoundBinaryTag.builder()
+        .putLongArray("MOTION_BLOCKING", motionBlocking.getData())
+        .putLongArray("WORLD_SURFACE", surface.getData())
+        .build();
   }
 
   private long[] create117Mask() {
@@ -235,8 +240,6 @@ public class ChunkData implements MinecraftPacket {
     throw new UnsupportedOperationException("cant be called");
   }
 
-  @SuppressWarnings({"MismatchedReadAndWriteOfArray"})
-  @Getter
   private static class BiomeData {
 
     private final byte[] pre115Biomes = new byte[256];
@@ -269,6 +272,14 @@ public class ChunkData implements MinecraftPacket {
           }
         }
       }
+    }
+
+    public byte[] getPre115Biomes() {
+      return this.pre115Biomes;
+    }
+
+    public int[] getPost115Biomes() {
+      return this.post115Biomes;
     }
   }
 }

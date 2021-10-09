@@ -48,9 +48,7 @@ public class AuthListener {
   @Subscribe
   public void onProfile(GameProfileRequestEvent e) {
     if (!Settings.IMP.MAIN.ONLINE_UUID_IF_POSSIBLE) {
-      e.setGameProfile(
-          e.getOriginalProfile().withId(
-              UuidUtils.generateOfflinePlayerUuid(e.getUsername())));
+      e.setGameProfile(e.getOriginalProfile().withId(UuidUtils.generateOfflinePlayerUuid(e.getUsername())));
     }
   }
 }

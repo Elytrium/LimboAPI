@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public interface PreparedPacket {
+
   <T extends MinecraftPacket> PreparedPacket prepare(T packet);
 
   <T extends MinecraftPacket> PreparedPacket prepare(List<T> packets);
@@ -25,6 +26,5 @@ public interface PreparedPacket {
 
   <T extends MinecraftPacket> PreparedPacket prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from);
 
-  <T extends MinecraftPacket> PreparedPacket prepare(
-      Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to);
+  <T extends MinecraftPacket> PreparedPacket prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to);
 }
