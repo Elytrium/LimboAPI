@@ -13,9 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2.3.4
       - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v2.1.0
+        uses: actions/setup-java@v2.3.1
         with:
-          distribution: 'adopt'
+          distribution: adopt
           java-version: ${{ matrix.java }}
       - name: Cache gradle
         uses: actions/cache@v2.1.6
@@ -24,11 +24,24 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
       - name: Download Velocity
-        run: "mkdir libs && wget https://ci.velocitypowered.com/job/velocity-3.0.0/lastSuccessfulBuild/artifact/proxy/build/libs/velocity-proxy-3.0.2-SNAPSHOT-all.jar -O libs/3.0.0.jar"
+        run: mkdir libs && wget https://ci.velocitypowered.com/job/velocity-3.0.0/lastSuccessfulBuild/artifact/proxy/build/libs/velocity-proxy-3.0.2-SNAPSHOT-all.jar -O libs/3.0.0.jar
       - name: Build plugins
         run: ./gradlew build
-      - name: Upload a build artifact
+      - name: Move plugins to root dir
+        shell: bash
+        run: mv */*/*/limbo*-all.jar ./
+      - name: Upload LimboAPI Plugin
         uses: actions/upload-artifact@v2.2.4
         with:
-          name: LimboAPI Built On ${{ matrix.java }} JDK
-          path: "*/build/libs/*-all.jar"
+          name: LimboAPI Plugin Built On ${{ matrix.java }} JDK
+          path: "limboapi-plugin*-all.jar"
+      - name: Upload LimboFilter
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: LimboFilter Built On ${{ matrix.java }} JDK
+          path: "limbofilter*-all.jar"
+      - name: Upload LimboAuth
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: LimboAuth Built On ${{ matrix.java }} JDK
+          path: "limboauth*-all.jar"

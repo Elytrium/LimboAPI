@@ -27,7 +27,6 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import java.io.File;
-import java.net.http.HttpClient;
 import java.nio.file.Path;
 import net.elytrium.limboapi.BuildConstants;
 import net.elytrium.limboapi.api.LimboFactory;
