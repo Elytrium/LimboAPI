@@ -42,18 +42,12 @@ public class ChangePasswordCommand implements SimpleCommand {
     final String[] args = invocation.arguments();
 
     if (!(source instanceof Player)) {
-      source.sendMessage(
-          LegacyComponentSerializer
-              .legacyAmpersand()
-              .deserialize(Settings.IMP.MAIN.STRINGS.NOT_PLAYER));
+      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NOT_PLAYER));
       return;
     }
 
     if (args.length != 1) {
-      source.sendMessage(
-          LegacyComponentSerializer
-              .legacyAmpersand()
-              .deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_USAGE));
+      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_USAGE));
     } else {
       try {
         UpdateBuilder<RegisteredPlayer, String> updateBuilder = this.playerDao.updateBuilder();
@@ -61,17 +55,11 @@ public class ChangePasswordCommand implements SimpleCommand {
         updateBuilder.updateColumnValue("hash", AuthSessionHandler.genHash(args[0]));
         updateBuilder.update();
 
-        source.sendMessage(
-            LegacyComponentSerializer
-                .legacyAmpersand()
-                .deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_SUCCESSFUL));
+        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_SUCCESSFUL));
       } catch (SQLException e) {
         e.printStackTrace();
 
-        source.sendMessage(
-            LegacyComponentSerializer
-                .legacyAmpersand()
-                .deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
+        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
       }
     }
   }

@@ -58,8 +58,7 @@ public class SchematicFile implements WorldFile {
       for (int y = 0; y < this.height; ++y) {
         for (int z = 0; z < this.length; ++z) {
           int index = (y * this.length + z) * this.width + x;
-          world.setBlock(x + offsetX, y + offsetY, z + offsetZ,
-              factory.createSimpleBlock(blockIds[index], this.blocksData[index]));
+          world.setBlock(x + offsetX, y + offsetY, z + offsetZ, factory.createSimpleBlock(blockIds[index], this.blocksData[index]));
         }
       }
     }

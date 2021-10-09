@@ -31,12 +31,14 @@ import io.netty.channel.EventLoop;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import java.net.SocketAddress;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 public class ClosedChannel implements Channel {
 
   private final EventLoop dummy;
+
+  public ClosedChannel(EventLoop dummy) {
+    this.dummy = dummy;
+  }
 
   @Override
   public ChannelId id() {
@@ -124,33 +126,32 @@ public class ClosedChannel implements Channel {
   }
 
   @Override
-  public ChannelFuture bind(SocketAddress socketAddress) {
+  public ChannelFuture bind(SocketAddress localAddress) {
     return null;
   }
 
   @Override
-  public ChannelFuture bind(SocketAddress socketAddress, ChannelPromise channelPromise) {
+  public ChannelFuture bind(SocketAddress localAddress, ChannelPromise promise) {
     return null;
   }
 
   @Override
-  public ChannelFuture connect(SocketAddress socketAddress) {
+  public ChannelFuture connect(SocketAddress remoteAddress) {
     return null;
   }
 
   @Override
-  public ChannelFuture connect(SocketAddress socketAddress, SocketAddress socketAddress1) {
+  public ChannelFuture connect(SocketAddress remoteAddress, SocketAddress localAddress) {
     return null;
   }
 
   @Override
-  public ChannelFuture connect(SocketAddress socketAddress, ChannelPromise channelPromise) {
+  public ChannelFuture connect(SocketAddress remoteAddress, ChannelPromise promise) {
     return null;
   }
 
   @Override
-  public ChannelFuture connect(SocketAddress socketAddress,
-      SocketAddress socketAddress1, ChannelPromise channelPromise) {
+  public ChannelFuture connect(SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) {
     return null;
   }
 
@@ -160,7 +161,7 @@ public class ClosedChannel implements Channel {
   }
 
   @Override
-  public ChannelFuture disconnect(ChannelPromise channelPromise) {
+  public ChannelFuture disconnect(ChannelPromise promise) {
     return null;
   }
 
@@ -170,7 +171,7 @@ public class ClosedChannel implements Channel {
   }
 
   @Override
-  public ChannelFuture close(ChannelPromise channelPromise) {
+  public ChannelFuture close(ChannelPromise promise) {
     return null;
   }
 
@@ -180,7 +181,7 @@ public class ClosedChannel implements Channel {
   }
 
   @Override
-  public ChannelFuture deregister(ChannelPromise channelPromise) {
+  public ChannelFuture deregister(ChannelPromise promise) {
     return null;
   }
 
@@ -190,12 +191,12 @@ public class ClosedChannel implements Channel {
   }
 
   @Override
-  public ChannelFuture write(Object o) {
+  public ChannelFuture write(Object msg) {
     return null;
   }
 
   @Override
-  public ChannelFuture write(Object o, ChannelPromise channelPromise) {
+  public ChannelFuture write(Object msg, ChannelPromise promise) {
     return null;
   }
 
@@ -205,12 +206,12 @@ public class ClosedChannel implements Channel {
   }
 
   @Override
-  public ChannelFuture writeAndFlush(Object o, ChannelPromise channelPromise) {
+  public ChannelFuture writeAndFlush(Object msg, ChannelPromise promise) {
     return null;
   }
 
   @Override
-  public ChannelFuture writeAndFlush(Object o) {
+  public ChannelFuture writeAndFlush(Object msg) {
     return null;
   }
 
@@ -230,7 +231,7 @@ public class ClosedChannel implements Channel {
   }
 
   @Override
-  public ChannelFuture newFailedFuture(Throwable throwable) {
+  public ChannelFuture newFailedFuture(Throwable cause) {
     return null;
   }
 
@@ -240,23 +241,23 @@ public class ClosedChannel implements Channel {
   }
 
   @Override
-  public <T> Attribute<T> attr(AttributeKey<T> attributeKey) {
+  public <T> Attribute<T> attr(AttributeKey<T> key) {
     return null;
   }
 
   @Override
-  public <T> boolean hasAttr(AttributeKey<T> attributeKey) {
+  public <T> boolean hasAttr(AttributeKey<T> key) {
     return false;
   }
 
   @Override
-  public int compareTo(@NonNull Channel channel) {
+  public int compareTo(@NonNull Channel o) {
     return 0;
   }
 
   @Override
-  public boolean equals(Object channel) {
-    return channel instanceof ClosedChannel && compareTo((Channel) channel) == 0;
+  public boolean equals(Object o) {
+    return o instanceof ClosedChannel && this.compareTo((Channel) o) == 0;
   }
 
   @Override

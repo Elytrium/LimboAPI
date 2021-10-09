@@ -17,15 +17,23 @@
 
 package net.elytrium.limbofilter.cache;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
 public class CaptchaHandler {
-  private MapDataPacket map;
-  private String answer;
+
+  private final MapDataPacket map;
+  private final String answer;
+
+  public CaptchaHandler(MapDataPacket map, String answer) {
+    this.map = map;
+    this.answer = answer;
+  }
+
+  public MapDataPacket getMap() {
+    return this.map;
+  }
+
+  public String getAnswer() {
+    return this.answer;
+  }
 }

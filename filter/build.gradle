@@ -1,40 +1,27 @@
 plugins {
-    id 'java'
-    id 'checkstyle'
+    id "java"
+    id "checkstyle"
 }
 
-apply plugin: 'org.cadixdev.licenser'
-apply from: '../gradle/checkstyle.gradle'
+apply plugin: "org.cadixdev.licenser"
+apply from: "../gradle/checkstyle.gradle"
 // TODO: Remove
-apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "com.github.johnrengelman.shadow"
 
 license {
-    header = project.rootProject.file('HEADER.txt')
+    header = project.rootProject.file("HEADER.txt")
 }
 
 dependencies {
-    compileOnly project(':limboapi-api')
-    compileOnly project(':limboapi-plugin')
-    compileOnly files('../libs/3.0.0.jar')
+    compileOnly project(":limboapi-api")
+    compileOnly project(":limboapi-plugin")
+    compileOnly files("../libs/3.0.0.jar")
 
-    compileOnly 'org.checkerframework:checker-qual:3.16.0'
+    compileOnly "org.checkerframework:checker-qual:3.18.1"
 
-    annotationProcessor 'com.velocitypowered:velocity-api:3.0.2-SNAPSHOT'
+    annotationProcessor "com.velocitypowered:velocity-api:3.0.2-SNAPSHOT"
 
-    compileOnly 'org.projectlombok:lombok:1.18.20'
-    annotationProcessor 'org.projectlombok:lombok:1.18.20'
-
-    testCompileOnly 'org.projectlombok:lombok:1.18.20'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
-
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.4.0'
-}
-
-tasks.withType(Checkstyle) {
-    exclude('**/net/elytrium/limbofilter/config/Settings.java')
-
-    exclude('**/net/elytrium/limbofilter/generator/CaptchaPainter.java') // Parameter Name
-    exclude('**/net/elytrium/limbofilter/handler/FallingCheckHandler.java') // Member Name
+    compileOnly "com.github.spotbugs:spotbugs-annotations:4.4.1"
 }
 
 // TODO: Remove

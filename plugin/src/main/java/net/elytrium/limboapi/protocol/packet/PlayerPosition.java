@@ -22,22 +22,25 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 public class PlayerPosition implements MinecraftPacket {
 
   private double x;
   private double y;
   private double z;
   private boolean onGround;
+
+  public PlayerPosition(double x, double y, double z, boolean onGround) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.onGround = onGround;
+  }
+
+  public PlayerPosition() {
+
+  }
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
@@ -57,6 +60,49 @@ public class PlayerPosition implements MinecraftPacket {
     if (handler instanceof LimboSessionHandlerImpl) {
       return ((LimboSessionHandlerImpl) handler).handle(this);
     }
+
     return false;
+  }
+
+  public double getX() {
+    return this.x;
+  }
+
+  public double getY() {
+    return this.y;
+  }
+
+  public double getZ() {
+    return this.z;
+  }
+
+  public boolean isOnGround() {
+    return this.onGround;
+  }
+
+  public void setX(double x) {
+    this.x = x;
+  }
+
+  public void setY(double y) {
+    this.y = y;
+  }
+
+  public void setZ(double z) {
+    this.z = z;
+  }
+
+  public void setOnGround(boolean onGround) {
+    this.onGround = onGround;
+  }
+
+  @Override
+  public String toString() {
+    return "PlayerPosition{"
+        + "x=" + this.getX()
+        + ", y=" + this.getY()
+        + ", z=" + this.getZ()
+        + ", onGround=" + this.isOnGround()
+        + "}";
   }
 }

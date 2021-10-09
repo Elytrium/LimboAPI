@@ -25,6 +25,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,15 +77,16 @@ public class FilterCommand implements SimpleCommand {
     final String[] args = invocation.arguments();
 
     if (args.length == 0) {
-      usage(source);
+      this.usage(source);
       return;
     }
 
-    SubCommand command = commands.get(args[0].toLowerCase(Locale.US));
+    SubCommand command = this.commands.get(args[0].toLowerCase(Locale.US));
     if (command == null) {
-      usage(source);
+      this.usage(source);
       return;
     }
+
     @SuppressWarnings("nullness")
     String[] actualArgs = Arrays.copyOfRange(args, 1, args.length);
     command.execute(source, actualArgs);
@@ -96,21 +98,21 @@ public class FilterCommand implements SimpleCommand {
     final String[] currentArgs = invocation.arguments();
 
     if (currentArgs.length == 0) {
-      return commands.entrySet().stream()
+      return this.commands.entrySet().stream()
           .filter(e -> e.getValue().hasPermission(source, new String[0]))
           .map(Map.Entry::getKey)
           .collect(ImmutableList.toImmutableList());
     }
 
     if (currentArgs.length == 1) {
-      return commands.entrySet().stream()
+      return this.commands.entrySet().stream()
           .filter(e -> e.getKey().regionMatches(true, 0, currentArgs[0], 0, currentArgs[0].length()))
           .filter(e -> e.getValue().hasPermission(source, new String[0]))
           .map(Map.Entry::getKey)
           .collect(ImmutableList.toImmutableList());
     }
 
-    SubCommand command = commands.get(currentArgs[0].toLowerCase(Locale.US));
+    SubCommand command = this.commands.get(currentArgs[0].toLowerCase(Locale.US));
     if (command == null) {
       return ImmutableList.of();
     }
@@ -125,9 +127,9 @@ public class FilterCommand implements SimpleCommand {
     final String[] args = invocation.arguments();
 
     if (args.length == 0) {
-      return commands.values().stream().anyMatch(e -> e.hasPermission(source, args));
+      return this.commands.values().stream().anyMatch(e -> e.hasPermission(source, args));
     }
-    SubCommand command = commands.get(args[0].toLowerCase(Locale.US));
+    SubCommand command = this.commands.get(args[0].toLowerCase(Locale.US));
     if (command == null) {
       return true;
     }
@@ -146,7 +148,7 @@ public class FilterCommand implements SimpleCommand {
 
     @Override
     public void execute(CommandSource source, String @NonNull [] args) {
-      plugin.reload();
+      this.plugin.reload();
     }
 
     @Override
@@ -165,16 +167,19 @@ public class FilterCommand implements SimpleCommand {
         public void run() {
           try {
             Statistics statistics = plugin.getStatistics();
-            playersWithStats.stream().map(server::getPlayer).forEach(player -> player.ifPresent(p -> p.sendActionBar(
-                LegacyComponentSerializer
-                    .legacyAmpersand()
-                    .deserialize(Settings.IMP.MAIN.STRINGS.STATS_FORMAT
-                        .replace("{0}", String.valueOf(statistics.getBlockedConnections()))
-                        .replace("{1}", String.valueOf(statistics.getConnectionsPerSecond()))
-                        .replace("{2}", String.valueOf(statistics.getPingsPerSecond()))
-                        .replace("{3}", String.valueOf(statistics.getTotalConnectionsPerSecond()))
-                        .replace("{4}", String.valueOf(p.getPing()))
-                    ))));
+            Stats.this.playersWithStats.stream().map(server::getPlayer).forEach(player ->
+                player.ifPresent(p ->
+                    p.sendActionBar(
+                        LegacyComponentSerializer
+                            .legacyAmpersand()
+                            .deserialize(MessageFormat.format(
+                                Settings.IMP.MAIN.STRINGS.STATS_FORMAT,
+                                statistics.getBlockedConnections(),
+                                statistics.getConnectionsPerSecond(),
+                                statistics.getPingsPerSecond(),
+                                statistics.getTotalConnectionsPerSecond(),
+                                p.getPing())
+                            ))));
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -189,18 +194,12 @@ public class FilterCommand implements SimpleCommand {
         return;
       }
       ConnectedPlayer player = (ConnectedPlayer) source;
-      if (playersWithStats.contains(player.getUniqueId())) {
-        source.sendMessage(
-            LegacyComponentSerializer
-                .legacyAmpersand()
-                .deserialize(Settings.IMP.MAIN.STRINGS.STATS_DISABLED));
-        playersWithStats.remove(player.getUniqueId());
+      if (this.playersWithStats.contains(player.getUniqueId())) {
+        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.STATS_DISABLED));
+        this.playersWithStats.remove(player.getUniqueId());
       } else {
-        source.sendMessage(
-            LegacyComponentSerializer
-                .legacyAmpersand()
-                .deserialize(Settings.IMP.MAIN.STRINGS.STATS_ENABLED));
-        playersWithStats.add(player.getUniqueId());
+        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.STATS_ENABLED));
+        this.playersWithStats.add(player.getUniqueId());
       }
     }
 

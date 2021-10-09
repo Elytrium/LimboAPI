@@ -33,15 +33,16 @@ public class Settings extends Config {
 
   @Comment("Don't use \\n, use {NL} for new line, and {PRFX} for prefix. Ampersand (&) color codes are supported too.")
   public static class MESSAGES {
+
     public String PREFIX = "&5Limbo&dAPI&c -> &f";
     public String TOO_BIG_PACKET = "Packet is too big.";
-    public String ALREADY_CONNECTED = "You are already connected.";
   }
 
   @Create
   public MAIN MAIN;
 
   public static class MAIN {
+
     public boolean LOGGING_ENABLED = true;
   }
 

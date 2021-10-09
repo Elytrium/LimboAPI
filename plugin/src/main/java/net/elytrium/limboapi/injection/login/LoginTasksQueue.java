@@ -52,14 +52,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import net.elytrium.limboapi.LimboAPI;
 import net.kyori.adventure.text.Component;
 
-@RequiredArgsConstructor
 public class LoginTasksQueue {
 
   private static Constructor<InitialConnectSessionHandler> initialCtor;
@@ -69,11 +67,20 @@ public class LoginTasksQueue {
   private static Field state;
   private static Method setPermissionFunction;
   private static Method connectToInitialServer;
+
   private final LimboAPI limboAPI;
   private final LoginSessionHandler handler;
   private final VelocityServer server;
   private final ConnectedPlayer player;
   private final Queue<Runnable> queue;
+
+  public LoginTasksQueue(LimboAPI limboAPI, LoginSessionHandler handler, VelocityServer server, ConnectedPlayer player, Queue<Runnable> queue) {
+    this.limboAPI = limboAPI;
+    this.handler = handler;
+    this.server = server;
+    this.player = player;
+    this.queue = queue;
+  }
 
   static {
     try {
@@ -92,19 +99,16 @@ public class LoginTasksQueue {
       state = MinecraftConnection.class.getDeclaredField("state");
       state.setAccessible(true);
 
-      setPermissionFunction = ConnectedPlayer.class
-          .getDeclaredMethod("setPermissionFunction", PermissionFunction.class);
+      setPermissionFunction = ConnectedPlayer.class.getDeclaredMethod("setPermissionFunction", PermissionFunction.class);
       setPermissionFunction.setAccessible(true);
 
-      connectToInitialServer = LoginSessionHandler.class
-          .getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
+      connectToInitialServer = LoginSessionHandler.class.getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
       connectToInitialServer.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException e) {
       e.printStackTrace();
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   public void next() {
     if (this.player.getConnection().isClosed()) {
       return;
@@ -113,35 +117,42 @@ public class LoginTasksQueue {
     if (this.queue.size() == 0) {
       this.player.getConnection().eventLoop().execute(this::finish);
     } else {
-      this.player.getConnection().eventLoop().execute(this.queue.poll());
+      this.player.getConnection().eventLoop().execute(Objects.requireNonNull(this.queue.poll()));
     }
   }
 
   private void finish() {
     this.limboAPI.removeLoginQueue(this.player);
     MinecraftConnection connection = this.player.getConnection();
+
     try {
-      // ported from Velocity
+      // from Velocity
       this.server.getEventManager()
           .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) defaultPermissions.get(null)))
           .thenAcceptAsync(event -> {
-            // wait for permissions to load, then set the players permission function
-            final PermissionFunction function = event.createFunction(this.player);
-            if (function == null) {
-              this.limboAPI.getLogger().error(
-                  "A plugin permission provider {} provided an invalid permission function"
-                      + " for player {}. This is a bug in the plugin, not in Velocity. Falling"
-                      + " back to the default permission function.",
-                  event.getProvider().getClass().getName(),
-                  this.player.getUsername());
-            } else {
+            if (!connection.isClosed()) {
+              // wait for permissions to load, then set the players permission function
+              final PermissionFunction function = event.createFunction(this.player);
+              if (function == null) {
+                this.limboAPI.getLogger().error(
+                    "A plugin permission provider {} provided an invalid permission function"
+                        + " for player {}. This is a bug in the plugin, not in Velocity. Falling"
+                        + " back to the default permission function.",
+                    event.getProvider().getClass().getName(),
+                    this.player.getUsername());
+              } else {
+                try {
+                  setPermissionFunction.invoke(this.player, function);
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                  this.limboAPI.getLogger().error("Exception while completing injection to {}", this.player, ex);
+                }
+              }
               try {
-                setPermissionFunction.invoke(this.player, function);
-              } catch (IllegalAccessException | InvocationTargetException ex) {
-                this.limboAPI.getLogger().error("Exception while completing injection to {}", this.player, ex);
+                this.initialize(connection);
+              } catch (IllegalAccessException e) {
+                e.printStackTrace();
               }
             }
-            this.initialize(connection);
           });
     } catch (IllegalAccessException ex) {
       this.limboAPI.getLogger().error("Exception while completing injection to {}", this.player, ex);
@@ -149,19 +160,18 @@ public class LoginTasksQueue {
   }
 
   // Ported from Velocity
-  @SneakyThrows
-  private void initialize(MinecraftConnection connection) {
+  private void initialize(MinecraftConnection connection) throws IllegalAccessException {
+    association.set(connection, this.player);
+
     state.set(connection, StateRegistry.PLAY);
     connection.getChannel().pipeline().get(MinecraftEncoder.class).setState(StateRegistry.PLAY);
     connection.getChannel().pipeline().get(MinecraftDecoder.class).setState(StateRegistry.PLAY);
-    association.set(connection, this.player);
 
     this.server.getEventManager().fire(new LoginEvent(this.player))
         .thenAcceptAsync(event -> {
           if (connection.isClosed()) {
             // The player was disconnected
-            this.server.getEventManager().fireAndForget(new DisconnectEvent(this.player,
-                DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE));
+            this.server.getEventManager().fireAndForget(new DisconnectEvent(this.player, DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE));
             return;
           }
 
@@ -183,8 +193,7 @@ public class LoginTasksQueue {
                       loginConnectionField.set(this.handler, connection);
                       connectToInitialServer.invoke(this.handler, this.player);
                     } catch (IllegalAccessException | InvocationTargetException ex) {
-                      this.limboAPI.getLogger()
-                          .error("Exception while connecting {} to initial server", this.player, ex);
+                      this.limboAPI.getLogger().error("Exception while connecting {} to initial server", this.player, ex);
                     }
                   });
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
@@ -193,8 +202,7 @@ public class LoginTasksQueue {
           }
         }, connection.eventLoop())
         .exceptionally((ex) -> {
-          this.limboAPI.getLogger()
-              .error("Exception while completing login initialisation phase for {}", this.player, ex);
+          this.limboAPI.getLogger().error("Exception while completing login initialisation phase for {}", this.player, ex);
           return null;
         });
   }

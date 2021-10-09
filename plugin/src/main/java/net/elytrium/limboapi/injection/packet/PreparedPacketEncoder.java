@@ -21,12 +21,14 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import java.util.List;
-import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
 public class PreparedPacketEncoder extends MessageToMessageEncoder<PreparedPacketImpl> {
 
   private final ProtocolVersion protocolVersion;
+
+  public PreparedPacketEncoder(ProtocolVersion protocolVersion) {
+    this.protocolVersion = protocolVersion;
+  }
 
   @Override
   protected void encode(ChannelHandlerContext ctx, PreparedPacketImpl msg, List<Object> out) throws Exception {

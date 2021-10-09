@@ -20,14 +20,11 @@ package net.elytrium.limboapi.protocol.data;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.BlockStorage;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
@@ -36,7 +33,6 @@ import net.elytrium.limboapi.mcprotocollib.BitStorage19;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BlockStorage19 implements BlockStorage {
 
   private final ProtocolVersion version;
@@ -46,20 +42,26 @@ public class BlockStorage19 implements BlockStorage {
 
   public BlockStorage19(ProtocolVersion version) {
     this.version = version;
-    this.storage = createStorage(4);
+    this.storage = this.createStorage(4);
     this.palette.add(SimpleBlock.AIR);
     this.rawToBlock.put(toRaw(SimpleBlock.AIR, version), SimpleBlock.AIR);
   }
 
+  private BlockStorage19(ProtocolVersion version, List<VirtualBlock> palette, Map<Integer, VirtualBlock> rawToBlock, CompactStorage storage) {
+    this.version = version;
+    this.palette = palette;
+    this.rawToBlock = rawToBlock;
+    this.storage = storage;
+  }
+
   public void set(int x, int y, int z, @NonNull VirtualBlock block) {
-    int id = getIndex(block);
+    int id = this.getIndex(block);
     this.storage.set(index(x, y, z), id);
   }
 
   @NonNull
-  @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
   public VirtualBlock get(int x, int y, int z) {
-    return get(index(x, y, z));
+    return this.get(index(x, y, z));
   }
 
   private VirtualBlock get(int index) {
@@ -85,6 +87,7 @@ public class BlockStorage19 implements BlockStorage {
         ProtocolUtils.writeVarInt(buf, toRaw(state, this.version));
       }
     }
+
     this.storage.write(buf, version);
   }
 
@@ -101,9 +104,9 @@ public class BlockStorage19 implements BlockStorage {
         length += ProtocolUtils.varIntBytes(toRaw(state, this.version));
       }
     }
+
     return length + this.storage.getDataLength();
   }
-
 
   private int getIndex(VirtualBlock block) {
     if (this.storage.getBitsPerEntry() > 8) {
@@ -114,8 +117,8 @@ public class BlockStorage19 implements BlockStorage {
     int id = this.palette.indexOf(block);
     if (id == -1) {
       if (this.palette.size() >= (1 << this.storage.getBitsPerEntry())) {
-        resize(this.storage.getBitsPerEntry() + 1);
-        return getIndex(block);
+        this.resize(this.storage.getBitsPerEntry() + 1);
+        return this.getIndex(block);
       }
       this.palette.add(block);
       id = this.palette.size() - 1;
@@ -125,13 +128,12 @@ public class BlockStorage19 implements BlockStorage {
 
   @Override
   public BlockStorage copy() {
-    return new BlockStorage19(this.version, new ArrayList<>(this.palette), new HashMap<>(this.rawToBlock),
-        this.storage.copy());
+    return new BlockStorage19(this.version, new ArrayList<>(this.palette), new HashMap<>(this.rawToBlock), this.storage.copy());
   }
 
   private void resize(int newSize) {
-    newSize = fixBitsPerEntry(newSize);
-    CompactStorage newStorage = createStorage(newSize);
+    newSize = this.fixBitsPerEntry(newSize);
+    CompactStorage newStorage = this.createStorage(newSize);
 
     for (int i = 0; i < SimpleChunk.MAX_BLOCKS_PER_SECTION; i++) {
       int newId = newSize > 8 ? toRaw(this.palette.get(this.storage.get(i)), this.version) : this.storage.get(i);

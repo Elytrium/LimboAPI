@@ -20,13 +20,11 @@ package net.elytrium.limboapi.server.world;
 import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import lombok.Getter;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
@@ -38,19 +36,13 @@ import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 public class SimpleWorld implements VirtualWorld {
 
   @NonNull
-  @Getter
   private final Dimension dimension;
   private final Map<Long, SimpleChunk> chunks = new HashMap<>();
 
-  @Getter
   private final double spawnX;
-  @Getter
   private final double spawnY;
-  @Getter
   private final double spawnZ;
-  @Getter
   private final float yaw;
-  @Getter
   private final float pitch;
 
   public SimpleWorld(@NonNull Dimension dimension, double x, double y, double z, float yaw, float pitch) {
@@ -69,11 +61,9 @@ public class SimpleWorld implements VirtualWorld {
     this.getChunkOrNew(x, z).setBlock(getChunkCoordinate(x), y, getChunkCoordinate(z), block);
   }
 
-  @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
   @NonNull
   public VirtualBlock getBlock(int x, int y, int z) {
-    return this.chunkAction(x, z, (c) -> c.getBlock(getChunkCoordinate(x), y, getChunkCoordinate(z)),
-        () -> SimpleBlock.AIR);
+    return this.chunkAction(x, z, (c) -> c.getBlock(getChunkCoordinate(x), y, getChunkCoordinate(z)), () -> SimpleBlock.AIR);
   }
 
   public void setBiome2d(int x, int z, @NonNull VirtualBiome biome) {
@@ -89,8 +79,7 @@ public class SimpleWorld implements VirtualWorld {
   }
 
   public byte getBlockLight(int x, int y, int z) {
-    return this.chunkAction(x, z,
-        (c) -> c.getBlockLight(getChunkCoordinate(x), y, getChunkCoordinate(z)), () -> (byte) 0);
+    return this.chunkAction(x, z, (c) -> c.getBlockLight(getChunkCoordinate(x), y, getChunkCoordinate(z)), () -> (byte) 0);
   }
 
   public void setBlockLight(int x, int y, int z, byte light) {
@@ -106,6 +95,7 @@ public class SimpleWorld implements VirtualWorld {
     if (chunk == null) {
       return ifNull.get();
     }
+
     return function.apply(chunk);
   }
 
@@ -122,6 +112,7 @@ public class SimpleWorld implements VirtualWorld {
     if (simpleChunk == null) {
       this.chunks.put(index, simpleChunk = new SimpleChunk(x, z));
     }
+
     return simpleChunk;
   }
 
@@ -138,6 +129,32 @@ public class SimpleWorld implements VirtualWorld {
     if (xz < 0) {
       xz += 16;
     }
+
     return xz;
+  }
+
+  @NonNull
+  public Dimension getDimension() {
+    return this.dimension;
+  }
+
+  public double getSpawnX() {
+    return this.spawnX;
+  }
+
+  public double getSpawnY() {
+    return this.spawnY;
+  }
+
+  public double getSpawnZ() {
+    return this.spawnZ;
+  }
+
+  public float getYaw() {
+    return this.yaw;
+  }
+
+  public float getPitch() {
+    return this.pitch;
   }
 }

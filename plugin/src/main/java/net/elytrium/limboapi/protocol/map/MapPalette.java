@@ -20,12 +20,9 @@ package net.elytrium.limboapi.protocol.map;
 import java.awt.image.BufferedImage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 public final class MapPalette {
 
-  @Getter
   private static final Color[] colors = new Color[] {
       clr(0, 0, 0), clr(0, 0, 0), clr(0, 0, 0), clr(0, 0, 0),
       clr(89, 125, 39), clr(109, 153, 48), clr(127, 178, 56), clr(67, 94, 29),
@@ -96,6 +93,7 @@ public final class MapPalette {
     for (int i = 0; i < result.length; ++i) {
       result[i] = tryFastMatchColor(result[i]);
     }
+
     return result;
   }
 
@@ -151,13 +149,21 @@ public final class MapPalette {
     return (rgb & 0xff000000) >>> 24;
   }
 
-  @AllArgsConstructor
-  @Getter
+  public static Color[] getColors() {
+    return MapPalette.colors.clone();
+  }
+
   public static class Color {
 
     private final int red;
     private final int green;
     private final int blue;
+
+    public Color(int red, int green, int blue) {
+      this.red = red;
+      this.green = green;
+      this.blue = blue;
+    }
 
     @Override
     public int hashCode() {
@@ -176,6 +182,18 @@ public final class MapPalette {
 
     public java.awt.Color toJava() {
       return new java.awt.Color(this.red, this.green, this.blue);
+    }
+
+    public int getRed() {
+      return this.red;
+    }
+
+    public int getGreen() {
+      return this.green;
+    }
+
+    public int getBlue() {
+      return this.blue;
     }
   }
 }

@@ -42,8 +42,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Supplier;
-import lombok.Getter;
-import lombok.SneakyThrows;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.Player;
@@ -60,19 +58,11 @@ import sun.misc.Unsafe;
 @SuppressWarnings("SameParameterValue")
 public class LimboProtocol {
 
-  @Getter
   private static StateRegistry limboRegistry;
-
   private static Method getProtocolRegistry;
-
   private static Method register;
-
   private static Constructor<StateRegistry.PacketMapping> ctor;
-
   private static Field packetClassToId;
-
-  public static Field clientbound;
-  public static Field serverbound;
 
   static {
     try {
@@ -81,47 +71,41 @@ public class LimboProtocol {
       Unsafe unsafe = (Unsafe) unsafeCtor.newInstance();
       limboRegistry = (StateRegistry) unsafe.allocateInstance(StateRegistry.class);
 
-      Constructor<StateRegistry.PacketRegistry> localCtor =
-          StateRegistry.PacketRegistry.class.getDeclaredConstructor(ProtocolUtils.Direction.class);
+      Constructor<StateRegistry.PacketRegistry> localCtor = StateRegistry.PacketRegistry.class.getDeclaredConstructor(ProtocolUtils.Direction.class);
       localCtor.setAccessible(true);
 
-      clientbound = StateRegistry.class.getDeclaredField("clientbound");
-      clientbound.setAccessible(true);
-      clientbound.set(limboRegistry, localCtor.newInstance(ProtocolUtils.Direction.CLIENTBOUND));
+      Field clientBound = StateRegistry.class.getDeclaredField("clientbound");
+      clientBound.setAccessible(true);
+      clientBound.set(limboRegistry, localCtor.newInstance(ProtocolUtils.Direction.CLIENTBOUND));
 
-      serverbound = StateRegistry.class.getDeclaredField("serverbound");
-      serverbound.setAccessible(true);
-      serverbound.set(limboRegistry, localCtor.newInstance(ProtocolUtils.Direction.SERVERBOUND));
+      Field serverBound = StateRegistry.class.getDeclaredField("serverbound");
+      serverBound.setAccessible(true);
+      serverBound.set(limboRegistry, localCtor.newInstance(ProtocolUtils.Direction.SERVERBOUND));
 
-      getProtocolRegistry = StateRegistry.PacketRegistry.class
-          .getDeclaredMethod("getProtocolRegistry", ProtocolVersion.class);
+      getProtocolRegistry = StateRegistry.PacketRegistry.class.getDeclaredMethod("getProtocolRegistry", ProtocolVersion.class);
       getProtocolRegistry.setAccessible(true);
 
-      register = StateRegistry.PacketRegistry.class
-          .getDeclaredMethod("register", Class.class, Supplier.class, StateRegistry.PacketMapping[].class);
+      register = StateRegistry.PacketRegistry.class.getDeclaredMethod("register", Class.class, Supplier.class, StateRegistry.PacketMapping[].class);
       register.setAccessible(true);
 
-      ctor = StateRegistry.PacketMapping.class
-          .getDeclaredConstructor(int.class, ProtocolVersion.class, ProtocolVersion.class, boolean.class);
+      ctor = StateRegistry.PacketMapping.class.getDeclaredConstructor(int.class, ProtocolVersion.class, ProtocolVersion.class, boolean.class);
       ctor.setAccessible(true);
 
       packetClassToId = StateRegistry.PacketRegistry.ProtocolRegistry.class.getDeclaredField("packetClassToId");
       packetClassToId.setAccessible(true);
-    } catch (NoSuchMethodException | InstantiationException
-        | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
+    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
       e.printStackTrace();
     }
   }
 
-  @SneakyThrows
-  public static void init() {
+  public static void init() throws InvocationTargetException, InstantiationException, IllegalAccessException {
     register(PacketDirection.SERVERBOUND,
-        TeleportConfirm.class, (Supplier<Object>) TeleportConfirm::new,
+        TeleportConfirm.class, TeleportConfirm::new,
         new StateRegistry.PacketMapping[] {
             map(0x00, ProtocolVersion.MINECRAFT_1_9, false)
         });
     register(PacketDirection.SERVERBOUND,
-        PlayerPositionAndLook.class, (Supplier<Object>) PlayerPositionAndLook::new,
+        PlayerPositionAndLook.class, PlayerPositionAndLook::new,
         new StateRegistry.PacketMapping[] {
             map(0x06, ProtocolVersion.MINECRAFT_1_7_2, false),
             map(0x06, ProtocolVersion.MINECRAFT_1_8, false),
@@ -134,7 +118,7 @@ public class LimboProtocol {
             map(0x12, ProtocolVersion.MINECRAFT_1_17, false)
         });
     register(PacketDirection.SERVERBOUND,
-        PlayerPosition.class, (Supplier<Object>) PlayerPosition::new,
+        PlayerPosition.class, PlayerPosition::new,
         new StateRegistry.PacketMapping[] {
             map(0x0B, ProtocolVersion.MINECRAFT_1_7_2, false),
             map(0x04, ProtocolVersion.MINECRAFT_1_7_6, false),
@@ -148,7 +132,7 @@ public class LimboProtocol {
             map(0x11, ProtocolVersion.MINECRAFT_1_17, false)
         });
     register(PacketDirection.SERVERBOUND,
-        Player.class, (Supplier<Object>) Player::new,
+        Player.class, Player::new,
         new StateRegistry.PacketMapping[] {
             map(0x03, ProtocolVersion.MINECRAFT_1_7_2, false),
             map(0x03, ProtocolVersion.MINECRAFT_1_8, false),
@@ -161,7 +145,7 @@ public class LimboProtocol {
             map(0x14, ProtocolVersion.MINECRAFT_1_17, false)
         });
     register(PacketDirection.CLIENTBOUND,
-        PlayerPositionAndLook.class, (Supplier<Object>) PlayerPositionAndLook::new,
+        PlayerPositionAndLook.class, PlayerPositionAndLook::new,
         new StateRegistry.PacketMapping[] {
             map(0x08, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x2E, ProtocolVersion.MINECRAFT_1_9, true),
@@ -174,7 +158,7 @@ public class LimboProtocol {
             map(0x38, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register(PacketDirection.CLIENTBOUND,
-        ChunkData.class, (Supplier<Object>) ChunkData::new,
+        ChunkData.class, ChunkData::new,
         new StateRegistry.PacketMapping[] {
             map(0x21, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x21, ProtocolVersion.MINECRAFT_1_8, true),
@@ -187,7 +171,7 @@ public class LimboProtocol {
             map(0x22, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register(PacketDirection.CLIENTBOUND,
-        SetSlot.class, (Supplier<Object>) SetSlot::new,
+        SetSlot.class, SetSlot::new,
         new StateRegistry.PacketMapping[] {
             map(0x2F, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x2F, ProtocolVersion.MINECRAFT_1_8, true),
@@ -200,7 +184,7 @@ public class LimboProtocol {
             map(0x16, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register(PacketDirection.CLIENTBOUND,
-        MapDataPacket.class, (Supplier<Object>) MapDataPacket::new,
+        MapDataPacket.class, MapDataPacket::new,
         new StateRegistry.PacketMapping[] {
             map(0x34, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x34, ProtocolVersion.MINECRAFT_1_8, true),
@@ -213,7 +197,7 @@ public class LimboProtocol {
             map(0x27, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register(PacketDirection.CLIENTBOUND,
-        PlayerAbilities.class, (Supplier<Object>) PlayerAbilities::new,
+        PlayerAbilities.class, PlayerAbilities::new,
         new StateRegistry.PacketMapping[] {
             map(0x39, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x39, ProtocolVersion.MINECRAFT_1_8, true),
@@ -227,7 +211,7 @@ public class LimboProtocol {
             map(0x32, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register(PacketDirection.CLIENTBOUND,
-        SetExp.class, (Supplier<Object>) SetExp::new,
+        SetExp.class, SetExp::new,
         new StateRegistry.PacketMapping[] {
             map(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x1F, ProtocolVersion.MINECRAFT_1_8, true),
@@ -240,7 +224,7 @@ public class LimboProtocol {
             map(0x51, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register(PacketDirection.CLIENTBOUND,
-        UpdateViewPosition.class, (Supplier<Object>) UpdateViewPosition::new,
+        UpdateViewPosition.class, UpdateViewPosition::new,
         new StateRegistry.PacketMapping[] {
             map(0x40, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x40, ProtocolVersion.MINECRAFT_1_14, true),
@@ -250,127 +234,152 @@ public class LimboProtocol {
         });
 
     register(PacketDirection.SERVERBOUND,
-        Chat.class, (Supplier<Object>) Chat::new,
-        getMappingsForPacket(StateRegistry.PLAY.serverbound, Chat.class, false));
+        Chat.class, Chat::new,
+        getMappingsForPacket(StateRegistry.PLAY.serverbound, Chat.class, false)
+    );
     register(PacketDirection.SERVERBOUND,
-        ClientSettings.class, (Supplier<Object>) ClientSettings::new,
-        getMappingsForPacket(StateRegistry.PLAY.serverbound, ClientSettings.class, false));
+        ClientSettings.class, ClientSettings::new,
+        getMappingsForPacket(StateRegistry.PLAY.serverbound, ClientSettings.class, false)
+    );
     register(PacketDirection.SERVERBOUND,
-        PluginMessage.class, (Supplier<Object>) PluginMessage::new,
-        getMappingsForPacket(StateRegistry.PLAY.serverbound, PluginMessage.class, false));
+        PluginMessage.class, PluginMessage::new,
+        getMappingsForPacket(StateRegistry.PLAY.serverbound, PluginMessage.class, false)
+    );
     register(PacketDirection.CLIENTBOUND,
-        Chat.class, (Supplier<Object>) Chat::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, Chat.class, true));
+        Chat.class, Chat::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, Chat.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        JoinGame.class, (Supplier<Object>) JoinGame::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, JoinGame.class, true));
+        JoinGame.class, JoinGame::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, JoinGame.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        Disconnect.class, (Supplier<Object>) Disconnect::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, Disconnect.class, true));
+        Disconnect.class, Disconnect::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, Disconnect.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        PluginMessage.class, (Supplier<Object>) PluginMessage::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, PluginMessage.class, true));
+        PluginMessage.class, PluginMessage::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, PluginMessage.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        Respawn.class, (Supplier<Object>) Respawn::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, Respawn.class, true));
+        Respawn.class, Respawn::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, Respawn.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        TitleActionbarPacket.class, (Supplier<Object>) TitleActionbarPacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound,
-            ProtocolVersion.MINECRAFT_1_17, TitleActionbarPacket.class, true));
+        TitleActionbarPacket.class, TitleActionbarPacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleActionbarPacket.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        TitleClearPacket.class, (Supplier<Object>) TitleClearPacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound,
-            ProtocolVersion.MINECRAFT_1_17, TitleClearPacket.class, true));
+        TitleClearPacket.class, TitleClearPacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleClearPacket.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        TitleSubtitlePacket.class, (Supplier<Object>) TitleSubtitlePacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound,
-            ProtocolVersion.MINECRAFT_1_17, TitleSubtitlePacket.class, true));
+        TitleSubtitlePacket.class, TitleSubtitlePacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleSubtitlePacket.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        TitleTextPacket.class, (Supplier<Object>) TitleTextPacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound,
-            ProtocolVersion.MINECRAFT_1_17, TitleTextPacket.class, true));
+        TitleTextPacket.class, TitleTextPacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleTextPacket.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        TitleTimesPacket.class, (Supplier<Object>) TitleTimesPacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound,
-            ProtocolVersion.MINECRAFT_1_17, TitleTimesPacket.class, true));
+        TitleTimesPacket.class, TitleTimesPacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleTimesPacket.class, true)
+    );
     register(PacketDirection.CLIENTBOUND,
-        LegacyTitlePacket.class, (Supplier<Object>) LegacyTitlePacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound,
-            ProtocolVersion.MINECRAFT_1_8, ProtocolVersion.MINECRAFT_1_16_4, LegacyTitlePacket.class, true));
+        LegacyTitlePacket.class, LegacyTitlePacket::new,
+        getMappingsForPacket(
+            StateRegistry.PLAY.clientbound,
+            ProtocolVersion.MINECRAFT_1_8,
+            ProtocolVersion.MINECRAFT_1_16_4,
+            LegacyTitlePacket.class,
+            true
+        )
+    );
   }
 
-  @SneakyThrows
-  public static void register(
-      PacketDirection direction,
-      Class packetClass,
-      Supplier packetSupplier,
-      StateRegistry.PacketMapping[] packetMappings) {
+  public static void register(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping[] packetMappings) {
     StateRegistry.PacketRegistry registry;
     switch (direction) {
-      case CLIENTBOUND:
+      case CLIENTBOUND: {
         registry = limboRegistry.clientbound;
         break;
-      case SERVERBOUND:
+      }
+      case SERVERBOUND: {
         registry = limboRegistry.serverbound;
         break;
-      default:
+      }
+      default: {
         throw new IllegalArgumentException();
+      }
     }
 
-    register.invoke(registry, packetClass, packetSupplier, packetMappings);
+    try {
+      register.invoke(registry, packetClass, packetSupplier, packetMappings);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
   }
 
-  private static StateRegistry.PacketMapping map(int id, ProtocolVersion version, boolean encodeOnly) {
+  private static StateRegistry.PacketMapping map(int id, ProtocolVersion version, boolean encodeOnly)
+      throws InvocationTargetException, InstantiationException, IllegalAccessException {
     return map(id, version, null, encodeOnly);
   }
 
-  @SneakyThrows
-  private static StateRegistry.PacketMapping map(
-      int id, ProtocolVersion version, ProtocolVersion lastValidProtocolVersion, boolean encodeOnly) {
+  private static StateRegistry.PacketMapping map(int id, ProtocolVersion version, ProtocolVersion lastValidProtocolVersion, boolean encodeOnly)
+      throws InvocationTargetException, InstantiationException, IllegalAccessException {
     return ctor.newInstance(id, version, lastValidProtocolVersion, encodeOnly);
   }
 
-  private static StateRegistry.PacketMapping[] getMappingsForPacket(
-      StateRegistry.PacketRegistry registry, Class<? extends MinecraftPacket> packet, boolean encodeOnly) {
-    return getMappingsForPacket(registry, ProtocolVersion.MINIMUM_VERSION,
-        ProtocolVersion.MAXIMUM_VERSION, packet, encodeOnly);
+  private static StateRegistry.PacketMapping[] getMappingsForPacket(StateRegistry.PacketRegistry registry,
+      Class<? extends MinecraftPacket> packet, boolean encodeOnly) {
+    return getMappingsForPacket(registry, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION, packet, encodeOnly);
   }
 
-  private static StateRegistry.PacketMapping[] getMappingsForPacket(
-      StateRegistry.PacketRegistry registry, ProtocolVersion from,
-      Class<? extends MinecraftPacket> packet, boolean encodeOnly) {
+  private static StateRegistry.PacketMapping[] getMappingsForPacket(StateRegistry.PacketRegistry registry,
+      ProtocolVersion from, Class<? extends MinecraftPacket> packet, boolean encodeOnly) {
     return getMappingsForPacket(registry, from, ProtocolVersion.MAXIMUM_VERSION, packet, encodeOnly);
   }
 
-  @SneakyThrows
-  private static StateRegistry.PacketMapping[] getMappingsForPacket(
-      StateRegistry.PacketRegistry registry, ProtocolVersion from, ProtocolVersion to,
-      Class<? extends MinecraftPacket> packet, boolean encodeOnly) {
-
+  private static StateRegistry.PacketMapping[] getMappingsForPacket(StateRegistry.PacketRegistry registry,
+      ProtocolVersion from, ProtocolVersion to, Class<? extends MinecraftPacket> packet, boolean encodeOnly) {
     List<StateRegistry.PacketMapping> mappings = new ArrayList<>();
     for (ProtocolVersion protocol : EnumSet.range(from, to)) {
       int id = getPacketId(registry, packet, protocol);
-      mappings.add(map(id, protocol, null, encodeOnly));
+      try {
+        mappings.add(map(id, protocol, null, encodeOnly));
+      } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+        e.printStackTrace();
+      }
     }
+
     return mappings.toArray(new StateRegistry.PacketMapping[0]);
   }
 
-  @SneakyThrows
-  public static int getPacketId(
-      StateRegistry.PacketRegistry packetRegistry,
-      Class<? extends MinecraftPacket> packet, ProtocolVersion version) {
-    StateRegistry.PacketRegistry.ProtocolRegistry protocolRegistry
-        = (StateRegistry.PacketRegistry.ProtocolRegistry) getProtocolRegistry.invoke(packetRegistry, version);
+  public static int getPacketId(StateRegistry.PacketRegistry packetRegistry, Class<? extends MinecraftPacket> packet, ProtocolVersion version) {
+    StateRegistry.PacketRegistry.ProtocolRegistry protocolRegistry = null;
+    try {
+      protocolRegistry = (StateRegistry.PacketRegistry.ProtocolRegistry) getProtocolRegistry.invoke(packetRegistry, version);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+
     return getPacketId(protocolRegistry, packet);
   }
 
   @SuppressWarnings("unchecked")
-  @SneakyThrows
-  public static int getPacketId(
-      StateRegistry.PacketRegistry.ProtocolRegistry registry,
-      Class<? extends MinecraftPacket> packet) {
-    Object2IntMap<Class<? extends MinecraftPacket>> map =
-        (Object2IntMap<Class<? extends MinecraftPacket>>) packetClassToId.get(registry);
+  public static int getPacketId(StateRegistry.PacketRegistry.ProtocolRegistry registry, Class<? extends MinecraftPacket> packet) {
+    Object2IntMap<Class<? extends MinecraftPacket>> map = null;
+    try {
+      map = (Object2IntMap<Class<? extends MinecraftPacket>>) packetClassToId.get(registry);
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    }
+    assert map != null;
+
     return map.getInt(packet);
+  }
+
+  public static StateRegistry getLimboRegistry() {
+    return LimboProtocol.limboRegistry;
   }
 }

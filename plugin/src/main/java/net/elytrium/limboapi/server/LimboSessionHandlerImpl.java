@@ -23,10 +23,8 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.Chat;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
-import lombok.Getter;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
@@ -37,7 +35,6 @@ import net.elytrium.limboapi.protocol.packet.PlayerPosition;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
 
-@Getter
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   private final LimboAPI limboAPI;
@@ -46,9 +43,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final MinecraftSessionHandler originalHandler;
   private RegisteredServer previousServer;
 
-  public LimboSessionHandlerImpl(
-      LimboAPI limboAPI, ConnectedPlayer player,
-      LimboSessionHandler callback, MinecraftSessionHandler originalHandler) {
+  public LimboSessionHandlerImpl(LimboAPI limboAPI, ConnectedPlayer player, LimboSessionHandler callback, MinecraftSessionHandler originalHandler) {
     this.limboAPI = limboAPI;
     this.player = player;
     this.callback = callback;
@@ -101,22 +96,28 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.callback.onGeneric(packet);
   }
 
-  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void disconnected() {
     this.callback.onDisconnect();
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
       this.limboAPI.getLogger().info(
-          this.player.getUsername() + " (" + this.player.getRemoteAddress()
-              + ") has disconnected from the " + callback.getClass().getSimpleName() + " Limbo");
+          this.player.getUsername() + " (" + this.player.getRemoteAddress() + ")"
+              + " has disconnected from the " + this.callback.getClass().getSimpleName() + " Limbo");
     }
 
-    if (!(this.originalHandler instanceof LoginSessionHandler)
-        && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
+    if (!(this.originalHandler instanceof LoginSessionHandler) && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
       this.player.getConnection().setSessionHandler(this.originalHandler);
     }
     ChannelPipeline pipeline = this.player.getConnection().getChannel().pipeline();
     if (pipeline.names().contains("prepared-encoder")) {
       pipeline.remove(PreparedPacketEncoder.class);
     }
+  }
+
+  public ConnectedPlayer getPlayer() {
+    return this.player;
+  }
+
+  public RegisteredServer getPreviousServer() {
+    return this.previousServer;
   }
 }

@@ -50,8 +50,8 @@ public class Rippler {
      *                  top or on the bottom of the image.
      */
     public AxisConfig(double start, double length, double amplitude) {
-      this.start = normalize(start, 2);
-      this.length = normalize(length, 4);
+      this.start = this.normalize(start, 2);
+      this.length = this.normalize(length, 4);
       this.amplitude = amplitude;
     }
 
@@ -75,21 +75,21 @@ public class Rippler {
      * @return wave part start value
      */
     public double getStart() {
-      return start;
+      return this.start;
     }
 
     /**
      * @return wave part length
      */
     public double getLength() {
-      return length;
+      return this.length;
     }
 
     /**
      * @return amplitude used to transform the wave part
      */
     public double getAmplitude() {
-      return amplitude;
+      return this.amplitude;
     }
   }
 
@@ -121,9 +121,9 @@ public class Rippler {
     final int width = src.getWidth();
     final int height = src.getHeight();
 
-    final int[] verticalDelta = calcDeltaArray(vertical, width);
+    final int[] verticalDelta = this.calcDeltaArray(this.vertical, width);
 
-    final int[] horizontalDelta = calcDeltaArray(horizontal, height);
+    final int[] horizontalDelta = this.calcDeltaArray(this.horizontal, height);
 
     for (int x = 0; x < width; x++) {
       for (int y = 0; y < height; y++) {
@@ -161,13 +161,13 @@ public class Rippler {
    * @return vertical config, not null
    */
   public AxisConfig getVertical() {
-    return vertical;
+    return this.vertical;
   }
 
   /**
    * @return horizontal config, not null
    */
   public AxisConfig getHorizontal() {
-    return horizontal;
+    return this.horizontal;
   }
 }

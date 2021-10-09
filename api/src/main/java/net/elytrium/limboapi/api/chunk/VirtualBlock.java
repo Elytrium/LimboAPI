@@ -49,8 +49,7 @@ public interface VirtualBlock {
     MINECRAFT_1_16_2(EnumSet.range(ProtocolVersion.MINECRAFT_1_16_2, ProtocolVersion.MINECRAFT_1_16_4)),
     MINECRAFT_1_17(EnumSet.range(ProtocolVersion.MINECRAFT_1_17, ProtocolVersion.MINECRAFT_1_17_1));
 
-    private static final EnumMap<ProtocolVersion, Version>
-        mcVersionToBlockVersions = new EnumMap<>(ProtocolVersion.class);
+    private static final EnumMap<ProtocolVersion, Version> mcVersionToBlockVersions = new EnumMap<>(ProtocolVersion.class);
 
     public static Version parse(String from) {
       switch (from) {
