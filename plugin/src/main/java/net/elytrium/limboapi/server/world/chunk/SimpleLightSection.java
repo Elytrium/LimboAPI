@@ -18,31 +18,40 @@
 package net.elytrium.limboapi.server.world.chunk;
 
 import com.google.common.base.Preconditions;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3d;
 
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor
 public class SimpleLightSection implements LightSection {
 
-  public static NibbleArray3d NO_LIGHT = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION);
-  public static NibbleArray3d ALL_LIGHT = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION, 15);
+  public static final NibbleArray3d NO_LIGHT = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION);
+  public static final NibbleArray3d ALL_LIGHT = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION, 15);
   public static final LightSection DEFAULT = new SimpleLightSection();
 
-  @Getter
   private NibbleArray3d blockLight = NO_LIGHT;
-  @Getter
   private NibbleArray3d skyLight = ALL_LIGHT;
-  @Getter
   private long lastUpdate = System.nanoTime();
+
+  private SimpleLightSection(NibbleArray3d blockLight, NibbleArray3d skyLight, long lastUpdate) {
+    this.blockLight = blockLight;
+    this.skyLight = skyLight;
+    this.lastUpdate = lastUpdate;
+  }
+
+  public SimpleLightSection() {
+
+  }
+
+  public NibbleArray3d getBlockLight() {
+    return this.blockLight;
+  }
 
   public byte getBlockLight(int x, int y, int z) {
     this.checkIndexes(x, y, z);
     return (byte) this.blockLight.get(x, y, z);
+  }
+
+  public NibbleArray3d getSkyLight() {
+    return this.skyLight;
   }
 
   public byte getSkyLight(int x, int y, int z) {
@@ -53,9 +62,11 @@ public class SimpleLightSection implements LightSection {
   public void setBlockLight(int x, int y, int z, byte light) {
     this.checkIndexes(x, y, z);
     Preconditions.checkArgument(light >= 0 && light <= 15, "light should be between 0 and 15");
+
     if (this.blockLight == NO_LIGHT && light != 0) {
       this.blockLight = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION);
     }
+
     this.blockLight.set(x, y, z, light);
     this.lastUpdate = System.nanoTime();
   }
@@ -84,5 +95,9 @@ public class SimpleLightSection implements LightSection {
     NibbleArray3d skyLight = this.skyLight == ALL_LIGHT ? ALL_LIGHT : this.skyLight.copy();
     NibbleArray3d blockLight = this.blockLight == NO_LIGHT ? NO_LIGHT : this.blockLight.copy();
     return new SimpleLightSection(blockLight, skyLight, this.lastUpdate);
+  }
+
+  public long getLastUpdate() {
+    return this.lastUpdate;
   }
 }

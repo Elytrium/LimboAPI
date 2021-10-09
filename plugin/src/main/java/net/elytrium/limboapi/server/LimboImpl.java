@@ -30,14 +30,10 @@ import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
 import com.velocitypowered.proxy.protocol.packet.Respawn;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.ChannelPipeline;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.SneakyThrows;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboSessionHandler;
@@ -53,9 +49,6 @@ import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 
-@Getter
-@Setter
-@SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
 public class LimboImpl implements Limbo {
 
   private static Field partialHashedSeed;
@@ -90,8 +83,8 @@ public class LimboImpl implements Limbo {
   }
 
   public void refresh() {
-    JoinGame legacyJoinGame = createLegacyJoinGamePacket();
-    JoinGame joinGame = createJoinGamePacket();
+    JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
+    JoinGame joinGame = this.createJoinGamePacket();
 
     this.joinPackets = new PreparedPacketImpl()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
@@ -99,9 +92,7 @@ public class LimboImpl implements Limbo {
 
     this.fastRejoinPackets = new PreparedPacketImpl();
     createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
-        .forEach(minecraftPacket ->
-            this.fastRejoinPackets.prepare(minecraftPacket,
-                ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
     createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_16)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16));
 
@@ -110,10 +101,8 @@ public class LimboImpl implements Limbo {
     this.chunks = new PreparedPacketImpl().prepare(this.createChunksPackets());
     this.spawnPosition = new PreparedPacketImpl()
         .prepare(this.createPlayerPosAndLookPacket(
-            this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(),
-            getWorld().getYaw(), getWorld().getPitch()))
-        .prepare(this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()),
-            ProtocolVersion.MINECRAFT_1_14);
+            this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.getWorld().getYaw(), this.getWorld().getPitch()))
+        .prepare(this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()), ProtocolVersion.MINECRAFT_1_14);
   }
 
   public void spawnPlayer(Player apiPlayer, LimboSessionHandler handler) {
@@ -125,13 +114,11 @@ public class LimboImpl implements Limbo {
 
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
         this.limboAPI.getLogger().info(
-            player.getUsername() + " (" + player.getRemoteAddress()
-                + ") has connected to the " + handler.getClass().getSimpleName() + " Limbo");
+            player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + handler.getClass().getSimpleName() + " Limbo");
       }
 
       if (!pipeline.names().contains("prepared-encoder")) {
-        pipeline.addAfter(Connections.MINECRAFT_ENCODER, "prepared-encoder",
-            new PreparedPacketEncoder(connection.getProtocolVersion()));
+        pipeline.addAfter(Connections.MINECRAFT_ENCODER, "prepared-encoder", new PreparedPacketEncoder(connection.getProtocolVersion()));
       }
 
       if (connection.getState() != LimboProtocol.getLimboRegistry()) {
@@ -153,13 +140,12 @@ public class LimboImpl implements Limbo {
 
       this.limboAPI.setLimboJoined(player);
 
-      LimboSessionHandlerImpl limboSessionHandlerImpl = new LimboSessionHandlerImpl(
-          this.limboAPI, player, handler, connection.getSessionHandler());
+      LimboSessionHandlerImpl limboSessionHandlerImpl = new LimboSessionHandlerImpl(this.limboAPI, player, handler, connection.getSessionHandler());
 
       connection.setSessionHandler(limboSessionHandlerImpl);
 
       connection.flush();
-      respawnPlayer(player);
+      this.respawnPlayer(player);
       limboSessionHandlerImpl.onSpawn(this, new LimboPlayerImpl(player, this));
     });
   }
@@ -167,8 +153,8 @@ public class LimboImpl implements Limbo {
   public void respawnPlayer(Player player) {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
-    connection.write(getSpawnPosition());
-    connection.write(getChunks());
+    connection.write(this.getSpawnPosition());
+    connection.write(this.getChunks());
   }
 
   private DimensionData createDimensionData(Dimension dimension) {
@@ -179,7 +165,6 @@ public class LimboImpl implements Limbo {
         0L, false, 1.0, dimension.getKey(), 0, 256);
   }
 
-  @SneakyThrows
   private JoinGame createJoinGamePacket() {
     Dimension dimension = this.world.getDimension();
 
@@ -190,26 +175,39 @@ public class LimboImpl implements Limbo {
     joinGame.setDimension(dimension.getModernId());
     joinGame.setDifficulty((short) 0);
     joinGame.setMaxPlayers(1);
-    partialHashedSeed.set(joinGame, System.currentTimeMillis());
+
+    try {
+      partialHashedSeed.set(joinGame, System.currentTimeMillis());
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    }
+
     joinGame.setLevelType("flat");
     joinGame.setViewDistance(12);
     joinGame.setReducedDebugInfo(true);
     joinGame.setIsHardcore(true);
 
     String key = dimension.getKey();
-    DimensionData dimensionData = createDimensionData(dimension);
+    DimensionData dimensionData = this.createDimensionData(dimension);
 
     joinGame.setDimensionRegistry(new DimensionRegistry(ImmutableSet.of(dimensionData), ImmutableSet.of(key)));
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
-    currentDimensionData.set(joinGame, dimensionData);
+
+    try {
+      currentDimensionData.set(joinGame, dimensionData);
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    }
+
     joinGame.setBiomeRegistry(Biome.getRegistry());
 
     return joinGame;
   }
 
   private JoinGame createLegacyJoinGamePacket() {
-    JoinGame joinGame = createJoinGamePacket();
+    JoinGame joinGame = this.createJoinGamePacket();
     joinGame.setDimension(this.world.getDimension().getLegacyId());
+
     return joinGame;
   }
 
@@ -218,6 +216,7 @@ public class LimboImpl implements Limbo {
     for (VirtualChunk chunk : this.world.getChunks()) {
       packets.add(this.createChunkDataPacket(chunk, (int) this.world.getSpawnY()));
     }
+
     return packets;
   }
 
@@ -245,7 +244,8 @@ public class LimboImpl implements Limbo {
         new Respawn(sentOldDim, joinGame.getPartialHashedSeed(),
             joinGame.getDifficulty(), joinGame.getGamemode(), joinGame.getLevelType(),
             false, joinGame.getDimensionInfo(), joinGame.getPreviousGamemode(),
-            joinGame.getCurrentDimensionData()));
+            joinGame.getCurrentDimensionData())
+    );
 
     return packets;
   }
@@ -265,14 +265,16 @@ public class LimboImpl implements Limbo {
         new Respawn(tempDim, joinGame.getPartialHashedSeed(), joinGame.getDifficulty(),
             joinGame.getGamemode(), joinGame.getLevelType(),
             false, joinGame.getDimensionInfo(), joinGame.getPreviousGamemode(),
-            joinGame.getCurrentDimensionData()));
+            joinGame.getCurrentDimensionData())
+    );
 
     // Now send a respawn packet in the correct dimension.
     packets.add(
         new Respawn(joinGame.getDimension(), joinGame.getPartialHashedSeed(),
             joinGame.getDifficulty(), joinGame.getGamemode(), joinGame.getLevelType(),
             false, joinGame.getDimensionInfo(), joinGame.getPreviousGamemode(),
-            joinGame.getCurrentDimensionData()));
+            joinGame.getCurrentDimensionData())
+    );
 
     return packets;
   }
@@ -288,5 +290,33 @@ public class LimboImpl implements Limbo {
 
   public UpdateViewPosition createUpdateViewPosition(int x, int z) {
     return new UpdateViewPosition(x >> 4, z >> 4);
+  }
+
+  public VirtualWorld getWorld() {
+    return this.world;
+  }
+
+  public PreparedPacketImpl getJoinPackets() {
+    return this.joinPackets;
+  }
+
+  public PreparedPacketImpl getFastRejoinPackets() {
+    return this.fastRejoinPackets;
+  }
+
+  public PreparedPacketImpl getSafeRejoinPackets() {
+    return this.safeRejoinPackets;
+  }
+
+  public PreparedPacketImpl getChunks() {
+    return this.chunks;
+  }
+
+  public PreparedPacketImpl getSpawnPosition() {
+    return this.spawnPosition;
+  }
+
+  public void setWorld(VirtualWorld world) {
+    this.world = world;
   }
 }

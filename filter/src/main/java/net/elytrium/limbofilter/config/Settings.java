@@ -31,6 +31,7 @@ public class Settings extends Config {
   public MAIN MAIN;
 
   public static class MAIN {
+
     public boolean CHECK_CLIENT_SETTINGS = true;
     public boolean CHECK_CLIENT_BRAND = true;
     public long PURGE_CACHE_MILLIS = 3600000;
@@ -42,10 +43,9 @@ public class Settings extends Config {
     public boolean FALLING_CHECK_DEBUG = false;
     public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 2048;
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
-    public String BRAND = "LimboFilter";
 
     @Comment("Available - ONLY_POSITION, ONLY_CAPTCHA, CAPTCHA_POSITION, CAPTCHA_ON_POSITION_FAILED, SUCCESSFULLY")
-    public String CHECK_STATE = "CAPTCHA_POSITION";
+    public String CHECK_STATE = "CAPTCHA_ON_POSITION_FAILED";
 
     public boolean LOAD_WORLD = false;
     @Comment("World file type: schematic")
@@ -61,10 +61,11 @@ public class Settings extends Config {
         "0 to enable on any connections per second"
     })
     public static class CONNECTION_LIMIT {
+
       @Comment({
           "All players will bypass all anti-bot checks"
       })
-      public int ALL_BYPASS = -1;
+      public int ALL_BYPASS = 0;
 
       @Comment({
           "Online mode players will bypass all anti-bot checks",
@@ -94,6 +95,7 @@ public class Settings extends Config {
     public Settings.MAIN.WORLD_COORDS WORLD_COORDS;
 
     public static class WORLD_COORDS {
+
       public int X = 0;
       public int Y = 0;
       public int Z = 0;
@@ -103,6 +105,7 @@ public class Settings extends Config {
     public MAIN.CAPTCHA_GENERATOR CAPTCHA_GENERATOR;
 
     public static class CAPTCHA_GENERATOR {
+
       @Comment("Path to the background image to draw on captcha (any format, 128x128), none if empty")
       public String BACKPLATE_PATH = "";
       @Comment("Path to the font files to draw on captcha (ttf), can be empty")
@@ -130,14 +133,14 @@ public class Settings extends Config {
     public MAIN.STRINGS STRINGS;
 
     public static class STRINGS {
-      public String CHECKING = "{PRFX} Bot-Filter check was started, please wait..";
-      public String CHECKING_CAPTCHA = "{PRFX} Please, solve the captcha";
+
+      public String CHECKING_CHAT = "{PRFX} Bot-Filter check was started, please wait..";
+      public String CHECKING_CAPTCHA_CHAT = "{PRFX} Please, solve the captcha";
       public String SUCCESSFUL_CRACKED = "{PRFX} Successfully passed Bot-Filter check. ";
       public String SUCCESSFUL_PREMIUM = "{PRFX} Successfully passed Bot-Filter check. Please, rejoin the server";
       public String CAPTCHA_FAILED = "{PRFX} You've mistaken in captcha check. Please, rejoin the server.";
       public String TOO_BIG_PACKET = "{PRFX} Your client sent too big packet.";
       public String FALLING_CHECK_FAILED = "{PRFX} Falling Check was failed. Please, rejoin the server.";
-      public String ALREADY_CONNECTED = "{PRFX} You are already connected.";
       public String STATS_FORMAT = "&c&lTotal Blocked: &6&l{0} &c&l| Connections Per Second: &6&l{1} &c&l| Pings Per Second: &6&l{2} &c&l| Total Connections Per Second: &6&l{3} &c&l| Ping: &6&l{4}";
       public String STATS_ENABLED = "{PRFX} &fNow you see statistics in your action bar.";
       public String STATS_DISABLED = "{PRFX} &fYou're no longer see statistics in your action bar.";
@@ -151,6 +154,7 @@ public class Settings extends Config {
     public COORDS COORDS;
 
     public static class COORDS {
+
       public double CAPTCHA_X = 0;
       public double CAPTCHA_Y = 0;
       public double CAPTCHA_Z = 0;
@@ -162,8 +166,8 @@ public class Settings extends Config {
   }
 
   public void reload(File file) {
-    load(file);
-    save(file);
-    load(file);
+    this.load(file);
+    this.save(file);
+    this.load(file);
   }
 }

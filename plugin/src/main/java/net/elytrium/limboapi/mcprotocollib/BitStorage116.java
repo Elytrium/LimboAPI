@@ -26,10 +26,8 @@ package net.elytrium.limboapi.mcprotocollib;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
-import lombok.Getter;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
 
 public class BitStorage116 implements CompactStorage {
@@ -58,9 +56,7 @@ public class BitStorage116 implements CompactStorage {
   };
 
   private final long[] data;
-  @Getter
   private final int bitsPerEntry;
-  @Getter
   private final int size;
 
   private final long maxValue;
@@ -106,11 +102,10 @@ public class BitStorage116 implements CompactStorage {
       throw new IndexOutOfBoundsException();
     }
 
-    int cellIndex = cellIndex(index);
-    int bitIndex = bitIndex(index, cellIndex);
+    int cellIndex = this.cellIndex(index);
+    int bitIndex = this.bitIndex(index, cellIndex);
     return (int) (this.data[cellIndex] >> bitIndex & this.maxValue);
   }
-
 
   @Override
   public void set(int index, int value) {
@@ -122,10 +117,9 @@ public class BitStorage116 implements CompactStorage {
       throw new IllegalArgumentException("Value cannot be outside of accepted range.");
     }
 
-    int cellIndex = cellIndex(index);
-    int bitIndex = bitIndex(index, cellIndex);
-    this.data[cellIndex] = this.data[cellIndex] & ~(this.maxValue << bitIndex)
-        | ((long) value & this.maxValue) << bitIndex;
+    int cellIndex = this.cellIndex(index);
+    int bitIndex = this.bitIndex(index, cellIndex);
+    this.data[cellIndex] = this.data[cellIndex] & ~(this.maxValue << bitIndex) | ((long) value & this.maxValue) << bitIndex;
   }
 
   private int cellIndex(int index) {
@@ -154,9 +148,16 @@ public class BitStorage116 implements CompactStorage {
     return new BitStorage116(this.bitsPerEntry, this.size, Arrays.copyOf(this.data, this.data.length));
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public long[] getData() {
-    return this.data;
+    return this.data.clone();
+  }
+
+  public int getBitsPerEntry() {
+    return this.bitsPerEntry;
+  }
+
+  public int getSize() {
+    return this.size;
   }
 }

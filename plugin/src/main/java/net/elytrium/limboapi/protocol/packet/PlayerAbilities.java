@@ -22,20 +22,22 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 public class PlayerAbilities implements MinecraftPacket {
 
   private byte flags;
   private float speed;
   private float field;
+
+  public PlayerAbilities(byte flags, float speed, float field) {
+    this.flags = flags;
+    this.speed = speed;
+    this.field = field;
+  }
+
+  public PlayerAbilities() {
+
+  }
 
   @Override
   public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
@@ -52,5 +54,38 @@ public class PlayerAbilities implements MinecraftPacket {
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     return false;
+  }
+
+  public byte getFlags() {
+    return this.flags;
+  }
+
+  public float getSpeed() {
+    return this.speed;
+  }
+
+  public float getField() {
+    return this.field;
+  }
+
+  public void setFlags(byte flags) {
+    this.flags = flags;
+  }
+
+  public void setSpeed(float speed) {
+    this.speed = speed;
+  }
+
+  public void setField(float field) {
+    this.field = field;
+  }
+
+  @Override
+  public String toString() {
+    return "PlayerAbilities{"
+        + "flags=" + this.getFlags()
+        + ", speed=" + this.getSpeed()
+        + ", field=" + this.getField()
+        + "}";
   }
 }

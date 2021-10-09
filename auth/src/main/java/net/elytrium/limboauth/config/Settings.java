@@ -30,6 +30,7 @@ public class Settings extends Config {
   public MAIN MAIN;
 
   public static class MAIN {
+
     public boolean ONLINE_MODE_NEED_AUTH = true;
     public boolean ONLINE_UUID_IF_POSSIBLE = true;
     public boolean ENABLE_TOTP = true;
@@ -69,6 +70,7 @@ public class Settings extends Config {
     public Settings.MAIN.WORLD_COORDS WORLD_COORDS;
 
     public static class WORLD_COORDS {
+
       public int X = 0;
       public int Y = 0;
       public int Z = 0;
@@ -78,6 +80,7 @@ public class Settings extends Config {
     public MAIN.STRINGS STRINGS;
 
     public static class STRINGS {
+
       public String RELOAD = "{PRFX} Reloaded successfully";
       public String RELOAD_FAILED = "{PRFX} &cReload failed, check console for details.";
       public String NOT_PLAYER = "{PRFX} &cСonsole is not allowed to execute this command!";
@@ -90,7 +93,6 @@ public class Settings extends Config {
       public String REGISTER = "{PRFX} Please, register using &a/reg &6password password";
 
       public String WRONG_NICKNAME_CASE = "{NL}{NL}&cThe case of your nickname is wrong. Nickname is CaSe SeNsItIvE.";
-      public String NICKNAME_PREMIUM = "{PRFX} Your nickname is set on premium account. Please, change your nickname";
       public String NICKNAME_INVALID = "{NL}{NL}&cYour nickname contains forbidden characters. Please, change your nickname";
       @Comment("6 hours by default in ip-limit-valid-time")
       public String IP_LIMIT = "{PRFX} Your IP has reached max registered accounts. If this is an error, restart your router, or wait about 6 hours";
@@ -117,6 +119,7 @@ public class Settings extends Config {
     public MAIN.AUTH_COORDS AUTH_COORDS;
 
     public static class AUTH_COORDS {
+
       public double X = 0;
       public double Y = 0;
       public double Z = 0;
@@ -130,6 +133,7 @@ public class Settings extends Config {
 
   @Comment("Database settings")
   public static class DATABASE {
+
     @Comment("Database type: mysql, postgresql, h2, or sqlite")
     public String STORAGE_TYPE = "h2";
 

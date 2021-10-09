@@ -65,6 +65,7 @@ public class YamlConfiguration extends ConfigurationProvider {
   });
 
   YamlConfiguration() {
+
   }
 
   @Override

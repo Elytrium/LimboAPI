@@ -17,16 +17,12 @@
 
 package net.elytrium.limboapi.server.world.chunk;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 
-@RequiredArgsConstructor
-@Getter
 public class SimpleChunkSnapshot implements ChunkSnapshot {
 
   private final int x;
@@ -36,8 +32,41 @@ public class SimpleChunkSnapshot implements ChunkSnapshot {
   private final LightSection[] light;
   private final VirtualBiome[] biomes;
 
+  public SimpleChunkSnapshot(int x, int z, boolean fullChunk, SimpleSection[] sections, LightSection[] light, VirtualBiome[] biomes) {
+    this.x = x;
+    this.z = z;
+    this.fullChunk = fullChunk;
+    this.sections = sections.clone();
+    this.light = light.clone();
+    this.biomes = biomes.clone();
+  }
+
   public VirtualBlock getBlock(int x, int y, int z) {
     SimpleSection section = this.sections[y / 16];
     return section == null ? SimpleBlock.AIR : section.getBlockAt(x, y % 16, z);
+  }
+
+  public int getX() {
+    return this.x;
+  }
+
+  public int getZ() {
+    return this.z;
+  }
+
+  public boolean isFullChunk() {
+    return this.fullChunk;
+  }
+
+  public SimpleSection[] getSections() {
+    return this.sections.clone();
+  }
+
+  public LightSection[] getLight() {
+    return this.light.clone();
+  }
+
+  public VirtualBiome[] getBiomes() {
+    return this.biomes.clone();
   }
 }

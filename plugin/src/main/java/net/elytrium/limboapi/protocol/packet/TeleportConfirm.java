@@ -22,19 +22,19 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 public class TeleportConfirm implements MinecraftPacket {
 
   private int teleportId;
+
+  public TeleportConfirm(int teleportId) {
+    this.teleportId = teleportId;
+  }
+
+  public TeleportConfirm() {
+
+  }
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
@@ -51,6 +51,22 @@ public class TeleportConfirm implements MinecraftPacket {
     if (handler instanceof LimboSessionHandlerImpl) {
       return ((LimboSessionHandlerImpl) handler).handle(this);
     }
+
     return false;
+  }
+
+  public int getTeleportId() {
+    return this.teleportId;
+  }
+
+  public void setTeleportId(int teleportId) {
+    this.teleportId = teleportId;
+  }
+
+  @Override
+  public String toString() {
+    return "TeleportConfirm{"
+        + "teleportId=" + this.getTeleportId()
+        + "}";
   }
 }

@@ -23,46 +23,45 @@ import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.event.query.ProxyQueryEvent;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limbofilter.FilterPlugin;
 import net.elytrium.limbofilter.config.Settings;
 
-@RequiredArgsConstructor
 public class FilterListener {
 
   private final FilterPlugin plugin;
 
-  @SneakyThrows
+  public FilterListener(FilterPlugin plugin) {
+    this.plugin = plugin;
+  }
+
   @Subscribe(order = PostOrder.FIRST)
   public void onProxyConnect(PreLoginEvent e) {
-    if (plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_VERIFY)
-        && plugin.shouldCheck(
-            e.getUsername(), e.getConnection().getRemoteAddress().getAddress())) {
+    if (this.plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_VERIFY)
+        && this.plugin.shouldCheck(e.getUsername(), e.getConnection().getRemoteAddress().getAddress())) {
       e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
     }
   }
 
   @Subscribe(order = PostOrder.FIRST)
   public void onLogin(LoginLimboRegisterEvent e) {
-    plugin.getStatistics().addConnectionPerSecond();
-    if (plugin.shouldCheck((ConnectedPlayer) e.getPlayer())) {
-      e.addCallback(() -> plugin.filter(e.getPlayer()));
+    this.plugin.getStatistics().addConnectionPerSecond();
+    if (this.plugin.shouldCheck((ConnectedPlayer) e.getPlayer())) {
+      e.addCallback(() -> this.plugin.filter(e.getPlayer()));
     }
   }
 
   @Subscribe(order = PostOrder.LAST)
   public void onPing(ProxyPingEvent e) {
-    if (plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.DISABLE_MOTD_PICTURE)) {
+    if (this.plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.DISABLE_MOTD_PICTURE)) {
       e.setPing(e.getPing().asBuilder().clearFavicon().build());
     }
 
-    plugin.getStatistics().addPingPerSecond();
+    this.plugin.getStatistics().addPingPerSecond();
   }
 
   @Subscribe
   public void onQuery(ProxyQueryEvent e) {
-    plugin.getStatistics().addPingPerSecond();
+    this.plugin.getStatistics().addPingPerSecond();
   }
 }

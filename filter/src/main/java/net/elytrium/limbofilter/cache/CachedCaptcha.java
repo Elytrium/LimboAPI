@@ -32,15 +32,16 @@ public class CachedCaptcha {
   private final AtomicInteger counterAtomic = new AtomicInteger(0);
 
   public void createCaptchaPacket(MapDataPacket map, String answer) {
-    captchas.add(new CaptchaHandler(map, answer));
+    this.captchas.add(new CaptchaHandler(map, answer));
   }
 
   public CaptchaHandler randomCaptcha() {
-    int counter = counterAtomic.incrementAndGet();
-    if (counter >= captchas.size()) {
+    int counter = this.counterAtomic.incrementAndGet();
+    if (counter >= this.captchas.size()) {
       counter = 0;
-      counterAtomic.set(0);
+      this.counterAtomic.set(0);
     }
-    return captchas.get(counter);
+
+    return this.captchas.get(counter);
   }
 }

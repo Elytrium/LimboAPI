@@ -26,12 +26,9 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.net.http.HttpClient;
 import java.nio.file.Path;
-import lombok.Getter;
-import lombok.SneakyThrows;
 import net.elytrium.limboapi.BuildConstants;
 import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limbofallback.config.Settings;
@@ -47,35 +44,36 @@ import org.slf4j.Logger;
     dependencies = {@Dependency(id = "limboapi")}
 )
 
-@Getter
-@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class FallbackPlugin {
 
-  private final HttpClient client = HttpClient.newHttpClient();
   private static FallbackPlugin instance;
+
   private final Path dataDirectory;
   private final Logger logger;
   private final ProxyServer server;
   private final LimboFactory factory;
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Inject
-  public FallbackPlugin(ProxyServer server,
-                        Logger logger, @Named("limboapi") PluginContainer factory, @DataDirectory Path dataDirectory) {
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  public FallbackPlugin(ProxyServer server, Logger logger, @Named("limboapi") PluginContainer factory, @DataDirectory Path dataDirectory) {
+    setInstance(this);
+
     this.server = server;
     this.logger = logger;
     this.dataDirectory = dataDirectory;
     this.factory = (LimboFactory) factory.getInstance().get();
   }
 
+  private static void setInstance(FallbackPlugin thisInst) {
+    instance = thisInst;
+  }
+
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
-    instance = this;
     this.server.getEventManager().register(this, new FallbackListener());
     this.reload();
   }
 
-  @SneakyThrows
   public void reload() {
     Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
   }
@@ -84,4 +82,11 @@ public class FallbackPlugin {
     return instance;
   }
 
+  public Logger getLogger() {
+    return this.logger;
+  }
+
+  public LimboFactory getFactory() {
+    return this.factory;
+  }
 }

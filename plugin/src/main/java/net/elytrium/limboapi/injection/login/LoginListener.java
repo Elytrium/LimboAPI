@@ -61,8 +61,6 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
@@ -71,22 +69,35 @@ import net.elytrium.limboapi.injection.dummy.DummyEventPool;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-@RequiredArgsConstructor
 public class LoginListener {
 
   private static final ClosedMinecraftConnection closed;
+
   private static Constructor<ConnectedPlayer> ctor;
   private static Field craftConnectionField;
   private static Field loginConnectionField;
   private static Field spawned;
 
+  private final LimboAPI limboAPI;
+  private final VelocityServer server;
+  private final List<String> onlineMode = new ArrayList<>();
+
+  public LoginListener(LimboAPI limboAPI, VelocityServer server) {
+    this.limboAPI = limboAPI;
+    this.server = server;
+  }
+
   static {
-    closed = new ClosedMinecraftConnection(
-        new ClosedChannel(new DummyEventPool()), LimboAPI.getInstance().getServer());
+    closed = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), LimboAPI.getInstance().getServer());
 
     try {
       ctor = ConnectedPlayer.class.getDeclaredConstructor(
-          VelocityServer.class, GameProfile.class, MinecraftConnection.class, InetSocketAddress.class, boolean.class);
+          VelocityServer.class,
+          GameProfile.class,
+          MinecraftConnection.class,
+          InetSocketAddress.class,
+          boolean.class
+      );
       ctor.setAccessible(true);
 
       craftConnectionField = InitialInboundConnection.class.getDeclaredField("connection");
@@ -102,15 +113,10 @@ public class LoginListener {
     }
   }
 
-  private final LimboAPI limboAPI;
-  private final VelocityServer server;
-  private final List<String> onlineMode = new ArrayList<>();
-
   @Subscribe(order = PostOrder.LAST)
   public void hookPreLogin(PreLoginEvent e) {
     PreLoginEvent.PreLoginComponentResult result = e.getResult();
-    if (!result.isForceOfflineMode() && (this.server.getConfiguration().isOnlineMode()
-        || result.isOnlineModeAllowed())) {
+    if (!result.isForceOfflineMode() && (this.server.getConfiguration().isOnlineMode() || result.isOnlineModeAllowed())) {
       this.onlineMode.add(e.getUsername());
     }
   }
@@ -121,9 +127,8 @@ public class LoginListener {
     this.onlineMode.remove(e.getPlayer().getUsername());
   }
 
-  @SneakyThrows
   @Subscribe(order = PostOrder.LAST)
-  public void hookLoginSession(GameProfileRequestEvent e) {
+  public void hookLoginSession(GameProfileRequestEvent e) throws IllegalAccessException {
     // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
     // method (which checks mcConnection.isActive()) and to override it. :)
     MinecraftConnection connection = (MinecraftConnection) craftConnectionField.get(e.getConnection());
@@ -139,12 +144,12 @@ public class LoginListener {
         ConnectedPlayer player = ctor.newInstance(
             this.server, e.getGameProfile(), connection,
             e.getConnection().getVirtualHost().orElse(null),
-            this.onlineMode.contains(e.getUsername()));
+            this.onlineMode.contains(e.getUsername())
+        );
 
         if (!this.server.canRegisterConnection(player)) {
           // TODO: Prepare this packet. Хм. Или не нужно?
-          player.disconnect0(
-              Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
+          player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
           return;
         }
 
@@ -173,8 +178,7 @@ public class LoginListener {
         this.server.getEventManager()
             .fire(new LoginLimboRegisterEvent(player))
             .thenAcceptAsync(limboEvent -> {
-              LoginTasksQueue queue = new LoginTasksQueue(
-                  this.limboAPI, handler, this.server, player, limboEvent.getCallbacks());
+              LoginTasksQueue queue = new LoginTasksQueue(this.limboAPI, handler, this.server, player, limboEvent.getCallbacks());
 
               this.limboAPI.addLoginQueue(player, queue);
               queue.next();
@@ -198,6 +202,7 @@ public class LoginListener {
         } catch (IllegalAccessException ex) {
           this.limboAPI.getLogger().error("Exception while hooking into ClientPlaySessionHandler of {}", player, ex);
         }
+
         connection.setSessionHandler(playHandler);
       }
     });

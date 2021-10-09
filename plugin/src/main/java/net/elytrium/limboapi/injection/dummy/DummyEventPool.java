@@ -152,8 +152,7 @@ public class DummyEventPool implements EventLoop {
 
   @NonNull
   @Override
-  public <T> List<java.util.concurrent.Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> collection,
-      long l, @NonNull TimeUnit timeUnit) {
+  public <T> List<java.util.concurrent.Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> collection, long l, @NonNull TimeUnit timeUnit) {
     return null;
   }
 
