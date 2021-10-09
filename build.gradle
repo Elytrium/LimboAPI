@@ -1,37 +1,24 @@
 buildscript {
     dependencies {
-        classpath 'gradle.plugin.com.github.jengelman.gradle.plugins:shadow:7.0.0'
+        classpath "gradle.plugin.com.github.jengelman.gradle.plugins:shadow:7.0.0"
     }
 }
 
 plugins {
-    id 'java'
+    id "java"
     id "com.github.spotbugs" version "4.7.1" apply false
-    id 'org.cadixdev.licenser' version '0.6.1' apply false
+    id "org.cadixdev.licenser" version "0.6.1" apply false
 }
 
 allprojects {
     apply plugin: "com.github.spotbugs"
-    compileJava.options.encoding = 'UTF-8'
+    compileJava.options.encoding = "UTF-8"
 
-    group = 'net.elytrium'
-    version = '1.0.1-DEV'
-
-    ext {
-        getCurrentShortRevision = {
-            new ByteArrayOutputStream().withStream { os ->
-                exec {
-                    executable = "git"
-                    args = ["rev-parse", "HEAD"]
-                    standardOutput = os
-                }
-                return os.toString().trim().substring(0, 8)
-            }
-        }
-    }
+    group = "net.elytrium"
+    version = "1.0.1-DEV"
 
     tasks.withType(JavaCompile) {
-        options.encoding = 'UTF-8'
+        options.encoding = "UTF-8"
     }
 
     java {
@@ -44,18 +31,8 @@ allprojects {
         mavenCentral()
 
         maven {
-            name = 'velocitypowered-repo'
-            url = 'https://repo.velocitypowered.com/snapshots/'
-        }
-
-        maven {
-            name = 'minecraft-libraries'
-            url = 'https://libraries.minecraft.net/'
-        }
-
-        maven {
-            name = 'spongepowered-repo'
-            url = 'https://repo.spongepowered.org/maven'
+            name = "velocitypowered-repo"
+            url = "https://repo.velocitypowered.com/snapshots/"
         }
     }
 
@@ -64,7 +41,7 @@ allprojects {
             html {
                 enabled = true
                 destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
-                stylesheet = 'fancy-hist.xsl'
+                stylesheet = "fancy-hist.xsl"
             }
         }
     }

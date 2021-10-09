@@ -29,31 +29,31 @@ public class Statistics {
   private final AtomicInteger pingsPerSecond = new AtomicInteger();
 
   public void addBlockedConnection() {
-    blockedConnections.incrementAndGet();
+    this.blockedConnections.incrementAndGet();
   }
 
   public void addConnectionPerSecond() {
-    connectionsPerSecond.incrementAndGet();
+    this.connectionsPerSecond.incrementAndGet();
   }
 
   public void addPingPerSecond() {
-    pingsPerSecond.incrementAndGet();
+    this.pingsPerSecond.incrementAndGet();
   }
 
   public long getBlockedConnections() {
-    return blockedConnections.longValue();
+    return this.blockedConnections.longValue();
   }
 
   public int getConnectionsPerSecond() {
-    return connectionsPerSecond.get();
+    return this.connectionsPerSecond.get();
   }
 
   public int getPingsPerSecond() {
-    return pingsPerSecond.get();
+    return this.pingsPerSecond.get();
   }
 
   public int getTotalConnectionsPerSecond() {
-    return pingsPerSecond.get() + connectionsPerSecond.get();
+    return this.pingsPerSecond.get() + this.connectionsPerSecond.get();
   }
 
   public void startUpdating() {
@@ -62,18 +62,17 @@ public class Statistics {
       int ppsBefore = 0;
 
       public void run() {
-        int currentCps = connectionsPerSecond.get();
+        int currentCps = Statistics.this.connectionsPerSecond.get();
         if (currentCps > 0) {
-          connectionsPerSecond.set(connectionsPerSecond.get() - cpsBefore);
-          cpsBefore = connectionsPerSecond.get();
+          Statistics.this.connectionsPerSecond.set(Statistics.this.connectionsPerSecond.get() - this.cpsBefore);
+          this.cpsBefore = Statistics.this.connectionsPerSecond.get();
         }
 
-        int currentPps = pingsPerSecond.get();
+        int currentPps = Statistics.this.pingsPerSecond.get();
         if (currentPps > 0) {
-          pingsPerSecond.set(pingsPerSecond.get() - ppsBefore);
-          ppsBefore = pingsPerSecond.get();
+          Statistics.this.pingsPerSecond.set(Statistics.this.pingsPerSecond.get() - this.ppsBefore);
+          this.ppsBefore = Statistics.this.pingsPerSecond.get();
         }
-
       }
     }, 1000, 1000);
   }

@@ -19,11 +19,9 @@ package net.elytrium.limboapi.server.world.chunk;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import lombok.Getter;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
@@ -32,14 +30,11 @@ import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 
-@SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
 public class SimpleChunk implements VirtualChunk {
 
   public static final int MAX_BLOCKS_PER_SECTION = 16 * 16 * 16;
 
-  @Getter
   private final int x;
-  @Getter
   private final int z;
 
   private final SimpleSection[] sections = new SimpleSection[16];
@@ -118,8 +113,7 @@ public class SimpleChunk implements VirtualChunk {
         lightSnapshot[i] = this.light[i].copy();
       }
     }
-    return new SimpleChunkSnapshot(this.x, this.z, full, sectionsSnapshot, lightSnapshot,
-        Arrays.copyOf(this.biomes, this.biomes.length));
+    return new SimpleChunkSnapshot(this.x, this.z, full, sectionsSnapshot, lightSnapshot, Arrays.copyOf(this.biomes, this.biomes.length));
   }
 
   private SimpleSection getSection(int y) {
@@ -128,6 +122,7 @@ public class SimpleChunk implements VirtualChunk {
     if (section == null) {
       this.sections[s] = (section = new SimpleSection());
     }
+
     return section;
   }
 
@@ -136,6 +131,7 @@ public class SimpleChunk implements VirtualChunk {
     if (section == null) {
       return ifNull.get();
     }
+
     return function.apply(section);
   }
 
@@ -145,6 +141,7 @@ public class SimpleChunk implements VirtualChunk {
     if (create && result == null) {
       this.light[index] = result = new SimpleLightSection();
     }
+
     return result == null ? SimpleLightSection.DEFAULT : result;
   }
 
@@ -154,5 +151,13 @@ public class SimpleChunk implements VirtualChunk {
 
   public static int getBiomeIndex(int x, int y, int z) {
     return ((y >> 2) & 63) << 4 | ((z >> 2) & 3) << 2 | ((x >> 2) & 3);
+  }
+
+  public int getX() {
+    return this.x;
+  }
+
+  public int getZ() {
+    return this.z;
   }
 }

@@ -26,23 +26,27 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 
-@NoArgsConstructor
 public class SimpleItem implements VirtualItem {
 
   private static final Gson gson = new Gson();
 
-  @Getter
   private static final Map<Item, SimpleItem> legacyIdMap = new EnumMap<>(Item.class);
 
-  @Getter
   private final Map<Version, Short> versionIDs = new EnumMap<>(Version.class);
+
+  public SimpleItem() {
+
+  }
+
+  public static Map<Item, SimpleItem> getLegacyIdMap() {
+    return SimpleItem.legacyIdMap;
+  }
 
   public short getId(ProtocolVersion version) {
     return this.getId(Version.map(version));
@@ -52,24 +56,27 @@ public class SimpleItem implements VirtualItem {
     return this.versionIDs.get(version);
   }
 
+  @SuppressWarnings("unchecked")
   public static void init() {
-    //noinspection unchecked,ConstantConditions
     LinkedTreeMap<String, LinkedTreeMap<String, String>> map = gson.fromJson(
         new InputStreamReader(
-            LimboAPI.getInstance().getClass()
-                .getClassLoader().getResourceAsStream("mapping/items.json"),
-            StandardCharsets.UTF_8), LinkedTreeMap.class);
+            Objects.requireNonNull(LimboAPI.getInstance().getClass().getClassLoader().getResourceAsStream("mapping/items.json")),
+            StandardCharsets.UTF_8
+        ), LinkedTreeMap.class);
 
     for (Item item : Item.values()) {
       SimpleItem simpleItem = new SimpleItem();
-      map.get(String.valueOf(item.getId()))
-          .forEach((key, value) -> simpleItem.getVersionIDs().put(Version.parse(key), Short.parseShort(value)));
+      map.get(String.valueOf(item.getId())).forEach((key, value) -> simpleItem.getVersionIDs().put(Version.parse(key), Short.parseShort(value)));
       legacyIdMap.put(item, simpleItem);
     }
   }
 
   public static SimpleItem fromItem(Item item) {
     return legacyIdMap.get(item);
+  }
+
+  public Map<Version, Short> getVersionIDs() {
+    return this.versionIDs;
   }
 
   public enum Version {
@@ -82,8 +89,7 @@ public class SimpleItem implements VirtualItem {
     MINECRAFT_1_16_2(EnumSet.range(ProtocolVersion.MINECRAFT_1_16_2, ProtocolVersion.MINECRAFT_1_16_4)),
     MINECRAFT_1_17(EnumSet.range(ProtocolVersion.MINECRAFT_1_17, ProtocolVersion.MINECRAFT_1_17_1));
 
-    private static final EnumMap<ProtocolVersion, Version>
-        mcVersionToItemVersions = new EnumMap<>(ProtocolVersion.class);
+    private static final EnumMap<ProtocolVersion, Version> mcVersionToItemVersions = new EnumMap<>(ProtocolVersion.class);
 
     public static Version parse(String from) {
       switch (from) {

@@ -22,19 +22,19 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 public class Player implements MinecraftPacket {
 
   private boolean onGround;
+
+  public Player(boolean onGround) {
+    this.onGround = onGround;
+  }
+
+  public Player() {
+
+  }
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
@@ -52,5 +52,20 @@ public class Player implements MinecraftPacket {
       return ((LimboSessionHandlerImpl) handler).handle(this);
     }
     return false;
+  }
+
+  public boolean isOnGround() {
+    return this.onGround;
+  }
+
+  public void setOnGround(boolean onGround) {
+    this.onGround = onGround;
+  }
+
+  @Override
+  public String toString() {
+    return "Player{"
+        + "onGround=" + this.isOnGround()
+        + "}";
   }
 }

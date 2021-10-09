@@ -26,12 +26,10 @@ package net.elytrium.limboapi.mcprotocollib;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
 
-@SuppressFBWarnings({"EI_EXPOSE_REP2", "EI_EXPOSE_REP"})
 public class BitStorage19 implements CompactStorage {
 
   private final long[] data;
@@ -49,7 +47,7 @@ public class BitStorage19 implements CompactStorage {
     }
 
     this.bitsPerEntry = bitsPerEntry;
-    this.data = data;
+    this.data = data.clone();
 
     this.size = this.data.length * 64 / this.bitsPerEntry;
     this.maxEntryValue = (1L << this.bitsPerEntry) - 1;
@@ -58,7 +56,6 @@ public class BitStorage19 implements CompactStorage {
   public int getBitsPerEntry() {
     return this.bitsPerEntry;
   }
-
 
   public int getSize() {
     return this.size;
@@ -78,8 +75,7 @@ public class BitStorage19 implements CompactStorage {
       return (int) (this.data[startIndex] >>> startBitSubIndex & this.maxEntryValue);
     } else {
       int endBitSubIndex = 64 - startBitSubIndex;
-      return (int) ((this.data[startIndex] >>> startBitSubIndex
-          | this.data[endIndex] << endBitSubIndex) & this.maxEntryValue);
+      return (int) ((this.data[startIndex] >>> startBitSubIndex | this.data[endIndex] << endBitSubIndex) & this.maxEntryValue);
     }
   }
 
@@ -97,12 +93,11 @@ public class BitStorage19 implements CompactStorage {
     int startIndex = bitIndex / 64;
     int endIndex = ((index + 1) * this.bitsPerEntry - 1) / 64;
     int startBitSubIndex = bitIndex % 64;
-    this.data[startIndex] = this.data[startIndex] & ~(this.maxEntryValue << startBitSubIndex)
-        | ((long) value & this.maxEntryValue) << startBitSubIndex;
+    this.data[startIndex] = this.data[startIndex]
+        & ~(this.maxEntryValue << startBitSubIndex) | ((long) value & this.maxEntryValue) << startBitSubIndex;
     if (startIndex != endIndex) {
       int endBitSubIndex = 64 - startBitSubIndex;
-      this.data[endIndex] = this.data[endIndex] >>> endBitSubIndex << endBitSubIndex
-          | ((long) value & this.maxEntryValue) >> endBitSubIndex;
+      this.data[endIndex] = this.data[endIndex] >>> endBitSubIndex << endBitSubIndex | ((long) value & this.maxEntryValue) >> endBitSubIndex;
     }
   }
 
@@ -126,7 +121,7 @@ public class BitStorage19 implements CompactStorage {
 
   @Override
   public long[] getData() {
-    return this.data;
+    return this.data.clone();
   }
 
   private static int roundToNearest(int value, int roundTo) {

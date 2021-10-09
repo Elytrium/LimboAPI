@@ -19,13 +19,22 @@ package net.elytrium.limboauth.model;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @DatabaseTable(tableName = "auth")
 public class RegisteredPlayer {
+
+  public RegisteredPlayer(String nickname, String lowercaseNickname, String hash, String ip, String totpToken, Long regDate) {
+    this.nickname = nickname;
+    this.lowercaseNickname = lowercaseNickname;
+    this.hash = hash;
+    this.ip = ip;
+    this.totpToken = totpToken;
+    this.regDate = regDate;
+  }
+
+  public RegisteredPlayer() {
+
+  }
 
   @DatabaseField(canBeNull = false)
   public String nickname;

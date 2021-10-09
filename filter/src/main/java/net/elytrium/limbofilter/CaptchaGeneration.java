@@ -33,8 +33,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.imageio.ImageIO;
-import lombok.SneakyThrows;
-import lombok.experimental.UtilityClass;
 import net.elytrium.limboapi.protocol.map.CraftMapCanvas;
 import net.elytrium.limboapi.protocol.map.MapPalette;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
@@ -46,22 +44,24 @@ import org.slf4j.Logger;
  * @author Leymooo
  * @author hevav
  */
-@UtilityClass
-public class CaptchaGeneration {
+public final class CaptchaGeneration {
 
   private static final CraftMapCanvas cachedBackgroundMap = new CraftMapCanvas();
-  private final FilterPlugin plugin = FilterPlugin.getInstance();
-  private final Logger logger = FilterPlugin.getInstance().getLogger();
-  private final CaptchaPainter painter = new CaptchaPainter();
-  private final List<Font> fonts = new ArrayList<>();
-  private final AtomicInteger fontCounter = new AtomicInteger(0);
-  private final AtomicInteger colorCounter = new AtomicInteger(0);
+  private static final FilterPlugin plugin = FilterPlugin.getInstance();
+  private static final Logger logger = FilterPlugin.getInstance().getLogger();
+  private static final CaptchaPainter painter = new CaptchaPainter();
+  private static final List<Font> fonts = new ArrayList<>();
+  private static final AtomicInteger fontCounter = new AtomicInteger(0);
+  private static final AtomicInteger colorCounter = new AtomicInteger(0);
 
-  public void init() {
+  private CaptchaGeneration() {
+    throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+  }
+
+  public static void init() {
     try {
       if (!Settings.IMP.MAIN.CAPTCHA_GENERATOR.BACKPLATE_PATH.equals("")) {
-        cachedBackgroundMap.drawImage(0, 0,
-            ImageIO.read(new File(Settings.IMP.MAIN.CAPTCHA_GENERATOR.BACKPLATE_PATH)));
+        cachedBackgroundMap.drawImage(0, 0, ImageIO.read(new File(Settings.IMP.MAIN.CAPTCHA_GENERATOR.BACKPLATE_PATH)));
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -72,13 +72,14 @@ public class CaptchaGeneration {
     int fontSize = Settings.IMP.MAIN.CAPTCHA_GENERATOR.FONT_SIZE;
     Map<TextAttribute, Object> textSettings = Map.of(
         TextAttribute.TRACKING,
-          Settings.IMP.MAIN.CAPTCHA_GENERATOR.LETTER_SPACING,
+        Settings.IMP.MAIN.CAPTCHA_GENERATOR.LETTER_SPACING,
         TextAttribute.SIZE,
-          (float) fontSize,
+        (float) fontSize,
         TextAttribute.STRIKETHROUGH,
-          Settings.IMP.MAIN.CAPTCHA_GENERATOR.STRIKETHROUGH,
+        Settings.IMP.MAIN.CAPTCHA_GENERATOR.STRIKETHROUGH,
         TextAttribute.UNDERLINE,
-          Settings.IMP.MAIN.CAPTCHA_GENERATOR.UNDERLINE);
+        Settings.IMP.MAIN.CAPTCHA_GENERATOR.UNDERLINE
+    );
 
     if (Settings.IMP.MAIN.CAPTCHA_GENERATOR.USE_STANDARD_FONTS) {
       fonts.add(new Font(Font.SANS_SERIF, Font.PLAIN, fontSize).deriveFont(textSettings));
@@ -106,12 +107,9 @@ public class CaptchaGeneration {
     new Thread(CaptchaGeneration::generateImages).start();
   }
 
-  @SneakyThrows
   @SuppressWarnings("StatementWithEmptyBody")
-  public void generateImages() {
-    ThreadPoolExecutor ex =
-        (ThreadPoolExecutor) Executors.newFixedThreadPool(
-            Runtime.getRuntime().availableProcessors());
+  public static void generateImages() {
+    ThreadPoolExecutor ex = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     for (int i = 100; i <= 999; i++) {
       ex.execute(CaptchaGeneration::genNewPacket);
     }
@@ -126,7 +124,7 @@ public class CaptchaGeneration {
     System.gc();
   }
 
-  public void genNewPacket() {
+  public static void genNewPacket() {
     String answer = randomAnswer();
     final CraftMapCanvas map = new CraftMapCanvas(cachedBackgroundMap.getCanvas());
     int fontNumber = fontCounter.getAndIncrement();
@@ -134,14 +132,13 @@ public class CaptchaGeneration {
       fontNumber = 0;
       fontCounter.set(0);
     }
-    BufferedImage image =
-        painter.draw(fonts.get(fontNumber), randomNotWhiteColor(), answer);
+    BufferedImage image = painter.draw(fonts.get(fontNumber), randomNotWhiteColor(), answer);
     map.drawImage(0, 0, image);
     MapDataPacket packet = new MapDataPacket(0, (byte) 0, map.getMapData());
     plugin.getCachedCaptcha().createCaptchaPacket(packet, answer);
   }
 
-  private Color randomNotWhiteColor() {
+  private static Color randomNotWhiteColor() {
     MapPalette.Color[] colors = MapPalette.getColors();
 
     int index;
@@ -156,7 +153,7 @@ public class CaptchaGeneration {
     return colors[index].toJava();
   }
 
-  private String randomAnswer() {
+  private static String randomAnswer() {
     int length = Settings.IMP.MAIN.CAPTCHA_GENERATOR.LENGTH;
     String pattern = Settings.IMP.MAIN.CAPTCHA_GENERATOR.PATTERN;
 
@@ -164,6 +161,7 @@ public class CaptchaGeneration {
     for (int i = 0; i < length; i++) {
       text[i] = pattern.charAt(ThreadLocalRandom.current().nextInt(pattern.length()));
     }
+
     return new String(text);
   }
 }

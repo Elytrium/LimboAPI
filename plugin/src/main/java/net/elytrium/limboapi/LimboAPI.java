@@ -26,11 +26,11 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -38,8 +38,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import lombok.Getter;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limboapi.api.chunk.Dimension;
@@ -73,11 +73,10 @@ import org.slf4j.Logger;
     authors = {"hevav", "mdxd44"}
 )
 
-@Getter
-@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class LimboAPI implements LimboFactory {
 
   private static LimboAPI instance;
+
   private final VelocityServer server;
   private final Logger logger;
   private final Metrics.Factory metricsFactory;
@@ -88,9 +87,8 @@ public class LimboAPI implements LimboFactory {
   private CachedPackets packets;
 
   @Inject
-  public LimboAPI(ProxyServer server, Logger logger,
-                  Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
-    instance = this;
+  public LimboAPI(ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
+    setInstance(this);
 
     this.server = (VelocityServer) server;
     this.logger = logger;
@@ -104,13 +102,21 @@ public class LimboAPI implements LimboFactory {
     this.logger.info("Initializing Simple Virtual Item system...");
     SimpleItem.init();
     this.logger.info("Initializing LimboProtocol...");
-    LimboProtocol.init();
+    try {
+      LimboProtocol.init();
+    } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private static void setInstance(LimboAPI thisInst) {
+    instance = thisInst;
   }
 
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
     this.metricsFactory.make(this, 12530);
-    this.packets = new CachedPackets(this);
+    this.packets = new CachedPackets();
     this.players.clear();
 
     this.reload();
@@ -126,17 +132,16 @@ public class LimboAPI implements LimboFactory {
     this.logger.info("Loaded!");
   }
 
-  @SuppressFBWarnings("NP_IMMEDIATE_DEREFERENCE_OF_READLINE")
   private void checkForUpdates() {
     if (!Settings.IMP.VERSION.contains("-DEV")) {
       try {
         URL url = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION");
         URLConnection conn = url.openConnection();
-        conn.setConnectTimeout(1200);
-        conn.setReadTimeout(1200);
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(
-            conn.getInputStream(), StandardCharsets.UTF_8))) {
-          if (!in.readLine().trim().equalsIgnoreCase(Settings.IMP.VERSION)) {
+        conn.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(4));
+        conn.setReadTimeout((int) TimeUnit.SECONDS.toMillis(4));
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+          String version = in.readLine();
+          if (version != null && !version.trim().equalsIgnoreCase(Settings.IMP.VERSION)) {
             this.logger.error("****************************************");
             this.logger.warn("The new update was found, please update.");
             this.logger.error("****************************************");
@@ -159,8 +164,7 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(boolean solid, boolean air,
-                                        boolean motionBlocking, SimpleBlock.BlockInfo... blockInfos) {
+  public VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, SimpleBlock.BlockInfo... blockInfos) {
     return new SimpleBlock(solid, air, motionBlocking, blockInfos);
   }
 
@@ -179,15 +183,13 @@ public class LimboAPI implements LimboFactory {
     return new SimpleWorld(dimension, x, y, z, yaw, pitch);
   }
 
+  @Override
   public PreparedPacket createPreparedPacket() {
     return new PreparedPacketImpl();
   }
 
-  public void registerPacket(
-      PacketDirection direction,
-      Class packetClass,
-      Supplier packetSupplier,
-      StateRegistry.PacketMapping[] packetMappings) {
+  @Override
+  public void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping[] packetMappings) {
     LimboProtocol.register(direction, packetClass, packetSupplier, packetMappings);
   }
 
@@ -221,5 +223,17 @@ public class LimboAPI implements LimboFactory {
 
   public static LimboAPI getInstance() {
     return instance;
+  }
+
+  public VelocityServer getServer() {
+    return this.server;
+  }
+
+  public Logger getLogger() {
+    return this.logger;
+  }
+
+  public CachedPackets getPackets() {
+    return this.packets;
   }
 }

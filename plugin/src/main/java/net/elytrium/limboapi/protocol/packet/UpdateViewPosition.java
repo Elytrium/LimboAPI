@@ -22,19 +22,20 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 public class UpdateViewPosition implements MinecraftPacket {
 
   private int x;
   private int z;
+
+  public UpdateViewPosition(int x, int z) {
+    this.x = x;
+    this.z = z;
+  }
+
+  public UpdateViewPosition() {
+
+  }
 
   @Override
   public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
@@ -50,5 +51,29 @@ public class UpdateViewPosition implements MinecraftPacket {
   @Override
   public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
     return false;
+  }
+
+  public int getX() {
+    return this.x;
+  }
+
+  public int getZ() {
+    return this.z;
+  }
+
+  public void setX(int x) {
+    this.x = x;
+  }
+
+  public void setZ(int z) {
+    this.z = z;
+  }
+
+  @Override
+  public String toString() {
+    return "UpdateViewPosition{"
+        + "x=" + this.getX()
+        + ", z=" + this.getZ()
+        + "}";
   }
 }

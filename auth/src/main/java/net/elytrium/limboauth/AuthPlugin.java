@@ -32,7 +32,6 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -42,15 +41,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.SneakyThrows;
 import net.elytrium.limboapi.BuildConstants;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
@@ -79,30 +76,27 @@ import org.slf4j.Logger;
     dependencies = {@Dependency(id = "limboapi")}
 )
 
-@Getter
-@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class AuthPlugin {
 
-  private final HttpClient client = HttpClient.newHttpClient();
   private static AuthPlugin instance;
+
+  private final HttpClient client = HttpClient.newHttpClient();
   private final Path dataDirectory;
   private final Logger logger;
   private final ProxyServer server;
   private final LimboFactory factory;
+
   private Dao<RegisteredPlayer, String> playerDao;
   private Limbo authServer;
   private Map<String, CachedUser> cachedAuthChecks;
-  private ScheduledExecutorService scheduler;
-
   private Component nicknameInvalid;
-  private Component nicknamePremium;
-
   private Pattern nicknameValidationPattern;
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Inject
-  public AuthPlugin(ProxyServer server,
-      Logger logger, @Named("limboapi") PluginContainer factory, @DataDirectory Path dataDirectory) {
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  public AuthPlugin(ProxyServer server, Logger logger, @Named("limboapi") PluginContainer factory, @DataDirectory Path dataDirectory) {
+    setInstance(this);
+
     this.server = server;
     this.logger = logger;
     this.dataDirectory = dataDirectory;
@@ -110,43 +104,44 @@ public class AuthPlugin {
   }
 
   @Subscribe
-  public void onProxyInitialization(ProxyInitializeEvent event) {
-    instance = this;
+  public void onProxyInitialization(ProxyInitializeEvent event) throws SQLException {
     this.server.getEventManager().register(this, new AuthListener());
     this.reload();
   }
 
-  @SneakyThrows
-  public void reload() {
+  private static void setInstance(AuthPlugin thisInst) {
+    instance = thisInst;
+  }
+
+  @SuppressWarnings("SwitchStatementWithTooFewBranches")
+  public void reload() throws SQLException {
     Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
 
     this.cachedAuthChecks = new ConcurrentHashMap<>();
 
+    System.setProperty("com.j256.simplelogging.level", "ERROR");
+
     Settings.DATABASE dbConfig = Settings.IMP.DATABASE;
+
     JdbcPooledConnectionSource connectionSource;
     switch (dbConfig.STORAGE_TYPE) {
       case "sqlite": {
-        Class.forName("org.sqlite.JDBC");
-        connectionSource = new JdbcPooledConnectionSource(
-            "jdbc:sqlite:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + dbConfig.FILENAME);
+        connectionSource = new JdbcPooledConnectionSource("jdbc:sqlite:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + dbConfig.FILENAME);
         break;
       }
       case "h2": {
-        connectionSource = new JdbcPooledConnectionSource(
-            "jdbc:h2:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + dbConfig.FILENAME);
+        connectionSource = new JdbcPooledConnectionSource("jdbc:h2:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + dbConfig.FILENAME);
         break;
       }
       case "mysql": {
         connectionSource = new JdbcPooledConnectionSource(
             "jdbc:mysql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE
-                + "?autoReconnect=true&initialTimeout=1&useSSL=false",
-            dbConfig.USER, dbConfig.PASSWORD);
+                + "?autoReconnect=true&initialTimeout=1&useSSL=false", dbConfig.USER, dbConfig.PASSWORD);
         break;
       }
       case "postgresql": {
         connectionSource = new JdbcPooledConnectionSource(
-            "jdbc:postgresql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE
-                + "?autoReconnect=true", dbConfig.USER, dbConfig.PASSWORD);
+            "jdbc:postgresql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE + "?autoReconnect=true", dbConfig.USER, dbConfig.PASSWORD);
         break;
       }
       default: {
@@ -178,18 +173,23 @@ public class AuthPlugin {
     VirtualWorld authWorld = this.factory.createVirtualWorld(
         Dimension.valueOf(Settings.IMP.MAIN.DIMENSION),
         authCoords.X, authCoords.Y, authCoords.Z,
-        (float) authCoords.YAW, (float) authCoords.PITCH);
+        (float) authCoords.YAW, (float) authCoords.PITCH
+    );
 
     if (Settings.IMP.MAIN.LOAD_WORLD) {
       try {
         Path path = this.dataDirectory.resolve(Settings.IMP.MAIN.WORLD_FILE_PATH);
         WorldFile file;
-        if ("schematic".equals(Settings.IMP.MAIN.WORLD_FILE_TYPE)) {
-          file = new SchematicFile(path);
-        } else {
-          this.logger.error("Incorrect world file type.");
-          this.server.shutdown();
-          return;
+        switch (Settings.IMP.MAIN.WORLD_FILE_TYPE) {
+          case "schematic": {
+            file = new SchematicFile(path);
+            break;
+          }
+          default: {
+            this.logger.error("Incorrect world file type.");
+            this.server.shutdown();
+            return;
+          }
         }
 
         Settings.MAIN.WORLD_COORDS coords = Settings.IMP.MAIN.WORLD_COORDS;
@@ -201,20 +201,13 @@ public class AuthPlugin {
 
     this.authServer = this.factory.createLimbo(authWorld);
 
-    this.nicknameInvalid = LegacyComponentSerializer
-        .legacyAmpersand()
-        .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_INVALID);
-    this.nicknamePremium = LegacyComponentSerializer
-        .legacyAmpersand()
-        .deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_PREMIUM);
+    this.nicknameInvalid = LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_INVALID);
 
-    this.scheduler = Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
+    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
 
-    this.scheduler.scheduleAtFixedRate(
-        () -> this.checkCache(this.cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
-        Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
-        Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
-        TimeUnit.MILLISECONDS);
+    scheduler.scheduleAtFixedRate(() ->
+        this.checkCache(this.cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
+        Settings.IMP.MAIN.PURGE_CACHE_MILLIS, Settings.IMP.MAIN.PURGE_CACHE_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   public void cacheAuthUser(Player player) {
@@ -241,7 +234,7 @@ public class AuthPlugin {
 
   public void auth(Player player) {
     String nickname = player.getUsername();
-    if (!nicknameValidationPattern.matcher(nickname).matches()) {
+    if (!this.nicknameValidationPattern.matcher(nickname).matches()) {
       player.disconnect(this.nicknameInvalid);
       return;
     }
@@ -251,9 +244,7 @@ public class AuthPlugin {
 
   private void sendToAuthServer(Player player, String nickname) {
     try {
-      AuthSessionHandler authSessionHandler = new AuthSessionHandler(this.playerDao, player, nickname);
-
-      this.authServer.spawnPlayer(player, authSessionHandler);
+      this.authServer.spawnPlayer(player, new AuthSessionHandler(this.playerDao, player, nickname));
     } catch (Throwable t) {
       this.logger.error("Error", t);
     }
@@ -261,8 +252,9 @@ public class AuthPlugin {
 
   public boolean isPremium(String nickname) {
     try {
-      HttpRequest request = HttpRequest.newBuilder().uri(
-          URI.create(String.format(Settings.IMP.MAIN.ISPREMIUM_AUTH_URL, nickname))).build();
+      HttpRequest request = HttpRequest.newBuilder()
+          .uri(URI.create(String.format(Settings.IMP.MAIN.ISPREMIUM_AUTH_URL, nickname)))
+          .build();
       HttpResponse<String> response = this.client.send(request, HttpResponse.BodyHandlers.ofString());
       return response.statusCode() == 200;
     } catch (IOException | InterruptedException e) {
@@ -282,10 +274,26 @@ public class AuthPlugin {
     return instance;
   }
 
-  @AllArgsConstructor
-  @Getter
+  public Logger getLogger() {
+    return this.logger;
+  }
+
   private static class CachedUser {
-    private InetAddress inetAddress;
-    private long checkTime;
+
+    private final InetAddress inetAddress;
+    private final long checkTime;
+
+    public CachedUser(InetAddress inetAddress, long checkTime) {
+      this.inetAddress = inetAddress;
+      this.checkTime = checkTime;
+    }
+
+    public InetAddress getInetAddress() {
+      return this.inetAddress;
+    }
+
+    public long getCheckTime() {
+      return this.checkTime;
+    }
   }
 }

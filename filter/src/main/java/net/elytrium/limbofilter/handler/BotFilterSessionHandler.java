@@ -24,10 +24,7 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientSettings;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Objects;
-import lombok.Getter;
-import lombok.Setter;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.protocol.packet.SetExp;
@@ -39,10 +36,9 @@ import net.elytrium.limbofilter.config.Settings;
 import net.elytrium.limbofilter.stats.Statistics;
 import org.slf4j.Logger;
 
-@Getter
 public class BotFilterSessionHandler extends FallingCheckHandler {
 
-  public static long TOTAL_TICKS;
+  private static long TOTAL_TICKS;
   private static double CAPTCHA_Y;
   private static long TOTAL_TIME;
 
@@ -55,20 +51,19 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   private final MinecraftPacket fallingCheckPos;
   private final MinecraftPacket fallingCheckChunk;
   private final MinecraftPacket fallingCheckView;
-  @Setter
-  private String captchaAnswer;
-  private LimboPlayer limboPlayer;
-  private int ignoredTicks = 0;
-  private long joinTime = System.currentTimeMillis();
-  private int attempts = Settings.IMP.MAIN.CAPTCHA_ATTEMPTS;
-  private boolean startedListening = false;
-  private int nonValidPacketsSize = 0;
-  @Getter
+
   private CheckState state = CheckState.valueOf(Settings.IMP.MAIN.CHECK_STATE);
+  private LimboPlayer limboPlayer;
+  private Limbo server;
+  private String captchaAnswer;
+  private int attempts = Settings.IMP.MAIN.CAPTCHA_ATTEMPTS;
+  private int ignoredTicks = 0;
+  private int nonValidPacketsSize = 0;
+  private int genericBytes = 0;
+  private long joinTime = System.currentTimeMillis();
+  private boolean startedListening = false;
   private boolean checkedBySettings = false;
   private boolean checkedByBrand = false;
-  private int genericBytes = 0;
-  private Limbo server;
 
   public BotFilterSessionHandler(ConnectedPlayer player, FilterPlugin plugin) {
     super(player.getProtocolVersion());
@@ -81,11 +76,10 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.connection = player.getConnection();
 
     Settings.MAIN.COORDS coords = Settings.IMP.MAIN.COORDS;
-    this.fallingCheckPos = packets.createPlayerPosAndLookPacket(
-        validX, validY, validZ, (float) coords.FALLING_CHECK_YAW, (float) coords.FALLING_CHECK_PITCH);
-    this.fallingCheckChunk = packets.createChunkDataPacket(
-        new SimpleChunk(validX >> 4, validZ >> 4), validY);
-    this.fallingCheckView = packets.createUpdateViewPosition(validX, validZ);
+    this.fallingCheckPos = this.packets.createPlayerPosAndLookPacket(
+        this.validX, this.validY, this.validZ, (float) coords.FALLING_CHECK_YAW, (float) coords.FALLING_CHECK_PITCH);
+    this.fallingCheckChunk = this.packets.createChunkDataPacket(new SimpleChunk(this.validX >> 4, this.validZ >> 4), this.validY);
+    this.fallingCheckView = this.packets.createUpdateViewPosition(this.validX, this.validZ);
   }
 
   @Override
@@ -95,150 +89,149 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       int singleLength = pluginMessage.content().readableBytes();
       singleLength += pluginMessage.getChannel().length() * 4;
       this.genericBytes += singleLength;
-      if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH
-          || this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
-        connection.closeWith(packets.getTooBigPacket());
-        logger.error("{} sent too big packet", player);
-        statistics.addBlockedConnection();
+      if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH || this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
+        this.connection.closeWith(this.packets.getTooBigPacket());
+        this.logger.error("{} sent too big packet", this.player);
+        this.statistics.addBlockedConnection();
       }
-      if (PluginMessageUtil.isMcBrand(pluginMessage) && !checkedByBrand) {
-        logger.info("{} has client brand {}", player,
-            PluginMessageUtil.readBrandMessage(pluginMessage.content()));
-        checkedByBrand = true;
+      if (PluginMessageUtil.isMcBrand(pluginMessage) && !this.checkedByBrand) {
+        this.logger.info("{} has client brand {}", this.player, PluginMessageUtil.readBrandMessage(pluginMessage.content()));
+        this.checkedByBrand = true;
       }
     } else if (packet instanceof ClientSettings) {
       ClientSettings clientSettings = (ClientSettings) packet;
-      if ((!checkedBySettings) && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
+      if (!this.checkedBySettings && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
         if (packet.toString().contains("null")) {
-          connection.closeWith(packets.getKickClientCheckSettings());
-          logger.error("{} has null in settings packet", player);
-          statistics.addBlockedConnection();
+          this.connection.closeWith(this.packets.getKickClientCheckSettings());
+          this.logger.error("{} has null in settings packet", this.player);
+          this.statistics.addBlockedConnection();
         } else if (!clientSettings.isChatColors()) {
-          connection.closeWith(packets.getKickClientCheckSettingsChat());
-          logger.error("{} didn't send isChatColors packet",
-              player);
-          statistics.addBlockedConnection();
+          this.connection.closeWith(this.packets.getKickClientCheckSettingsChat());
+          this.logger.error("{} didn't send isChatColors packet", this.player);
+          this.statistics.addBlockedConnection();
         } else if (clientSettings.getSkinParts() == 0) {
-          connection.closeWith(packets.getKickClientCheckSettingsSkin());
-          logger.error("{} didn't send skin parts packet",
-              player);
-          statistics.addBlockedConnection();
+          this.connection.closeWith(this.packets.getKickClientCheckSettingsSkin());
+          this.logger.error("{} didn't send skin parts packet", this.player);
+          this.statistics.addBlockedConnection();
         }
       }
-      checkedBySettings = true;
+
+      this.checkedBySettings = true;
     }
   }
 
   @Override
   public void onChat(String message) {
-    if ((state == CheckState.CAPTCHA_POSITION || state == CheckState.ONLY_CAPTCHA) && message.length() <= 256) {
-      if (message.equals(captchaAnswer)) {
-        connection.write(packets.getResetSlot());
-        finishCheck();
-      } else if (--attempts != 0) {
-        sendCaptcha();
+    if ((this.state == CheckState.CAPTCHA_POSITION || this.state == CheckState.ONLY_CAPTCHA) && message.length() <= 256) {
+      if (message.equals(this.captchaAnswer)) {
+        this.connection.write(this.packets.getResetSlot());
+        this.finishCheck();
+      } else if (--this.attempts != 0) {
+        this.sendCaptcha();
       } else {
-        statistics.addBlockedConnection();
-        connection.closeWith(packets.getCaptchaFailed());
+        this.statistics.addBlockedConnection();
+        this.connection.closeWith(this.packets.getCaptchaFailed());
       }
     }
   }
 
-  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void finishCheck() {
-    if (System.currentTimeMillis() - joinTime < TOTAL_TIME && state != CheckState.ONLY_CAPTCHA) {
-      if (state == CheckState.CAPTCHA_POSITION && ticks < TOTAL_TICKS) {
-        state = CheckState.ONLY_POSITION;
+    if (System.currentTimeMillis() - this.joinTime < TOTAL_TIME && this.state != CheckState.ONLY_CAPTCHA) {
+      if (this.state == CheckState.CAPTCHA_POSITION && ticks < TOTAL_TICKS) {
+        this.state = CheckState.ONLY_POSITION;
       } else {
-        if (state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
-          changeStateToCaptcha();
+        if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
+          this.changeStateToCaptcha();
         } else {
-          statistics.addBlockedConnection();
-          connection.closeWith(packets.getFallingCheckFailed());
+          this.statistics.addBlockedConnection();
+          this.connection.closeWith(this.packets.getFallingCheckFailed());
         }
       }
       return;
     }
 
-    if ((!checkedBySettings) && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
-      connection.closeWith(packets.getKickClientCheckSettings());
-      statistics.addBlockedConnection();
+    if ((!this.checkedBySettings) && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
+      this.connection.closeWith(this.packets.getKickClientCheckSettings());
+      this.statistics.addBlockedConnection();
     }
-    if ((!checkedByBrand) && Settings.IMP.MAIN.CHECK_CLIENT_BRAND) {
-      connection.closeWith(packets.getKickClientCheckBrand());
-      statistics.addBlockedConnection();
+    if ((!this.checkedByBrand) && Settings.IMP.MAIN.CHECK_CLIENT_BRAND) {
+      this.connection.closeWith(this.packets.getKickClientCheckBrand());
+      this.statistics.addBlockedConnection();
     }
 
-    state = CheckState.SUCCESSFUL;
-    plugin.cacheFilterUser(player);
+    this.state = CheckState.SUCCESSFUL;
+    this.plugin.cacheFilterUser(this.player);
 
-    if (plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_VERIFY)
-        || plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.NEED_TO_RECONNECT)) {
-      connection.closeWith(packets.getSuccessfulBotFilterDisconnect());
+    if (this.plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_VERIFY)
+        || this.plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.NEED_TO_RECONNECT)) {
+      this.connection.closeWith(this.packets.getSuccessfulBotFilterDisconnect());
     } else {
-      connection.write(packets.getSuccessfulBotFilterChat());
-      limboPlayer.disconnect();
+      this.connection.write(this.packets.getSuccessfulBotFilterChat());
+      this.limboPlayer.disconnect();
     }
   }
 
   @Override
   public void onMove() {
-    if (!startedListening && state != CheckState.ONLY_CAPTCHA) {
-      if (x == validX && z == validZ) {
-        startedListening = true;
-        connection.write(packets.getAntiBotTitle());
+    if (!this.startedListening && this.state != CheckState.ONLY_CAPTCHA) {
+      if (this.x == this.validX && this.z == this.validZ) {
+        this.startedListening = true;
+        this.connection.write(this.packets.getAntiBotTitle());
       }
-      if (nonValidPacketsSize > Settings.IMP.MAIN.NON_VALID_POSITION_XZ_ATTEMPTS) {
-        fallingCheckFailed();
+      if (this.nonValidPacketsSize > Settings.IMP.MAIN.NON_VALID_POSITION_XZ_ATTEMPTS) {
+        this.fallingCheckFailed();
         return;
       }
-      lastY = validY;
-      nonValidPacketsSize++;
+
+      this.lastY = this.validY;
+      this.nonValidPacketsSize++;
     }
-    if (startedListening) {
-      if (lastY == CAPTCHA_Y || onGround) {
+    if (this.startedListening) {
+      if (this.lastY == CAPTCHA_Y || this.onGround) {
         return;
       }
-      if (state == CheckState.ONLY_CAPTCHA) {
-        if (lastY != y && waitingTeleportId == -1) {
-          setCaptchaPosition(true);
+      if (this.state == CheckState.ONLY_CAPTCHA) {
+        if (this.lastY != this.y && this.waitingTeleportId == -1) {
+          this.setCaptchaPosition(true);
         }
         return;
       }
-      if (lastY - y == 0) {
-        ignoredTicks++;
+      if (this.lastY - this.y == 0) {
+        this.ignoredTicks++;
         return;
       }
-      if (ticks >= TOTAL_TICKS) {
-        if (state == CheckState.CAPTCHA_POSITION) {
-          changeStateToCaptcha();
+      if (this.ticks >= TOTAL_TICKS) {
+        if (this.state == CheckState.CAPTCHA_POSITION) {
+          this.changeStateToCaptcha();
         } else {
-          finishCheck();
+          this.finishCheck();
         }
+
         return;
       }
       if (Settings.IMP.MAIN.FALLING_CHECK_DEBUG) {
-        System.out.println("lastY=" + lastY + "; y=" + y + "; diff=" + (lastY - y) + ";"
-            + " need=" + getLoadedChunkSpeed(ticks) + "; ticks=" + ticks
-            + "; x=" + x + "; z=" + z + "; validX=" + validX + "; validZ=" + validZ
-            + "; startedListening=" + startedListening + "; state=" + state
-            + "; onGround=" + onGround);
+        System.out.println("lastY=" + this.lastY + "; y=" + this.y + "; diff=" + (this.lastY - this.y) + ";"
+            + " need=" + getLoadedChunkSpeed(ticks) + "; ticks=" + this.ticks
+            + "; x=" + x + "; z=" + this.z + "; validX=" + this.validX + "; validZ=" + this.validZ
+            + "; startedListening=" + this.startedListening + "; state=" + this.state
+            + "; onGround=" + this.onGround);
       }
-      if (ignoredTicks > Settings.IMP.MAIN.NON_VALID_POSITION_Y_ATTEMPTS) {
-        fallingCheckFailed();
+      if (this.ignoredTicks > Settings.IMP.MAIN.NON_VALID_POSITION_Y_ATTEMPTS) {
+        this.fallingCheckFailed();
         return;
       }
-      if ((x != validX && z != validZ) || checkY()) {
-        fallingCheckFailed();
+      if ((this.x != this.validX && this.z != this.validZ) || this.checkY()) {
+        this.fallingCheckFailed();
         return;
       }
-      if ((state == CheckState.CAPTCHA_ON_POSITION_FAILED || state == CheckState.ONLY_POSITION)) {
-        SetExp expBuf = packets.getExperience().get(ticks);
+      if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED || this.state == CheckState.ONLY_POSITION) {
+        SetExp expBuf = this.packets.getExperience().get(this.ticks);
         if (expBuf != null) {
-          connection.write(expBuf);
+          this.connection.write(expBuf);
         }
       }
-      ticks++;
+
+      this.ticks++;
     }
   }
 
@@ -246,65 +239,68 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   public void onSpawn(Limbo server, LimboPlayer player) {
     this.server = server;
     this.limboPlayer = player;
-    if (state == CheckState.ONLY_CAPTCHA) {
-      sendCaptcha();
-    } else if (state == CheckState.CAPTCHA_POSITION) {
-      sendFallingCheckPackets();
-      sendCaptcha();
-    } else if (state == CheckState.ONLY_POSITION
-        || state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
-      sendFallingCheckPackets();
+    if (this.state == CheckState.ONLY_CAPTCHA) {
+      this.sendCaptcha();
+    } else if (this.state == CheckState.CAPTCHA_POSITION) {
+      this.sendFallingCheckPackets();
+      this.sendCaptcha();
+    } else if (this.state == CheckState.ONLY_POSITION || this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
+      this.connection.delayedWrite(this.packets.getCheckingChat());
+      this.sendFallingCheckPackets();
     }
-    connection.flush();
+
+    this.connection.flush();
   }
 
   private void sendFallingCheckPackets() {
-    connection.delayedWrite(fallingCheckPos);
-    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
-      connection.delayedWrite(fallingCheckView);
+    this.connection.delayedWrite(this.fallingCheckPos);
+    if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
+      this.connection.delayedWrite(this.fallingCheckView);
     }
-    connection.delayedWrite(fallingCheckChunk);
+
+    this.connection.delayedWrite(this.fallingCheckChunk);
   }
 
   private void sendCaptcha() {
-    CaptchaHandler captchaHandler = plugin.getCachedCaptcha().randomCaptcha();
+    CaptchaHandler captchaHandler = this.plugin.getCachedCaptcha().randomCaptcha();
     String captchaAnswer = captchaHandler.getAnswer();
-    setCaptchaAnswer(captchaAnswer);
-    connection.delayedWrite(packets.getSetSlot());
-    connection.delayedWrite(captchaHandler.getMap());
-    connection.delayedWrite(packets.getCheckingCaptchaChat());
-    connection.flush();
+    this.setCaptchaAnswer(captchaAnswer);
+    this.connection.delayedWrite(this.packets.getSetSlot());
+    this.connection.delayedWrite(captchaHandler.getMap());
+    this.connection.delayedWrite(this.packets.getCheckingCaptchaChat());
+    this.connection.flush();
   }
 
   private boolean checkY() {
-    double speed = getLoadedChunkSpeed(ticks);
-    return (Math.abs(lastY - y - speed) > Settings.IMP.MAIN.MAX_VALID_POSITION_DIFFERENCE);
+    double speed = getLoadedChunkSpeed(this.ticks);
+    return (Math.abs(this.lastY - this.y - speed) > Settings.IMP.MAIN.MAX_VALID_POSITION_DIFFERENCE);
   }
 
   private void fallingCheckFailed() {
-    if (state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
-      changeStateToCaptcha();
+    if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
+      this.changeStateToCaptcha();
       return;
     }
-    statistics.addBlockedConnection();
-    connection.closeWith(packets.getFallingCheckFailed());
+
+    this.statistics.addBlockedConnection();
+    this.connection.closeWith(this.packets.getFallingCheckFailed());
   }
 
   private void setCaptchaPosition(boolean disableFall) {
-    server.respawnPlayer(player);
+    this.server.respawnPlayer(this.player);
     if (disableFall) {
-      connection.write(packets.getNoAbilities());
+      this.connection.write(this.packets.getNoAbilities());
     }
 
-    waitingTeleportId = validTeleportId;
+    this.waitingTeleportId = this.validTeleportId;
   }
 
   private void changeStateToCaptcha() {
-    state = CheckState.ONLY_CAPTCHA;
-    joinTime = System.currentTimeMillis() + TOTAL_TIME;
-    setCaptchaPosition(true);
-    if (captchaAnswer == null) {
-      sendCaptcha();
+    this.state = CheckState.ONLY_CAPTCHA;
+    this.joinTime = System.currentTimeMillis() + TOTAL_TIME;
+    this.setCaptchaPosition(true);
+    if (this.captchaAnswer == null) {
+      this.sendCaptcha();
     }
   }
 
@@ -316,19 +312,27 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    BotFilterSessionHandler that = (BotFilterSessionHandler) o;
-    return player.getUsername().equals(that.player.getUsername());
+
+    return this.player.getUsername().equals(((BotFilterSessionHandler) o).player.getUsername());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(player.getUsername());
+    return Objects.hash(this.player.getUsername());
   }
 
   public static void reload() {
     TOTAL_TICKS = Settings.IMP.MAIN.FALLING_CHECK_TICKS;
     TOTAL_TIME = (TOTAL_TICKS * 50) - 100;
     CAPTCHA_Y = Settings.IMP.MAIN.COORDS.CAPTCHA_Y;
+  }
+
+  public void setCaptchaAnswer(String captchaAnswer) {
+    this.captchaAnswer = captchaAnswer;
+  }
+
+  public static long getTotalTicks() {
+    return TOTAL_TICKS;
   }
 
   public enum CheckState {

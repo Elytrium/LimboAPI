@@ -30,7 +30,6 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -41,10 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.SneakyThrows;
 import net.elytrium.limboapi.BuildConstants;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limboapi.api.chunk.Dimension;
@@ -69,125 +66,122 @@ import org.slf4j.Logger;
     dependencies = {@Dependency(id = "limboapi")}
 )
 
-@Getter
-@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 public class FilterPlugin {
 
   private static FilterPlugin instance;
+
   private final Path dataDirectory;
   private final Logger logger;
   private final ProxyServer server;
   private final LimboFactory factory;
   private final CachedPackets packets;
   private final Statistics statistics;
+
   private Map<String, CachedUser> cachedFilterChecks;
-  private ScheduledExecutorService scheduler;
   private CachedCaptcha cachedCaptcha;
   private Limbo filterServer;
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Inject
-  public FilterPlugin(ProxyServer server,
-                    Logger logger,
-                    @Named("limboapi") PluginContainer factory,
-                    @DataDirectory Path dataDirectory) {
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  public FilterPlugin(ProxyServer server, Logger logger, @Named("limboapi") PluginContainer factory, @DataDirectory Path dataDirectory) {
+    setInstance(this);
+
     this.server = server;
     this.logger = logger;
     this.dataDirectory = dataDirectory;
     this.factory = (LimboFactory) factory.getInstance().get();
     this.packets = new CachedPackets();
     this.statistics = new Statistics();
-    statistics.startUpdating();
+    this.statistics.startUpdating();
+  }
+
+  private static void setInstance(FilterPlugin thisInst) {
+    instance = thisInst;
   }
 
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
-    instance = this;
-    server.getEventManager().register(this, new FilterListener(this));
-    reload();
+    this.server.getEventManager().register(this, new FilterListener(this));
+    this.reload();
   }
 
-  @SneakyThrows
+  @SuppressWarnings("SwitchStatementWithTooFewBranches")
   public void reload() {
-    Settings.IMP.reload(new File(dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
+    Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
 
     BotFilterSessionHandler.reload();
 
-    cachedCaptcha = new CachedCaptcha();
+    this.cachedCaptcha = new CachedCaptcha();
     CaptchaGeneration.init();
-    packets.createPackets();
+    this.packets.createPackets();
 
-    cachedFilterChecks = new ConcurrentHashMap<>();
+    this.cachedFilterChecks = new ConcurrentHashMap<>();
 
     Settings.MAIN.COORDS captchaCoords = Settings.IMP.MAIN.COORDS;
-    VirtualWorld authWorld = factory.createVirtualWorld(
+    VirtualWorld authWorld = this.factory.createVirtualWorld(
         Dimension.valueOf(Settings.IMP.MAIN.BOTFILTER_DIMENSION),
         captchaCoords.CAPTCHA_X, captchaCoords.CAPTCHA_Y, captchaCoords.CAPTCHA_Z,
         (float) captchaCoords.CAPTCHA_YAW, (float) captchaCoords.CAPTCHA_PITCH);
 
     if (Settings.IMP.MAIN.LOAD_WORLD) {
       try {
-        Path path = dataDirectory.resolve(Settings.IMP.MAIN.WORLD_FILE_PATH);
+        Path path = this.dataDirectory.resolve(Settings.IMP.MAIN.WORLD_FILE_PATH);
         WorldFile file;
         switch (Settings.IMP.MAIN.WORLD_FILE_TYPE) {
-          case "schematic":
+          case "schematic": {
             file = new SchematicFile(path);
             break;
-          default:
-            logger.error("Incorrect world file type.");
-            server.shutdown();
+          }
+          default: {
+            this.logger.error("Incorrect world file type.");
+            this.server.shutdown();
             return;
+          }
         }
 
         Settings.MAIN.WORLD_COORDS coords = Settings.IMP.MAIN.WORLD_COORDS;
-        file.toWorld(factory, authWorld, coords.X, coords.Y, coords.Z);
+        file.toWorld(this.factory, authWorld, coords.X, coords.Y, coords.Z);
       } catch (IOException e) {
         e.printStackTrace();
       }
     }
 
-    filterServer = factory.createLimbo(authWorld);
+    this.filterServer = this.factory.createLimbo(authWorld);
 
-    scheduler =
-        Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
+    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
 
     scheduler.scheduleAtFixedRate(
-        () -> checkCache(cachedFilterChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
+        () -> this.checkCache(this.cachedFilterChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         TimeUnit.MILLISECONDS);
 
-    CommandManager manager = server.getCommandManager();
+    CommandManager manager = this.server.getCommandManager();
     manager.unregister("limbofilter");
-    manager.register("limbofilter",
-        new FilterCommand((VelocityServer) server, this),
-        "lf", "botfilter", "bf");
+    manager.register("limbofilter", new FilterCommand((VelocityServer) this.server, this), "lf", "botfilter", "bf");
   }
 
   public void cacheFilterUser(Player player) {
     String username = player.getUsername();
-    cachedFilterChecks.remove(username);
-    InetSocketAddress adr = player.getRemoteAddress();
-    cachedFilterChecks.put(username, new CachedUser(adr.getAddress(), System.currentTimeMillis()));
+    this.cachedFilterChecks.remove(username);
+    this.cachedFilterChecks.put(username, new CachedUser(player.getRemoteAddress().getAddress(), System.currentTimeMillis()));
   }
 
   public boolean shouldCheck(ConnectedPlayer player) {
-    if (!checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ALL_BYPASS)) {
+    if (!this.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ALL_BYPASS)) {
       return false;
     }
 
-    if (player.isOnlineMode()
-        && !checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_BYPASS)) {
+    if (player.isOnlineMode() && !this.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_BYPASS)) {
       return false;
     }
 
-    InetSocketAddress adr = (InetSocketAddress) player.getConnection().getRemoteAddress();
-    return shouldCheck(player.getUsername(), adr.getAddress());
+    return this.shouldCheck(player.getUsername(), ((InetSocketAddress) player.getConnection().getRemoteAddress()).getAddress());
   }
 
   public boolean shouldCheck(String nickname, InetAddress ip) {
-    if (cachedFilterChecks.containsKey(nickname)) {
-      return !ip.equals(cachedFilterChecks.get(nickname).getInetAddress());
+    if (this.cachedFilterChecks.containsKey(nickname)) {
+      return !ip.equals(this.cachedFilterChecks.get(nickname).getInetAddress());
     } else {
       return true;
     }
@@ -195,12 +189,9 @@ public class FilterPlugin {
 
   public void filter(Player player) {
     try {
-      BotFilterSessionHandler botFilterSessionHandler =
-          new BotFilterSessionHandler((ConnectedPlayer) player, this);
-
-      filterServer.spawnPlayer(player, botFilterSessionHandler);
+      this.filterServer.spawnPlayer(player, new BotFilterSessionHandler((ConnectedPlayer) player, this));
     } catch (Throwable t) {
-      logger.error("Error", t);
+      this.logger.error("Error", t);
     }
   }
 
@@ -223,10 +214,42 @@ public class FilterPlugin {
     return instance;
   }
 
-  @AllArgsConstructor
-  @Getter
+  public Logger getLogger() {
+    return this.logger;
+  }
+
+  public LimboFactory getFactory() {
+    return this.factory;
+  }
+
+  public CachedPackets getPackets() {
+    return this.packets;
+  }
+
+  public Statistics getStatistics() {
+    return this.statistics;
+  }
+
+  public CachedCaptcha getCachedCaptcha() {
+    return this.cachedCaptcha;
+  }
+
   private static class CachedUser {
-    private InetAddress inetAddress;
-    private long checkTime;
+
+    private final InetAddress inetAddress;
+    private final long checkTime;
+
+    public CachedUser(InetAddress inetAddress, long checkTime) {
+      this.inetAddress = inetAddress;
+      this.checkTime = checkTime;
+    }
+
+    public InetAddress getInetAddress() {
+      return this.inetAddress;
+    }
+
+    public long getCheckTime() {
+      return this.checkTime;
+    }
   }
 }

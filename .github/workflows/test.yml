@@ -1,13 +1,13 @@
 name: Java CI with Gradle [PR tests]
 
-on: [pull_request]
+on: [ pull_request ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [11, 16]
+        java: [ 11, 16 ]
       fail-fast: true
     steps:
       - name: Checkout
@@ -24,7 +24,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
       - name: Download Velocity
-        run: "mkdir libs && wget https://versions.velocitypowered.com/download/3.0.0.jar -O libs/3.0.0.jar"
+        run: "mkdir libs && wget https://ci.velocitypowered.com/job/velocity-3.0.0/lastSuccessfulBuild/artifact/proxy/build/libs/velocity-proxy-3.0.2-SNAPSHOT-all.jar -O libs/3.0.0.jar"
       - name: Build plugins
         run: ./gradlew build
       - name: Upload a build artifact

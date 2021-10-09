@@ -1,33 +1,23 @@
 plugins {
-    id 'java'
-    id 'checkstyle'
+    id "java"
+    id "checkstyle"
 }
 
-apply plugin: 'org.cadixdev.licenser'
-apply from: '../gradle/checkstyle.gradle'
-apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "org.cadixdev.licenser"
+apply from: "../gradle/checkstyle.gradle"
+apply plugin: "com.github.johnrengelman.shadow"
 
 license {
-    header = project.rootProject.file('HEADER.txt')
+    header = project.rootProject.file("HEADER.txt")
 }
 
 dependencies {
-    compileOnly project(':limboapi-api')
-    compileOnly files('../libs/3.0.0.jar')
+    compileOnly project(":limboapi-api")
+    compileOnly files("../libs/3.0.0.jar")
 
-    annotationProcessor 'com.velocitypowered:velocity-api:3.0.2-SNAPSHOT'
+    annotationProcessor "com.velocitypowered:velocity-api:3.0.2-SNAPSHOT"
 
-    compileOnly 'org.projectlombok:lombok:1.18.20'
-    annotationProcessor 'org.projectlombok:lombok:1.18.20'
-
-    testCompileOnly 'org.projectlombok:lombok:1.18.20'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
-
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.4.0'
-}
-
-tasks.withType(Checkstyle) {
-    exclude('**/net/elytrium/limbofallback/config/Settings.java')
+    compileOnly "com.github.spotbugs:spotbugs-annotations:4.4.1"
 }
 
 // TODO: Replace non shaded jar by shaded

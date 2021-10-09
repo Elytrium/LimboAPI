@@ -20,25 +20,28 @@ package net.elytrium.limboapi.server.world.chunk;
 import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.BlockSection;
 import net.elytrium.limboapi.api.chunk.data.BlockStorage;
 import net.elytrium.limboapi.protocol.data.BlockStorage19;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 
-@RequiredArgsConstructor
-@AllArgsConstructor()
 public class SimpleSection implements BlockSection {
 
   private final BlockStorage blocks;
-  @Getter
   private long lastUpdate = System.nanoTime();
 
   public SimpleSection() {
     this(new BlockStorage19(ProtocolVersion.MINECRAFT_1_17));
+  }
+
+  public SimpleSection(BlockStorage blocks) {
+    this.blocks = blocks;
+  }
+
+  public SimpleSection(BlockStorage blocks, long lastUpdate) {
+    this.blocks = blocks;
+    this.lastUpdate = lastUpdate;
   }
 
   public VirtualBlock getBlockAt(int x, int y, int z) {
@@ -53,8 +56,7 @@ public class SimpleSection implements BlockSection {
   }
 
   public SimpleSection getSnapshot() {
-    BlockStorage blockStorage = this.blocks.copy();
-    return new SimpleSection(blockStorage, this.lastUpdate);
+    return new SimpleSection(this.blocks.copy(), this.lastUpdate);
   }
 
   private void checkIndexes(int x, int y, int z) {
@@ -65,5 +67,9 @@ public class SimpleSection implements BlockSection {
 
   private boolean checkIndex(int i) {
     return i >= 0 && i <= 15;
+  }
+
+  public long getLastUpdate() {
+    return this.lastUpdate;
   }
 }

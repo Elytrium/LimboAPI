@@ -205,7 +205,7 @@ public final class Configuration {
 
   public int getInt(String path) {
     Object def = this.getDefault(path);
-    return getInt(path, (def instanceof Number) ? ((Number) def).intValue() : 0);
+    return this.getInt(path, (def instanceof Number) ? ((Number) def).intValue() : 0);
   }
 
   public int getInt(String path, int def) {

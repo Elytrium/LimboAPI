@@ -52,7 +52,7 @@ public class Config {
   private final Logger logger = AuthPlugin.getInstance().getLogger();
 
   public Config() {
-    save(new ArrayList<>(), getClass(), this, 0);
+    this.save(new ArrayList<>(), getClass(), this, 0);
   }
 
   /**
@@ -65,9 +65,9 @@ public class Config {
    */
   private void set(String key, Object value) {
     String[] split = key.split("\\.");
-    Object instance = getInstance(split, this.getClass());
+    Object instance = this.getInstance(split, this.getClass());
     if (instance != null) {
-      Field field = getField(split, instance);
+      Field field = this.getField(split, instance);
       if (field != null) {
         try {
           if (field.getAnnotation(Final.class) != null) {
@@ -79,11 +79,12 @@ public class Config {
           field.set(instance, value);
           return;
         } catch (IllegalAccessException | IllegalArgumentException e) {
-          logger.warn("Error:", e);
+          this.logger.warn("Error:", e);
         }
       }
     }
-    logger.warn("Failed to set config option: {}: {} | {} ", key, value, instance);
+
+    this.logger.warn("Failed to set config option: {}: {} | {} ", key, value, instance);
   }
 
   public void set(Configuration yml, String oldPath) {
@@ -91,14 +92,14 @@ public class Config {
       Object value = yml.get(key);
       String newPath = oldPath + (oldPath.isEmpty() ? "" : ".") + key;
       if (value instanceof Configuration) {
-        set((Configuration) value, newPath);
+        this.set((Configuration) value, newPath);
         continue;
       } else if (value instanceof String) {
-        set(newPath, ((String) value).replace("{NL}", "\n")
+        this.set(newPath, ((String) value).replace("{NL}", "\n")
             .replace("{PRFX}", Settings.IMP.PREFIX));
         continue;
       }
-      set(newPath, value);
+      this.set(newPath, value);
     }
   }
 
@@ -113,10 +114,10 @@ public class Config {
         yml = ConfigurationProvider.getProvider(YamlConfiguration.class).load(reader);
       }
     } catch (IOException ex) {
-      logger.warn("Unable to load config ", ex);
+      this.logger.warn("Unable to load config ", ex);
       return false;
     }
-    set(yml, "");
+    this.set(yml, "");
     return true;
   }
 
@@ -135,7 +136,7 @@ public class Config {
       Path configFile = file.toPath();
       Path tempCfg = new File(file.getParentFile(), "__tmpcfg").toPath();
       List<String> lines = new ArrayList<>();
-      save(lines, getClass(), this, 0);
+      this.save(lines, getClass(), this, 0);
 
       Files.write(tempCfg, lines, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
       try {
@@ -148,13 +149,13 @@ public class Config {
         );
       }
     } catch (IOException e) {
-      logger.warn("Error:", e);
+      this.logger.warn("Error:", e);
     }
   }
 
   private void save(List<String> lines, Class clazz, final Object instance, int indent) {
     try {
-      String spacing = repeat(" ", indent);
+      String spacing = this.repeat(" ", indent);
       for (Field field : clazz.getFields()) {
         if (field.getAnnotation(Ignore.class) != null) {
           continue;
@@ -172,7 +173,7 @@ public class Config {
         Create create = field.getAnnotation(Create.class);
         if (create != null) {
           Object value = field.get(instance);
-          setAccessible(field);
+          this.setAccessible(field);
           if (indent == 0) {
             lines.add("");
           }
@@ -182,20 +183,20 @@ public class Config {
               lines.add(spacing + "# " + commentLine);
             }
           }
-          lines.add(spacing + toNodeName(current.getSimpleName()) + ":");
+          lines.add(spacing + this.toNodeName(current.getSimpleName()) + ":");
           if (value == null) {
             field.set(instance, value = current.newInstance());
           }
-          save(lines, current, value, indent + 2);
+          this.save(lines, current, value, indent + 2);
         } else {
-          lines.add(spacing + toNodeName(field.getName() + ": ")
-              + toYamlString(field, field.get(instance), spacing));
+          lines.add(spacing + this.toNodeName(field.getName() + ": ")
+              + this.toYamlString(field, field.get(instance), spacing));
         }
       }
     } catch (RuntimeException e) {
-      logger.warn("RuntimeEx Error:", e);
+      this.logger.warn("RuntimeEx Error:", e);
     } catch (Exception e) {
-      logger.warn("Error:", e);
+      this.logger.warn("Error:", e);
     }
   }
 
@@ -205,6 +206,7 @@ public class Config {
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.FIELD})
   public @interface Create {
+
   }
 
   /**
@@ -213,6 +215,7 @@ public class Config {
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.FIELD)
   public @interface Final {
+
   }
 
   /**
@@ -221,6 +224,7 @@ public class Config {
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.FIELD, ElementType.TYPE})
   public @interface Comment {
+
     String[] value();
   }
 
@@ -230,6 +234,7 @@ public class Config {
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.FIELD, ElementType.TYPE})
   public @interface Ignore {
+
   }
 
   private String toYamlString(Field field, Object value, String spacing) {
@@ -244,7 +249,7 @@ public class Config {
       StringBuilder m = new StringBuilder();
       for (Object obj : listValue) {
         m.append(
-            System.lineSeparator()).append(spacing).append("- ").append(toYamlString(field, obj, spacing));
+            System.lineSeparator()).append(spacing).append("- ").append(this.toYamlString(field, obj, spacing));
       }
       return m.toString();
     }
@@ -274,13 +279,13 @@ public class Config {
    */
   private Field getField(String[] split, Object instance) {
     try {
-      Field field = instance.getClass().getField(toFieldName(split[split.length - 1]));
-      setAccessible(field);
+      Field field = instance.getClass().getField(this.toFieldName(split[split.length - 1]));
+      this.setAccessible(field);
       return field;
     } catch (IllegalAccessException | NoSuchFieldException | SecurityException
         | NoSuchMethodException | InvocationTargetException e) {
-      logger.warn("Invalid config field: {} for {}", String.join(".", split),
-          toNodeName(instance.getClass().getSimpleName()));
+      this.logger.warn("Invalid config field: {} for {}", String.join(".", split),
+          this.toNodeName(instance.getClass().getSimpleName()));
       return null;
     }
   }
@@ -304,14 +309,14 @@ public class Config {
             Class found = null;
             Class<?>[] classes = clazz.getDeclaredClasses();
             for (Class current : classes) {
-              if (current.getSimpleName().equalsIgnoreCase(toFieldName(split[0]))) {
+              if (current.getSimpleName().equalsIgnoreCase(this.toFieldName(split[0]))) {
                 found = current;
                 break;
               }
             }
             try {
-              Field instanceField = clazz.getDeclaredField(toFieldName(split[0]));
-              setAccessible(instanceField);
+              Field instanceField = clazz.getDeclaredField(this.toFieldName(split[0]));
+              this.setAccessible(instanceField);
               Object value = instanceField.get(instance);
               if (value == null) {
                 value = found.newInstance();
