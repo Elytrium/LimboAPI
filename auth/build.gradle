@@ -13,6 +13,7 @@ license {
 
 dependencies {
     compileOnly project(":limboapi-api")
+    compileOnly project(":limboapi-plugin")
     compileOnly files("../libs/3.0.0.jar")
 
     implementation "at.favre.lib:bcrypt:0.9.0"

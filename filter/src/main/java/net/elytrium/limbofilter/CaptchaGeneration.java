@@ -36,7 +36,6 @@ import javax.imageio.ImageIO;
 import net.elytrium.limboapi.protocol.map.CraftMapCanvas;
 import net.elytrium.limboapi.protocol.map.MapPalette;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
-import net.elytrium.limbofilter.config.Settings;
 import net.elytrium.limbofilter.generator.CaptchaPainter;
 import org.slf4j.Logger;
 

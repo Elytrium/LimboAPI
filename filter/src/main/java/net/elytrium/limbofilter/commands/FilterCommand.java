@@ -36,7 +36,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import net.elytrium.limbofilter.FilterPlugin;
-import net.elytrium.limbofilter.config.Settings;
+import net.elytrium.limbofilter.Settings;
 import net.elytrium.limbofilter.stats.Statistics;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;

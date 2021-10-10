@@ -22,7 +22,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
-import net.elytrium.limbofilter.config.Settings;
+import net.elytrium.limbofilter.Settings;
 
 public abstract class FallingCheckHandler implements LimboSessionHandler {
 

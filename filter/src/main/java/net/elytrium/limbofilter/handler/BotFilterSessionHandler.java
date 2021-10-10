@@ -30,9 +30,9 @@ import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.protocol.packet.SetExp;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.elytrium.limbofilter.FilterPlugin;
+import net.elytrium.limbofilter.Settings;
 import net.elytrium.limbofilter.cache.CachedPackets;
 import net.elytrium.limbofilter.cache.CaptchaHandler;
-import net.elytrium.limbofilter.config.Settings;
 import net.elytrium.limbofilter.stats.Statistics;
 import org.slf4j.Logger;
 
