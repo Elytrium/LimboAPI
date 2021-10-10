@@ -30,7 +30,6 @@ import java.io.File;
 import java.nio.file.Path;
 import net.elytrium.limboapi.BuildConstants;
 import net.elytrium.limboapi.api.LimboFactory;
-import net.elytrium.limbofallback.config.Settings;
 import net.elytrium.limbofallback.listener.FallbackListener;
 import org.slf4j.Logger;
 

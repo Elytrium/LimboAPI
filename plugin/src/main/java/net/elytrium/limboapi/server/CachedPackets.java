@@ -20,8 +20,8 @@ package net.elytrium.limboapi.server;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.packet.Disconnect;
 import java.util.function.Function;
+import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
-import net.elytrium.limboapi.config.Settings;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 

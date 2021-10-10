@@ -20,7 +20,7 @@ package net.elytrium.limboauth.command;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import net.elytrium.limboauth.AuthPlugin;
-import net.elytrium.limboauth.config.Settings;
+import net.elytrium.limboauth.Settings;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class AuthReloadCommand implements SimpleCommand {

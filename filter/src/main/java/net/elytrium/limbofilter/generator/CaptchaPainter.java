@@ -31,7 +31,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ConvolveOp;
 import java.awt.image.Kernel;
 import java.util.Random;
-import net.elytrium.limbofilter.config.Settings;
+import net.elytrium.limbofilter.Settings;
 
 public class CaptchaPainter {
 

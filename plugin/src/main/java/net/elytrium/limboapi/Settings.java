@@ -15,10 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.config;
+package net.elytrium.limboapi;
 
 import java.io.File;
-import net.elytrium.limboapi.BuildConstants;
+import net.elytrium.limboapi.config.Config;
+import org.slf4j.Logger;
 
 public class Settings extends Config {
 
@@ -27,6 +28,7 @@ public class Settings extends Config {
 
   @Final
   public String VERSION = BuildConstants.LIMBO_VERSION;
+  public String PREFIX = "&5Limbo&dAPI&c -> &f";
 
   @Create
   public MESSAGES MESSAGES;
@@ -34,7 +36,6 @@ public class Settings extends Config {
   @Comment("Don't use \\n, use {NL} for new line, and {PRFX} for prefix. Ampersand (&) color codes are supported too.")
   public static class MESSAGES {
 
-    public String PREFIX = "&5Limbo&dAPI&c -> &f";
     public String TOO_BIG_PACKET = "Packet is too big.";
   }
 
@@ -47,10 +48,20 @@ public class Settings extends Config {
   }
 
   public void reload(File file) {
-    this.load(file);
-    this.save(file);
+    if (this.load(file, this.PREFIX)) {
+      this.save(file);
+    } else {
+      Logger logger = LimboAPI.getInstance().getLogger();
+      logger.warn("************* FIRST LAUNCH *************");
+      logger.warn("Thanks for installing LimboAPI!");
+      logger.warn("(c) 2021 Elytrium");
+      logger.warn("");
+      logger.warn("Check out our plugins here: https://ely.su/github <3");
+      logger.warn("Discord: https://ely.su/discord");
+      logger.warn("****************************************");
 
-    // Placeholders fix
-    this.load(file);
+      this.save(file);
+      this.load(file, this.PREFIX);
+    }
   }
 }

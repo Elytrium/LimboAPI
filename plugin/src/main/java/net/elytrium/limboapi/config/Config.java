@@ -18,54 +18,49 @@
 package net.elytrium.limboapi.config;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.api.config.Configuration;
-import net.elytrium.limboapi.api.config.ConfigurationProvider;
-import net.elytrium.limboapi.api.config.YamlConfiguration;
 import org.slf4j.Logger;
+import org.yaml.snakeyaml.Yaml;
 
 public class Config {
 
-  private final Logger logger = LimboAPI.getInstance().getLogger();
+  private static final Logger LOGGER = LimboAPI.getInstance().getLogger();
 
   public Config() {
-    this.save(new ArrayList<>(), getClass(), this, 0);
+    this.save(new PrintWriter(new ByteArrayOutputStream(0), false, StandardCharsets.UTF_8), this.getClass(), this, 0);
   }
 
   /**
-   * Set the value of a specific node.<br>
-   * Probably throws some error if you supply non existing keys or invalid.
-   * values
+   * Set the value of a specific node. Probably throws some error if you supply non-existing keys or invalid values.
    *
    * @param key   config node
    * @param value value
    */
-  private void set(String key, Object value) {
+  private void set(String key, Object value, Class<?> root) {
     String[] split = key.split("\\.");
-    Object instance = this.getInstance(split, this.getClass());
+    Object instance = this.getInstance(split, root);
     if (instance != null) {
       Field field = this.getField(split, instance);
       if (field != null) {
@@ -78,132 +73,44 @@ public class Config {
           }
           field.set(instance, value);
           return;
-        } catch (IllegalAccessException | IllegalArgumentException e) {
-          this.logger.warn("Error:", e);
+        } catch (Throwable e) {
+          e.printStackTrace();
         }
       }
     }
-    this.logger.warn("Failed to set config option: {}: {} | {} ", key, value, instance);
+
+    LOGGER.debug("Failed to set config option: " + key + ": " + value + " | " + instance + " | " + root.getSimpleName() + ".yml");
   }
 
-  public void set(Configuration yml, String oldPath) {
-    for (String key : yml.getKeys()) {
-      Object value = yml.get(key);
-      String newPath = oldPath + (oldPath.isEmpty() ? "" : ".") + key;
-      if (value instanceof Configuration) {
-        this.set((Configuration) value, newPath);
-        continue;
+  @SuppressWarnings("unchecked")
+  public void set(Map<String, Object> input, String prefix, String oldPath) {
+    for (Map.Entry<String, Object> entry : input.entrySet()) {
+      String key = oldPath + (oldPath.isEmpty() ? "" : ".") + entry.getKey();
+      Object value = entry.getValue();
+
+      if (value instanceof Map) {
+        this.set((Map<String, Object>) value, prefix, key);
       } else if (value instanceof String) {
-        this.set(newPath, ((String) value).replace("{NL}", "\n")
-            .replace("{PRFX}", Settings.IMP.MESSAGES.PREFIX));
-        continue;
+        this.set(key, ((String) value).replace("{NL}", "\n").replace("{PRFX}", prefix), this.getClass());
+      } else {
+        this.set(key, value, this.getClass());
       }
-      this.set(newPath, value);
     }
   }
 
-  public boolean load(File file) {
+  public boolean load(File file, String prefix) {
     if (!file.exists()) {
-      this.logger.warn("*** FIRST LAUNCH ***********************");
-      this.logger.warn("Thanks for installing LimboAPI!");
-      this.logger.warn("(c) 2021 Elytrium");
-      this.logger.warn("");
-      this.logger.warn("Check out our plugins here: https://ely.su/github <3");
-      this.logger.warn("Discord: https://ely.su/discord");
-      this.logger.warn("****************************************");
       return false;
     }
-    Configuration yml;
-    try {
-      try (InputStreamReader reader = new InputStreamReader(
-          new FileInputStream(file), StandardCharsets.UTF_8)) {
-        yml = ConfigurationProvider.getProvider(YamlConfiguration.class).load(reader);
-      }
-    } catch (IOException ex) {
-      this.logger.warn("Unable to load config ", ex);
-      return false;
-    }
-    this.set(yml, "");
-    return true;
-  }
 
-  /**
-   * Set all values in the file (load first to avoid overwriting).
-   *
-   * @param file file
-   */
-  @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
-  public void save(File file) {
-    try {
-      File parent = file.getParentFile();
-      if (parent != null) {
-        file.getParentFile().mkdirs();
-      }
-      Path configFile = file.toPath();
-      Path tempCfg = new File(file.getParentFile(), "__tmpcfg").toPath();
-      List<String> lines = new ArrayList<>();
-      this.save(lines, getClass(), this, 0);
-
-      Files.write(tempCfg, lines, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
-      try {
-        Files.move(tempCfg, configFile,
-            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE
-        );
-      } catch (AtomicMoveNotSupportedException e) {
-        Files.move(tempCfg, configFile,
-            StandardCopyOption.REPLACE_EXISTING
-        );
-      }
+    try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+      this.set(new Yaml().load(reader), prefix, "");
     } catch (IOException e) {
-      this.logger.warn("Error:", e);
+      LOGGER.warn("Unable to load config ", e);
+      return false;
     }
-  }
 
-  private void save(List<String> lines, Class clazz, final Object instance, int indent) {
-    try {
-      String spacing = this.repeat(" ", indent);
-      for (Field field : clazz.getFields()) {
-        if (field.getAnnotation(Ignore.class) != null) {
-          continue;
-        }
-        Class<?> current = field.getType();
-        if (field.getAnnotation(Ignore.class) != null) {
-          continue;
-        }
-        Comment comment = field.getAnnotation(Comment.class);
-        if (comment != null) {
-          for (String commentLine : comment.value()) {
-            lines.add(spacing + "# " + commentLine);
-          }
-        }
-        Create create = field.getAnnotation(Create.class);
-        if (create != null) {
-          Object value = field.get(instance);
-          this.setAccessible(field);
-          if (indent == 0) {
-            lines.add("");
-          }
-          comment = current.getAnnotation(Comment.class);
-          if (comment != null) {
-            for (String commentLine : comment.value()) {
-              lines.add(spacing + "# " + commentLine);
-            }
-          }
-          lines.add(spacing + this.toNodeName(current.getSimpleName()) + ":");
-          if (value == null) {
-            field.set(instance, value = current.newInstance());
-          }
-          this.save(lines, current, value, indent + 2);
-        } else {
-          lines.add(spacing + this.toNodeName(field.getName() + ": ")
-              + this.toYamlString(field, field.get(instance), spacing));
-        }
-      }
-    } catch (RuntimeException e) {
-      this.logger.warn("RuntimeEx Error:", e);
-    } catch (Exception e) {
-      this.logger.warn("Error:", e);
-    }
+    return true;
   }
 
   /**
@@ -219,7 +126,7 @@ public class Config {
    * Indicates that a field cannot be modified.
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.FIELD)
+  @Target({ElementType.FIELD})
   public @interface Final {
 
   }
@@ -243,10 +150,7 @@ public class Config {
 
   }
 
-  private String toYamlString(Field field, Object value, String spacing) {
-    if (value == null) {
-      return "null";
-    }
+  private String toYamlString(Object value, String spacing) {
     if (value instanceof List) {
       Collection<?> listValue = (Collection<?>) value;
       if (listValue.isEmpty()) {
@@ -254,44 +158,111 @@ public class Config {
       }
       StringBuilder m = new StringBuilder();
       for (Object obj : listValue) {
-        m.append(
-            System.lineSeparator()).append(spacing).append("- ").append(this.toYamlString(field, obj, spacing));
+        m.append(System.lineSeparator()).append(spacing).append("- ").append(this.toYamlString(obj, spacing));
       }
+
       return m.toString();
     }
+
     if (value instanceof String) {
       String stringValue = (String) value;
       if (stringValue.isEmpty()) {
         return "''";
       }
-      String quoted = "\"" + stringValue + "\"";
-      //noinspection ConstantConditions | We don't need to replace when IMP is initalizing
-      if (Settings.IMP == null || field.getName().equalsIgnoreCase("prefix")) {
-        return quoted;
-      }
-      return quoted.replace("\n", "{NL}")
-          .replace(Settings.IMP.MESSAGES.PREFIX, "{PRFX}");
+
+      return "\"" + stringValue + "\"";
     }
-    return value.toString();
+
+    return value != null ? value.toString() : "null";
   }
 
   /**
-   * Get the field for a specific config node and instance.<br>
-   * Note: As expiry can have multiple blocks there will be multiple instances.
+   * Set all values in the file (load first to avoid overwriting).
+   */
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
+  public void save(File file) {
+    try {
+      if (!file.exists()) {
+        File parent = file.getParentFile();
+        if (parent != null) {
+          file.getParentFile().mkdirs();
+        }
+        file.createNewFile();
+      }
+
+      PrintWriter writer = new PrintWriter(file, StandardCharsets.UTF_8);
+      Object instance = this;
+      this.save(writer, getClass(), instance, 0);
+      writer.close();
+    } catch (Throwable e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void save(PrintWriter writer, Class<?> clazz, final Object instance, int indent) {
+    try {
+      String lineSeparator = System.lineSeparator();
+      String spacing = this.repeat(" ", indent);
+
+      for (Field field : clazz.getFields()) {
+        if (field.getAnnotation(Ignore.class) != null) {
+          continue;
+        }
+        Class<?> current = field.getType();
+        if (field.getAnnotation(Ignore.class) != null) {
+          continue;
+        }
+
+        Comment comment = field.getAnnotation(Comment.class);
+        if (comment != null) {
+          for (String commentLine : comment.value()) {
+            writer.write(spacing + "# " + commentLine + lineSeparator);
+          }
+        }
+
+        Create create = field.getAnnotation(Create.class);
+        if (create != null) {
+          Object value = field.get(instance);
+          this.setAccessible(field);
+          if (indent == 0) {
+            writer.write(lineSeparator);
+          }
+          comment = current.getAnnotation(Comment.class);
+          if (comment != null) {
+            for (String commentLine : comment.value()) {
+              writer.write(spacing + "# " + commentLine + lineSeparator);
+            }
+          }
+          writer.write(spacing + this.toNodeName(current.getSimpleName()) + ":" + lineSeparator);
+          if (value == null) {
+            field.set(instance, value = current.getDeclaredConstructor().newInstance());
+          }
+          this.save(writer, current, value, indent + 2);
+        } else {
+          writer.write(spacing + this.toNodeName(field.getName() + ": ") + this.toYamlString(field.get(instance), spacing) + lineSeparator);
+        }
+      }
+    } catch (Throwable e) {
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * Get the field for a specific config node and instance.
+   *
+   * <p>As expiry can have multiple blocks there will be multiple instances
    *
    * @param split    the node (split by period)
    * @param instance the instance
-   * @return Field field
    */
   private Field getField(String[] split, Object instance) {
     try {
       Field field = instance.getClass().getField(this.toFieldName(split[split.length - 1]));
       this.setAccessible(field);
       return field;
-    } catch (IllegalAccessException | NoSuchFieldException | SecurityException
-        | NoSuchMethodException | InvocationTargetException e) {
-      this.logger.warn("Invalid config field: {} for {}", String.join(".", split),
-          this.toNodeName(instance.getClass().getSimpleName()));
+    } catch (Throwable ignored) {
+      LOGGER.debug("Invalid config field: " + this.join(split, ".") + " for " + this.toNodeName(instance.getClass().getSimpleName()));
       return null;
     }
   }
@@ -300,104 +271,107 @@ public class Config {
    * Get the instance for a specific config node.
    *
    * @param split the node (split by period)
-   * @param root  the root class
    * @return The instance or null
    */
-  private Object getInstance(String[] split, Class root) {
+  private Object getInstance(String[] split, Class<?> root) {
     try {
       Class<?> clazz = root == null ? MethodHandles.lookup().lookupClass() : root;
       Object instance = this;
       while (split.length > 0) {
-        switch (split.length) {
-          case 1:
-            return instance;
-          default:
-            Class found = null;
-            Class<?>[] classes = clazz.getDeclaredClasses();
-            for (Class current : classes) {
-              if (current.getSimpleName().equalsIgnoreCase(this.toFieldName(split[0]))) {
-                found = current;
-                break;
-              }
+        if (split.length == 1) {
+          return instance;
+        } else {
+          Class<?> found = null;
+          assert clazz != null;
+          Class<?>[] classes = clazz.getDeclaredClasses();
+          for (Class<?> current : classes) {
+            if (Objects.equals(current.getSimpleName(), this.toFieldName(split[0]))) {
+              found = current;
+              break;
             }
-            try {
-              Field instanceField = clazz.getDeclaredField(this.toFieldName(split[0]));
-              this.setAccessible(instanceField);
-              Object value = instanceField.get(instance);
-              if (value == null) {
-                value = found.newInstance();
-                instanceField.set(instance, value);
-              }
-              clazz = found;
-              instance = value;
-              split = Arrays.copyOfRange(split, 1, split.length);
-              continue;
-            } catch (NoSuchFieldException | NoSuchMethodException | InvocationTargetException ignore) {
-              //
+          }
+
+          assert found != null;
+          try {
+            Field instanceField = clazz.getDeclaredField(this.toFieldName(split[0]));
+            this.setAccessible(instanceField);
+            Object value = instanceField.get(instance);
+            if (value == null) {
+              value = found.getDeclaredConstructor().newInstance();
+              instanceField.set(instance, value);
             }
-            return null;
+
+            clazz = found;
+            instance = value;
+            split = Arrays.copyOfRange(split, 1, split.length);
+            continue;
+          } catch (NoSuchFieldException e) {
+            //
+          }
+
+          split = Arrays.copyOfRange(split, 1, split.length);
+          clazz = found;
+          instance = clazz.getDeclaredConstructor().newInstance();
         }
       }
-    } catch (Exception e) {
+    } catch (Throwable e) {
       e.printStackTrace();
     }
+
     return null;
   }
 
   /**
    * Translate a node to a java field name.
-   *
-   * @param node node to translate
-   * @return java field name
    */
   private String toFieldName(String node) {
-    return node.toUpperCase().replaceAll("-", "_");
+    return node.toUpperCase(Locale.ROOT).replaceAll("-", "_");
   }
 
   /**
    * Translate a field to a config node.
-   *
-   * @param field to translate
-   * @return config node name
    */
   private String toNodeName(String field) {
-    return field.toLowerCase().replace("_", "-");
+    return field.toLowerCase(Locale.ROOT).replace("_", "-");
   }
 
   /**
-   * Set some field to be accesible.
-   *
-   * @param field to be accesible
-   * @throws NoSuchFieldException   ...
-   * @throws IllegalAccessException ...
+   * Set some field to be accessible.
    */
-  private void setAccessible(Field field) throws NoSuchFieldException,
-      IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+  private void setAccessible(Field field) throws NoSuchFieldException, IllegalAccessException {
     field.setAccessible(true);
-    int modifiers = field.getModifiers();
-    if (Modifier.isFinal(modifiers)) {
-      try {
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, modifiers & ~Modifier.FINAL);
-      } catch (NoSuchFieldException e) {
-        // Java 12 compatibility *this is fine*
-        Method getDeclaredFields0 = Class.class.getDeclaredMethod(
-            "getDeclaredFields0", boolean.class);
-        getDeclaredFields0.setAccessible(true);
-        Field[] fields = (Field[]) getDeclaredFields0.invoke(Field.class, false);
-        for (Field classField : fields) {
-          if ("modifiers".equals(classField.getName())) {
-            classField.setAccessible(true);
-            classField.set(field, modifiers & ~Modifier.FINAL);
-            break;
-          }
-        }
-      }
+    if (Modifier.isFinal(field.getModifiers())) {
+      Field modifiersField = Field.class.getDeclaredField("modifiers");
+      modifiersField.setAccessible(true);
+      modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
     }
   }
 
-  private String repeat(final String s, final int n) {
-    return String.valueOf(s).repeat(Math.max(0, n));
+  @SuppressWarnings("SameParameterValue")
+  private String repeat(String s, int n) {
+    return IntStream.range(0, n).mapToObj(i -> s).collect(Collectors.joining());
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private String join(Object[] array, String delimiter) {
+    switch (array.length) {
+      case 0: {
+        return "";
+      }
+      case 1: {
+        return array[0].toString();
+      }
+      default: {
+        final StringBuilder result = new StringBuilder();
+        for (int i = 0, j = array.length; i < j; i++) {
+          if (i > 0) {
+            result.append(delimiter);
+          }
+          result.append(array[i]);
+        }
+
+        return result.toString();
+      }
+    }
   }
 }

@@ -35,7 +35,7 @@ import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboauth.AuthPlugin;
-import net.elytrium.limboauth.config.Settings;
+import net.elytrium.limboauth.Settings;
 import net.elytrium.limboauth.model.RegisteredPlayer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
