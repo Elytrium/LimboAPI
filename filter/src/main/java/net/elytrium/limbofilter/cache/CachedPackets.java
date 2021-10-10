@@ -38,7 +38,7 @@ import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.elytrium.limbofilter.FilterPlugin;
-import net.elytrium.limbofilter.config.Settings;
+import net.elytrium.limbofilter.Settings;
 import net.elytrium.limbofilter.handler.BotFilterSessionHandler;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;

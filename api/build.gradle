@@ -12,9 +12,6 @@ java {
 }
 
 license {
-    matching(includes: ["**/limboapi/api/config/**"]) {
-        header = project.rootProject.file("HEADER_BUNGEECORD.txt")
-    }
     matching(includes: ["**/mcprotocollib/**"]) {
         header = project.rootProject.file("HEADER_MCPROTOCOLLIB.txt")
     }

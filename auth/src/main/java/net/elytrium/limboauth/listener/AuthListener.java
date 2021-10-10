@@ -23,7 +23,7 @@ import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.util.UuidUtils;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboauth.AuthPlugin;
-import net.elytrium.limboauth.config.Settings;
+import net.elytrium.limboauth.Settings;
 
 public class AuthListener {
 

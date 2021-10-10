@@ -15,10 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limbofilter.config;
+package net.elytrium.limbofilter;
 
 import java.io.File;
 import java.util.List;
+import net.elytrium.limboapi.config.Config;
 
 public class Settings extends Config {
 
@@ -166,8 +167,11 @@ public class Settings extends Config {
   }
 
   public void reload(File file) {
-    this.load(file);
-    this.save(file);
-    this.load(file);
+    if (this.load(file, this.PREFIX)) {
+      this.save(file);
+    } else {
+      this.save(file);
+      this.load(file, this.PREFIX);
+    }
   }
 }

@@ -15,9 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboauth.config;
+package net.elytrium.limboauth;
 
 import java.io.File;
+import net.elytrium.limboapi.config.Config;
 
 public class Settings extends Config {
 
@@ -148,10 +149,11 @@ public class Settings extends Config {
   }
 
   public void reload(File file) {
-    this.load(file);
-    this.save(file);
-
-    // Placeholders fix
-    this.load(file);
+    if (this.load(file, this.PREFIX)) {
+      this.save(file);
+    } else {
+      this.save(file);
+      this.load(file, this.PREFIX);
+    }
   }
 }

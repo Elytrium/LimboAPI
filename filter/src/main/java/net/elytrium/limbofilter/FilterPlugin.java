@@ -50,7 +50,6 @@ import net.elytrium.limboapi.api.file.WorldFile;
 import net.elytrium.limbofilter.cache.CachedCaptcha;
 import net.elytrium.limbofilter.cache.CachedPackets;
 import net.elytrium.limbofilter.commands.FilterCommand;
-import net.elytrium.limbofilter.config.Settings;
 import net.elytrium.limbofilter.handler.BotFilterSessionHandler;
 import net.elytrium.limbofilter.listener.FilterListener;
 import net.elytrium.limbofilter.stats.Statistics;

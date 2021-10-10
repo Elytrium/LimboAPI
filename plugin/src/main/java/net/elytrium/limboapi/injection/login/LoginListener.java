@@ -148,7 +148,6 @@ public class LoginListener {
         );
 
         if (!this.server.canRegisterConnection(player)) {
-          // TODO: Prepare this packet. Хм. Или не нужно?
           player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
           return;
         }
