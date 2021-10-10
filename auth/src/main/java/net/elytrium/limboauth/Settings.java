@@ -35,6 +35,11 @@ public class Settings extends Config {
     public boolean ONLINE_MODE_NEED_AUTH = true;
     public boolean ONLINE_UUID_IF_POSSIBLE = true;
     public boolean ENABLE_TOTP = true;
+    @Comment({
+        "If you want to migrate your database from another plugin, which is not using BCrypt",
+        "You can set an old hash algorithm to migrate from. Currently, only AUTHME is supported yet"
+    })
+    public String MIGRATION_HASH = "";
     @Comment("Available dimensions: OVERWORLD, NETHER, THE_END")
     public String DIMENSION = "THE_END";
     public long PURGE_CACHE_MILLIS = 3600000;
@@ -60,12 +65,12 @@ public class Settings extends Config {
     public String WORLD_FILE_PATH = "world.schematic";
     @Comment({
         "Custom isPremium URL",
-        "You can use Mojang one's API: https://api.mojang.com/users/profiles/minecraft/%s",
-        "Or CloudFlare one's (set by default)",
+        "You can use Mojang one's API (set by default)",
+        "Or CloudFlare one's: https://api.ashcon.app/mojang/v1/user/%s",
         "Or use this code to make your own API: https://blog.cloudflare.com/minecraft-api-with-workers-coffeescript/",
         "Or implement your own API, it should just respond with HTTP code 200 only if the player is premium"
     })
-    public String ISPREMIUM_AUTH_URL = "https://api.ashcon.app/mojang/v1/user/%s";
+    public String ISPREMIUM_AUTH_URL = "https://api.mojang.com/users/profiles/minecraft/%s";
 
     @Create
     public Settings.MAIN.WORLD_COORDS WORLD_COORDS;
