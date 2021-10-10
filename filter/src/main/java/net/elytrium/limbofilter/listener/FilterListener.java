@@ -25,7 +25,7 @@ import com.velocitypowered.api.event.query.ProxyQueryEvent;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limbofilter.FilterPlugin;
-import net.elytrium.limbofilter.config.Settings;
+import net.elytrium.limbofilter.Settings;
 
 public class FilterListener {
 
