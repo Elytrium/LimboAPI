@@ -23,6 +23,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.Chat;
 import com.velocitypowered.proxy.protocol.packet.Disconnect;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -54,6 +55,8 @@ public class CachedPackets {
   private PreparedPacket resetSlot;
   private PreparedPacket checkingChat;
   private PreparedPacket checkingCaptchaChat;
+  private PreparedPacket checkingTitle;
+  private PreparedPacket checkingCaptchaTitle;
   private PreparedPacket kickClientCheckSettings;
   private PreparedPacket kickClientCheckSettingsChat;
   private PreparedPacket kickClientCheckSettingsSkin;
@@ -61,19 +64,16 @@ public class CachedPackets {
   private PreparedPacket successfulBotFilterChat;
   private PreparedPacket successfulBotFilterDisconnect;
   private PreparedPacket noAbilities;
-  private PreparedPacket antiBotTitle;
   private List<SetExp> experience;
 
   public void createPackets() {
+    Settings.MAIN.STRINGS strings = Settings.IMP.MAIN.STRINGS;
     this.experience = this.createExpPackets();
 
     this.noAbilities = this.prepare(this.createAbilitiesPacket());
-    this.tooBigPacket = this.prepare((version) ->
-        this.createDisconnectPacket(Settings.IMP.MAIN.STRINGS.TOO_BIG_PACKET, version));
-    this.captchaFailed = this.prepare((version) ->
-        this.createDisconnectPacket(Settings.IMP.MAIN.STRINGS.CAPTCHA_FAILED, version));
-    this.fallingCheckFailed = this.prepare((version) ->
-        this.createDisconnectPacket(Settings.IMP.MAIN.STRINGS.FALLING_CHECK_FAILED, version));
+    this.tooBigPacket = this.prepare((version) -> this.createDisconnectPacket(strings.TOO_BIG_PACKET, version));
+    this.captchaFailed = this.prepare((version) -> this.createDisconnectPacket(strings.CAPTCHA_FAILED, version));
+    this.fallingCheckFailed = this.prepare((version) -> this.createDisconnectPacket(strings.FALLING_CHECK_FAILED, version));
 
     this.setSlot = FilterPlugin.getInstance().getFactory().createPreparedPacket()
         .prepare(this.createSetSlotPacket(0, 36, SimpleItem.fromItem(Item.FILLED_MAP), 1, 0, null),
@@ -82,18 +82,21 @@ public class CachedPackets {
             CompoundBinaryTag.builder().put("map", IntBinaryTag.of(0)).build()), ProtocolVersion.MINECRAFT_1_17);
 
     this.resetSlot = this.prepare(this.createSetSlotPacket(0, 36, SimpleItem.fromItem(Item.AIR), 0, 0, null));
-    this.checkingChat = this.createChatPacket(Settings.IMP.MAIN.STRINGS.CHECKING_CHAT);
-    this.checkingCaptchaChat = this.createChatPacket(Settings.IMP.MAIN.STRINGS.CHECKING_CAPTCHA_CHAT);
-    this.successfulBotFilterChat = this.createChatPacket(Settings.IMP.MAIN.STRINGS.SUCCESSFUL_CRACKED);
-    this.successfulBotFilterDisconnect = this.prepare((version) -> this.createDisconnectPacket(Settings.IMP.MAIN.STRINGS.SUCCESSFUL_PREMIUM, version));
-    this.antiBotTitle = this.createTitlePacket("Settings.IMP.MAIN.BRAND", Settings.IMP.MAIN.STRINGS.CHECKING_CAPTCHA_CHAT, 10, 50, 10);
+    this.checkingChat = this.createChatPacket(strings.CHECKING_CHAT);
+    this.checkingCaptchaChat = this.createChatPacket(strings.CHECKING_CAPTCHA_CHAT);
+    this.successfulBotFilterChat = this.createChatPacket(strings.SUCCESSFUL_CRACKED);
+    this.successfulBotFilterDisconnect = this.prepare((version) -> this.createDisconnectPacket(strings.SUCCESSFUL_PREMIUM, version));
+    this.checkingTitle = this.createTitlePacket(strings.CHECKING_TITLE, strings.CHECKING_SUBTITLE, 10, 50, 10);
+    this.checkingCaptchaTitle = this.createTitlePacket(
+        strings.CHECKING_CAPTCHA_TITLE,
+        MessageFormat.format(strings.CHECKING_CAPTCHA_SUBTITLE, Settings.IMP.MAIN.CAPTCHA_ATTEMPTS),
+        10, 50, 10
+    );
 
-    this.kickClientCheckSettings = this.prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.STRINGS.KICK_CLIENT_CHECK_SETTINGS, version));
-    this.kickClientCheckSettingsChat = this.prepare(version ->
-        this.createDisconnectPacket(Settings.IMP.MAIN.STRINGS.KICK_CLIENT_CHECK_SETTINGS_CHAT_COLOR, version));
-    this.kickClientCheckSettingsSkin = this.prepare(version ->
-        this.createDisconnectPacket(Settings.IMP.MAIN.STRINGS.KICK_CLIENT_CHECK_SETTINGS_SKIN_PARTS, version));
-    this.kickClientCheckBrand = this.prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.STRINGS.KICK_CLIENT_CHECK_BRAND, version));
+    this.kickClientCheckSettings = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_SETTINGS, version));
+    this.kickClientCheckSettingsChat = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_SETTINGS_CHAT_COLOR, version));
+    this.kickClientCheckSettingsSkin = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_SETTINGS_SKIN_PARTS, version));
+    this.kickClientCheckBrand = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_BRAND, version));
   }
 
   private PlayerAbilities createAbilitiesPacket() {
@@ -125,6 +128,7 @@ public class CachedPackets {
     return new UpdateViewPosition(x >> 4, z >> 4);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private SetSlot createSetSlotPacket(int windowId, int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt) {
     return new SetSlot(windowId, slot, item, count, data, nbt);
   }
@@ -163,31 +167,39 @@ public class CachedPackets {
     return Disconnect.create(component, version);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private PreparedPacket createTitlePacket(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
     PreparedPacket preparedPacket = FilterPlugin.getInstance().getFactory().createPreparedPacket();
 
-    Component titleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(title);
-    Component subtitleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(subtitle);
+    if (!title.isEmpty()) {
+      Component titleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(title);
 
-    preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
-      packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(titleComponent));
-      return packet;
-    }, ProtocolVersion.MINECRAFT_1_8);
+      preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
+        GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
+        packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(titleComponent));
+        return packet;
+      }, ProtocolVersion.MINECRAFT_1_8);
+    }
 
-    preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_SUBTITLE, version);
-      packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(subtitleComponent));
-      return packet;
-    }, ProtocolVersion.MINECRAFT_1_8);
+    if (!subtitle.isEmpty()) {
+      Component subtitleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(subtitle);
 
-    preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TIMES, version);
-      packet.setFadeIn(fadeIn);
-      packet.setStay(stay);
-      packet.setFadeOut(fadeOut);
-      return packet;
-    }, ProtocolVersion.MINECRAFT_1_8);
+      preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
+        GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_SUBTITLE, version);
+        packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(subtitleComponent));
+        return packet;
+      }, ProtocolVersion.MINECRAFT_1_8);
+    }
+
+    if (!subtitle.isEmpty() && !title.isEmpty()) {
+      preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
+        GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TIMES, version);
+        packet.setFadeIn(fadeIn);
+        packet.setStay(stay);
+        packet.setFadeOut(fadeOut);
+        return packet;
+      }, ProtocolVersion.MINECRAFT_1_8);
+    }
 
     return preparedPacket;
   }
@@ -220,6 +232,14 @@ public class CachedPackets {
     return this.checkingCaptchaChat;
   }
 
+  public PreparedPacket getCheckingTitle() {
+    return this.checkingTitle;
+  }
+
+  public PreparedPacket getCheckingCaptchaTitle() {
+    return this.checkingCaptchaTitle;
+  }
+
   public PreparedPacket getKickClientCheckSettings() {
     return this.kickClientCheckSettings;
   }
@@ -246,10 +266,6 @@ public class CachedPackets {
 
   public PreparedPacket getNoAbilities() {
     return this.noAbilities;
-  }
-
-  public PreparedPacket getAntiBotTitle() {
-    return this.antiBotTitle;
   }
 
   public List<SetExp> getExperience() {

@@ -41,9 +41,9 @@ public class Settings extends Config {
     public int NON_VALID_POSITION_Y_ATTEMPTS = 10;
     public int FALLING_CHECK_TICKS = 128;
     public double MAX_VALID_POSITION_DIFFERENCE = 0.01;
-    public boolean FALLING_CHECK_DEBUG = false;
     public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 2048;
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
+    public boolean FALLING_CHECK_DEBUG = false;
 
     @Comment("Available - ONLY_POSITION, ONLY_CAPTCHA, CAPTCHA_POSITION, CAPTCHA_ON_POSITION_FAILED, SUCCESSFULLY")
     public String CHECK_STATE = "CAPTCHA_ON_POSITION_FAILED";
@@ -136,7 +136,11 @@ public class Settings extends Config {
     public static class STRINGS {
 
       public String CHECKING_CHAT = "{PRFX} Bot-Filter check was started, please wait..";
-      public String CHECKING_CAPTCHA_CHAT = "{PRFX} Please, solve the captcha";
+      public String CHECKING_TITLE = "{PRFX}";
+      public String CHECKING_SUBTITLE = "&aPlease wait..";
+      public String CHECKING_CAPTCHA_CHAT = "{PRFX} &aPlease, solve the captcha";
+      public String CHECKING_CAPTCHA_TITLE = "&aSolve the captcha";
+      public String CHECKING_CAPTCHA_SUBTITLE = "&aYou have &6{0} attempts";
       public String SUCCESSFUL_CRACKED = "{PRFX} Successfully passed Bot-Filter check. ";
       public String SUCCESSFUL_PREMIUM = "{PRFX} Successfully passed Bot-Filter check. Please, rejoin the server";
       public String CAPTCHA_FAILED = "{PRFX} You've mistaken in captcha check. Please, rejoin the server.";
