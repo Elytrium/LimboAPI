@@ -240,12 +240,8 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.server = server;
     this.limboPlayer = player;
     if (this.state == CheckState.ONLY_CAPTCHA) {
-      this.connection.delayedWrite(this.packets.getCheckingCaptchaTitle());
-      this.connection.delayedWrite(this.packets.getCheckingCaptchaChat());
       this.sendCaptcha();
     } else if (this.state == CheckState.CAPTCHA_POSITION) {
-      this.connection.delayedWrite(this.packets.getCheckingCaptchaTitle());
-      this.connection.delayedWrite(this.packets.getCheckingCaptchaChat());
       this.sendFallingCheckPackets();
       this.sendCaptcha();
     } else if (this.state == CheckState.ONLY_POSITION || this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
@@ -270,6 +266,8 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     CaptchaHandler captchaHandler = this.plugin.getCachedCaptcha().randomCaptcha();
     String captchaAnswer = captchaHandler.getAnswer();
     this.setCaptchaAnswer(captchaAnswer);
+    this.connection.delayedWrite(this.packets.getCheckingCaptchaTitle());
+    this.connection.delayedWrite(this.packets.getCheckingCaptchaChat());
     this.connection.delayedWrite(this.packets.getSetSlot());
     this.connection.delayedWrite(captchaHandler.getMap());
     this.connection.flush();

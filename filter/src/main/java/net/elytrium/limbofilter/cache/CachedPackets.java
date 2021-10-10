@@ -171,15 +171,13 @@ public class CachedPackets {
   private PreparedPacket createTitlePacket(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
     PreparedPacket preparedPacket = FilterPlugin.getInstance().getFactory().createPreparedPacket();
 
-    if (!title.isEmpty()) {
-      Component titleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(title);
+    Component titleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(title);
 
-      preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
-        GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
-        packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(titleComponent));
-        return packet;
-      }, ProtocolVersion.MINECRAFT_1_8);
-    }
+    preparedPacket.prepare((Function<ProtocolVersion, GenericTitlePacket>) (version) -> {
+      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
+      packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(titleComponent));
+      return packet;
+    }, ProtocolVersion.MINECRAFT_1_8);
 
     if (!subtitle.isEmpty()) {
       Component subtitleComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(subtitle);

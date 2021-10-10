@@ -18,7 +18,6 @@
 package net.elytrium.limboapi.config;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -47,10 +46,6 @@ import org.yaml.snakeyaml.Yaml;
 public class Config {
 
   private static final Logger LOGGER = LimboAPI.getInstance().getLogger();
-
-  public Config() {
-    this.save(new PrintWriter(new ByteArrayOutputStream(0), false, StandardCharsets.UTF_8), this.getClass(), this, 0);
-  }
 
   /**
    * Set the value of a specific node. Probably throws some error if you supply non-existing keys or invalid values.
@@ -167,7 +162,7 @@ public class Config {
     if (value instanceof String) {
       String stringValue = (String) value;
       if (stringValue.isEmpty()) {
-        return "''";
+        return "\"\"";
       }
 
       return "\"" + stringValue + "\"";
@@ -181,7 +176,7 @@ public class Config {
    */
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
-  public void save(File file) {
+  public void save(File file, String prefix) {
     try {
       if (!file.exists()) {
         File parent = file.getParentFile();
@@ -193,14 +188,14 @@ public class Config {
 
       PrintWriter writer = new PrintWriter(file, StandardCharsets.UTF_8);
       Object instance = this;
-      this.save(writer, getClass(), instance, 0);
+      this.save(writer, getClass(), instance, 0, prefix);
       writer.close();
     } catch (Throwable e) {
       e.printStackTrace();
     }
   }
 
-  private void save(PrintWriter writer, Class<?> clazz, final Object instance, int indent) {
+  private void save(PrintWriter writer, Class<?> clazz, final Object instance, int indent, String prefix) {
     try {
       String lineSeparator = System.lineSeparator();
       String spacing = this.repeat(" ", indent);
@@ -238,9 +233,10 @@ public class Config {
           if (value == null) {
             field.set(instance, value = current.getDeclaredConstructor().newInstance());
           }
-          this.save(writer, current, value, indent + 2);
+          this.save(writer, current, value, indent + 2, prefix);
         } else {
-          writer.write(spacing + this.toNodeName(field.getName() + ": ") + this.toYamlString(field.get(instance), spacing) + lineSeparator);
+          String val = this.toYamlString(field.get(instance), spacing).replace(prefix, "{PRFX}");
+          writer.write(spacing + this.toNodeName(field.getName() + ": ") + val + lineSeparator);
         }
       }
     } catch (Throwable e) {
