@@ -49,7 +49,7 @@ public class Settings extends Config {
 
   public void reload(File file) {
     if (this.load(file, this.PREFIX)) {
-      this.save(file);
+      this.save(file, this.PREFIX);
     } else {
       Logger logger = LimboAPI.getInstance().getLogger();
       logger.warn("************* FIRST LAUNCH *************");
@@ -60,7 +60,7 @@ public class Settings extends Config {
       logger.warn("Discord: https://ely.su/discord");
       logger.warn("****************************************");
 
-      this.save(file);
+      this.save(file, this.PREFIX);
       this.load(file, this.PREFIX);
     }
   }
