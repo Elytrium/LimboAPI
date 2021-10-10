@@ -135,12 +135,12 @@ public class Settings extends Config {
 
     public static class STRINGS {
 
-      public String CHECKING_CHAT = "{PRFX} Bot-Filter check was started, please wait..";
+      public String CHECKING_CHAT = "{PRFX} Bot-Filter check was started, please wait and don't move..";
       public String CHECKING_TITLE = "{PRFX}";
       public String CHECKING_SUBTITLE = "&aPlease wait..";
       public String CHECKING_CAPTCHA_CHAT = "{PRFX} &aPlease, solve the captcha";
       public String CHECKING_CAPTCHA_TITLE = "&aSolve the captcha";
-      public String CHECKING_CAPTCHA_SUBTITLE = "&aYou have &6{0} attempts";
+      public String CHECKING_CAPTCHA_SUBTITLE = "&aYou have &6{0} &aattempts";
       public String SUCCESSFUL_CRACKED = "{PRFX} Successfully passed Bot-Filter check. ";
       public String SUCCESSFUL_PREMIUM = "{PRFX} Successfully passed Bot-Filter check. Please, rejoin the server";
       public String CAPTCHA_FAILED = "{PRFX} You've mistaken in captcha check. Please, rejoin the server.";
@@ -172,9 +172,9 @@ public class Settings extends Config {
 
   public void reload(File file) {
     if (this.load(file, this.PREFIX)) {
-      this.save(file);
+      this.save(file, this.PREFIX);
     } else {
-      this.save(file);
+      this.save(file, this.PREFIX);
       this.load(file, this.PREFIX);
     }
   }
