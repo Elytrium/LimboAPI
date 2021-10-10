@@ -36,6 +36,7 @@ import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboauth.AuthPlugin;
 import net.elytrium.limboauth.Settings;
+import net.elytrium.limboauth.migration.MigrationHash;
 import net.elytrium.limboauth.model.RegisteredPlayer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
@@ -146,7 +147,23 @@ public class AuthSessionHandler implements LimboSessionHandler {
   }
 
   private boolean checkPassword(String password) {
-    return BCrypt.verifyer().verify(password.getBytes(StandardCharsets.UTF_8), this.playerInfo.hash.getBytes(StandardCharsets.UTF_8)).verified;
+    boolean isCorrect = BCrypt.verifyer()
+        .verify(password.getBytes(StandardCharsets.UTF_8), this.playerInfo.hash.getBytes(StandardCharsets.UTF_8)).verified;
+
+    if (!isCorrect && !Settings.IMP.MAIN.MIGRATION_HASH.isEmpty()) {
+      isCorrect = MigrationHash.valueOf(Settings.IMP.MAIN.MIGRATION_HASH).checkPassword(this.playerInfo.hash, password);
+
+      if (isCorrect) {
+        this.playerInfo.hash = genHash(password);
+        try {
+          this.playerDao.update(this.playerInfo);
+        } catch (SQLException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
+    return isCorrect;
   }
 
   private void checkIp() {
