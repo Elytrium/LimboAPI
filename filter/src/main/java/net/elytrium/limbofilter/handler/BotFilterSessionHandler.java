@@ -172,11 +172,11 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   }
 
   @Override
+  @SuppressWarnings("ConstantConditions")
   public void onMove() {
     if (!this.startedListening && this.state != CheckState.ONLY_CAPTCHA) {
       if (this.x == this.validX && this.z == this.validZ) {
         this.startedListening = true;
-        this.connection.write(this.packets.getAntiBotTitle());
       }
       if (this.nonValidPacketsSize > Settings.IMP.MAIN.NON_VALID_POSITION_XZ_ATTEMPTS) {
         this.fallingCheckFailed();
@@ -240,11 +240,16 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.server = server;
     this.limboPlayer = player;
     if (this.state == CheckState.ONLY_CAPTCHA) {
+      this.connection.delayedWrite(this.packets.getCheckingCaptchaTitle());
+      this.connection.delayedWrite(this.packets.getCheckingCaptchaChat());
       this.sendCaptcha();
     } else if (this.state == CheckState.CAPTCHA_POSITION) {
+      this.connection.delayedWrite(this.packets.getCheckingCaptchaTitle());
+      this.connection.delayedWrite(this.packets.getCheckingCaptchaChat());
       this.sendFallingCheckPackets();
       this.sendCaptcha();
     } else if (this.state == CheckState.ONLY_POSITION || this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
+      this.connection.delayedWrite(this.packets.getCheckingTitle());
       this.connection.delayedWrite(this.packets.getCheckingChat());
       this.sendFallingCheckPackets();
     }
@@ -267,7 +272,6 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.setCaptchaAnswer(captchaAnswer);
     this.connection.delayedWrite(this.packets.getSetSlot());
     this.connection.delayedWrite(captchaHandler.getMap());
-    this.connection.delayedWrite(this.packets.getCheckingCaptchaChat());
     this.connection.flush();
   }
 
@@ -286,6 +290,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.connection.closeWith(this.packets.getFallingCheckFailed());
   }
 
+  @SuppressWarnings("SameParameterValue")
   private void setCaptchaPosition(boolean disableFall) {
     this.server.respawnPlayer(this.player);
     if (disableFall) {
@@ -335,6 +340,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     return TOTAL_TICKS;
   }
 
+  @SuppressWarnings("unused")
   public enum CheckState {
     ONLY_POSITION,
     ONLY_CAPTCHA,
