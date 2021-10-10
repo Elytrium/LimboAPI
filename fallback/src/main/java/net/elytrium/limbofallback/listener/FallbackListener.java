@@ -30,8 +30,8 @@ public class FallbackListener {
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Subscribe
+  @SuppressWarnings("ConstantConditions")
   public void onKick(KickedFromServerEvent e) {
     // Forcing NullPointerException to prevent player kicking
     // May not work :(
