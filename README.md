@@ -51,10 +51,37 @@ Velocity | Offline Mode | 2 sec | 55%
 - Subscribe to ``LoginLimboRegisterEvent`` to send players to the Limbo server during login process 
 - Use ``LimboFactory`` to send players to the Limbo server during play process
 
+### How to include it
+
+- Build the project and use local maven repo:
+```
+        <dependency>
+            <groupId>net.elytrium</groupId>
+            <artifactId>limboapi-api</artifactId>
+            <version>1.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+```
+- Or use the precompiled .jar file (e.g. from Releases or Actions):
+```
+        <dependency>
+            <groupId>net.elytrium</groupId>
+            <artifactId>limboapi-api</artifactId>
+            <version>1.0.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/limboapi-api.jar</systemPath>
+        </dependency>
+```
+
 ### Demo
 
 - [LimboAuth](https://github.com/Elytrium/LimboAPI/tree/master/auth) - Simple usage, using special api
 - [LimboFilter](https://github.com/Elytrium/LimboAPI/tree/master/filter) - Advanced usage, using plugin's api
+
+## Building
+
+- To build this project you need to download Velocity 3.0.0+ jar file to the "libs" folder
+ - You can use the ```./scripts/init_libs.sh``` script
 
 ## Donation
 
