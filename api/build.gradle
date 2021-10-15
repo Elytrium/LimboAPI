@@ -1,6 +1,7 @@
 plugins {
     id "java-library"
     id "checkstyle"
+    id "maven-publish"
 }
 
 apply plugin: "org.cadixdev.licenser"
@@ -28,6 +29,17 @@ dependencies {
 task javadocJar(type: Jar) {
     classifier "javadoc"
     from javadoc
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = this.getProject().getGroup()
+            artifactId = this.getProject().getName()
+            version = this.getProject().getVersion()
+            from components.java
+        }
+    }
 }
 
 artifacts {
