@@ -1,5 +1,5 @@
 #!/bin/bash 
-cd ..
+
 DIR="libs"
 V_VERSION="3.0.0"
 if [ -d "$DIR" ]; then
