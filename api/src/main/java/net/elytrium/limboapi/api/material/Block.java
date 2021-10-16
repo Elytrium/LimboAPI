@@ -265,7 +265,6 @@ public enum Block {
   STRUCTURE_BLOCK(255);
 
   private final int id;
-
   private final byte data;
 
   Block(final int id) {

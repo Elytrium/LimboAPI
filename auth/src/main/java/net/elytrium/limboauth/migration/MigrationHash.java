@@ -23,6 +23,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public enum MigrationHash {
+
+  @SuppressWarnings({"unused", "SpellCheckingInspection"})
   AUTHME((hash, password) -> {
     String[] arr = hash.split("\\$"); // $SHA$salt$hash
     return arr.length == 4 && arr[3].equals(MigrationHash.getSHA256(MigrationHash.getSHA256(password) + arr[2]));
@@ -43,10 +45,10 @@ public enum MigrationHash {
       MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
       messageDigest.reset();
       messageDigest.update(string.getBytes(StandardCharsets.UTF_8));
-      byte[] arrby = messageDigest.digest();
-      return String.format("%0" + (arrby.length << 1) + "x", new BigInteger(1, arrby));
-    } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-      throw new IllegalArgumentException(noSuchAlgorithmException);
+      byte[] array = messageDigest.digest();
+      return String.format("%0" + (array.length << 1) + "x", new BigInteger(1, array));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalArgumentException(e);
     }
   }
 }

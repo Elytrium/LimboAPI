@@ -16,6 +16,7 @@ import net.elytrium.limboapi.api.material.VirtualItem;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.Component;
 
+@SuppressWarnings("unused")
 public interface LimboPlayer {
 
   void sendImage(int mapId, BufferedImage image);
@@ -25,6 +26,8 @@ public interface LimboPlayer {
   void teleport(double x, double y, double z, float yaw, float pitch);
 
   void sendTitle(Component title, Component subtitle, ProtocolVersion version, int fadeIn, int stay, int fadeOut);
+
+  void disableFalling();
 
   void disconnect();
 

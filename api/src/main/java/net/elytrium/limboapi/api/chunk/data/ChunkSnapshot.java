@@ -12,6 +12,8 @@ import net.elytrium.limboapi.api.chunk.VirtualBlock;
 
 public interface ChunkSnapshot {
 
+  VirtualBlock getBlock(int x, int y, int z);
+
   int getX();
 
   int getZ();
@@ -23,6 +25,4 @@ public interface ChunkSnapshot {
   LightSection[] getLight();
 
   VirtualBiome[] getBiomes();
-
-  VirtualBlock getBlock(int x, int y, int z);
 }

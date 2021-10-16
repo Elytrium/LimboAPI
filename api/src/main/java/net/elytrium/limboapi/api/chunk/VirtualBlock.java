@@ -15,15 +15,20 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("unused")
 public interface VirtualBlock {
-
-  Map<Version, BlockInfo> getBlockInfos();
 
   VirtualBlock setData(byte data);
 
-  short getId(ProtocolVersion version);
+  byte getData(Version version);
 
   byte getData(ProtocolVersion version);
+
+  Map<Version, BlockInfo> getBlockInfos();
+
+  short getId(ProtocolVersion version);
+
+  short getId(Version version);
 
   boolean isSolid();
 
@@ -32,6 +37,7 @@ public interface VirtualBlock {
   boolean isMotionBlocking();
 
   enum Version {
+
     /*
     MINECRAFT_1_7(ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_7_6),
     MINECRAFT_1_8(ProtocolVersion.MINECRAFT_1_8),

@@ -64,6 +64,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
   @Override
   public void onSpawn(Limbo server, LimboPlayer player) {
     this.player = player;
+    this.player.disableFalling();
     this.ip = this.proxyPlayer.getRemoteAddress().getAddress().getHostAddress();
 
     if (this.playerInfo == null) {
@@ -83,9 +84,11 @@ public class AuthSessionHandler implements LimboSessionHandler {
         case "/reg":
         case "/register":
         case "/r": {
-          if (args.length >= 3 && !this.totp && this.playerInfo == null && args[1].equals(args[2])) {
-            this.register(args[1]);
-            this.finish();
+          if (!this.totp && this.playerInfo == null) {
+            if (this.checkArgsLength(args.length) && this.checkPasswordsRepeat(args)) {
+              this.register(args[1]);
+              this.finish();
+            }
           } else {
             this.sendMessage();
           }
@@ -94,13 +97,15 @@ public class AuthSessionHandler implements LimboSessionHandler {
         case "/log":
         case "/login":
         case "/l": {
-          if (args.length >= 2 && !this.totp && this.playerInfo != null) {
-            if (this.checkPassword(args[1])) {
-              this.finishOrTotp();
-            } else if (this.attempts-- != 0) {
-              this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
-            } else {
-              this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+          if (!this.totp && this.playerInfo != null) {
+            if (this.checkArgsLength(args.length)) {
+              if (this.checkPassword(args[1])) {
+                this.finishOrTotp();
+              } else if (this.attempts-- != 0) {
+                this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+              } else {
+                this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+              }
             }
           } else {
             this.sendMessage();
@@ -108,11 +113,13 @@ public class AuthSessionHandler implements LimboSessionHandler {
           break;
         }
         case "/2fa": {
-          if (args.length >= 2 && this.totp) {
-            if (verifier.isValidCode(this.playerInfo.totpToken, args[1])) {
-              this.finish();
-            } else {
-              this.sendMessage();
+          if (this.totp) {
+            if (this.checkArgsLength(args.length)) {
+              if (verifier.isValidCode(this.playerInfo.totpToken, args[1])) {
+                this.finish();
+              } else {
+                this.sendMessage();
+              }
             }
           } else {
             this.sendMessage();
@@ -245,6 +252,30 @@ public class AuthSessionHandler implements LimboSessionHandler {
     } else {
       this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.LOGIN));
     }
+  }
+
+  private boolean checkPasswordsRepeat(String[] args) {
+    if (Settings.IMP.MAIN.REPEAT_PASSWORD && !args[1].equals(args[2])) {
+      this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.DIFFERENT_PASSWORDS));
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean checkArgsLength(int length) {
+    if (this.totp && length != 2) {
+      this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.WRONG_ARGUMENTS_AMOUNT));
+      return false;
+    } else if (this.playerInfo == null && (Settings.IMP.MAIN.REPEAT_PASSWORD && length != 3)) {
+      this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.WRONG_ARGUMENTS_AMOUNT));
+      return false;
+    } else if (length != 2) {
+      this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.WRONG_ARGUMENTS_AMOUNT));
+      return false;
+    }
+
+    return true;
   }
 
   public static String genHash(String password) {

@@ -42,6 +42,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -123,13 +124,13 @@ public class AuthPlugin {
     Settings.DATABASE dbConfig = Settings.IMP.DATABASE;
 
     JdbcPooledConnectionSource connectionSource;
-    switch (dbConfig.STORAGE_TYPE) {
+    switch (dbConfig.STORAGE_TYPE.toLowerCase(Locale.ROOT)) {
       case "sqlite": {
-        connectionSource = new JdbcPooledConnectionSource("jdbc:sqlite:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + dbConfig.FILENAME);
+        connectionSource = new JdbcPooledConnectionSource("jdbc:sqlite:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + "limboauth.db");
         break;
       }
       case "h2": {
-        connectionSource = new JdbcPooledConnectionSource("jdbc:h2:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + dbConfig.FILENAME);
+        connectionSource = new JdbcPooledConnectionSource("jdbc:h2:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + "limboauth");
         break;
       }
       case "mysql": {
@@ -271,10 +272,6 @@ public class AuthPlugin {
 
   public static AuthPlugin getInstance() {
     return instance;
-  }
-
-  public Logger getLogger() {
-    return this.logger;
   }
 
   private static class CachedUser {

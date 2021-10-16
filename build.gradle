@@ -15,7 +15,7 @@ allprojects {
     compileJava.options.encoding = "UTF-8"
 
     group = "net.elytrium"
-    version = "1.0.1-DEV"
+    version = "1.0.1-rc1"
 
     tasks.withType(JavaCompile) {
         options.encoding = "UTF-8"

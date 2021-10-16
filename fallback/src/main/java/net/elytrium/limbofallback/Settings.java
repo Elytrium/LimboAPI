@@ -27,6 +27,42 @@ public class Settings extends Config {
 
   public String PREFIX = "LimboFallback &6>> &f";
 
+  @Create
+  public MAIN MAIN;
+
+  public static class MAIN {
+
+    @Comment("Available dimensions: OVERWORLD, NETHER, THE_END")
+    public String DIMENSION = "THE_END";
+
+    public boolean LOAD_WORLD = false;
+    @Comment("World file type: schematic")
+    public String WORLD_FILE_TYPE = "schematic";
+    public String WORLD_FILE_PATH = "world.schematic";
+
+    @Create
+    public Settings.MAIN.WORLD_COORDS WORLD_COORDS;
+
+    public static class WORLD_COORDS {
+
+      public int X = 0;
+      public int Y = 0;
+      public int Z = 0;
+    }
+
+    @Create
+    public FALLBACK_COORDS FALLBACK_COORDS;
+
+    public static class FALLBACK_COORDS {
+
+      public double X = 0;
+      public double Y = 0;
+      public double Z = 0;
+      public double YAW = 0;
+      public double PITCH = 0;
+    }
+  }
+
   public void reload(File file) {
     if (this.load(file, this.PREFIX)) {
       this.save(file, this.PREFIX);

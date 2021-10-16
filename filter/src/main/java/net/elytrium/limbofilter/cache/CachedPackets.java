@@ -23,7 +23,6 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.Chat;
 import com.velocitypowered.proxy.protocol.packet.Disconnect;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -54,9 +53,7 @@ public class CachedPackets {
   private PreparedPacket setSlot;
   private PreparedPacket resetSlot;
   private PreparedPacket checkingChat;
-  private PreparedPacket checkingCaptchaChat;
   private PreparedPacket checkingTitle;
-  private PreparedPacket checkingCaptchaTitle;
   private PreparedPacket kickClientCheckSettings;
   private PreparedPacket kickClientCheckSettingsChat;
   private PreparedPacket kickClientCheckSettingsSkin;
@@ -83,15 +80,9 @@ public class CachedPackets {
 
     this.resetSlot = this.prepare(this.createSetSlotPacket(0, 36, SimpleItem.fromItem(Item.AIR), 0, 0, null));
     this.checkingChat = this.createChatPacket(strings.CHECKING_CHAT);
-    this.checkingCaptchaChat = this.createChatPacket(strings.CHECKING_CAPTCHA_CHAT);
     this.successfulBotFilterChat = this.createChatPacket(strings.SUCCESSFUL_CRACKED);
     this.successfulBotFilterDisconnect = this.prepare((version) -> this.createDisconnectPacket(strings.SUCCESSFUL_PREMIUM, version));
-    this.checkingTitle = this.createTitlePacket(strings.CHECKING_TITLE, strings.CHECKING_SUBTITLE, 10, 50, 10);
-    this.checkingCaptchaTitle = this.createTitlePacket(
-        strings.CHECKING_CAPTCHA_TITLE,
-        MessageFormat.format(strings.CHECKING_CAPTCHA_SUBTITLE, Settings.IMP.MAIN.CAPTCHA_ATTEMPTS),
-        10, 50, 10
-    );
+    this.checkingTitle = this.createTitlePacket(strings.CHECKING_TITLE, strings.CHECKING_SUBTITLE);
 
     this.kickClientCheckSettings = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_SETTINGS, version));
     this.kickClientCheckSettingsChat = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_SETTINGS_CHAT_COLOR, version));
@@ -148,7 +139,7 @@ public class CachedPackets {
     return preparedPacket;
   }
 
-  private PreparedPacket createChatPacket(String text) {
+  public PreparedPacket createChatPacket(String text) {
     return FilterPlugin.getInstance().getFactory().createPreparedPacket()
         .prepare(new Chat(
             ProtocolUtils.getJsonChatSerializer(ProtocolVersion.MINIMUM_VERSION).serialize(
@@ -165,6 +156,10 @@ public class CachedPackets {
   private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {
     Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(message);
     return Disconnect.create(component, version);
+  }
+
+  public PreparedPacket createTitlePacket(String title, String subtitle) {
+    return this.createTitlePacket(title, subtitle, 10, 50, 10);
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -226,16 +221,8 @@ public class CachedPackets {
     return this.checkingChat;
   }
 
-  public PreparedPacket getCheckingCaptchaChat() {
-    return this.checkingCaptchaChat;
-  }
-
   public PreparedPacket getCheckingTitle() {
     return this.checkingTitle;
-  }
-
-  public PreparedPacket getCheckingCaptchaTitle() {
-    return this.checkingCaptchaTitle;
   }
 
   public PreparedPacket getKickClientCheckSettings() {

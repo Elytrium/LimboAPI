@@ -32,6 +32,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 
+@SuppressWarnings("unused")
 public class SimpleItem implements VirtualItem {
 
   private static final Gson gson = new Gson();
@@ -40,14 +41,11 @@ public class SimpleItem implements VirtualItem {
 
   private final Map<Version, Short> versionIDs = new EnumMap<>(Version.class);
 
-  public SimpleItem() {
-
-  }
-
   public static Map<Item, SimpleItem> getLegacyIdMap() {
     return SimpleItem.legacyIdMap;
   }
 
+  @Override
   public short getId(ProtocolVersion version) {
     return this.getId(Version.map(version));
   }
@@ -80,6 +78,7 @@ public class SimpleItem implements VirtualItem {
   }
 
   public enum Version {
+
     LEGACY(EnumSet.range(ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_12_2)),
     MINECRAFT_1_13(ProtocolVersion.MINECRAFT_1_13),
     MINECRAFT_1_13_2(ProtocolVersion.MINECRAFT_1_13_1, ProtocolVersion.MINECRAFT_1_13_2),

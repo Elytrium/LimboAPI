@@ -45,55 +45,73 @@ public class SimpleChunk implements VirtualChunk {
     this.x = x;
     this.z = z;
     Arrays.fill(this.biomes, Biome.PLAINS);
-    //Arrays.fill(light, LightSection.DEFAULT);
+    //Arrays.fill(this.light, LightSection.DEFAULT);
   }
 
+  @Override
   public void setBlock(int x, int y, int z, @Nullable VirtualBlock block) {
     SimpleSection section = this.getSection(y);
     section.setBlockAt(x, y % 16, z, block);
   }
 
   @NonNull
+  @Override
   public VirtualBlock getBlock(int x, int y, int z) {
     return this.sectionAction(y, (s) -> s.getBlockAt(x, y % 16, z), () -> SimpleBlock.AIR);
   }
 
-  @NonNull
-  public VirtualBiome getBiome(int x, int y, int z) {
-    return this.biomes[getBiomeIndex(x, y, z)];
-  }
-
+  @Override
   public void setBiome2d(int x, int z, @NonNull VirtualBiome biome) {
     for (int y = 0; y < 256; y += 4) {
       this.setBiome3d(x, y, z, biome);
     }
   }
 
-
+  @Override
   public void setBiome3d(int x, int y, int z, @NonNull VirtualBiome biome) {
     this.biomes[getBiomeIndex(x, y, z)] = biome;
   }
 
-  public byte getBlockLight(int x, int y, int z) {
-    return this.getLightSection(y, false).getBlockLight(x, y % 16, z);
+  @NonNull
+  @Override
+  public VirtualBiome getBiome(int x, int y, int z) {
+    return this.biomes[getBiomeIndex(x, y, z)];
   }
 
+  @Override
   public void setBlockLight(int x, int y, int z, byte light) {
     this.getLightSection(y, true).setBlockLight(x, y % 16, z, light);
   }
 
-  public byte getSkyLight(int x, int y, int z) {
-    return this.getLightSection(y, false).getSkyLight(x, y % 16, z);
+  @Override
+  public byte getBlockLight(int x, int y, int z) {
+    return this.getLightSection(y, false).getBlockLight(x, y % 16, z);
   }
 
+  @Override
   public void setSkyLight(int x, int y, int z, byte light) {
     this.getLightSection(y, true).setSkyLight(x, y % 16, z, light);
   }
 
+  @Override
+  public byte getSkyLight(int x, int y, int z) {
+    return this.getLightSection(y, false).getSkyLight(x, y % 16, z);
+  }
+
+  public int getX() {
+    return this.x;
+  }
+
+  public int getZ() {
+    return this.z;
+  }
+
+  @Override
   public ChunkSnapshot getFullChunkSnapshot() {
     return this.createSnapshot(true, 0);
   }
 
+  @Override
   public ChunkSnapshot getPartialChunkSnapshot(long previousUpdate) {
     return this.createSnapshot(false, previousUpdate);
   }
@@ -105,6 +123,7 @@ public class SimpleChunk implements VirtualChunk {
         sectionsSnapshot[i] = this.sections[i].getSnapshot();
       }
     }
+
     LightSection[] lightSnapshot = new LightSection[18];
     for (int i = 0; i < this.light.length; i++) {
       if (this.light[i] == null) {
@@ -113,6 +132,7 @@ public class SimpleChunk implements VirtualChunk {
         lightSnapshot[i] = this.light[i].copy();
       }
     }
+
     return new SimpleChunkSnapshot(this.x, this.z, full, sectionsSnapshot, lightSnapshot, Arrays.copyOf(this.biomes, this.biomes.length));
   }
 
@@ -151,13 +171,5 @@ public class SimpleChunk implements VirtualChunk {
 
   public static int getBiomeIndex(int x, int y, int z) {
     return ((y >> 2) & 63) << 4 | ((z >> 2) & 3) << 2 | ((x >> 2) & 3);
-  }
-
-  public int getX() {
-    return this.x;
-  }
-
-  public int getZ() {
-    return this.z;
   }
 }
