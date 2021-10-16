@@ -31,6 +31,7 @@ import java.util.Objects;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 
+@SuppressWarnings("unused")
 public class SimpleBlock implements VirtualBlock {
 
   public static final SimpleBlock AIR = air(BlockInfo.info(Version.LEGACY, 0));
@@ -63,53 +64,67 @@ public class SimpleBlock implements VirtualBlock {
   private final boolean motionBlocking; //1.14+
 
   public SimpleBlock(boolean solid, boolean air, boolean motionBlocking, BlockInfo... blockInfos) {
-    this.motionBlocking = motionBlocking;
     this.blockInfos = new EnumMap<>(Version.class);
+    this.solid = solid;
+    this.air = air;
+    this.motionBlocking = motionBlocking;
+
     for (BlockInfo info : blockInfos) {
       for (Version version : EnumSet.range(info.getVersion(), Version.MINECRAFT_1_17)) {
         this.blockInfos.put(version, info);
       }
     }
-    this.air = air;
-    this.solid = solid;
   }
 
   public SimpleBlock(SimpleBlock block) {
-    this.motionBlocking = block.motionBlocking;
     this.blockInfos = Map.copyOf(block.blockInfos);
-    this.air = block.air;
     this.solid = block.solid;
+    this.air = block.air;
+    this.motionBlocking = block.motionBlocking;
   }
 
-  public short getId(Version version) {
-    return this.blockInfos.get(version).getId();
-  }
-
-  public short getId(ProtocolVersion version) {
-    return this.getId(Version.map(version));
-  }
-
+  @Override
   public SimpleBlock setData(byte data) {
     this.blockInfos.forEach((e, k) -> k.setData(data));
     return this;
   }
 
+  @Override
   public byte getData(Version version) {
     return this.blockInfos.get(version).getData();
   }
 
+  @Override
   public byte getData(ProtocolVersion version) {
     return this.getData(Version.map(version));
   }
 
+  @Override
+  public Map<Version, BlockInfo> getBlockInfos() {
+    return this.blockInfos;
+  }
+
+  @Override
+  public short getId(Version version) {
+    return this.blockInfos.get(version).getId();
+  }
+
+  @Override
+  public short getId(ProtocolVersion version) {
+    return this.getId(Version.map(version));
+  }
+
+  @Override
   public boolean isSolid() {
     return this.solid;
   }
 
+  @Override
   public boolean isAir() {
     return this.air;
   }
 
+  @Override
   public boolean isMotionBlocking() {
     return this.motionBlocking;
   }
@@ -142,9 +157,5 @@ public class SimpleBlock implements VirtualBlock {
   @NonNull
   public static SimpleBlock air(BlockInfo... infos) {
     return new SimpleBlock(false, true, false, infos);
-  }
-
-  public Map<Version, BlockInfo> getBlockInfos() {
-    return this.blockInfos;
   }
 }

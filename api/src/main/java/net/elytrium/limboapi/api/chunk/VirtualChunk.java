@@ -11,31 +11,32 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 
+@SuppressWarnings("unused")
 public interface VirtualChunk {
-
-  int getX();
-
-  int getZ();
 
   void setBlock(int x, int y, int z, @Nullable VirtualBlock block);
 
   @NonNull
   VirtualBlock getBlock(int x, int y, int z);
 
-  @NonNull
-  VirtualBiome getBiome(int x, int y, int z);
-
   void setBiome2d(int x, int z, @NonNull VirtualBiome biome);
 
   void setBiome3d(int x, int y, int z, @NonNull VirtualBiome biome);
 
-  byte getBlockLight(int x, int y, int z);
+  @NonNull
+  VirtualBiome getBiome(int x, int y, int z);
 
   void setBlockLight(int x, int y, int z, byte light);
 
-  byte getSkyLight(int x, int y, int z);
+  byte getBlockLight(int x, int y, int z);
 
   void setSkyLight(int x, int y, int z, byte light);
+
+  byte getSkyLight(int x, int y, int z);
+
+  int getX();
+
+  int getZ();
 
   ChunkSnapshot getFullChunkSnapshot();
 

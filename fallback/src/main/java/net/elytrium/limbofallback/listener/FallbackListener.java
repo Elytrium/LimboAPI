@@ -20,22 +20,38 @@ package net.elytrium.limbofallback.listener;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.proxy.server.ServerInfo;
+import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
+import net.elytrium.limbofallback.FallbackPlugin;
 
 public class FallbackListener {
 
+  private final AtomicInteger counter = new AtomicInteger();
+
   @Subscribe
   public void onProxyConnect(PlayerChooseInitialServerEvent e) {
-    if (e.getInitialServer().isEmpty()) {
-      // TODO: send to limbo
+    RegisteredServer srv = e.getInitialServer().get();
+    if (srv.getServerInfo().getName().startsWith("Limbo_")) {
+      FallbackPlugin.getInstance().sendToFallBackServer(e.getPlayer(), srv);
+    } else if (e.getInitialServer().isEmpty() || srv.getServerInfo() == null) {
+      FallbackPlugin.getInstance().sendToFallBackServer(e.getPlayer(), srv);
     }
   }
 
   @Subscribe
-  @SuppressWarnings("ConstantConditions")
   public void onKick(KickedFromServerEvent e) {
-    // Forcing NullPointerException to prevent player kicking
-    // May not work :(
-    e.setResult(KickedFromServerEvent.DisconnectPlayer.create(null));
-    // TODO: send to limbo
+    FallbackPlugin.getInstance().getLogger().info("Sending player to limbo.");
+    int i = this.counter.incrementAndGet();
+    if (i > 255) {
+      this.counter.set(0);
+      i = 0;
+    }
+    e.setResult(KickedFromServerEvent.RedirectPlayer.create(
+        FallbackPlugin.getInstance().getServer().registerServer(
+            new ServerInfo("Limbo_" + i + "_" + e.getPlayer().getUsername(), InetSocketAddress.createUnresolved("192.168.44." + i, i))
+        )
+    ));
   }
 }

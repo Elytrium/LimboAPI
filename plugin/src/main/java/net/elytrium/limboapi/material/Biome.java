@@ -27,6 +27,7 @@ import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.CompoundBinaryTag.Builder;
 import net.kyori.adventure.nbt.ListBinaryTag;
 
+@SuppressWarnings("unused")
 public enum Biome implements VirtualBiome {
 
   PLAINS("minecraft:plains", 1,
@@ -80,10 +81,12 @@ public enum Biome implements VirtualBiome {
         .build();
   }
 
+  @Override
   public String getName() {
     return this.name;
   }
 
+  @Override
   public int getId() {
     return this.id;
   }
@@ -176,10 +179,10 @@ public enum Biome implements VirtualBiome {
     private final Particle particle;
 
     public Effects(int skyColor,
-                   int waterFogColor, int fogColor, int waterColor,
-                   @Nullable Integer foliageColor, @Nullable String grassColorModifier, @Nullable Music music,
-                   @Nullable String ambientSound, @Nullable AdditionsSound additionsSound,
-                   @Nullable MoodSound moodSound, @Nullable Particle particle) {
+        int waterFogColor, int fogColor, int waterColor,
+        @Nullable Integer foliageColor, @Nullable String grassColorModifier, @Nullable Music music,
+        @Nullable String ambientSound, @Nullable AdditionsSound additionsSound,
+        @Nullable MoodSound moodSound, @Nullable Particle particle) {
       this.skyColor = skyColor;
       this.waterFogColor = waterFogColor;
       this.fogColor = fogColor;
@@ -307,7 +310,7 @@ public enum Biome implements VirtualBiome {
           + "}";
     }
 
-    public static class MoodSound {
+    public static final class MoodSound {
 
       private final int tickDelay;
       private final double offset;
@@ -363,7 +366,7 @@ public enum Biome implements VirtualBiome {
       }
     }
 
-    public static class Music {
+    public static final class Music {
 
       private final boolean replaceCurrentMusic;
       @NonNull
@@ -419,7 +422,7 @@ public enum Biome implements VirtualBiome {
       }
     }
 
-    public static class AdditionsSound {
+    public static final class AdditionsSound {
 
       @NonNull
       private final String sound;
@@ -459,7 +462,7 @@ public enum Biome implements VirtualBiome {
       }
     }
 
-    public static class Particle {
+    public static final class Particle {
 
       private final float probability;
       @NonNull
@@ -540,10 +543,6 @@ public enum Biome implements VirtualBiome {
       private AdditionsSound additionsSound;
       private MoodSound moodSound;
       private Particle particle;
-
-      EffectsBuilder() {
-
-      }
 
       public EffectsBuilder skyColor(int skyColor) {
         this.skyColor = skyColor;

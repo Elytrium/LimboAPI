@@ -31,34 +31,39 @@ public class SimpleLightSection implements LightSection {
   private NibbleArray3d skyLight = ALL_LIGHT;
   private long lastUpdate = System.nanoTime();
 
+  public SimpleLightSection() {
+
+  }
+
   private SimpleLightSection(NibbleArray3d blockLight, NibbleArray3d skyLight, long lastUpdate) {
     this.blockLight = blockLight;
     this.skyLight = skyLight;
     this.lastUpdate = lastUpdate;
   }
 
-  public SimpleLightSection() {
-
-  }
-
+  @Override
   public NibbleArray3d getBlockLight() {
     return this.blockLight;
   }
 
+  @Override
   public byte getBlockLight(int x, int y, int z) {
     this.checkIndexes(x, y, z);
     return (byte) this.blockLight.get(x, y, z);
   }
 
+  @Override
   public NibbleArray3d getSkyLight() {
     return this.skyLight;
   }
 
+  @Override
   public byte getSkyLight(int x, int y, int z) {
     this.checkIndexes(x, y, z);
     return (byte) this.skyLight.get(x, y, z);
   }
 
+  @Override
   public void setBlockLight(int x, int y, int z, byte light) {
     this.checkIndexes(x, y, z);
     Preconditions.checkArgument(light >= 0 && light <= 15, "light should be between 0 and 15");
@@ -71,6 +76,19 @@ public class SimpleLightSection implements LightSection {
     this.lastUpdate = System.nanoTime();
   }
 
+  @Override
+  public SimpleLightSection copy() {
+    NibbleArray3d skyLight = this.skyLight == ALL_LIGHT ? ALL_LIGHT : this.skyLight.copy();
+    NibbleArray3d blockLight = this.blockLight == NO_LIGHT ? NO_LIGHT : this.blockLight.copy();
+    return new SimpleLightSection(blockLight, skyLight, this.lastUpdate);
+  }
+
+  @Override
+  public long getLastUpdate() {
+    return this.lastUpdate;
+  }
+
+  @Override
   public void setSkyLight(int x, int y, int z, byte light) {
     this.checkIndexes(x, y, z);
     Preconditions.checkArgument(light >= 0 && light <= 15, "light should be between 0 and 15");
@@ -89,15 +107,5 @@ public class SimpleLightSection implements LightSection {
 
   private boolean checkIndex(int i) {
     return i >= 0 && i <= 15;
-  }
-
-  public SimpleLightSection copy() {
-    NibbleArray3d skyLight = this.skyLight == ALL_LIGHT ? ALL_LIGHT : this.skyLight.copy();
-    NibbleArray3d blockLight = this.blockLight == NO_LIGHT ? NO_LIGHT : this.blockLight.copy();
-    return new SimpleLightSection(blockLight, skyLight, this.lastUpdate);
-  }
-
-  public long getLastUpdate() {
-    return this.lastUpdate;
   }
 }

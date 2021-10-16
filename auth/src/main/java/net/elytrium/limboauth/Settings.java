@@ -35,6 +35,7 @@ public class Settings extends Config {
     public boolean ONLINE_MODE_NEED_AUTH = true;
     public boolean ONLINE_UUID_IF_POSSIBLE = true;
     public boolean ENABLE_TOTP = true;
+    public boolean REPEAT_PASSWORD = true;
     @Comment({
         "If you want to migrate your database from another plugin, which is not using BCrypt",
         "You can set an old hash algorithm to migrate from. Currently, only AUTHME is supported yet"
@@ -92,11 +93,15 @@ public class Settings extends Config {
       public String NOT_PLAYER = "{PRFX} &cСonsole is not allowed to execute this command!";
       public String ERROR_OCCURRED = "{PRFX} &cAn internal error has occurred!";
 
-      public String LOGIN = "{PRFX} Please, login using &a/l &6password";
-      public String LOGIN_SUCCESS = "{PRFX} &aSuccessfully logged in";
-      public String PASSWORD_WRONG = "{PRFX} &cPassword is wrong";
+      public String WRONG_ARGUMENTS_AMOUNT = "{PRFX} &cWrong number of arguments!";
 
-      public String REGISTER = "{PRFX} Please, register using &a/reg &6password password";
+      public String LOGIN = "{PRFX} Please, login using &a/l &6password!";
+      public String LOGIN_SUCCESS = "{PRFX} &aSuccessfully logged in!";
+      public String PASSWORD_WRONG = "{PRFX} &cPassword is wrong!";
+
+      @Comment("Or if repeat-password change to one password")
+      public String REGISTER = "{PRFX} Please, register using &a/reg &6password password.";
+      public String DIFFERENT_PASSWORDS = "{PRFX} The entered passwords differ from each other.";
 
       public String WRONG_NICKNAME_CASE = "{NL}{NL}&cThe case of your nickname is wrong. Nickname is CaSe SeNsItIvE.";
       public String NICKNAME_INVALID = "{NL}{NL}&cYour nickname contains forbidden characters. Please, change your nickname";
@@ -142,9 +147,6 @@ public class Settings extends Config {
 
     @Comment("Database type: mysql, postgresql, h2, or sqlite")
     public String STORAGE_TYPE = "h2";
-
-    @Comment("Settings for File-based databases (Like H2, SQLite): ")
-    public String FILENAME = "limboauth.db";
 
     @Comment("Settings for Network-based database (like MySQL, PostgreSQL): ")
     public String HOSTNAME = "127.0.0.1:3306";

@@ -15,6 +15,7 @@ import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
+@SuppressWarnings("unused")
 public class SchematicFile implements WorldFile {
 
   private short width;

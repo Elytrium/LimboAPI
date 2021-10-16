@@ -100,11 +100,15 @@ public class LimboImpl implements Limbo {
 
     this.chunks = new PreparedPacketImpl().prepare(this.createChunksPackets());
     this.spawnPosition = new PreparedPacketImpl()
-        .prepare(this.createPlayerPosAndLookPacket(
-            this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.getWorld().getYaw(), this.getWorld().getPitch()))
+        .prepare(
+            this.createPlayerPosAndLookPacket(
+                this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.getWorld().getYaw(), this.getWorld().getPitch()
+            )
+        )
         .prepare(this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()), ProtocolVersion.MINECRAFT_1_14);
   }
 
+  @Override
   public void spawnPlayer(Player apiPlayer, LimboSessionHandler handler) {
     ConnectedPlayer player = (ConnectedPlayer) apiPlayer;
     MinecraftConnection connection = player.getConnection();
@@ -150,6 +154,7 @@ public class LimboImpl implements Limbo {
     });
   }
 
+  @Override
   public void respawnPlayer(Player player) {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
@@ -183,7 +188,7 @@ public class LimboImpl implements Limbo {
     }
 
     joinGame.setLevelType("flat");
-    joinGame.setViewDistance(12);
+    joinGame.setViewDistance(4);
     joinGame.setReducedDebugInfo(true);
     joinGame.setIsHardcore(true);
 
