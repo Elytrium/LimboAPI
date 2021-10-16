@@ -45,8 +45,8 @@ public class BlockStorage17 implements BlockStorage {
     this.blocks[BlockStorage.index(x, y, z)] = block;
   }
 
-  @Override
   @NonNull
+  @Override
   public VirtualBlock get(int x, int y, int z) {
     VirtualBlock block = this.blocks[BlockStorage.index(x, y, z)];
     return block == null ? SimpleBlock.AIR : block;
@@ -74,6 +74,15 @@ public class BlockStorage17 implements BlockStorage {
   }
 
   @Override
+  public int getDataLength(ProtocolVersion version) {
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      return this.blocks.length + (SimpleChunk.MAX_BLOCKS_PER_SECTION >> 1);
+    } else {
+      return this.blocks.length * 2;
+    }
+  }
+
+  @Override
   public BlockStorage copy() {
     return new BlockStorage17(Arrays.copyOf(this.blocks, this.blocks.length));
   }
@@ -97,15 +106,6 @@ public class BlockStorage17 implements BlockStorage {
 
     for (Short s : raw) {
       buf.writeShortLE(s);
-    }
-  }
-
-  @Override
-  public int getDataLength(ProtocolVersion version) {
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      return this.blocks.length + (SimpleChunk.MAX_BLOCKS_PER_SECTION >> 1);
-    } else {
-      return this.blocks.length * 2;
     }
   }
 }

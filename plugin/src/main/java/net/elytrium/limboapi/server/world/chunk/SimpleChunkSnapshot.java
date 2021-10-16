@@ -41,31 +41,38 @@ public class SimpleChunkSnapshot implements ChunkSnapshot {
     this.biomes = biomes.clone();
   }
 
+  @Override
   public VirtualBlock getBlock(int x, int y, int z) {
     SimpleSection section = this.sections[y / 16];
     return section == null ? SimpleBlock.AIR : section.getBlockAt(x, y % 16, z);
   }
 
+  @Override
   public int getX() {
     return this.x;
   }
 
+  @Override
   public int getZ() {
     return this.z;
   }
 
+  @Override
   public boolean isFullChunk() {
     return this.fullChunk;
   }
 
+  @Override
   public SimpleSection[] getSections() {
     return this.sections.clone();
   }
 
+  @Override
   public LightSection[] getLight() {
     return this.light.clone();
   }
 
+  @Override
   public VirtualBiome[] getBiomes() {
     return this.biomes.clone();
   }

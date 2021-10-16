@@ -11,22 +11,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public interface VirtualWorld {
 
-  Dimension getDimension();
-
-  double getSpawnX();
-
-  double getSpawnY();
-
-  double getSpawnZ();
-
-  float getYaw();
-
-  float getPitch();
-
-  void setBlock(int x, int y, int z, @Nullable VirtualBlock block);
-
+  @NonNull
   VirtualBlock getBlock(int x, int y, int z);
 
   void setBiome2d(int x, int z, @NonNull VirtualBiome biome);
@@ -45,4 +33,19 @@ public interface VirtualWorld {
   VirtualChunk getChunk(int x, int z);
 
   VirtualChunk getChunkOrNew(int x, int z);
+
+  @NonNull
+  Dimension getDimension();
+
+  double getSpawnX();
+
+  double getSpawnY();
+
+  double getSpawnZ();
+
+  float getYaw();
+
+  float getPitch();
+
+  void setBlock(int x, int y, int z, @Nullable VirtualBlock block);
 }

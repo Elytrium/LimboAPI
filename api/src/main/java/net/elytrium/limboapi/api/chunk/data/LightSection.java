@@ -19,11 +19,11 @@ public interface LightSection {
 
   byte getSkyLight(int x, int y, int z);
 
-  long getLastUpdate();
-
   void setBlockLight(int x, int y, int z, byte light);
 
   void setSkyLight(int x, int y, int z, byte light);
 
   LightSection copy();
+
+  long getLastUpdate();
 }

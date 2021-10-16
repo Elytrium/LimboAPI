@@ -30,6 +30,7 @@ import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.protocol.map.MapPalette;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
+import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.SetSlot;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -63,6 +64,11 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
+  public void teleport(double x, double y, double z, float yaw, float pitch) {
+    this.player.getConnection().write(new PlayerPositionAndLook(x, y, z, yaw, pitch, -133, false, true));
+  }
+
+  @Override
   public void sendTitle(Component title, Component subtitle, ProtocolVersion version, int fadeIn, int stay, int fadeOut) {
     {
       GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
@@ -87,8 +93,8 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
-  public void teleport(double x, double y, double z, float yaw, float pitch) {
-    this.player.getConnection().write(new PlayerPositionAndLook(x, y, z, yaw, pitch, -133, false, true));
+  public void disableFalling() {
+    this.player.getConnection().write(new PlayerAbilities((byte) 6, 0f, 0f));
   }
 
   @Override

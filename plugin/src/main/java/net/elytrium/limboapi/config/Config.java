@@ -145,7 +145,7 @@ public class Config {
 
   }
 
-  private String toYamlString(Object value, String spacing) {
+  private String toYamlString(Object value, String spacing, String fieldName, String prefix) {
     if (value instanceof List) {
       Collection<?> listValue = (Collection<?>) value;
       if (listValue.isEmpty()) {
@@ -153,7 +153,7 @@ public class Config {
       }
       StringBuilder m = new StringBuilder();
       for (Object obj : listValue) {
-        m.append(System.lineSeparator()).append(spacing).append("- ").append(this.toYamlString(obj, spacing));
+        m.append(System.lineSeparator()).append(spacing).append("- ").append(this.toYamlString(obj, spacing, fieldName, prefix));
       }
 
       return m.toString();
@@ -165,7 +165,12 @@ public class Config {
         return "\"\"";
       }
 
-      return "\"" + stringValue + "\"";
+      String quoted = "\"" + stringValue + "\"";
+      if (fieldName.equalsIgnoreCase("prefix")) {
+        return quoted;
+      } else {
+        return quoted.replace("\n", "{NL}").replace(prefix, "{PRFX}");
+      }
     }
 
     return value != null ? value.toString() : "null";
@@ -235,8 +240,8 @@ public class Config {
           }
           this.save(writer, current, value, indent + 2, prefix);
         } else {
-          String val = this.toYamlString(field.get(instance), spacing).replace(prefix, "{PRFX}");
-          writer.write(spacing + this.toNodeName(field.getName() + ": ") + val + lineSeparator);
+          String value = this.toYamlString(field.get(instance), spacing, field.getName(), prefix);
+          writer.write(spacing + this.toNodeName(field.getName() + ": ") + value + lineSeparator);
         }
       }
     } catch (Throwable e) {

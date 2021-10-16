@@ -73,8 +73,7 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
   @Override
   public void onMove(double x, double y, double z) {
     if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_8) <= 0
-        && x == this.validX && y == this.validY && z == this.validZ
-        && this.waitingTeleportId == this.validTeleportId) {
+        && x == this.validX && y == this.validY && z == this.validZ && this.waitingTeleportId == this.validTeleportId) {
       this.ticks = 1;
       this.y = -1;
       this.waitingTeleportId = -1;

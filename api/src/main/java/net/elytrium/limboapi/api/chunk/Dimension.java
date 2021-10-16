@@ -7,6 +7,7 @@
 
 package net.elytrium.limboapi.api.chunk;
 
+@SuppressWarnings("unused")
 public enum Dimension {
 
   OVERWORLD("minecraft:overworld", 0, 0),

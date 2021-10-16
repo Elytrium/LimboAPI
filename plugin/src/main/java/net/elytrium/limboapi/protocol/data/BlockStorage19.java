@@ -42,9 +42,9 @@ public class BlockStorage19 implements BlockStorage {
 
   public BlockStorage19(ProtocolVersion version) {
     this.version = version;
-    this.storage = this.createStorage(4);
     this.palette.add(SimpleBlock.AIR);
     this.rawToBlock.put(toRaw(SimpleBlock.AIR, version), SimpleBlock.AIR);
+    this.storage = this.createStorage(4);
   }
 
   private BlockStorage19(ProtocolVersion version, List<VirtualBlock> palette, Map<Integer, VirtualBlock> rawToBlock, CompactStorage storage) {
@@ -54,12 +54,13 @@ public class BlockStorage19 implements BlockStorage {
     this.storage = storage;
   }
 
+  @Override
   public void set(int x, int y, int z, @NonNull VirtualBlock block) {
-    int id = this.getIndex(block);
-    this.storage.set(index(x, y, z), id);
+    this.storage.set(index(x, y, z), this.getIndex(block));
   }
 
   @NonNull
+  @Override
   public VirtualBlock get(int x, int y, int z) {
     return this.get(index(x, y, z));
   }
@@ -108,6 +109,11 @@ public class BlockStorage19 implements BlockStorage {
     return length + this.storage.getDataLength();
   }
 
+  @Override
+  public BlockStorage copy() {
+    return new BlockStorage19(this.version, new ArrayList<>(this.palette), new HashMap<>(this.rawToBlock), this.storage.copy());
+  }
+
   private int getIndex(VirtualBlock block) {
     if (this.storage.getBitsPerEntry() > 8) {
       int raw = toRaw(block, this.version);
@@ -124,11 +130,6 @@ public class BlockStorage19 implements BlockStorage {
       id = this.palette.size() - 1;
     }
     return id;
-  }
-
-  @Override
-  public BlockStorage copy() {
-    return new BlockStorage19(this.version, new ArrayList<>(this.palette), new HashMap<>(this.rawToBlock), this.storage.copy());
   }
 
   private void resize(int newSize) {

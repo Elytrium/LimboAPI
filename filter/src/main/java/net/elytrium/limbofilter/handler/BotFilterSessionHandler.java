@@ -24,6 +24,8 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientSettings;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
+import java.text.MessageFormat;
+import java.util.List;
 import java.util.Objects;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.player.LimboPlayer;
@@ -211,8 +213,8 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       }
       if (Settings.IMP.MAIN.FALLING_CHECK_DEBUG) {
         System.out.println("lastY=" + this.lastY + "; y=" + this.y + "; diff=" + (this.lastY - this.y) + ";"
-            + " need=" + getLoadedChunkSpeed(ticks) + "; ticks=" + this.ticks
-            + "; x=" + x + "; z=" + this.z + "; validX=" + this.validX + "; validZ=" + this.validZ
+            + " need=" + getLoadedChunkSpeed(this.ticks) + "; ticks=" + this.ticks
+            + "; x=" + this.x + "; z=" + this.z + "; validX=" + this.validX + "; validZ=" + this.validZ
             + "; startedListening=" + this.startedListening + "; state=" + this.state
             + "; onGround=" + this.onGround);
       }
@@ -220,7 +222,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         this.fallingCheckFailed();
         return;
       }
-      if ((this.x != this.validX && this.z != this.validZ) || this.checkY()) {
+      if ((this.x != this.validX && this.z != this.validZ) || this.checkY()) { // TODO: Fix optifine 1.8
         this.fallingCheckFailed();
         return;
       }
@@ -266,8 +268,15 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     CaptchaHandler captchaHandler = this.plugin.getCachedCaptcha().randomCaptcha();
     String captchaAnswer = captchaHandler.getAnswer();
     this.setCaptchaAnswer(captchaAnswer);
-    this.connection.delayedWrite(this.packets.getCheckingCaptchaTitle());
-    this.connection.delayedWrite(this.packets.getCheckingCaptchaChat());
+    Settings.MAIN.STRINGS strings = Settings.IMP.MAIN.STRINGS;
+    if (this.attempts == Settings.IMP.MAIN.CAPTCHA_ATTEMPTS) {
+      this.connection.delayedWrite(this.packets.createChatPacket(MessageFormat.format(strings.CHECKING_CAPTCHA_CHAT, this.attempts)));
+      this.connection.delayedWrite(
+          this.packets.createTitlePacket(strings.CHECKING_CAPTCHA_TITLE, MessageFormat.format(strings.CHECKING_CAPTCHA_SUBTITLE, this.attempts))
+      );
+    } else {
+      this.connection.delayedWrite(this.packets.createChatPacket(MessageFormat.format(strings.CHECKING_WRONG_CAPTCHA_CHAT, this.attempts)));
+    }
     this.connection.delayedWrite(this.packets.getSetSlot());
     this.connection.delayedWrite(captchaHandler.getMap());
     this.connection.flush();
@@ -280,6 +289,8 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
   private void fallingCheckFailed() {
     if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
+      List<SetExp> expList = this.packets.getExperience();
+      this.connection.write(expList.get(expList.size() - 1));
       this.changeStateToCaptcha();
       return;
     }

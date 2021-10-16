@@ -132,17 +132,19 @@ public class LimboAPI implements LimboFactory {
   }
 
   private void checkForUpdates() {
-    if (!Settings.IMP.VERSION.contains("-DEV")) {
+    if (!Settings.IMP.VERSION.contains("-DEV") && !Settings.IMP.VERSION.contains("rc-")) {
       try {
         URL url = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION");
         URLConnection conn = url.openConnection();
-        conn.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(4));
-        conn.setReadTimeout((int) TimeUnit.SECONDS.toMillis(4));
+        int timeout = (int) TimeUnit.SECONDS.toMillis(4);
+        conn.setConnectTimeout(timeout);
+        conn.setReadTimeout(timeout);
         try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
           String version = in.readLine();
           if (version != null && !version.trim().equalsIgnoreCase(Settings.IMP.VERSION)) {
             this.logger.error("****************************************");
-            this.logger.warn("The new update was found, please update.");
+            this.logger.warn("The new LimboAPI update was found, please update.");
+            this.logger.error("https://github.com/Elytrium/LimboAPI/releases/");
             this.logger.error("****************************************");
           }
         }
@@ -168,11 +170,6 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
-  public VirtualItem getItem(Item item) {
-    return SimpleItem.fromItem(item);
-  }
-
-  @Override
   public Limbo createLimbo(VirtualWorld world) {
     return new LimboImpl(this, world);
   }
@@ -190,6 +187,11 @@ public class LimboAPI implements LimboFactory {
   @Override
   public void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping[] packetMappings) {
     LimboProtocol.register(direction, packetClass, packetSupplier, packetMappings);
+  }
+
+  @Override
+  public VirtualItem getItem(Item item) {
+    return SimpleItem.fromItem(item);
   }
 
   public void setLimboJoined(Player player) {
