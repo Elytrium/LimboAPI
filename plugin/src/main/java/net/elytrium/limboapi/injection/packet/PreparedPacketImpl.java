@@ -38,10 +38,12 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   private final Map<ProtocolVersion, List<ByteBuf>> packets = new ConcurrentHashMap<>();
 
+  @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(T packet) {
     return this.prepare((Function<ProtocolVersion, T>) (version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
   }
 
+  @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(List<T> packets) {
     for (T packet : packets) {
       this.prepare((Function<ProtocolVersion, T>) (version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
@@ -50,22 +52,27 @@ public class PreparedPacketImpl implements PreparedPacket {
     return this;
   }
 
+  @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(T packet, ProtocolVersion from) {
     return this.prepare((Function<ProtocolVersion, T>) (version) -> packet, from, ProtocolVersion.MAXIMUM_VERSION);
   }
 
+  @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(T packet, ProtocolVersion from, ProtocolVersion to) {
     return this.prepare((Function<ProtocolVersion, T>) (version) -> packet, from, to);
   }
 
+  @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet) {
     return this.prepare(packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
   }
 
+  @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from) {
     return this.prepare(packet, from, ProtocolVersion.MAXIMUM_VERSION);
   }
 
+  @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to) {
     for (ProtocolVersion protocolVersion : EnumSet.range(from, to)) {
       ByteBuf buf = this.encodePacket(packet.apply(protocolVersion), protocolVersion);

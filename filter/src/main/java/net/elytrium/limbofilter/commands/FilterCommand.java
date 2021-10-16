@@ -138,7 +138,7 @@ public class FilterCommand implements SimpleCommand {
     return command.hasPermission(source, actualArgs);
   }
 
-  private static class Reload implements SubCommand {
+  private static final class Reload implements SubCommand {
 
     private final FilterPlugin plugin;
 
@@ -157,7 +157,7 @@ public class FilterCommand implements SimpleCommand {
     }
   }
 
-  private static class Stats implements SubCommand {
+  private static final class Stats implements SubCommand {
 
     private final List<UUID> playersWithStats = Collections.synchronizedList(new ArrayList<>());
 

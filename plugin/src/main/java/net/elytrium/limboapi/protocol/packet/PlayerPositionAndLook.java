@@ -25,6 +25,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
+@SuppressWarnings("unused")
 public class PlayerPositionAndLook implements MinecraftPacket {
 
   private double x;
@@ -35,6 +36,10 @@ public class PlayerPositionAndLook implements MinecraftPacket {
   private int teleportId;
   private boolean onGround;
   private boolean dismountVehicle;
+
+  public PlayerPositionAndLook() {
+
+  }
 
   public PlayerPositionAndLook(double x, double y, double z, float yaw, float pitch, int teleportId, boolean onGround, boolean dismountVehicle) {
     this.x = x;
@@ -47,8 +52,82 @@ public class PlayerPositionAndLook implements MinecraftPacket {
     this.dismountVehicle = dismountVehicle;
   }
 
-  public PlayerPositionAndLook() {
+  public double getX() {
+    return this.x;
+  }
 
+  public void setX(double x) {
+    this.x = x;
+  }
+
+  public double getY() {
+    return this.y;
+  }
+
+  public void setY(double y) {
+    this.y = y;
+  }
+
+  public double getZ() {
+    return this.z;
+  }
+
+  public void setZ(double z) {
+    this.z = z;
+  }
+
+  public float getYaw() {
+    return this.yaw;
+  }
+
+  public void setYaw(float yaw) {
+    this.yaw = yaw;
+  }
+
+  public float getPitch() {
+    return this.pitch;
+  }
+
+  public void setPitch(float pitch) {
+    this.pitch = pitch;
+  }
+
+  public int getTeleportId() {
+    return this.teleportId;
+  }
+
+  public void setTeleportId(int teleportId) {
+    this.teleportId = teleportId;
+  }
+
+  public boolean isOnGround() {
+    return this.onGround;
+  }
+
+  public void setOnGround(boolean onGround) {
+    this.onGround = onGround;
+  }
+
+  public boolean isDismountVehicle() {
+    return this.dismountVehicle;
+  }
+
+  public void setDismountVehicle(boolean dismountVehicle) {
+    this.dismountVehicle = dismountVehicle;
+  }
+
+  @Override
+  public String toString() {
+    return "PlayerPositionAndLook{"
+        + "x=" + this.getX()
+        + ", y=" + this.getY()
+        + ", z=" + this.getZ()
+        + ", yaw=" + this.getYaw()
+        + ", pitch=" + this.getPitch()
+        + ", teleportId=" + this.getTeleportId()
+        + ", onGround=" + this.isOnGround()
+        + ", dismountVehicle=" + this.isDismountVehicle()
+        + "}";
   }
 
   @Override
@@ -98,83 +177,5 @@ public class PlayerPositionAndLook implements MinecraftPacket {
     }
 
     return false;
-  }
-
-  public double getX() {
-    return this.x;
-  }
-
-  public double getY() {
-    return this.y;
-  }
-
-  public double getZ() {
-    return this.z;
-  }
-
-  public float getYaw() {
-    return this.yaw;
-  }
-
-  public float getPitch() {
-    return this.pitch;
-  }
-
-  public int getTeleportId() {
-    return this.teleportId;
-  }
-
-  public boolean isOnGround() {
-    return this.onGround;
-  }
-
-  public boolean isDismountVehicle() {
-    return this.dismountVehicle;
-  }
-
-  public void setX(double x) {
-    this.x = x;
-  }
-
-  public void setY(double y) {
-    this.y = y;
-  }
-
-  public void setZ(double z) {
-    this.z = z;
-  }
-
-  public void setYaw(float yaw) {
-    this.yaw = yaw;
-  }
-
-  public void setPitch(float pitch) {
-    this.pitch = pitch;
-  }
-
-  public void setTeleportId(int teleportId) {
-    this.teleportId = teleportId;
-  }
-
-  public void setOnGround(boolean onGround) {
-    this.onGround = onGround;
-  }
-
-  public void setDismountVehicle(boolean dismountVehicle) {
-    this.dismountVehicle = dismountVehicle;
-  }
-
-  @Override
-  public String toString() {
-    return "PlayerPositionAndLook{"
-        + "x=" + this.getX()
-        + ", y=" + this.getY()
-        + ", z=" + this.getZ()
-        + ", yaw=" + this.getYaw()
-        + ", pitch=" + this.getPitch()
-        + ", teleportId=" + this.getTeleportId()
-        + ", onGround=" + this.isOnGround()
-        + ", dismountVehicle=" + this.isDismountVehicle()
-        + "}";
   }
 }

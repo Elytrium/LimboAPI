@@ -12,11 +12,11 @@ import net.elytrium.limboapi.api.chunk.VirtualBlock;
 
 public interface BlockSection {
 
-  long getLastUpdate();
+  void setBlockAt(int x, int y, int z, @Nullable VirtualBlock block);
 
   VirtualBlock getBlockAt(int x, int y, int z);
 
-  void setBlockAt(int x, int y, int z, @Nullable VirtualBlock block);
-
   BlockSection getSnapshot();
+
+  long getLastUpdate();
 }

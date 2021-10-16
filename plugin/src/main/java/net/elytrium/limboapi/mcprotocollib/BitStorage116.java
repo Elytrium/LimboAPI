@@ -97,17 +97,6 @@ public class BitStorage116 implements CompactStorage {
   }
 
   @Override
-  public int get(int index) {
-    if (index < 0 || index > this.size - 1) {
-      throw new IndexOutOfBoundsException();
-    }
-
-    int cellIndex = this.cellIndex(index);
-    int bitIndex = this.bitIndex(index, cellIndex);
-    return (int) (this.data[cellIndex] >> bitIndex & this.maxValue);
-  }
-
-  @Override
   public void set(int index, int value) {
     if (index < 0 || index > this.size - 1) {
       throw new IndexOutOfBoundsException();
@@ -122,12 +111,15 @@ public class BitStorage116 implements CompactStorage {
     this.data[cellIndex] = this.data[cellIndex] & ~(this.maxValue << bitIndex) | ((long) value & this.maxValue) << bitIndex;
   }
 
-  private int cellIndex(int index) {
-    return (int) (index * this.divideMultiply + this.divideAdd >> 32 >> this.divideShift);
-  }
+  @Override
+  public int get(int index) {
+    if (index < 0 || index > this.size - 1) {
+      throw new IndexOutOfBoundsException();
+    }
 
-  private int bitIndex(int index, int cellIndex) {
-    return (index - cellIndex * this.valuesPerLong) * this.bitsPerEntry;
+    int cellIndex = this.cellIndex(index);
+    int bitIndex = this.bitIndex(index, cellIndex);
+    return (int) (this.data[cellIndex] >> bitIndex & this.maxValue);
   }
 
   @Override
@@ -139,13 +131,13 @@ public class BitStorage116 implements CompactStorage {
   }
 
   @Override
-  public int getDataLength() {
-    return ProtocolUtils.varIntBytes(this.data.length) + this.data.length * 8;
+  public int getBitsPerEntry() {
+    return this.bitsPerEntry;
   }
 
   @Override
-  public CompactStorage copy() {
-    return new BitStorage116(this.bitsPerEntry, this.size, Arrays.copyOf(this.data, this.data.length));
+  public int getDataLength() {
+    return ProtocolUtils.varIntBytes(this.data.length) + this.data.length * 8;
   }
 
   @Override
@@ -153,11 +145,16 @@ public class BitStorage116 implements CompactStorage {
     return this.data.clone();
   }
 
-  public int getBitsPerEntry() {
-    return this.bitsPerEntry;
+  @Override
+  public CompactStorage copy() {
+    return new BitStorage116(this.bitsPerEntry, this.size, Arrays.copyOf(this.data, this.data.length));
   }
 
-  public int getSize() {
-    return this.size;
+  private int cellIndex(int index) {
+    return (int) (index * this.divideMultiply + this.divideAdd >> 32 >> this.divideShift);
+  }
+
+  private int bitIndex(int index, int cellIndex) {
+    return (index - cellIndex * this.valuesPerLong) * this.bitsPerEntry;
   }
 }

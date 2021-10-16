@@ -44,19 +44,27 @@ public class SimpleSection implements BlockSection {
     this.lastUpdate = lastUpdate;
   }
 
-  public VirtualBlock getBlockAt(int x, int y, int z) {
-    this.checkIndexes(x, y, z);
-    return this.blocks.get(x, y, z);
-  }
-
+  @Override
   public void setBlockAt(int x, int y, int z, @Nullable VirtualBlock block) {
     this.checkIndexes(x, y, z);
     this.blocks.set(x, y, z, block == null ? SimpleBlock.AIR : block);
     this.lastUpdate = System.nanoTime();
   }
 
+  @Override
+  public VirtualBlock getBlockAt(int x, int y, int z) {
+    this.checkIndexes(x, y, z);
+    return this.blocks.get(x, y, z);
+  }
+
+  @Override
   public SimpleSection getSnapshot() {
     return new SimpleSection(this.blocks.copy(), this.lastUpdate);
+  }
+
+  @Override
+  public long getLastUpdate() {
+    return this.lastUpdate;
   }
 
   private void checkIndexes(int x, int y, int z) {
@@ -67,9 +75,5 @@ public class SimpleSection implements BlockSection {
 
   private boolean checkIndex(int i) {
     return i >= 0 && i <= 15;
-  }
-
-  public long getLastUpdate() {
-    return this.lastUpdate;
   }
 }

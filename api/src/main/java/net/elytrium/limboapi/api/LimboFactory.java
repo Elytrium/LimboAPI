@@ -21,27 +21,6 @@ import net.elytrium.limboapi.api.protocol.PreparedPacket;
 public interface LimboFactory {
 
   /**
-   * Creates new virtual world.
-   *
-   * @param dimension World dimension
-   * @param x         Spawn location (X)
-   * @param y         Spawn location (Y)
-   * @param z         Spawn location (Z)
-   * @param yaw       Spawn rotation (Yaw)
-   * @param pitch     Spawn rotation (Pitch)
-   * @return new virtual world.
-   */
-  VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch);
-
-  /**
-   * Creates new virtual server.
-   *
-   * @param world Virtual world
-   * @return new virtual server.
-   */
-  Limbo createLimbo(VirtualWorld world);
-
-  /**
    * Creates new virtual block from Block enum.
    *
    * @param block Block from Block enum
@@ -66,19 +45,32 @@ public interface LimboFactory {
   VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
 
   /**
+   * Creates new virtual world.
+   *
+   * @param dimension World dimension
+   * @param x         Spawn location (X)
+   * @param y         Spawn location (Y)
+   * @param z         Spawn location (Z)
+   * @param yaw       Spawn rotation (Yaw)
+   * @param pitch     Spawn rotation (Pitch)
+   * @return new virtual world.
+   */
+  VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch);
+
+  /**
+   * Creates new virtual server.
+   *
+   * @param world Virtual world
+   * @return new virtual server.
+   */
+  Limbo createLimbo(VirtualWorld world);
+
+  /**
    * Creates new prepared packet builder.
    *
    * @return new prepared packet.
    */
   PreparedPacket createPreparedPacket();
-
-  /**
-   * Creates new virtual item from Item enum.
-   *
-   * @param item Item from item enum
-   * @return new virtual item.
-   */
-  VirtualItem getItem(Item item);
 
   /**
    * Registers self-made packet.
@@ -89,4 +81,12 @@ public interface LimboFactory {
    * @param packetMappings Packet id mappings
    */
   void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping[] packetMappings);
+
+  /**
+   * Creates new virtual item from Item enum.
+   *
+   * @param item Item from item enum
+   * @return new virtual item.
+   */
+  VirtualItem getItem(Item item);
 }

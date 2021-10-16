@@ -44,6 +44,10 @@
     <module name="NewlineAtEndOfFile"/>
 
     <module name="TreeWalker">
+        <module name="MissingOverride"/>
+        <module name="FinalClass"/>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
         <module name="RequireThis">
             <property name="validateOnlyOverlapping" value="false"/>
         </module>
