@@ -53,15 +53,25 @@ public class Settings extends Config {
     public String WORLD_FILE_TYPE = "schematic";
     public String WORLD_FILE_PATH = "world.schematic";
 
+    @Comment("Unit of time in seconds for the Statistics")
+    public int UNIT_OF_TIME_CPS = 300;
+    @Comment("How many times per unit of time we need to change the amount of connections")
+    public int INTERPOLATE_CPS_WEIGHT = 600;
+
+    @Comment("Unit of time in seconds for the Statistics")
+    public int UNIT_OF_TIME_PPS = 5;
+    @Comment("How many times per unit of time we need to change the amount of pings")
+    public int INTERPOLATE_PPS_WEIGHT = 10;
+
     @Create
-    public Settings.MAIN.CONNECTION_LIMIT CONNECTION_LIMIT;
+    public FILTER_AUTO_TOGGLE FILTER_AUTO_TOGGLE;
 
     @Comment({
-        "Minimum total connections per second amount to toggle anti-bot checks",
+        "Minimum/maximum total connections amount per the unit of time to toggle anti-bot checks",
         "-1 to disable the check",
-        "0 to enable on any connections per second"
+        "0 to enable on any connections per the unit of time"
     })
-    public static class CONNECTION_LIMIT {
+    public static class FILTER_AUTO_TOGGLE {
 
       @Comment({
           "All players will bypass all anti-bot checks"
@@ -72,24 +82,24 @@ public class Settings extends Config {
           "Online mode players will bypass all anti-bot checks",
           "Doesn't work with online-mode-verify: -1"
       })
-      public int ONLINE_MODE_BYPASS = 3;
+      public int ONLINE_MODE_BYPASS = 100;
 
       @Comment({
           "Verify Online Mode connection before AntiBot.",
           "If connections per second amount is bigger than the limit: online mode players will need to reconnect",
           "Else: Some attacks can consume more cpu and network, and can lead to long-lasting Mojang rate-limiting"
       })
-      public int ONLINE_MODE_VERIFY = 3;
+      public int ONLINE_MODE_VERIFY = 100;
 
       @Comment({
           "The player will need to reconnect after passing AntiBot check.",
       })
-      public int NEED_TO_RECONNECT = 15;
+      public int NEED_TO_RECONNECT = 250;
 
       @Comment({
           "Picture in the MOTD Server Ping packet will be disabled.",
       })
-      public int DISABLE_MOTD_PICTURE = 15;
+      public int DISABLE_MOTD_PICTURE = 25;
     }
 
     @Create
@@ -153,7 +163,7 @@ public class Settings extends Config {
       public String TOO_BIG_PACKET = "{PRFX} Your client sent too big packet.";
       public String FALLING_CHECK_FAILED = "{PRFX} Falling Check was failed. Please, rejoin the server.";
 
-      public String STATS_FORMAT = "&c&lTotal Blocked: &6&l{0} &c&l| Connections Per Second: &6&l{1} &c&l| Pings Per Second: &6&l{2} &c&l| Total Connections Per Second: &6&l{3} &c&l| Ping: &6&l{4}";
+      public String STATS_FORMAT = "&c&lTotal Blocked: &6&l{0} &c&l| Connections: &6&l{1} &c&l| Pings: &6&l{2} &c&l| Total Connections: &6&l{3} &c&l| Ping: &6&l{4}";
       public String STATS_ENABLED = "{PRFX} &fNow you see statistics in your action bar.";
       public String STATS_DISABLED = "{PRFX} &fYou're no longer see statistics in your action bar.";
 

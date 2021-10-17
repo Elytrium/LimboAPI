@@ -164,8 +164,8 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.state = CheckState.SUCCESSFUL;
     this.plugin.cacheFilterUser(this.player);
 
-    if (this.plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_VERIFY)
-        || this.plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.NEED_TO_RECONNECT)) {
+    if (this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.ONLINE_MODE_VERIFY)
+        || this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.NEED_TO_RECONNECT)) {
       this.connection.closeWith(this.packets.getSuccessfulBotFilterDisconnect());
     } else {
       this.connection.write(this.packets.getSuccessfulBotFilterChat());
