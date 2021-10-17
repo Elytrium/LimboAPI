@@ -93,8 +93,6 @@ public class Settings extends Config {
       public String NOT_PLAYER = "{PRFX} &cСonsole is not allowed to execute this command!";
       public String ERROR_OCCURRED = "{PRFX} &cAn internal error has occurred!";
 
-      public String WRONG_ARGUMENTS_AMOUNT = "{PRFX} &cWrong number of arguments!";
-
       public String LOGIN = "{PRFX} Please, login using &a/l &6password!";
       public String LOGIN_SUCCESS = "{PRFX} &aSuccessfully logged in!";
       public String PASSWORD_WRONG = "{PRFX} &cPassword is wrong!";
