@@ -21,6 +21,7 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 
 public class MapDataPacket implements MinecraftPacket {
@@ -117,12 +118,13 @@ public class MapDataPacket implements MinecraftPacket {
     private final int y;
     private final byte[] data;
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public MapData(int columns, int rows, int x, int y, byte[] data) {
       this.columns = columns;
       this.rows = rows;
       this.x = x;
       this.y = y;
-      this.data = data.clone();
+      this.data = data;
     }
 
     public int getColumns() {
@@ -141,8 +143,9 @@ public class MapDataPacket implements MinecraftPacket {
       return this.y;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     public byte[] getData() {
-      return this.data.clone();
+      return this.data;
     }
   }
 }

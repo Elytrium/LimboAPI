@@ -26,10 +26,12 @@ package net.elytrium.limboapi.mcprotocollib;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
 
+@SuppressFBWarnings({"EI_EXPOSE_REP2", "EI_EXPOSE_REP"})
 public class BitStorage19 implements CompactStorage {
 
   private final long[] data;
@@ -47,7 +49,7 @@ public class BitStorage19 implements CompactStorage {
     }
 
     this.bitsPerEntry = bitsPerEntry;
-    this.data = data.clone();
+    this.data = data;
 
     this.size = this.data.length * 64 / this.bitsPerEntry;
     this.maxEntryValue = (1L << this.bitsPerEntry) - 1;
@@ -119,9 +121,10 @@ public class BitStorage19 implements CompactStorage {
     return new BitStorage19(this.bitsPerEntry, Arrays.copyOf(this.data, this.data.length));
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public long[] getData() {
-    return this.data.clone();
+    return this.data;
   }
 
   private static int roundToNearest(int value, int roundTo) {
