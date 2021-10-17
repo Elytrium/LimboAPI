@@ -19,61 +19,93 @@ package net.elytrium.limbofilter.stats;
 
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import net.elytrium.limbofilter.Settings;
 
 public class Statistics {
 
   private final AtomicLong blockedConnections = new AtomicLong(0L);
-  private final AtomicInteger connectionsPerSecond = new AtomicInteger();
-  private final AtomicInteger pingsPerSecond = new AtomicInteger();
+  private final AtomicLong connections = new AtomicLong(0L);
+  private final AtomicLong pings = new AtomicLong(0L);
+  private final AtomicLong interpolatedCpsBefore = new AtomicLong(0L);
+  private final AtomicLong interpolatedPpsBefore = new AtomicLong(0L);
 
   public void addBlockedConnection() {
     this.blockedConnections.incrementAndGet();
   }
 
-  public void addConnectionPerSecond() {
-    this.connectionsPerSecond.incrementAndGet();
+  public void addConnection() {
+    this.connections.addAndGet(Settings.IMP.MAIN.INTERPOLATE_CPS_WEIGHT);
   }
 
-  public void addPingPerSecond() {
-    this.pingsPerSecond.incrementAndGet();
+  public void addPing() {
+    this.pings.addAndGet(Settings.IMP.MAIN.INTERPOLATE_PPS_WEIGHT);
   }
 
   public long getBlockedConnections() {
-    return this.blockedConnections.longValue();
+    return this.blockedConnections.get();
   }
 
-  public int getConnectionsPerSecond() {
-    return this.connectionsPerSecond.get();
+  public long getConnections() {
+    return this.connections.get() / Settings.IMP.MAIN.INTERPOLATE_CPS_WEIGHT;
   }
 
-  public int getPingsPerSecond() {
-    return this.pingsPerSecond.get();
+  public long getPings() {
+    return this.pings.get() / Settings.IMP.MAIN.INTERPOLATE_PPS_WEIGHT;
   }
 
-  public int getTotalConnectionsPerSecond() {
-    return this.pingsPerSecond.get() + this.connectionsPerSecond.get();
+  public long getTotalConnection() {
+    return this.getPings() + this.getConnections();
   }
 
   public void startUpdating() {
+    this.startUpdatingCps();
+    this.startUpdatingPps();
+  }
+
+  public void startUpdatingCps() {
+    long delayInterpolate = Settings.IMP.MAIN.UNIT_OF_TIME_CPS * 1000L;
+
     new Timer().scheduleAtFixedRate(new TimerTask() {
-      int cpsBefore = 0;
-      int ppsBefore = 0;
-
       public void run() {
-        int currentCps = Statistics.this.connectionsPerSecond.get();
-        if (currentCps > 0) {
-          Statistics.this.connectionsPerSecond.set(Statistics.this.connectionsPerSecond.get() - this.cpsBefore);
-          this.cpsBefore = Statistics.this.connectionsPerSecond.get();
-        }
+        Statistics.this.interpolatedCpsBefore.set(Statistics.this.connections.get() / Settings.IMP.MAIN.INTERPOLATE_CPS_WEIGHT);
+      }
+    }, delayInterpolate, delayInterpolate);
 
-        int currentPps = Statistics.this.pingsPerSecond.get();
-        if (currentPps > 0) {
-          Statistics.this.pingsPerSecond.set(Statistics.this.pingsPerSecond.get() - this.ppsBefore);
-          this.ppsBefore = Statistics.this.pingsPerSecond.get();
+    long delay = delayInterpolate / Settings.IMP.MAIN.INTERPOLATE_CPS_WEIGHT;
+
+    new Timer().scheduleAtFixedRate(new TimerTask() {
+      public void run() {
+        long current = Statistics.this.connections.get();
+        long before = Statistics.this.interpolatedCpsBefore.get();
+
+        if (current >= before) {
+          Statistics.this.connections.set(current - before);
         }
       }
-    }, 1000, 1000);
+    }, delay, delay);
+  }
+
+  public void startUpdatingPps() {
+    long delayInterpolate = Settings.IMP.MAIN.UNIT_OF_TIME_PPS * 1000L;
+
+    new Timer().scheduleAtFixedRate(new TimerTask() {
+      public void run() {
+        Statistics.this.interpolatedPpsBefore.set(Statistics.this.pings.get() / Settings.IMP.MAIN.INTERPOLATE_PPS_WEIGHT);
+      }
+    }, delayInterpolate, delayInterpolate);
+
+    long delay = delayInterpolate / Settings.IMP.MAIN.INTERPOLATE_PPS_WEIGHT;
+
+    new Timer().scheduleAtFixedRate(new TimerTask() {
+      public void run() {
+        long current = Statistics.this.pings.get();
+        long before = Statistics.this.interpolatedPpsBefore.get();
+
+        if (current >= before) {
+          Statistics.this.pings.set(current - before);
+        }
+      }
+    }, delay, delay);
   }
 }

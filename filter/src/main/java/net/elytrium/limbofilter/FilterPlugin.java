@@ -90,7 +90,6 @@ public class FilterPlugin {
     this.factory = (LimboFactory) factory.getInstance().get();
     this.packets = new CachedPackets();
     this.statistics = new Statistics();
-    this.statistics.startUpdating();
   }
 
   private static void setInstance(FilterPlugin thisInst) {
@@ -108,6 +107,8 @@ public class FilterPlugin {
     Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
 
     BotFilterSessionHandler.reload();
+
+    this.statistics.startUpdating();
 
     this.cachedCaptcha = new CachedCaptcha();
     CaptchaGeneration.init();
@@ -166,11 +167,11 @@ public class FilterPlugin {
   }
 
   public boolean shouldCheck(ConnectedPlayer player) {
-    if (!this.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ALL_BYPASS)) {
+    if (!this.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.ALL_BYPASS)) {
       return false;
     }
 
-    if (player.isOnlineMode() && !this.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_BYPASS)) {
+    if (player.isOnlineMode() && !this.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.ONLINE_MODE_BYPASS)) {
       return false;
     }
 
@@ -200,12 +201,20 @@ public class FilterPlugin {
         .forEach(userMap::remove);
   }
 
-  public boolean checkLimit(int limit) {
+  public boolean checkCpsLimit(int limit) {
     if (limit == -1) {
       return false;
     }
 
-    return limit <= this.statistics.getConnectionsPerSecond();
+    return limit <= this.statistics.getConnections();
+  }
+
+  public boolean checkPpsLimit(int limit) {
+    if (limit == -1) {
+      return false;
+    }
+
+    return limit <= this.statistics.getPings();
   }
 
   public static FilterPlugin getInstance() {
