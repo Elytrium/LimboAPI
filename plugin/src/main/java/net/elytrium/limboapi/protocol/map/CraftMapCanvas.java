@@ -17,6 +17,7 @@
 
 package net.elytrium.limboapi.protocol.map;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
@@ -62,7 +63,8 @@ public class CraftMapCanvas {
     return new MapDataPacket.MapData(128, 128, 0, 0, this.canvas);
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public byte[] getCanvas() {
-    return this.canvas.clone();
+    return this.canvas;
   }
 }

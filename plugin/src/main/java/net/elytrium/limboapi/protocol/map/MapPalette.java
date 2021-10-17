@@ -17,6 +17,7 @@
 
 package net.elytrium.limboapi.protocol.map;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.image.BufferedImage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -149,8 +150,9 @@ public final class MapPalette {
     return (rgb & 0xff000000) >>> 24;
   }
 
+  @SuppressFBWarnings("MS_EXPOSE_REP")
   public static Color[] getColors() {
-    return MapPalette.colors.clone();
+    return MapPalette.colors;
   }
 
   public static class Color {
