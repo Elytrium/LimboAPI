@@ -17,12 +17,14 @@
 
 package net.elytrium.limboapi.server.world.chunk;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 
+@SuppressFBWarnings({"EI_EXPOSE_REP2", "EI_EXPOSE_REP"})
 public class SimpleChunkSnapshot implements ChunkSnapshot {
 
   private final int x;
@@ -36,9 +38,9 @@ public class SimpleChunkSnapshot implements ChunkSnapshot {
     this.x = x;
     this.z = z;
     this.fullChunk = fullChunk;
-    this.sections = sections.clone();
-    this.light = light.clone();
-    this.biomes = biomes.clone();
+    this.sections = sections;
+    this.light = light;
+    this.biomes = biomes;
   }
 
   @Override
@@ -64,16 +66,16 @@ public class SimpleChunkSnapshot implements ChunkSnapshot {
 
   @Override
   public SimpleSection[] getSections() {
-    return this.sections.clone();
+    return this.sections;
   }
 
   @Override
   public LightSection[] getLight() {
-    return this.light.clone();
+    return this.light;
   }
 
   @Override
   public VirtualBiome[] getBiomes() {
-    return this.biomes.clone();
+    return this.biomes;
   }
 }

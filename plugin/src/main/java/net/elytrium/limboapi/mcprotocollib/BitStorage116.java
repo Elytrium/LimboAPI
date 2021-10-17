@@ -26,6 +26,7 @@ package net.elytrium.limboapi.mcprotocollib;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
@@ -140,9 +141,10 @@ public class BitStorage116 implements CompactStorage {
     return ProtocolUtils.varIntBytes(this.data.length) + this.data.length * 8;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public long[] getData() {
-    return this.data.clone();
+    return this.data;
   }
 
   @Override
