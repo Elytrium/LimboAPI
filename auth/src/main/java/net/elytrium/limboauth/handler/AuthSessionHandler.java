@@ -79,16 +79,14 @@ public class AuthSessionHandler implements LimboSessionHandler {
   @Override
   public void onChat(String message) {
     String[] args = message.split(" ");
-    if (args.length != 0) {
+    if (args.length != 0 && this.checkArgsLength(args.length)) {
       switch (args[0]) {
         case "/reg":
         case "/register":
         case "/r": {
-          if (!this.totp && this.playerInfo == null) {
-            if (this.checkArgsLength(args.length) && this.checkPasswordsRepeat(args)) {
-              this.register(args[1]);
-              this.finish();
-            }
+          if (!this.totp && this.playerInfo == null && this.checkPasswordsRepeat(args)) {
+            this.register(args[1]);
+            this.finish();
           } else {
             this.sendMessage();
           }
@@ -98,14 +96,12 @@ public class AuthSessionHandler implements LimboSessionHandler {
         case "/login":
         case "/l": {
           if (!this.totp && this.playerInfo != null) {
-            if (this.checkArgsLength(args.length)) {
-              if (this.checkPassword(args[1])) {
-                this.finishOrTotp();
-              } else if (this.attempts-- != 0) {
-                this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
-              } else {
-                this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
-              }
+            if (this.checkPassword(args[1])) {
+              this.finishOrTotp();
+            } else if (this.attempts-- != 0) {
+              this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+            } else {
+              this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
             }
           } else {
             this.sendMessage();
@@ -114,12 +110,10 @@ public class AuthSessionHandler implements LimboSessionHandler {
         }
         case "/2fa": {
           if (this.totp) {
-            if (this.checkArgsLength(args.length)) {
-              if (verifier.isValidCode(this.playerInfo.totpToken, args[1])) {
-                this.finish();
-              } else {
-                this.sendMessage();
-              }
+            if (verifier.isValidCode(this.playerInfo.totpToken, args[1])) {
+              this.finish();
+            } else {
+              this.sendMessage();
             }
           } else {
             this.sendMessage();
@@ -131,6 +125,8 @@ public class AuthSessionHandler implements LimboSessionHandler {
           break;
         }
       }
+    } else {
+      this.sendMessage();
     }
   }
 
@@ -174,35 +170,37 @@ public class AuthSessionHandler implements LimboSessionHandler {
   }
 
   private void checkIp() {
-    List<RegisteredPlayer> alreadyRegistered = null;
     try {
-      alreadyRegistered = this.playerDao.queryForEq("IP", this.ip);
+      List<RegisteredPlayer> alreadyRegistered = this.playerDao.queryForEq("IP", this.ip);
+
+      if (alreadyRegistered == null) {
+        return;
+      }
+
+      AtomicInteger sizeOfValid = new AtomicInteger(alreadyRegistered.size());
+
+      if (Settings.IMP.MAIN.IP_LIMIT_VALID_TIME != 0) {
+        long checkDate = System.currentTimeMillis() - Settings.IMP.MAIN.IP_LIMIT_VALID_TIME;
+
+        alreadyRegistered.stream()
+            .filter(e -> e.regDate < checkDate)
+            .forEach(e -> {
+              try {
+                e.ip = "";
+                this.playerDao.update(e);
+                sizeOfValid.decrementAndGet();
+              } catch (SQLException ex) {
+                ex.printStackTrace();
+              }
+            });
+      }
+
+      if (sizeOfValid.get() >= Settings.IMP.MAIN.IP_LIMIT_REGISTRATIONS) {
+        this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.IP_LIMIT)
+        );
+      }
     } catch (SQLException e) {
       e.printStackTrace();
-    }
-    assert alreadyRegistered != null;
-
-    AtomicInteger sizeOfValid = new AtomicInteger(alreadyRegistered.size());
-
-    if (Settings.IMP.MAIN.IP_LIMIT_VALID_TIME != 0) {
-      long checkDate = System.currentTimeMillis() - Settings.IMP.MAIN.IP_LIMIT_VALID_TIME;
-
-      alreadyRegistered.stream()
-          .filter(e -> e.regDate < checkDate)
-          .forEach(e -> {
-            try {
-              e.ip = "";
-              this.playerDao.update(e);
-              sizeOfValid.decrementAndGet();
-            } catch (SQLException ex) {
-              ex.printStackTrace();
-            }
-          });
-    }
-
-    if (sizeOfValid.get() >= Settings.IMP.MAIN.IP_LIMIT_REGISTRATIONS) {
-      this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.IP_LIMIT)
-      );
     }
   }
 
@@ -263,19 +261,12 @@ public class AuthSessionHandler implements LimboSessionHandler {
     return true;
   }
 
-  private boolean checkArgsLength(int length) {
-    if (this.totp && length != 2) {
-      this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.WRONG_ARGUMENTS_AMOUNT));
-      return false;
-    } else if (this.playerInfo == null && (Settings.IMP.MAIN.REPEAT_PASSWORD && length != 3)) {
-      this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.WRONG_ARGUMENTS_AMOUNT));
-      return false;
-    } else if (length != 2) {
-      this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.WRONG_ARGUMENTS_AMOUNT));
-      return false;
+  private boolean checkArgsLength(int argsLength) {
+    if (this.playerInfo == null && Settings.IMP.MAIN.REPEAT_PASSWORD) {
+      return argsLength == 3;
+    } else {
+      return argsLength == 2;
     }
-
-    return true;
   }
 
   public static String genHash(String password) {

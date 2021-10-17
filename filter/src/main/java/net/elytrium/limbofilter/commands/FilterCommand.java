@@ -23,7 +23,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -40,6 +39,7 @@ import net.elytrium.limbofilter.Settings;
 import net.elytrium.limbofilter.stats.Statistics;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -160,26 +160,17 @@ public class FilterCommand implements SimpleCommand {
   private static final class Stats implements SubCommand {
 
     private final List<UUID> playersWithStats = Collections.synchronizedList(new ArrayList<>());
+    private final FilterPlugin plugin;
 
     private Stats(VelocityServer server, FilterPlugin plugin) {
+      this.plugin = plugin;
+
       new Timer().scheduleAtFixedRate(new TimerTask() {
         @Override
         public void run() {
           try {
-            Statistics statistics = plugin.getStatistics();
             Stats.this.playersWithStats.stream().map(server::getPlayer).forEach(player ->
-                player.ifPresent(p ->
-                    p.sendActionBar(
-                        LegacyComponentSerializer
-                            .legacyAmpersand()
-                            .deserialize(MessageFormat.format(
-                                Settings.IMP.MAIN.STRINGS.STATS_FORMAT,
-                                statistics.getBlockedConnections(),
-                                statistics.getConnectionsPerSecond(),
-                                statistics.getPingsPerSecond(),
-                                statistics.getTotalConnectionsPerSecond(),
-                                p.getPing())
-                            ))));
+                player.ifPresent(p -> p.sendActionBar(Stats.this.getStats(p.getPing()))));
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -190,9 +181,10 @@ public class FilterCommand implements SimpleCommand {
     @Override
     public void execute(CommandSource source, String @NonNull [] args) {
       if (!(source instanceof Player)) {
-        source.sendMessage(CommandMessages.PLAYERS_ONLY);
+        source.sendMessage(this.getStats(0));
         return;
       }
+
       ConnectedPlayer player = (ConnectedPlayer) source;
       if (this.playersWithStats.contains(player.getUniqueId())) {
         source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.STATS_DISABLED));
@@ -206,6 +198,20 @@ public class FilterCommand implements SimpleCommand {
     @Override
     public boolean hasPermission(final CommandSource source, final String @NonNull [] args) {
       return source.hasPermission("limbofilter.stats");
+    }
+
+    private TextComponent getStats(long ping) {
+      Statistics statistics = this.plugin.getStatistics();
+
+      return LegacyComponentSerializer
+          .legacyAmpersand()
+          .deserialize(MessageFormat.format(
+              Settings.IMP.MAIN.STRINGS.STATS_FORMAT,
+              statistics.getBlockedConnections(),
+              statistics.getConnections() + "/" + Settings.IMP.MAIN.UNIT_OF_TIME_CPS + "s",
+              statistics.getPings() + "/" + Settings.IMP.MAIN.UNIT_OF_TIME_PPS + "s",
+              statistics.getTotalConnection(), ping)
+          );
     }
   }
 }

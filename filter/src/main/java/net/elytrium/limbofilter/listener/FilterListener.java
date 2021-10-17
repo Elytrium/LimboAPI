@@ -37,7 +37,7 @@ public class FilterListener {
 
   @Subscribe(order = PostOrder.FIRST)
   public void onProxyConnect(PreLoginEvent e) {
-    if (this.plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.ONLINE_MODE_VERIFY)
+    if (this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.ONLINE_MODE_VERIFY)
         && this.plugin.shouldCheck(e.getUsername(), e.getConnection().getRemoteAddress().getAddress())) {
       e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
     }
@@ -45,7 +45,7 @@ public class FilterListener {
 
   @Subscribe(order = PostOrder.FIRST)
   public void onLogin(LoginLimboRegisterEvent e) {
-    this.plugin.getStatistics().addConnectionPerSecond();
+    this.plugin.getStatistics().addConnection();
     if (this.plugin.shouldCheck((ConnectedPlayer) e.getPlayer())) {
       e.addCallback(() -> this.plugin.filter(e.getPlayer()));
     }
@@ -53,15 +53,15 @@ public class FilterListener {
 
   @Subscribe(order = PostOrder.LAST)
   public void onPing(ProxyPingEvent e) {
-    if (this.plugin.checkLimit(Settings.IMP.MAIN.CONNECTION_LIMIT.DISABLE_MOTD_PICTURE)) {
+    if (this.plugin.checkPpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.DISABLE_MOTD_PICTURE)) {
       e.setPing(e.getPing().asBuilder().clearFavicon().build());
     }
 
-    this.plugin.getStatistics().addPingPerSecond();
+    this.plugin.getStatistics().addPing();
   }
 
   @Subscribe
   public void onQuery(ProxyQueryEvent e) {
-    this.plugin.getStatistics().addPingPerSecond();
+    this.plugin.getStatistics().addPing();
   }
 }

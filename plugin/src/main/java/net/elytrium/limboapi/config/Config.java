@@ -283,7 +283,10 @@ public class Config {
           return instance;
         } else {
           Class<?> found = null;
-          assert clazz != null;
+          if (clazz == null) {
+            return null;
+          }
+          
           Class<?>[] classes = clazz.getDeclaredClasses();
           for (Class<?> current : classes) {
             if (Objects.equals(current.getSimpleName(), this.toFieldName(split[0]))) {
@@ -292,7 +295,10 @@ public class Config {
             }
           }
 
-          assert found != null;
+          if (found == null) {
+            return null;
+          }
+
           try {
             Field instanceField = clazz.getDeclaredField(this.toFieldName(split[0]));
             this.setAccessible(instanceField);
