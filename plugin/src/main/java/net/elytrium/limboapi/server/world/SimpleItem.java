@@ -41,10 +41,6 @@ public class SimpleItem implements VirtualItem {
 
   private final Map<Version, Short> versionIDs = new EnumMap<>(Version.class);
 
-  public static Map<Item, SimpleItem> getLegacyIdMap() {
-    return SimpleItem.legacyIdMap;
-  }
-
   @Override
   public short getId(ProtocolVersion version) {
     return this.getId(Version.map(version));
@@ -64,17 +60,13 @@ public class SimpleItem implements VirtualItem {
 
     for (Item item : Item.values()) {
       SimpleItem simpleItem = new SimpleItem();
-      map.get(String.valueOf(item.getId())).forEach((key, value) -> simpleItem.getVersionIDs().put(Version.parse(key), Short.parseShort(value)));
+      map.get(String.valueOf(item.getId())).forEach((key, value) -> simpleItem.versionIDs.put(Version.parse(key), Short.parseShort(value)));
       legacyIdMap.put(item, simpleItem);
     }
   }
 
   public static SimpleItem fromItem(Item item) {
     return legacyIdMap.get(item);
-  }
-
-  public Map<Version, Short> getVersionIDs() {
-    return this.versionIDs;
   }
 
   public enum Version {

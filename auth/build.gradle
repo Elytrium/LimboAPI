@@ -28,7 +28,7 @@ dependencies {
 
     annotationProcessor "com.velocitypowered:velocity-api:3.0.2-SNAPSHOT"
 
-    compileOnly "com.github.spotbugs:spotbugs-annotations:4.4.1"
+    compileOnly "com.github.spotbugs:spotbugs-annotations:4.4.2"
 }
 
 shadowJar {

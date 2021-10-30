@@ -188,7 +188,7 @@ public class LimboImpl implements Limbo {
     }
 
     joinGame.setLevelType("flat");
-    joinGame.setViewDistance(4);
+    joinGame.setViewDistance(10);
     joinGame.setReducedDebugInfo(true);
     joinGame.setIsHardcore(true);
 
