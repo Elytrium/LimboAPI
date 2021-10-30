@@ -132,7 +132,7 @@ public class LimboAPI implements LimboFactory {
   }
 
   private void checkForUpdates() {
-    if (!Settings.IMP.VERSION.contains("-DEV") || !Settings.IMP.VERSION.contains("rc-")) {
+    if (!Settings.IMP.VERSION.contains("-DEV") || !Settings.IMP.VERSION.contains("-rc")) {
       try {
         URL url = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION");
         URLConnection conn = url.openConnection();

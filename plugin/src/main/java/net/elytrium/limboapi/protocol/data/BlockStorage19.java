@@ -56,7 +56,8 @@ public class BlockStorage19 implements BlockStorage {
 
   @Override
   public void set(int x, int y, int z, @NonNull VirtualBlock block) {
-    this.storage.set(index(x, y, z), this.getIndex(block));
+    int id = this.getIndex(block);
+    this.storage.set(index(x, y, z), id);
   }
 
   @NonNull

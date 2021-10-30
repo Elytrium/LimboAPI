@@ -1,3 +1,5 @@
+//file:noinspection GroovyAssignabilityCheck
+
 plugins {
     id "java-library"
     id "checkstyle"
@@ -23,7 +25,7 @@ license {
 dependencies {
     compileOnly files("../libs/3.0.0.jar")
 
-    compileOnly "com.github.spotbugs:spotbugs-annotations:4.4.1"
+    compileOnly "com.github.spotbugs:spotbugs-annotations:4.4.2"
 }
 
 task javadocJar(type: Jar) {
@@ -66,17 +68,12 @@ javadoc {
     }
 }
 
-def generateTemplates = tasks.register("generateTemplates", Copy) { task ->
-    def props = [
-        "version": project.version
-    ]
-    task.inputs.properties props
+sourceSets.main.java.srcDir(tasks.register("generateTemplates", Copy) { task ->
+    task.inputs.properties "version": project.version
 
     task.from file("src/main/templates")
     task.into layout.buildDirectory.dir("../build/generated/sources/templates")
-    task.expand props
-}
-
-sourceSets.main.java.srcDir(generateTemplates.map {
+    task.expand "version": project.version
+}.map {
     it.outputs
 })
