@@ -141,8 +141,8 @@ public class BitStorage116 implements CompactStorage {
     return ProtocolUtils.varIntBytes(this.data.length) + this.data.length * 8;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public long[] getData() {
     return this.data;
   }

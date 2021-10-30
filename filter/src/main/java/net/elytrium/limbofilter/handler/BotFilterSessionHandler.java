@@ -139,7 +139,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
   private void finishCheck() {
     if (System.currentTimeMillis() - this.joinTime < TOTAL_TIME && this.state != CheckState.ONLY_CAPTCHA) {
-      if (this.state == CheckState.CAPTCHA_POSITION && ticks < TOTAL_TICKS) {
+      if (this.state == CheckState.CAPTCHA_POSITION && this.ticks < TOTAL_TICKS) {
         this.state = CheckState.ONLY_POSITION;
       } else {
         if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
