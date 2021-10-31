@@ -35,6 +35,7 @@ public class Settings extends Config {
 
     public boolean CHECK_CLIENT_SETTINGS = true;
     public boolean CHECK_CLIENT_BRAND = true;
+    public List<String> BLOCKED_CLIENT_BRANDS = List.of("brand1", "brand2");
     public long PURGE_CACHE_MILLIS = 3600000;
     public int CAPTCHA_ATTEMPTS = 2;
     public int NON_VALID_POSITION_XZ_ATTEMPTS = 10;
@@ -82,19 +83,19 @@ public class Settings extends Config {
           "Online mode players will bypass all anti-bot checks",
           "Doesn't work with online-mode-verify: -1"
       })
-      public int ONLINE_MODE_BYPASS = 100;
+      public int ONLINE_MODE_BYPASS = 49;
 
       @Comment({
           "Verify Online Mode connection before AntiBot.",
           "If connections per second amount is bigger than the limit: online mode players will need to reconnect",
           "Else: Some attacks can consume more cpu and network, and can lead to long-lasting Mojang rate-limiting"
       })
-      public int ONLINE_MODE_VERIFY = 100;
+      public int ONLINE_MODE_VERIFY = 79;
 
       @Comment({
           "The player will need to reconnect after passing AntiBot check.",
       })
-      public int NEED_TO_RECONNECT = 250;
+      public int NEED_TO_RECONNECT = 129;
 
       @Comment({
           "Picture in the MOTD Server Ping packet will be disabled.",
@@ -170,7 +171,7 @@ public class Settings extends Config {
       public String KICK_CLIENT_CHECK_SETTINGS = "&cYour client doesn't send settings packets.";
       public String KICK_CLIENT_CHECK_SETTINGS_CHAT_COLOR = "&cPlease enable colors in chat settings to join the server.{NL}&eOptions > Chat Settings";
       public String KICK_CLIENT_CHECK_SETTINGS_SKIN_PARTS = "&cPlease enable any option from the skin customization to join the server.{NL}&eOptions > Skin Customization";
-      public String KICK_CLIENT_CHECK_BRAND = "&cYour client doesn't send brand packets.";
+      public String KICK_CLIENT_CHECK_BRAND = "&cYour client doesn't send brand packet or it's blocked.";
     }
 
     @Create
@@ -190,9 +191,9 @@ public class Settings extends Config {
 
   public void reload(File file) {
     if (this.load(file, this.PREFIX)) {
-      this.save(file, this.PREFIX);
+      this.save(file);
     } else {
-      this.save(file, this.PREFIX);
+      this.save(file);
       this.load(file, this.PREFIX);
     }
   }

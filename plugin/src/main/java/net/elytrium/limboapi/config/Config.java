@@ -46,6 +46,8 @@ import org.yaml.snakeyaml.Yaml;
 public class Config {
 
   private static final Logger LOGGER = LimboAPI.getInstance().getLogger();
+  private String oldPrefix = "";
+  private String currentPrefix = "";
 
   /**
    * Set the value of a specific node. Probably throws some error if you supply non-existing keys or invalid values.
@@ -78,15 +80,19 @@ public class Config {
   }
 
   @SuppressWarnings("unchecked")
-  public void set(Map<String, Object> input, String prefix, String oldPath) {
+  public void set(Map<String, Object> input, String oldPath) {
     for (Map.Entry<String, Object> entry : input.entrySet()) {
       String key = oldPath + (oldPath.isEmpty() ? "" : ".") + entry.getKey();
       Object value = entry.getValue();
 
       if (value instanceof Map) {
-        this.set((Map<String, Object>) value, prefix, key);
+        this.set((Map<String, Object>) value, key);
       } else if (value instanceof String) {
-        this.set(key, ((String) value).replace("{NL}", "\n").replace("{PRFX}", prefix), this.getClass());
+        if (key.equalsIgnoreCase("prefix") && !this.currentPrefix.equals(value)) {
+          this.currentPrefix = (String) value;
+        }
+
+        this.set(key, ((String) value).replace("{NL}", "\n").replace("{PRFX}", this.currentPrefix), this.getClass());
       } else {
         this.set(key, value, this.getClass());
       }
@@ -94,12 +100,14 @@ public class Config {
   }
 
   public boolean load(File file, String prefix) {
+    this.oldPrefix = this.currentPrefix.isEmpty() ? prefix : this.currentPrefix;
+    this.currentPrefix = prefix;
     if (!file.exists()) {
       return false;
     }
 
     try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
-      this.set(new Yaml().load(reader), prefix, "");
+      this.set(new Yaml().load(reader), "");
     } catch (IOException e) {
       LOGGER.warn("Unable to load config ", e);
       return false;
@@ -145,7 +153,7 @@ public class Config {
 
   }
 
-  private String toYamlString(Object value, String spacing, String fieldName, String prefix) {
+  private String toYamlString(Object value, String spacing, String fieldName) {
     if (value instanceof List) {
       Collection<?> listValue = (Collection<?>) value;
       if (listValue.isEmpty()) {
@@ -153,7 +161,7 @@ public class Config {
       }
       StringBuilder m = new StringBuilder();
       for (Object obj : listValue) {
-        m.append(System.lineSeparator()).append(spacing).append("- ").append(this.toYamlString(obj, spacing, fieldName, prefix));
+        m.append(System.lineSeparator()).append(spacing).append("- ").append(this.toYamlString(obj, spacing, fieldName));
       }
 
       return m.toString();
@@ -169,7 +177,7 @@ public class Config {
       if (fieldName.equalsIgnoreCase("prefix")) {
         return quoted;
       } else {
-        return quoted.replace("\n", "{NL}").replace(prefix, "{PRFX}");
+        return quoted.replace("\n", "{NL}").replace(this.currentPrefix.equals(this.oldPrefix) ? this.oldPrefix : this.currentPrefix, "{PRFX}");
       }
     }
 
@@ -181,7 +189,7 @@ public class Config {
    */
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
-  public void save(File file, String prefix) {
+  public void save(File file) {
     try {
       if (!file.exists()) {
         File parent = file.getParentFile();
@@ -193,14 +201,14 @@ public class Config {
 
       PrintWriter writer = new PrintWriter(file, StandardCharsets.UTF_8);
       Object instance = this;
-      this.save(writer, getClass(), instance, 0, prefix);
+      this.save(writer, this.getClass(), instance, 0);
       writer.close();
     } catch (Throwable e) {
       e.printStackTrace();
     }
   }
 
-  private void save(PrintWriter writer, Class<?> clazz, final Object instance, int indent, String prefix) {
+  private void save(PrintWriter writer, Class<?> clazz, final Object instance, int indent) {
     try {
       String lineSeparator = System.lineSeparator();
       String spacing = this.repeat(" ", indent);
@@ -238,9 +246,9 @@ public class Config {
           if (value == null) {
             field.set(instance, value = current.getDeclaredConstructor().newInstance());
           }
-          this.save(writer, current, value, indent + 2, prefix);
+          this.save(writer, current, value, indent + 2);
         } else {
-          String value = this.toYamlString(field.get(instance), spacing, field.getName(), prefix);
+          String value = this.toYamlString(field.get(instance), spacing, field.getName());
           writer.write(spacing + this.toNodeName(field.getName() + ": ") + value + lineSeparator);
         }
       }
