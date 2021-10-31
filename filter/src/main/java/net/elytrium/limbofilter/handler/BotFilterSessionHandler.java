@@ -79,7 +79,8 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
     Settings.MAIN.COORDS coords = Settings.IMP.MAIN.COORDS;
     this.fallingCheckPos = this.packets.createPlayerPosAndLookPacket(
-        this.validX, this.validY, this.validZ, (float) coords.FALLING_CHECK_YAW, (float) coords.FALLING_CHECK_PITCH);
+        this.validX, this.validY, this.validZ, (float) coords.FALLING_CHECK_YAW, (float) coords.FALLING_CHECK_PITCH
+    );
     this.fallingCheckChunk = this.packets.createChunkDataPacket(new SimpleChunk(this.validX >> 4, this.validZ >> 4), this.validY);
     this.fallingCheckView = this.packets.createUpdateViewPosition(this.validX, this.validZ);
   }
@@ -97,8 +98,11 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         this.statistics.addBlockedConnection();
       }
       if (PluginMessageUtil.isMcBrand(pluginMessage) && !this.checkedByBrand) {
-        this.logger.info("{} has client brand {}", this.player, PluginMessageUtil.readBrandMessage(pluginMessage.content()));
-        this.checkedByBrand = true;
+        String brand = PluginMessageUtil.readBrandMessage(pluginMessage.content());
+        this.logger.info("{} has client brand {}", this.player, brand);
+        if (!Settings.IMP.MAIN.BLOCKED_CLIENT_BRANDS.contains(brand)) {
+          this.checkedByBrand = true;
+        }
       }
     } else if (packet instanceof ClientSettings) {
       ClientSettings clientSettings = (ClientSettings) packet;
@@ -283,8 +287,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   }
 
   private boolean checkY() {
-    double speed = getLoadedChunkSpeed(this.ticks);
-    return (Math.abs(this.lastY - this.y - speed) > Settings.IMP.MAIN.MAX_VALID_POSITION_DIFFERENCE);
+    return (Math.abs(this.lastY - this.y - getLoadedChunkSpeed(this.ticks)) > Settings.IMP.MAIN.MAX_VALID_POSITION_DIFFERENCE);
   }
 
   private void fallingCheckFailed() {

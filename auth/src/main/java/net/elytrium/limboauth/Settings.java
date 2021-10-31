@@ -155,9 +155,9 @@ public class Settings extends Config {
 
   public void reload(File file) {
     if (this.load(file, this.PREFIX)) {
-      this.save(file, this.PREFIX);
+      this.save(file);
     } else {
-      this.save(file, this.PREFIX);
+      this.save(file);
       this.load(file, this.PREFIX);
     }
   }
