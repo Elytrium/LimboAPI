@@ -8,5 +8,5 @@ else
   mkdir libs
   cd libs 
   wget https://versions.velocitypowered.com/download/$V_VERSION.jar
-  exit 1
+  exit 0
 fi
