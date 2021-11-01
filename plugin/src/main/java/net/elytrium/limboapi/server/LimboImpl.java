@@ -123,7 +123,9 @@ public class LimboImpl implements Limbo {
       }
 
       if (!pipeline.names().contains("prepared-encoder")) {
-        // With an abnormally large number of connections from the same nickname, requests don't have time to be processed, and an error occurs that "minecraft-encoder" doesn't exist.
+        // With an abnormally large number of connections from the same nickname,
+        // requests don't have time to be processed,
+        // and an error occurs that "minecraft-encoder" doesn't exist.
         if (!pipeline.names().contains(Connections.MINECRAFT_ENCODER)) {
           connection.close();
           return;
