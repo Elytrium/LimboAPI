@@ -37,6 +37,7 @@ public class FilterListener {
 
   @Subscribe(order = PostOrder.FIRST)
   public void onProxyConnect(PreLoginEvent e) {
+    this.plugin.getStatistics().addConnection();
     if (this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.ONLINE_MODE_VERIFY)
         && this.plugin.shouldCheck(e.getUsername(), e.getConnection().getRemoteAddress().getAddress())) {
       e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
@@ -45,7 +46,6 @@ public class FilterListener {
 
   @Subscribe(order = PostOrder.FIRST)
   public void onLogin(LoginLimboRegisterEvent e) {
-    this.plugin.getStatistics().addConnection();
     if (this.plugin.shouldCheck((ConnectedPlayer) e.getPlayer())) {
       e.addCallback(() -> this.plugin.filter(e.getPlayer()));
     }
