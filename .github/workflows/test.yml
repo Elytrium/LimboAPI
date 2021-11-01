@@ -23,8 +23,8 @@ jobs:
           path: ~/.gradle
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
-      - name: Download Velocity
-        run: mkdir libs && wget https://ci.velocitypowered.com/job/velocity-3.0.0/lastSuccessfulBuild/artifact/proxy/build/libs/velocity-proxy-3.0.2-SNAPSHOT-all.jar -O libs/3.0.0.jar
+      - name: Download required libraries
+        run: bash scripts/init_libs.sh
       - name: Build plugins
         run: ./gradlew build
       - name: Move plugins to root dir
