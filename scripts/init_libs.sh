@@ -6,6 +6,7 @@ if [ -d "$DIR" ]; then
   echo "libs folders exists"
 else
   mkdir libs
+  # shellcheck disable=SC2164
   cd libs 
   wget https://versions.velocitypowered.com/download/$V_VERSION.jar
   exit 0

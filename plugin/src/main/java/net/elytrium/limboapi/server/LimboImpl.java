@@ -118,10 +118,17 @@ public class LimboImpl implements Limbo {
 
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
         this.limboAPI.getLogger().info(
-            player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + handler.getClass().getSimpleName() + " Limbo");
+            player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + handler.getClass().getSimpleName() + " Limbo"
+        );
       }
 
       if (!pipeline.names().contains("prepared-encoder")) {
+        // With an abnormally large number of connections from the same nickname, requests don't have time to be processed, and an error occurs that "minecraft-encoder" doesn't exist.
+        if (!pipeline.names().contains(Connections.MINECRAFT_ENCODER)) {
+          connection.close();
+          return;
+        }
+
         pipeline.addAfter(Connections.MINECRAFT_ENCODER, "prepared-encoder", new PreparedPacketEncoder(connection.getProtocolVersion()));
       }
 
