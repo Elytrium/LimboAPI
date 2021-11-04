@@ -109,7 +109,7 @@ public class Settings extends Config {
       public String UNREGISTER_SUCCESSFUL = "{PRFX} Successfully unregistered player";
       public String UNREGISTER_USAGE = "{PRFX} Usage: /unregister <nickname>";
 
-      public String CHANGE_PASSWORD_USAGE = "{PRFX} Usage: /changepass <old password> <new password>";
+      public String CHANGE_PASSWORD_USAGE = "{PRFX} Usage: /changepass <new password>";
       public String CHANGE_PASSWORD_SUCCESSFUL = "{PRFX} Successfully changed password";
 
       public String TOTP = "{PRFX} Please, enter your 2FA key using &a/2fa key";
