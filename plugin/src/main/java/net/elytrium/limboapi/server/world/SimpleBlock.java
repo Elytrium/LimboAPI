@@ -151,7 +151,12 @@ public class SimpleBlock implements VirtualBlock {
 
   @NonNull
   public static SimpleBlock fromLegacyId(short id) {
-    return legacyIDsMap.get(id);
+    if (legacyIDsMap.containsKey(id)) {
+      return legacyIDsMap.get(id);
+    } else {
+      LimboAPI.getInstance().getLogger().warn("Block #" + id + " is not supported, and was replaced with air");
+      return AIR;
+    }
   }
 
   @NonNull

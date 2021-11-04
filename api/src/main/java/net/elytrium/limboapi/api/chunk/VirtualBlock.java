@@ -44,9 +44,10 @@ public interface VirtualBlock {
     MINECRAFT_1_9(EnumSet.range(ProtocolVersion.MINECRAFT_1_9, ProtocolVersion.MINECRAFT_1_9_4)),
     MINECRAFT_1_10(ProtocolVersion.MINECRAFT_1_10),
     MINECRAFT_1_11(ProtocolVersion.MINECRAFT_1_11, ProtocolVersion.MINECRAFT_1_11_1),
-    */
-    LEGACY(EnumSet.range(ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_8)),
+
     MINECRAFT_1_12(EnumSet.range(ProtocolVersion.MINECRAFT_1_9, ProtocolVersion.MINECRAFT_1_12_2)),
+    */
+    LEGACY(EnumSet.range(ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_12_2)),
     MINECRAFT_1_13(ProtocolVersion.MINECRAFT_1_13),
     MINECRAFT_1_13_2(ProtocolVersion.MINECRAFT_1_13_1, ProtocolVersion.MINECRAFT_1_13_2),
     MINECRAFT_1_14(EnumSet.range(ProtocolVersion.MINECRAFT_1_14, ProtocolVersion.MINECRAFT_1_14_4)),
@@ -59,9 +60,9 @@ public interface VirtualBlock {
 
     public static Version parse(String from) {
       switch (from) {
-        case "1.12": {
+        /* case "1.12": {
           return MINECRAFT_1_12;
-        }
+        } */
         case "1.13": {
           return MINECRAFT_1_13;
         }
