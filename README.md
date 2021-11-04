@@ -32,6 +32,7 @@ Leymooo's BungeeCord BotFilter | Offline Mode | 8 sec | 40%
 yooniks' BungeeCord Aegis Escanor 1.3.1 | Offline Mode | 10 sec | 20%
 yooniks' BungeeCord Aegis 9.2.1 | Offline Mode | 10 sec | 100% (what?)
 Velocity | JPremium Online/Offline Mode | 2 sec | 95%
+Velocity | BotSentry 9.2 + Online Mode | 2 sec | 70%
 Velocity | Online Mode | 2 sec | 70%
 Velocity | Offline Mode | 2 sec | 55%
 
