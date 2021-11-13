@@ -92,10 +92,6 @@ public class FilterPlugin {
     this.statistics = new Statistics();
   }
 
-  private static void setInstance(FilterPlugin thisInst) {
-    instance = thisInst;
-  }
-
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
     this.server.getEventManager().register(this, new FilterListener(this));
@@ -215,6 +211,10 @@ public class FilterPlugin {
     }
 
     return limit <= this.statistics.getPings();
+  }
+
+  private static void setInstance(FilterPlugin instance) {
+    FilterPlugin.instance = instance;
   }
 
   public static FilterPlugin getInstance() {

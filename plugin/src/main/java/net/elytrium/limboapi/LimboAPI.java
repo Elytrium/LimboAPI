@@ -26,19 +26,12 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
@@ -60,6 +53,7 @@ import net.elytrium.limboapi.server.LimboImpl;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.elytrium.limboapi.server.world.SimpleWorld;
+import net.elytrium.limboapi.utils.UpdatesChecker;
 import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
@@ -108,10 +102,6 @@ public class LimboAPI implements LimboFactory {
     }
   }
 
-  private static void setInstance(LimboAPI thisInst) {
-    instance = thisInst;
-  }
-
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
     this.metricsFactory.make(this, 12530);
@@ -119,7 +109,13 @@ public class LimboAPI implements LimboFactory {
     this.players.clear();
 
     this.reload();
-    this.checkForUpdates();
+    UpdatesChecker.checkForUpdates(
+        this.getLogger(),
+        Settings.IMP.VERSION,
+        "https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION",
+        "LimboAPI",
+        "https://github.com/Elytrium/LimboAPI/releases/"
+    );
   }
 
   public void reload() {
@@ -129,29 +125,6 @@ public class LimboAPI implements LimboFactory {
     this.server.getEventManager().register(this, new LoginListener(this, this.server));
     this.server.getEventManager().register(this, new DisconnectListener(this));
     this.logger.info("Loaded!");
-  }
-
-  private void checkForUpdates() {
-    if (!Settings.IMP.VERSION.contains("-DEV") && !Settings.IMP.VERSION.contains("-rc")) {
-      try {
-        URL url = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION");
-        URLConnection conn = url.openConnection();
-        int timeout = (int) TimeUnit.SECONDS.toMillis(4);
-        conn.setConnectTimeout(timeout);
-        conn.setReadTimeout(timeout);
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-          String version = in.readLine();
-          if (version != null && !version.trim().equalsIgnoreCase(Settings.IMP.VERSION)) {
-            this.logger.error("****************************************");
-            this.logger.warn("The new LimboAPI update was found, please update.");
-            this.logger.error("https://github.com/Elytrium/LimboAPI/releases/");
-            this.logger.error("****************************************");
-          }
-        }
-      } catch (IOException ex) {
-        this.logger.warn("Unable to check for updates.", ex);
-      }
-    }
   }
 
   @Override
@@ -220,6 +193,10 @@ public class LimboAPI implements LimboFactory {
 
   public void removeLoginQueue(Player player) {
     this.loginQueue.remove(player);
+  }
+
+  private static void setInstance(LimboAPI instance) {
+    LimboAPI.instance = instance;
   }
 
   public static LimboAPI getInstance() {
