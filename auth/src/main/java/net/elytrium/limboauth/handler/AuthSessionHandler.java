@@ -171,7 +171,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
 
   private void checkIp() {
     try {
-      List<RegisteredPlayer> alreadyRegistered = this.playerDao.queryForEq("IP", this.ip);
+      List<RegisteredPlayer> alreadyRegistered = this.playerDao.queryForEq("ip", this.ip);
 
       if (alreadyRegistered == null) {
         return;
