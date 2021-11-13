@@ -72,10 +72,6 @@ public class FallbackPlugin {
     this.factory = (LimboFactory) factory.getInstance().get();
   }
 
-  private static void setInstance(FallbackPlugin thisInst) {
-    instance = thisInst;
-  }
-
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
     this.server.getEventManager().register(this, new FallbackListener());
@@ -125,6 +121,10 @@ public class FallbackPlugin {
     } catch (Throwable t) {
       this.logger.error("Error", t);
     }
+  }
+
+  private static void setInstance(FallbackPlugin instance) {
+    FallbackPlugin.instance = instance;
   }
 
   public static FallbackPlugin getInstance() {
