@@ -109,10 +109,6 @@ public class AuthPlugin {
     this.reload();
   }
 
-  private static void setInstance(AuthPlugin thisInst) {
-    instance = thisInst;
-  }
-
   @SuppressWarnings("SwitchStatementWithTooFewBranches")
   public void reload() throws SQLException {
     Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
@@ -207,7 +203,8 @@ public class AuthPlugin {
 
     scheduler.scheduleAtFixedRate(() ->
         this.checkCache(this.cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
-        Settings.IMP.MAIN.PURGE_CACHE_MILLIS, Settings.IMP.MAIN.PURGE_CACHE_MILLIS, TimeUnit.MILLISECONDS);
+        Settings.IMP.MAIN.PURGE_CACHE_MILLIS, Settings.IMP.MAIN.PURGE_CACHE_MILLIS, TimeUnit.MILLISECONDS
+    );
   }
 
   public void cacheAuthUser(Player player) {
@@ -268,6 +265,10 @@ public class AuthPlugin {
         .filter(u -> u.getValue().getCheckTime() + time <= System.currentTimeMillis())
         .map(Map.Entry::getKey)
         .forEach(userMap::remove);
+  }
+
+  private static void setInstance(AuthPlugin instance) {
+    AuthPlugin.instance = instance;
   }
 
   public static AuthPlugin getInstance() {
