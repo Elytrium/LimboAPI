@@ -105,7 +105,6 @@ public class AuthPlugin {
 
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) throws SQLException {
-    this.server.getEventManager().register(this, new AuthListener());
     this.reload();
   }
 
@@ -198,6 +197,9 @@ public class AuthPlugin {
     this.authServer = this.factory.createLimbo(authWorld);
 
     this.nicknameInvalid = LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NICKNAME_INVALID);
+
+    this.server.getEventManager().unregisterListeners(this);
+    this.server.getEventManager().register(this, new AuthListener(this.playerDao));
 
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
 
