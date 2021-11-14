@@ -28,13 +28,14 @@ public class RegisteredPlayer {
 
   }
 
-  public RegisteredPlayer(String nickname, String lowercaseNickname, String hash, String ip, String totpToken, Long regDate) {
+  public RegisteredPlayer(String nickname, String lowercaseNickname, String hash, String ip, String totpToken, Long regDate, String uuid) {
     this.nickname = nickname;
     this.lowercaseNickname = lowercaseNickname;
     this.hash = hash;
     this.ip = ip;
     this.totpToken = totpToken;
     this.regDate = regDate;
+    this.uuid = uuid;
   }
 
   @DatabaseField(canBeNull = false)
@@ -54,4 +55,7 @@ public class RegisteredPlayer {
 
   @DatabaseField
   public Long regDate;
+
+  @DatabaseField
+  public String uuid;
 }
