@@ -17,15 +17,25 @@
 
 package net.elytrium.limboauth.listener;
 
+import com.j256.ormlite.dao.Dao;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.util.UuidUtils;
+import java.util.UUID;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboauth.AuthPlugin;
 import net.elytrium.limboauth.Settings;
+import net.elytrium.limboauth.handler.AuthSessionHandler;
+import net.elytrium.limboauth.model.RegisteredPlayer;
 
 public class AuthListener {
+
+  private final Dao<RegisteredPlayer, String> playerDao;
+
+  public AuthListener(Dao<RegisteredPlayer, String> playerDao) {
+    this.playerDao = playerDao;
+  }
 
   @Subscribe
   public void onProxyConnect(PreLoginEvent e) {
@@ -49,6 +59,14 @@ public class AuthListener {
   public void onProfile(GameProfileRequestEvent e) {
     if (!Settings.IMP.MAIN.ONLINE_UUID_IF_POSSIBLE) {
       e.setGameProfile(e.getOriginalProfile().withId(UuidUtils.generateOfflinePlayerUuid(e.getUsername())));
+    }
+
+    if (Settings.IMP.MAIN.SAVE_UUID) {
+      RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, e.getUsername());
+
+      if (registeredPlayer != null) {
+        e.setGameProfile(e.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
+      }
     }
   }
 }

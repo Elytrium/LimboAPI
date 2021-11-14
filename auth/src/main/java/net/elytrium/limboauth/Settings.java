@@ -34,6 +34,11 @@ public class Settings extends Config {
 
     public boolean ONLINE_MODE_NEED_AUTH = true;
     public boolean ONLINE_UUID_IF_POSSIBLE = true;
+    @Comment({
+        "Forcibly set player's UUID to the value from the database",
+        "If the player had the cracked account, and switched to the premium account, the cracked UUID will be used."
+    })
+    public boolean SAVE_UUID = false;
     public boolean ENABLE_TOTP = true;
     public boolean REPEAT_PASSWORD = true;
     @Comment({

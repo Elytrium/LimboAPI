@@ -217,7 +217,8 @@ public class AuthSessionHandler implements LimboSessionHandler {
         genHash(password),
         this.ip,
         "",
-        System.currentTimeMillis()
+        System.currentTimeMillis(),
+        this.proxyPlayer.getUniqueId().toString()
     );
 
     try {
