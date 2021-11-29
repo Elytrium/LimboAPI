@@ -42,6 +42,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final LimboSessionHandler callback;
   private final MinecraftSessionHandler originalHandler;
   private RegisteredServer previousServer;
+  private boolean knownDisconnect = false;
 
   public LimboSessionHandlerImpl(LimboAPI limboAPI, ConnectedPlayer player, LimboSessionHandler callback, MinecraftSessionHandler originalHandler) {
     this.limboAPI = limboAPI;
@@ -79,6 +80,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     return true;
   }
 
+  @Override
   public boolean handle(Chat packet) {
     this.callback.onChat(packet.getMessage());
     return true;
@@ -96,20 +98,25 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.callback.onGeneric(packet);
   }
 
+  @Override
   public void disconnected() {
-    this.callback.onDisconnect();
-    if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-      this.limboAPI.getLogger().info(
-          this.player.getUsername() + " (" + this.player.getRemoteAddress() + ")"
-              + " has disconnected from the " + this.callback.getClass().getSimpleName() + " Limbo");
-    }
+    if (!this.knownDisconnect) {
+      this.knownDisconnect = true;
+      this.callback.onDisconnect();
+      if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+        this.limboAPI.getLogger().info(
+            this.player.getUsername() + " (" + this.player.getRemoteAddress() + ")"
+                + " has disconnected from the " + this.callback.getClass().getSimpleName() + " Limbo"
+        );
+      }
 
-    if (!(this.originalHandler instanceof LoginSessionHandler) && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
-      this.player.getConnection().setSessionHandler(this.originalHandler);
-    }
-    ChannelPipeline pipeline = this.player.getConnection().getChannel().pipeline();
-    if (pipeline.names().contains("prepared-encoder")) {
-      pipeline.remove(PreparedPacketEncoder.class);
+      if (!(this.originalHandler instanceof LoginSessionHandler) && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
+        this.player.getConnection().setSessionHandler(this.originalHandler);
+      }
+      ChannelPipeline pipeline = this.player.getConnection().getChannel().pipeline();
+      if (pipeline.names().contains("prepared-encoder")) {
+        pipeline.remove(PreparedPacketEncoder.class);
+      }
     }
   }
 

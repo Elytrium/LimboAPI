@@ -30,6 +30,7 @@ import java.util.Objects;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.protocol.packet.SetExp;
+import net.elytrium.limboapi.server.LimboImpl;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.elytrium.limbofilter.FilterPlugin;
 import net.elytrium.limbofilter.Settings;
@@ -44,15 +45,16 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   private static double CAPTCHA_Y;
   private static long TOTAL_TIME;
 
-  private final Statistics statistics;
-  private final FilterPlugin plugin;
   private final ConnectedPlayer player;
+  private final FilterPlugin plugin;
+  private final Statistics statistics;
   private final Logger logger;
   private final CachedPackets packets;
   private final MinecraftConnection connection;
-  private final MinecraftPacket fallingCheckPos;
-  private final MinecraftPacket fallingCheckChunk;
-  private final MinecraftPacket fallingCheckView;
+
+  private MinecraftPacket fallingCheckPos;
+  private MinecraftPacket fallingCheckChunk;
+  private MinecraftPacket fallingCheckView;
 
   private CheckState state = CheckState.valueOf(Settings.IMP.MAIN.CHECK_STATE);
   private LimboPlayer limboPlayer;
@@ -70,19 +72,13 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   public BotFilterSessionHandler(ConnectedPlayer player, FilterPlugin plugin) {
     super(player.getProtocolVersion());
 
-    this.plugin = plugin;
     this.player = player;
-    this.statistics = plugin.getStatistics();
-    this.logger = plugin.getLogger();
-    this.packets = plugin.getPackets();
-    this.connection = player.getConnection();
+    this.plugin = plugin;
 
-    Settings.MAIN.COORDS coords = Settings.IMP.MAIN.COORDS;
-    this.fallingCheckPos = this.packets.createPlayerPosAndLookPacket(
-        this.validX, this.validY, this.validZ, (float) coords.FALLING_CHECK_YAW, (float) coords.FALLING_CHECK_PITCH
-    );
-    this.fallingCheckChunk = this.packets.createChunkDataPacket(new SimpleChunk(this.validX >> 4, this.validZ >> 4), this.validY);
-    this.fallingCheckView = this.packets.createUpdateViewPosition(this.validX, this.validZ);
+    this.statistics = this.plugin.getStatistics();
+    this.logger = this.plugin.getLogger();
+    this.packets = this.plugin.getPackets();
+    this.connection = this.player.getConnection();
   }
 
   @Override
@@ -212,21 +208,22 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         } else {
           this.finishCheck();
         }
-
         return;
       }
       if (Settings.IMP.MAIN.FALLING_CHECK_DEBUG) {
-        System.out.println("lastY=" + this.lastY + "; y=" + this.y + "; diff=" + (this.lastY - this.y) + ";"
-            + " need=" + getLoadedChunkSpeed(this.ticks) + "; ticks=" + this.ticks
+        System.out.println(
+            "lastY=" + this.lastY + "; y=" + this.y + "; diff=" + (this.lastY - this.y)
+            + "; need=" + getLoadedChunkSpeed(this.ticks) + "; ticks=" + this.ticks
             + "; x=" + this.x + "; z=" + this.z + "; validX=" + this.validX + "; validZ=" + this.validZ
             + "; startedListening=" + this.startedListening + "; state=" + this.state
-            + "; onGround=" + this.onGround);
+            + "; onGround=" + this.onGround
+        );
       }
       if (this.ignoredTicks > Settings.IMP.MAIN.NON_VALID_POSITION_Y_ATTEMPTS) {
         this.fallingCheckFailed();
         return;
       }
-      if ((this.x != this.validX && this.z != this.validZ) || this.checkY()) { // TODO: Fix optifine 1.8
+      if ((this.x != this.validX && this.z != this.validZ) || this.checkY()) {
         this.fallingCheckFailed();
         return;
       }
@@ -245,6 +242,14 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   public void onSpawn(Limbo server, LimboPlayer player) {
     this.server = server;
     this.limboPlayer = player;
+
+    Settings.MAIN.COORDS coords = Settings.IMP.MAIN.COORDS;
+    this.fallingCheckPos = ((LimboImpl) this.server).createPlayerPosAndLookPacket(
+        this.validX, this.validY, this.validZ, (float) coords.FALLING_CHECK_YAW, (float) coords.FALLING_CHECK_PITCH
+    );
+    this.fallingCheckChunk = ((LimboImpl) this.server).createChunkDataPacket(new SimpleChunk(this.validX >> 4, this.validZ >> 4), this.validY);
+    this.fallingCheckView = ((LimboImpl) this.server).createUpdateViewPosition(this.validX, this.validZ);
+
     if (this.state == CheckState.ONLY_CAPTCHA) {
       this.sendCaptcha();
     } else if (this.state == CheckState.CAPTCHA_POSITION) {

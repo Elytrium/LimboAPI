@@ -75,12 +75,9 @@ public class LoginListener {
   private static final ClosedMinecraftConnection closed;
 
   private static Constructor<ConnectedPlayer> ctor;
-  private static Field craftConnectionField;
   private static Field loginConnectionField;
   private static Field delegate;
   private static Field spawned;
-
-  private static boolean isVelocityOld;
 
   private final LimboAPI limboAPI;
   private final VelocityServer server;
@@ -92,13 +89,10 @@ public class LoginListener {
   }
 
   static {
-    // TODO: Remove after velocity release.
     try {
       Class.forName("com.velocitypowered.proxy.connection.client.LoginInboundConnection");
-      isVelocityOld = false;
     } catch (ClassNotFoundException e) {
-      isVelocityOld = true;
-      //this.logger.warn("!!! Velocity 3.0.x is deprecated, please update your Velocity binary to 3.1.x as soon as possible !!!");
+      LimboAPI.getInstance().getLogger().error("Please update your Velocity binary to 3.1.x", e);
     }
 
     closed = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), LimboAPI.getInstance().getServer());
@@ -113,13 +107,8 @@ public class LoginListener {
       );
       ctor.setAccessible(true);
 
-      craftConnectionField = InitialInboundConnection.class.getDeclaredField("connection");
-      craftConnectionField.setAccessible(true);
-
-      if (!isVelocityOld) {
-        delegate = LoginInboundConnection.class.getDeclaredField("delegate");
-        delegate.setAccessible(true);
-      }
+      delegate = LoginInboundConnection.class.getDeclaredField("delegate");
+      delegate.setAccessible(true);
 
       loginConnectionField = LoginSessionHandler.class.getDeclaredField("mcConnection");
       loginConnectionField.setAccessible(true);
@@ -149,12 +138,7 @@ public class LoginListener {
   public void hookLoginSession(GameProfileRequestEvent e) throws IllegalAccessException {
     // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
     // method (which checks mcConnection.isActive()) and to override it. :)
-    MinecraftConnection connection;
-    if (isVelocityOld) {
-      connection = (MinecraftConnection) craftConnectionField.get(e.getConnection());
-    } else {
-      connection = ((InitialInboundConnection) delegate.get(e.getConnection())).getConnection();
-    }
+    MinecraftConnection connection = ((InitialInboundConnection) delegate.get(e.getConnection())).getConnection();
     LoginSessionHandler handler = (LoginSessionHandler) connection.getSessionHandler();
     loginConnectionField.set(handler, closed);
     if (connection.isClosed()) {
