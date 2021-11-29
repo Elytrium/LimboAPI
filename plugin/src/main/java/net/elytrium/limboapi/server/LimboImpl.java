@@ -55,7 +55,7 @@ public class LimboImpl implements Limbo {
   private static Field currentDimensionData;
 
   private final LimboAPI limboAPI;
-  private VirtualWorld world;
+  private final VirtualWorld world;
 
   private PreparedPacketImpl joinPackets;
   private PreparedPacketImpl fastRejoinPackets;
@@ -91,21 +91,22 @@ public class LimboImpl implements Limbo {
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16);
 
     this.fastRejoinPackets = new PreparedPacketImpl();
-    createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
+    this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
-    createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_16)
+    this.createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_16)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16));
 
-    this.safeRejoinPackets = new PreparedPacketImpl().prepare(createSafeClientServerSwitch(legacyJoinGame));
+    this.safeRejoinPackets = new PreparedPacketImpl().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
 
     this.chunks = new PreparedPacketImpl().prepare(this.createChunksPackets());
     this.spawnPosition = new PreparedPacketImpl()
         .prepare(
             this.createPlayerPosAndLookPacket(
-                this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.getWorld().getYaw(), this.getWorld().getPitch()
+                this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
             )
-        )
-        .prepare(this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()), ProtocolVersion.MINECRAFT_1_14);
+        ).prepare(
+            this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()), ProtocolVersion.MINECRAFT_1_14
+        );
   }
 
   @Override
@@ -143,12 +144,12 @@ public class LimboImpl implements Limbo {
 
       if (this.limboAPI.isLimboJoined(player)) {
         if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
-          connection.delayedWrite(this.getSafeRejoinPackets());
+          connection.delayedWrite(this.safeRejoinPackets);
         } else {
-          connection.delayedWrite(this.getFastRejoinPackets());
+          connection.delayedWrite(this.fastRejoinPackets);
         }
       } else {
-        connection.delayedWrite(this.getJoinPackets());
+        connection.delayedWrite(this.joinPackets);
       }
 
       this.limboAPI.setLimboJoined(player);
@@ -167,8 +168,8 @@ public class LimboImpl implements Limbo {
   public void respawnPlayer(Player player) {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
-    connection.write(this.getSpawnPosition());
-    connection.write(this.getChunks());
+    connection.write(this.spawnPosition);
+    connection.write(this.chunks);
   }
 
   private DimensionData createDimensionData(Dimension dimension) {
@@ -176,7 +177,8 @@ public class LimboImpl implements Limbo {
         0.0f, false, false, false, true,
         false, false, false, false, 256,
         "minecraft:infiniburn_nether",
-        0L, false, 1.0, dimension.getKey(), 0, 256);
+        0L, false, 1.0, dimension.getKey(), 0, 256
+    );
   }
 
   private JoinGame createJoinGamePacket() {
@@ -235,7 +237,7 @@ public class LimboImpl implements Limbo {
   }
 
   // Velocity backport
-  public static List<MinecraftPacket> createFastClientServerSwitch(JoinGame joinGame, ProtocolVersion version) {
+  private List<MinecraftPacket> createFastClientServerSwitch(JoinGame joinGame, ProtocolVersion version) {
     // In order to handle switching to another server, you will need to send two packets:
     //
     // - The join game packet from the backend server, with a different dimension
@@ -264,7 +266,7 @@ public class LimboImpl implements Limbo {
     return packets;
   }
 
-  public static List<MinecraftPacket> createSafeClientServerSwitch(JoinGame joinGame) {
+  private List<MinecraftPacket> createSafeClientServerSwitch(JoinGame joinGame) {
     // Some clients do not behave well with the "fast" respawn sequence. In this case we will use
     // a "safe" respawn sequence that involves sending three packets to the client. They have the
     // same effect but tend to work better with buggier clients (Forge 1.8 in particular).
@@ -293,7 +295,7 @@ public class LimboImpl implements Limbo {
     return packets;
   }
 
-  private ChunkData createChunkDataPacket(VirtualChunk chunk, int skyLightY) {
+  public ChunkData createChunkDataPacket(VirtualChunk chunk, int skyLightY) {
     chunk.setSkyLight(chunk.getX() % 16, skyLightY, chunk.getZ() % 16, (byte) 1);
     return new ChunkData(chunk.getFullChunkSnapshot(), true);
   }
@@ -304,33 +306,5 @@ public class LimboImpl implements Limbo {
 
   public UpdateViewPosition createUpdateViewPosition(int x, int z) {
     return new UpdateViewPosition(x >> 4, z >> 4);
-  }
-
-  public VirtualWorld getWorld() {
-    return this.world;
-  }
-
-  public PreparedPacketImpl getJoinPackets() {
-    return this.joinPackets;
-  }
-
-  public PreparedPacketImpl getFastRejoinPackets() {
-    return this.fastRejoinPackets;
-  }
-
-  public PreparedPacketImpl getSafeRejoinPackets() {
-    return this.safeRejoinPackets;
-  }
-
-  public PreparedPacketImpl getChunks() {
-    return this.chunks;
-  }
-
-  public PreparedPacketImpl getSpawnPosition() {
-    return this.spawnPosition;
-  }
-
-  public void setWorld(VirtualWorld world) {
-    this.world = world;
   }
 }

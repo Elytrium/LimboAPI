@@ -57,11 +57,11 @@ public class ChunkData implements MinecraftPacket {
   public ChunkData(ChunkSnapshot chunkSnapshot, boolean skyLight) {
     this.chunk = chunkSnapshot;
     int mask = 0;
-    for (int i = 0; i < chunkSnapshot.getSections().length; i++) {
-      if (chunkSnapshot.getSections()[i] != null) {
+    for (int i = 0; i < this.chunk.getSections().length; i++) {
+      if (this.chunk.getSections()[i] != null) {
         mask |= 1 << i;
-        LightSection light = chunkSnapshot.getLight()[i];
-        NetworkSection section = new NetworkSection(chunkSnapshot.getSections()[i], light.getBlockLight(), skyLight ? light.getSkyLight() : null);
+        LightSection light = this.chunk.getLight()[i];
+        NetworkSection section = new NetworkSection(this.chunk.getSections()[i], light.getBlockLight(), skyLight ? light.getSkyLight() : null);
         this.sections.add(section);
       }
     }
@@ -69,7 +69,7 @@ public class ChunkData implements MinecraftPacket {
     this.mask = mask;
     this.heightmap114 = this.createHeightMap(true);
     this.heightmap116 = this.createHeightMap(false);
-    this.biomeData = new BiomeData(chunkSnapshot);
+    this.biomeData = new BiomeData(this.chunk);
   }
 
   public ChunkData() {
@@ -77,9 +77,14 @@ public class ChunkData implements MinecraftPacket {
   }
 
   @Override
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+
+  }
+
+  @Override
   public void encode(ByteBuf buf, Direction direction, ProtocolVersion version) {
     if (!this.chunk.isFullChunk()) {
-      //1.17 supports only full chunks
+      // 1.17 supports only full chunks
       Preconditions.checkState(version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0);
     }
 
@@ -90,17 +95,19 @@ public class ChunkData implements MinecraftPacket {
 
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) >= 0
           && version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) < 0) {
-        buf.writeBoolean(true); //ignore old data
+        buf.writeBoolean(true); // Ignore old data
       }
 
-      //mask
+      // Mask
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) > 0) {
         ProtocolUtils.writeVarInt(buf, this.mask);
       } else {
-        buf.writeShort(this.mask);
+        // OptiFine devs have over-optimized the chunk loading by breaking loading of void-chunks.
+        // We are changing void-chunks length here, and OptiFine client thinks that the chunk is not void-alike.
+        buf.writeShort(this.mask == 0 ? 1 : this.mask);
       }
     } else {
-      //1.17 mask
+      // 1.17 mask
       long[] mask = this.create117Mask();
       ProtocolUtils.writeVarInt(buf, mask.length);
       for (long m : mask) {
@@ -108,7 +115,7 @@ public class ChunkData implements MinecraftPacket {
       }
     }
 
-    //1.14+ HeightMap
+    // 1.14+ HeightMap
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) < 0) {
         ProtocolUtils.writeCompoundTag(buf, this.heightmap114);
@@ -117,7 +124,7 @@ public class ChunkData implements MinecraftPacket {
       }
     }
 
-    //1.15+ Biomes
+    // 1.15+ Biomes
     if (this.chunk.isFullChunk() && version.compareTo(ProtocolVersion.MINECRAFT_1_15) >= 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) >= 0) {
         ProtocolUtils.writeVarInt(buf, this.biomeData.getPost115Biomes().length);
@@ -204,12 +211,11 @@ public class ChunkData implements MinecraftPacket {
   }
 
   private long[] create117Mask() {
-    BitSet bitSet = BitSet.valueOf(new long[] {this.mask});
-    return bitSet.toLongArray();
+    return BitSet.valueOf(new long[] {this.mask}).toLongArray();
   }
 
   private void write17(ByteBuf out, ByteBuf data) {
-    out.writeShort(0); //Extended bitmask
+    out.writeShort(0); // Extended bitmask
     byte[] uncompressed = new byte[data.readableBytes()];
     data.readBytes(uncompressed);
     ByteBuf compressed = Unpooled.buffer();
@@ -222,7 +228,7 @@ public class ChunkData implements MinecraftPacket {
         int count = deflater.deflate(buffer);
         compressed.writeBytes(buffer, 0, count);
       }
-      out.writeInt(compressed.readableBytes()); // compressed size
+      out.writeInt(compressed.readableBytes()); // Compressed size
       out.writeBytes(compressed);
     } finally {
       deflater.end();
@@ -231,13 +237,8 @@ public class ChunkData implements MinecraftPacket {
   }
 
   @Override
-  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
-    throw new UnsupportedOperationException("should not be decoded");
-  }
-
-  @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    throw new UnsupportedOperationException("cant be called");
+    return true;
   }
 
   private static class BiomeData {
@@ -251,7 +252,7 @@ public class ChunkData implements MinecraftPacket {
         this.post115Biomes[i] = biomes[i].getId();
       }
 
-      //Down sample 4x4x4 3d biomes to 2d XZ
+      // Down sample 4x4x4 3d biomes to 2d XZ
       Map<Integer, Integer> samples = new HashMap<>(256 / 4);
       for (int x = 0; x < 16; x += 4) {
         for (int z = 0; z < 16; z += 4) {

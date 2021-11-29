@@ -148,7 +148,13 @@ public class FilterCommand implements SimpleCommand {
 
     @Override
     public void execute(CommandSource source, String @NonNull [] args) {
-      this.plugin.reload();
+      try {
+        this.plugin.reload();
+        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.RELOAD));
+      } catch (Exception e) {
+        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.RELOAD_FAILED));
+        e.printStackTrace();
+      }
     }
 
     @Override
@@ -169,8 +175,10 @@ public class FilterCommand implements SimpleCommand {
         @Override
         public void run() {
           try {
-            Stats.this.playersWithStats.stream().map(server::getPlayer).forEach(player ->
-                player.ifPresent(p -> p.sendActionBar(Stats.this.getStats(p.getPing()))));
+            Stats.this.playersWithStats
+                .stream()
+                .map(server::getPlayer)
+                .forEach(player -> player.ifPresent(p -> p.sendActionBar(Stats.this.getStats(p.getPing()))));
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -203,15 +211,16 @@ public class FilterCommand implements SimpleCommand {
     private TextComponent getStats(long ping) {
       Statistics statistics = this.plugin.getStatistics();
 
-      return LegacyComponentSerializer
-          .legacyAmpersand()
-          .deserialize(MessageFormat.format(
+      return LegacyComponentSerializer.legacyAmpersand().deserialize(
+          MessageFormat.format(
               Settings.IMP.MAIN.STRINGS.STATS_FORMAT,
               statistics.getBlockedConnections(),
               statistics.getConnections() + "/" + Settings.IMP.MAIN.UNIT_OF_TIME_CPS + "s",
               statistics.getPings() + "/" + Settings.IMP.MAIN.UNIT_OF_TIME_PPS + "s",
-              statistics.getTotalConnection(), ping)
-          );
+              statistics.getTotalConnection(),
+              ping
+          )
+      );
     }
   }
 }

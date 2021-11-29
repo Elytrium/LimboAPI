@@ -31,11 +31,9 @@ public class AuthReloadCommand implements SimpleCommand {
 
     try {
       AuthPlugin.getInstance().reload();
-
       source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.RELOAD));
     } catch (Exception e) {
       e.printStackTrace();
-
       source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.RELOAD_FAILED));
     }
   }

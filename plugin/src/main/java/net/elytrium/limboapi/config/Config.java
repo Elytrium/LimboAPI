@@ -294,7 +294,7 @@ public class Config {
           if (clazz == null) {
             return null;
           }
-          
+
           Class<?>[] classes = clazz.getDeclaredClasses();
           for (Class<?> current : classes) {
             if (Objects.equals(current.getSimpleName(), this.toFieldName(split[0]))) {

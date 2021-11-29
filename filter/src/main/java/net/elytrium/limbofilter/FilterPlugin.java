@@ -113,10 +113,11 @@ public class FilterPlugin {
     this.cachedFilterChecks = new ConcurrentHashMap<>();
 
     Settings.MAIN.COORDS captchaCoords = Settings.IMP.MAIN.COORDS;
-    VirtualWorld authWorld = this.factory.createVirtualWorld(
+    VirtualWorld filterWorld = this.factory.createVirtualWorld(
         Dimension.valueOf(Settings.IMP.MAIN.BOTFILTER_DIMENSION),
         captchaCoords.CAPTCHA_X, captchaCoords.CAPTCHA_Y, captchaCoords.CAPTCHA_Z,
-        (float) captchaCoords.CAPTCHA_YAW, (float) captchaCoords.CAPTCHA_PITCH);
+        (float) captchaCoords.CAPTCHA_YAW, (float) captchaCoords.CAPTCHA_PITCH
+    );
 
     if (Settings.IMP.MAIN.LOAD_WORLD) {
       try {
@@ -135,21 +136,22 @@ public class FilterPlugin {
         }
 
         Settings.MAIN.WORLD_COORDS coords = Settings.IMP.MAIN.WORLD_COORDS;
-        file.toWorld(this.factory, authWorld, coords.X, coords.Y, coords.Z);
+        file.toWorld(this.factory, filterWorld, coords.X, coords.Y, coords.Z);
       } catch (IOException e) {
         e.printStackTrace();
       }
     }
 
-    this.filterServer = this.factory.createLimbo(authWorld);
+    this.filterServer = this.factory.createLimbo(filterWorld);
 
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
 
-    scheduler.scheduleAtFixedRate(
-        () -> this.checkCache(this.cachedFilterChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
+    scheduler.scheduleAtFixedRate(() ->
+        this.checkCache(this.cachedFilterChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
-        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS
+    );
 
     CommandManager manager = this.server.getCommandManager();
     manager.unregister("limbofilter");
