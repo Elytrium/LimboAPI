@@ -26,12 +26,12 @@ public class SchematicFile implements WorldFile {
   private byte[] blocksData;
 
   public SchematicFile(Path file) throws IOException {
-    CompoundBinaryTag tag = BinaryTagIO.reader().read(file, BinaryTagIO.Compression.GZIP);
+    CompoundBinaryTag tag = BinaryTagIO.unlimitedReader().read(file, BinaryTagIO.Compression.GZIP);
     this.fromNBT(tag);
   }
 
   public SchematicFile(InputStream stream) throws IOException {
-    CompoundBinaryTag tag = BinaryTagIO.reader().read(stream, BinaryTagIO.Compression.GZIP);
+    CompoundBinaryTag tag = BinaryTagIO.unlimitedReader().read(stream, BinaryTagIO.Compression.GZIP);
     this.fromNBT(tag);
   }
 
