@@ -47,7 +47,7 @@ public class Settings extends Config {
     public boolean FALLING_CHECK_DEBUG = false;
 
     @Comment("Available - ONLY_POSITION, ONLY_CAPTCHA, CAPTCHA_POSITION, CAPTCHA_ON_POSITION_FAILED, SUCCESSFULLY")
-    public String CHECK_STATE = "CAPTCHA_ON_POSITION_FAILED";
+    public String CHECK_STATE = "CAPTCHA_POSITION";
 
     public boolean LOAD_WORLD = false;
     @Comment("World file type: schematic")
@@ -145,6 +145,9 @@ public class Settings extends Config {
     public MAIN.STRINGS STRINGS;
 
     public static class STRINGS {
+
+      public String RELOAD = "{PRFX} Reloaded successfully";
+      public String RELOAD_FAILED = "{PRFX} &cReload failed, check console for details.";
 
       public String CHECKING_CHAT = "{PRFX} Bot-Filter check was started, please wait and don't move..";
 

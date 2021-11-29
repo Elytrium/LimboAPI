@@ -49,7 +49,7 @@ Velocity | Offline Mode | 2 sec | 55%
 ## How to
 
 - Include ``limboapi-api`` to your Maven/Gradle project as compile-only
-- Subscribe to ``LoginLimboRegisterEvent`` to send players to the Limbo server during login process 
+- Subscribe to ``LoginLimboRegisterEvent`` to send players to the Limbo server during login process
 - Use ``LimboFactory`` to send players to the Limbo server during play process
 
 ### How to include it
@@ -82,7 +82,7 @@ Velocity | Offline Mode | 2 sec | 55%
 ## Building
 
 - To build this project you need to download Velocity 3.0.0+ jar file to the "libs" folder
- - You can use the ```./scripts/init_libs.sh``` script
+- You can use the ```./scripts/init_libs.sh``` script
 
 ## Donation
 
