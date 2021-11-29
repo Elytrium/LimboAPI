@@ -99,7 +99,7 @@ public class PreparedPacketImpl implements PreparedPacket {
   private <T extends MinecraftPacket> ByteBuf encodePacket(T packet, ProtocolVersion version) {
     int id = this.getPacketId(packet, version);
     if (id == Integer.MIN_VALUE) {
-      LimboAPI.getInstance().getLogger().error("Bad packet id. {}", packet.getClass().getSimpleName());
+      LimboAPI.getInstance().getLogger().error("Bad packet id {}:{}", id, packet.getClass().getSimpleName());
     }
     ByteBuf byteBuf = Unpooled.buffer();
     ProtocolUtils.writeVarInt(byteBuf, id);
@@ -112,8 +112,9 @@ public class PreparedPacketImpl implements PreparedPacket {
     try {
       return LimboProtocol.getPacketId(LimboProtocol.getLimboRegistry().clientbound, packet.getClass(), version);
     } catch (Exception e) {
-      return LimboProtocol.getPacketId(LimboProtocol.getLimboRegistry().clientbound,
-          (Class<? extends MinecraftPacket>) packet.getClass().getSuperclass(), version);
+      return LimboProtocol.getPacketId(
+          LimboProtocol.getLimboRegistry().clientbound, (Class<? extends MinecraftPacket>) packet.getClass().getSuperclass(), version
+      );
     }
   }
 }

@@ -127,6 +127,7 @@ public class BitStorage19 implements CompactStorage {
     return this.data;
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static int roundToNearest(int value, int roundTo) {
     if (roundTo == 0) {
       return 0;

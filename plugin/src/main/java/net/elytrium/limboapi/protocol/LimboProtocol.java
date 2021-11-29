@@ -374,9 +374,8 @@ public class LimboProtocol {
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
-    assert map != null;
 
-    return map.getInt(packet);
+    return map == null ? Integer.MIN_VALUE : map.getInt(packet);
   }
 
   public static StateRegistry getLimboRegistry() {

@@ -26,16 +26,12 @@ import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
-import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.SetExp;
 import net.elytrium.limboapi.protocol.packet.SetSlot;
-import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
-import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.elytrium.limbofilter.FilterPlugin;
 import net.elytrium.limbofilter.Settings;
@@ -94,10 +90,6 @@ public class CachedPackets {
     return new PlayerAbilities((byte) 6, 0f, 0f);
   }
 
-  public PlayerPositionAndLook createPlayerPosAndLookPacket(double x, double y, double z, float yaw, float pitch) {
-    return new PlayerPositionAndLook(x, y, z, yaw, pitch, -133, false, true);
-  }
-
   private List<SetExp> createExpPackets() {
     List<SetExp> packets = new ArrayList<>();
     long ticks = BotFilterSessionHandler.getTotalTicks();
@@ -108,15 +100,6 @@ public class CachedPackets {
     }
 
     return packets;
-  }
-
-  public ChunkData createChunkDataPacket(VirtualChunk chunk, int skyLightY) {
-    chunk.setSkyLight(chunk.getX() % 16, skyLightY, chunk.getZ() % 16, (byte) 1);
-    return new ChunkData(chunk.getFullChunkSnapshot(), true);
-  }
-
-  public UpdateViewPosition createUpdateViewPosition(int x, int z) {
-    return new UpdateViewPosition(x >> 4, z >> 4);
   }
 
   @SuppressWarnings("SameParameterValue")
