@@ -81,7 +81,7 @@ Velocity | Offline Mode | 2 sec | 55%
 
 ## Building
 
-- To build this project you need to download Velocity 3.0.0+ jar file to the "libs" folder
+- To build this project you need to download Velocity 3.1.0+ jar file to the "libs" folder
 - You can use the ```./scripts/init_libs.sh``` script
 
 ## Donation
