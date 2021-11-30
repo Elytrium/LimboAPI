@@ -31,20 +31,12 @@ public class PlayerPosition implements MinecraftPacket {
   private double z;
   private boolean onGround;
 
-  public PlayerPosition(double x, double y, double z, boolean onGround) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-    this.onGround = onGround;
-  }
-
-  public PlayerPosition() {
-
-  }
-
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     this.x = buf.readDouble();
+    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      buf.skipBytes(8);
+    }
     this.y = buf.readDouble();
     this.z = buf.readDouble();
     this.onGround = buf.readBoolean();
@@ -61,7 +53,7 @@ public class PlayerPosition implements MinecraftPacket {
       return ((LimboSessionHandlerImpl) handler).handle(this);
     }
 
-    return false;
+    return true;
   }
 
   public double getX() {
@@ -80,29 +72,13 @@ public class PlayerPosition implements MinecraftPacket {
     return this.onGround;
   }
 
-  public void setX(double x) {
-    this.x = x;
-  }
-
-  public void setY(double y) {
-    this.y = y;
-  }
-
-  public void setZ(double z) {
-    this.z = z;
-  }
-
-  public void setOnGround(boolean onGround) {
-    this.onGround = onGround;
-  }
-
   @Override
   public String toString() {
     return "PlayerPosition{"
-        + "x=" + this.getX()
-        + ", y=" + this.getY()
-        + ", z=" + this.getZ()
-        + ", onGround=" + this.isOnGround()
+        + "x=" + this.x
+        + ", y=" + this.y
+        + ", z=" + this.z
+        + ", onGround=" + this.onGround
         + "}";
   }
 }

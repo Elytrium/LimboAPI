@@ -51,21 +51,18 @@ public class Player implements MinecraftPacket {
     if (handler instanceof LimboSessionHandlerImpl) {
       return ((LimboSessionHandlerImpl) handler).handle(this);
     }
-    return false;
+
+    return true;
   }
 
   public boolean isOnGround() {
     return this.onGround;
   }
 
-  public void setOnGround(boolean onGround) {
-    this.onGround = onGround;
-  }
-
   @Override
   public String toString() {
     return "Player{"
-        + "onGround=" + this.isOnGround()
+        + "onGround=" + this.onGround
         + "}";
   }
 }

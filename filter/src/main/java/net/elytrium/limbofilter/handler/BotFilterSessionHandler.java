@@ -174,7 +174,6 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   }
 
   @Override
-  @SuppressWarnings("ConstantConditions")
   public void onMove() {
     if (!this.startedListening && this.state != CheckState.ONLY_CAPTCHA) {
       if (this.x == this.validX && this.z == this.validZ) {
@@ -215,8 +214,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
             "lastY=" + this.lastY + "; y=" + this.y + "; diff=" + (this.lastY - this.y)
             + "; need=" + getLoadedChunkSpeed(this.ticks) + "; ticks=" + this.ticks
             + "; x=" + this.x + "; z=" + this.z + "; validX=" + this.validX + "; validZ=" + this.validZ
-            + "; startedListening=" + this.startedListening + "; state=" + this.state
-            + "; onGround=" + this.onGround
+            + "; ignoredTicks=" + this.ignoredTicks + "; state=" + this.state
         );
       }
       if (this.ignoredTicks > Settings.IMP.MAIN.NON_VALID_POSITION_Y_ATTEMPTS) {
@@ -247,7 +245,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.fallingCheckPos = ((LimboImpl) this.server).createPlayerPosAndLookPacket(
         this.validX, this.validY, this.validZ, (float) coords.FALLING_CHECK_YAW, (float) coords.FALLING_CHECK_PITCH
     );
-    this.fallingCheckChunk = ((LimboImpl) this.server).createChunkDataPacket(new SimpleChunk(this.validX >> 4, this.validZ >> 4), this.validY);
+    this.fallingCheckChunk = ((LimboImpl) this.server).createChunkDataPacket(new SimpleChunk(this.validX >> 4, this.validZ >> 4), 256);
     this.fallingCheckView = ((LimboImpl) this.server).createUpdateViewPosition(this.validX, this.validZ);
 
     if (this.state == CheckState.ONLY_CAPTCHA) {
@@ -256,7 +254,9 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       this.sendFallingCheckPackets();
       this.sendCaptcha();
     } else if (this.state == CheckState.ONLY_POSITION || this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
-      this.connection.delayedWrite(this.packets.getCheckingTitle());
+      if (this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+        this.connection.delayedWrite(this.packets.getCheckingTitle());
+      }
       this.connection.delayedWrite(this.packets.getCheckingChat());
       this.sendFallingCheckPackets();
     }
@@ -280,9 +280,11 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     Settings.MAIN.STRINGS strings = Settings.IMP.MAIN.STRINGS;
     if (this.attempts == Settings.IMP.MAIN.CAPTCHA_ATTEMPTS) {
       this.connection.delayedWrite(this.packets.createChatPacket(MessageFormat.format(strings.CHECKING_CAPTCHA_CHAT, this.attempts)));
-      this.connection.delayedWrite(
-          this.packets.createTitlePacket(strings.CHECKING_CAPTCHA_TITLE, MessageFormat.format(strings.CHECKING_CAPTCHA_SUBTITLE, this.attempts))
-      );
+      if (this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+        this.connection.delayedWrite(
+            this.packets.createTitlePacket(strings.CHECKING_CAPTCHA_TITLE, MessageFormat.format(strings.CHECKING_CAPTCHA_SUBTITLE, this.attempts))
+        );
+      }
     } else {
       this.connection.delayedWrite(this.packets.createChatPacket(MessageFormat.format(strings.CHECKING_WRONG_CAPTCHA_CHAT, this.attempts)));
     }

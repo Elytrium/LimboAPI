@@ -27,12 +27,12 @@ import net.kyori.adventure.nbt.CompoundBinaryTag;
 
 public class SetSlot implements MinecraftPacket {
 
-  private int windowId;
-  private int slot;
-  private VirtualItem item;
-  private int count;
-  private int data;
-  private CompoundBinaryTag nbt;
+  private final int windowId;
+  private final int slot;
+  private final VirtualItem item;
+  private final int count;
+  private final int data;
+  private final CompoundBinaryTag nbt;
 
   public SetSlot(int windowId, int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt) {
     this.windowId = windowId;
@@ -44,7 +44,7 @@ public class SetSlot implements MinecraftPacket {
   }
 
   public SetSlot() {
-
+    throw new IllegalStateException();
   }
 
   @Override
@@ -93,66 +93,18 @@ public class SetSlot implements MinecraftPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
-    return false;
-  }
-
-  public int getWindowId() {
-    return this.windowId;
-  }
-
-  public int getSlot() {
-    return this.slot;
-  }
-
-  public VirtualItem getItem() {
-    return this.item;
-  }
-
-  public int getCount() {
-    return this.count;
-  }
-
-  public int getData() {
-    return this.data;
-  }
-
-  public CompoundBinaryTag getNbt() {
-    return this.nbt;
-  }
-
-  public void setWindowId(int windowId) {
-    this.windowId = windowId;
-  }
-
-  public void setSlot(int slot) {
-    this.slot = slot;
-  }
-
-  public void setItem(VirtualItem item) {
-    this.item = item;
-  }
-
-  public void setCount(int count) {
-    this.count = count;
-  }
-
-  public void setData(int data) {
-    this.data = data;
-  }
-
-  public void setNbt(CompoundBinaryTag nbt) {
-    this.nbt = nbt;
+    return true;
   }
 
   @Override
   public String toString() {
     return "SetSlot{"
-        + "windowId=" + this.getWindowId()
-        + ", slot=" + this.getSlot()
-        + ", item=" + this.getItem()
-        + ", count=" + this.getCount()
-        + ", data=" + this.getData()
-        + ", nbt=" + this.getNbt()
+        + "windowId=" + this.windowId
+        + ", slot=" + this.slot
+        + ", item=" + this.item
+        + ", count=" + this.count
+        + ", data=" + this.data
+        + ", nbt=" + this.nbt
         + ")";
   }
 }

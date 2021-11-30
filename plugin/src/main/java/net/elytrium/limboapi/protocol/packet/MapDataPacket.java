@@ -26,9 +26,9 @@ import io.netty.buffer.ByteBuf;
 
 public class MapDataPacket implements MinecraftPacket {
 
-  private int mapId;
-  private byte scale;
-  private MapData data;
+  private final int mapId;
+  private final byte scale;
+  private final MapData data;
 
   public MapDataPacket(int mapId, byte scale, MapData data) {
     this.mapId = mapId;
@@ -37,7 +37,7 @@ public class MapDataPacket implements MinecraftPacket {
   }
 
   public MapDataPacket() {
-
+    throw new IllegalStateException();
   }
 
   @Override
@@ -74,39 +74,15 @@ public class MapDataPacket implements MinecraftPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
-    return false;
-  }
-
-  public int getMapId() {
-    return this.mapId;
-  }
-
-  public byte getScale() {
-    return this.scale;
-  }
-
-  public MapData getData() {
-    return this.data;
-  }
-
-  public void setMapId(int mapId) {
-    this.mapId = mapId;
-  }
-
-  public void setScale(byte scale) {
-    this.scale = scale;
-  }
-
-  public void setData(MapData data) {
-    this.data = data;
+    return true;
   }
 
   @Override
   public String toString() {
     return "MapDataPacket{"
-        + "mapId=" + this.getMapId()
-        + ", scale=" + this.getScale()
-        + ", data=" + this.getData()
+        + "mapId=" + this.mapId
+        + ", scale=" + this.scale
+        + ", data=" + this.data
         + "}";
   }
 

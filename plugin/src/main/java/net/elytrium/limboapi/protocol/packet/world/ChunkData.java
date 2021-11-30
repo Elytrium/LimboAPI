@@ -93,8 +93,7 @@ public class ChunkData implements MinecraftPacket {
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0) {
       buf.writeBoolean(this.chunk.isFullChunk());
 
-      if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) >= 0
-          && version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) < 0) {
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) >= 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) < 0) {
         buf.writeBoolean(true); // Ignore old data
       }
 
@@ -180,7 +179,7 @@ public class ChunkData implements MinecraftPacket {
     }
 
     if (dataLength != data.readableBytes()) {
-      LimboAPI.getInstance().getLogger().warn("Data length missmatch: " + dataLength + " != " + data.readableBytes() + ". Version: " + version);
+      LimboAPI.getInstance().getLogger().warn("Data length mismatch: " + dataLength + " != " + data.readableBytes() + ". Version: " + version);
     }
 
     return data;

@@ -50,10 +50,13 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
 
   public FallingCheckHandler(ProtocolVersion version) {
     this.version = version;
-    this.validX = ThreadLocalRandom.current().nextInt(16384) + 256;
-    this.validY = ThreadLocalRandom.current().nextInt(256);
-    this.validZ = ThreadLocalRandom.current().nextInt(16384) + 256;
-    this.validTeleportId = ThreadLocalRandom.current().nextInt(65535);
+
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    this.validX = rnd.nextInt(256, 16384);
+    // See https://media.discordapp.net/attachments/878241549857738793/915165038464098314/unknown.png
+    this.validY = rnd.nextInt(256, 512);
+    this.validZ = rnd.nextInt(256, 16384);
+    this.validTeleportId = rnd.nextInt(65535);
 
     this.x = this.validX;
     this.y = this.validY;
