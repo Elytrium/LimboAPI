@@ -41,8 +41,8 @@ import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
+import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
-import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
@@ -57,11 +57,11 @@ public class LimboImpl implements Limbo {
   private final LimboAPI limboAPI;
   private final VirtualWorld world;
 
-  private PreparedPacketImpl joinPackets;
-  private PreparedPacketImpl fastRejoinPackets;
-  private PreparedPacketImpl safeRejoinPackets;
-  private PreparedPacketImpl chunks;
-  private PreparedPacketImpl spawnPosition;
+  private PreparedPacket joinPackets;
+  private PreparedPacket fastRejoinPackets;
+  private PreparedPacket safeRejoinPackets;
+  private PreparedPacket chunks;
+  private PreparedPacket spawnPosition;
 
   static {
     try {
@@ -86,20 +86,20 @@ public class LimboImpl implements Limbo {
     JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGame joinGame = this.createJoinGamePacket();
 
-    this.joinPackets = new PreparedPacketImpl()
+    this.joinPackets = LimboAPI.getInstance().createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16);
 
-    this.fastRejoinPackets = new PreparedPacketImpl();
+    this.fastRejoinPackets = LimboAPI.getInstance().createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
     this.createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_16)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16));
 
-    this.safeRejoinPackets = new PreparedPacketImpl().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
+    this.safeRejoinPackets = LimboAPI.getInstance().createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
 
-    this.chunks = new PreparedPacketImpl().prepare(this.createChunksPackets());
-    this.spawnPosition = new PreparedPacketImpl()
+    this.chunks = LimboAPI.getInstance().createPreparedPacket().prepare(this.createChunksPackets());
+    this.spawnPosition = LimboAPI.getInstance().createPreparedPacket()
         .prepare(
             this.createPlayerPosAndLookPacket(
                 this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()

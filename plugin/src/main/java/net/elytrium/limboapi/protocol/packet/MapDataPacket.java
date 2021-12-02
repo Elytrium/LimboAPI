@@ -26,9 +26,9 @@ import io.netty.buffer.ByteBuf;
 
 public class MapDataPacket implements MinecraftPacket {
 
-  private int mapId;
-  private byte scale;
-  private MapData data;
+  private final int mapId;
+  private final byte scale;
+  private final MapData data;
 
   public MapDataPacket(int mapId, byte scale, MapData data) {
     this.mapId = mapId;
@@ -37,7 +37,7 @@ public class MapDataPacket implements MinecraftPacket {
   }
 
   public MapDataPacket() {
-
+    throw new IllegalStateException();
   }
 
   @Override
@@ -48,68 +48,52 @@ public class MapDataPacket implements MinecraftPacket {
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     ProtocolUtils.writeVarInt(buf, this.mapId);
-    buf.writeByte(this.scale);
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+      buf.writeByte(this.scale);
 
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_9) >= 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0) {
-      buf.writeBoolean(false);
-    }
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_9) >= 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0) {
+        buf.writeBoolean(false);
+      }
 
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
-      buf.writeBoolean(false);
-    }
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
+        buf.writeBoolean(false);
+      }
 
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
-      buf.writeBoolean(false);
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
+        buf.writeBoolean(false);
+      } else {
+        ProtocolUtils.writeVarInt(buf, 0);
+      }
+
+      buf.writeByte(this.data.getColumns());
+      buf.writeByte(this.data.getRows());
+      buf.writeByte(this.data.getX());
+      buf.writeByte(this.data.getY());
+      ProtocolUtils.writeByteArray(buf, this.data.getData());
     } else {
-      ProtocolUtils.writeVarInt(buf, 0);
+      buf.writeShort(this.data.getData().length + 3);
+      buf.writeByte(0);
+      buf.writeByte(this.data.getX());
+      buf.writeByte(this.data.getY());
+      buf.writeBytes(this.data.getData());
     }
-
-    buf.writeByte(this.data.getColumns());
-    buf.writeByte(this.data.getRows());
-    buf.writeByte(this.data.getX());
-    buf.writeByte(this.data.getY());
-    buf.ensureWritable(3 + this.data.getData().length);
-    ProtocolUtils.writeByteArray(buf, this.data.getData());
   }
 
   @Override
   public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
-    return false;
-  }
-
-  public int getMapId() {
-    return this.mapId;
-  }
-
-  public byte getScale() {
-    return this.scale;
-  }
-
-  public MapData getData() {
-    return this.data;
-  }
-
-  public void setMapId(int mapId) {
-    this.mapId = mapId;
-  }
-
-  public void setScale(byte scale) {
-    this.scale = scale;
-  }
-
-  public void setData(MapData data) {
-    this.data = data;
+    return true;
   }
 
   @Override
   public String toString() {
     return "MapDataPacket{"
-        + "mapId=" + this.getMapId()
-        + ", scale=" + this.getScale()
-        + ", data=" + this.getData()
+        + "mapId=" + this.mapId
+        + ", scale=" + this.scale
+        + ", data=" + this.data
         + "}";
   }
 
+  @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
   public static class MapData {
 
     private final int columns;
@@ -118,13 +102,20 @@ public class MapDataPacket implements MinecraftPacket {
     private final int y;
     private final byte[] data;
 
-    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public MapData(int columns, int rows, int x, int y, byte[] data) {
       this.columns = columns;
       this.rows = rows;
       this.x = x;
       this.y = y;
       this.data = data;
+    }
+
+    public MapData(int x, byte[] data) {
+      this(128, 128, x, 0, data);
+    }
+
+    public MapData(byte[] data) {
+      this(128, 128, 0, 0, data);
     }
 
     public int getColumns() {
@@ -143,7 +134,6 @@ public class MapDataPacket implements MinecraftPacket {
       return this.y;
     }
 
-    @SuppressFBWarnings("EI_EXPOSE_REP")
     public byte[] getData() {
       return this.data;
     }

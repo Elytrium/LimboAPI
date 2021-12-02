@@ -108,7 +108,6 @@ public class LimboProtocol {
         PlayerPositionAndLook.class, PlayerPositionAndLook::new,
         new StateRegistry.PacketMapping[] {
             map(0x06, ProtocolVersion.MINECRAFT_1_7_2, false),
-            map(0x06, ProtocolVersion.MINECRAFT_1_8, false),
             map(0x0D, ProtocolVersion.MINECRAFT_1_9, false),
             map(0x0F, ProtocolVersion.MINECRAFT_1_12, false),
             map(0x0E, ProtocolVersion.MINECRAFT_1_12_1, false),
@@ -120,9 +119,7 @@ public class LimboProtocol {
     register(PacketDirection.SERVERBOUND,
         PlayerPosition.class, PlayerPosition::new,
         new StateRegistry.PacketMapping[] {
-            map(0x0B, ProtocolVersion.MINECRAFT_1_7_2, false),
-            map(0x04, ProtocolVersion.MINECRAFT_1_7_6, false),
-            map(0x04, ProtocolVersion.MINECRAFT_1_8, false),
+            map(0x04, ProtocolVersion.MINECRAFT_1_7_2, false),
             map(0x0C, ProtocolVersion.MINECRAFT_1_9, false),
             map(0x0E, ProtocolVersion.MINECRAFT_1_12, false),
             map(0x0D, ProtocolVersion.MINECRAFT_1_12_1, false),
@@ -135,7 +132,6 @@ public class LimboProtocol {
         Player.class, Player::new,
         new StateRegistry.PacketMapping[] {
             map(0x03, ProtocolVersion.MINECRAFT_1_7_2, false),
-            map(0x03, ProtocolVersion.MINECRAFT_1_8, false),
             map(0x0F, ProtocolVersion.MINECRAFT_1_9, false),
             map(0x0D, ProtocolVersion.MINECRAFT_1_12, false),
             map(0x0C, ProtocolVersion.MINECRAFT_1_12_1, false),
@@ -161,7 +157,6 @@ public class LimboProtocol {
         ChunkData.class, ChunkData::new,
         new StateRegistry.PacketMapping[] {
             map(0x21, ProtocolVersion.MINECRAFT_1_7_2, true),
-            map(0x21, ProtocolVersion.MINECRAFT_1_8, true),
             map(0x20, ProtocolVersion.MINECRAFT_1_9, true),
             map(0x22, ProtocolVersion.MINECRAFT_1_13, true),
             map(0x21, ProtocolVersion.MINECRAFT_1_14, true),
@@ -174,7 +169,6 @@ public class LimboProtocol {
         SetSlot.class, SetSlot::new,
         new StateRegistry.PacketMapping[] {
             map(0x2F, ProtocolVersion.MINECRAFT_1_7_2, true),
-            map(0x2F, ProtocolVersion.MINECRAFT_1_8, true),
             map(0x16, ProtocolVersion.MINECRAFT_1_9, true),
             map(0x17, ProtocolVersion.MINECRAFT_1_13, true),
             map(0x16, ProtocolVersion.MINECRAFT_1_14, true),
@@ -187,10 +181,8 @@ public class LimboProtocol {
         MapDataPacket.class, MapDataPacket::new,
         new StateRegistry.PacketMapping[] {
             map(0x34, ProtocolVersion.MINECRAFT_1_7_2, true),
-            map(0x34, ProtocolVersion.MINECRAFT_1_8, true),
             map(0x24, ProtocolVersion.MINECRAFT_1_9, true),
             map(0x26, ProtocolVersion.MINECRAFT_1_13, true),
-            map(0x26, ProtocolVersion.MINECRAFT_1_14, true),
             map(0x27, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x26, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x25, ProtocolVersion.MINECRAFT_1_16_2, true),
@@ -200,7 +192,6 @@ public class LimboProtocol {
         PlayerAbilities.class, PlayerAbilities::new,
         new StateRegistry.PacketMapping[] {
             map(0x39, ProtocolVersion.MINECRAFT_1_7_2, true),
-            map(0x39, ProtocolVersion.MINECRAFT_1_8, true),
             map(0x2B, ProtocolVersion.MINECRAFT_1_9, true),
             map(0x2C, ProtocolVersion.MINECRAFT_1_12_1, true),
             map(0x2E, ProtocolVersion.MINECRAFT_1_13, true),
@@ -213,8 +204,7 @@ public class LimboProtocol {
     register(PacketDirection.CLIENTBOUND,
         SetExp.class, SetExp::new,
         new StateRegistry.PacketMapping[] {
-            map(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
-            map(0x1F, ProtocolVersion.MINECRAFT_1_8, true),
+            map(0x1F, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x3D, ProtocolVersion.MINECRAFT_1_9, true),
             map(0x3F, ProtocolVersion.MINECRAFT_1_12, true),
             map(0x40, ProtocolVersion.MINECRAFT_1_12_1, true),
@@ -226,7 +216,6 @@ public class LimboProtocol {
     register(PacketDirection.CLIENTBOUND,
         UpdateViewPosition.class, UpdateViewPosition::new,
         new StateRegistry.PacketMapping[] {
-            map(0x40, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x40, ProtocolVersion.MINECRAFT_1_14, true),
             map(0x41, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x40, ProtocolVersion.MINECRAFT_1_16_1, true),
@@ -309,7 +298,7 @@ public class LimboProtocol {
         break;
       }
       default: {
-        throw new IllegalArgumentException();
+        throw new IllegalStateException("Unexpected value: " + direction);
       }
     }
 

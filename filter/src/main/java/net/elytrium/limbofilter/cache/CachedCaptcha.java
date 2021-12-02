@@ -17,10 +17,14 @@
 
 package net.elytrium.limbofilter.cache;
 
+import com.velocitypowered.api.network.ProtocolVersion;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
+import net.elytrium.limbofilter.FilterPlugin;
+import net.elytrium.limbofilter.Settings;
 
 /**
  * @author Leymooo
@@ -31,8 +35,21 @@ public class CachedCaptcha {
   private final List<CaptchaHandler> captchas = new ArrayList<>();
   private final AtomicInteger counterAtomic = new AtomicInteger(0);
 
-  public void createCaptchaPacket(MapDataPacket map, String answer) {
-    this.captchas.add(new CaptchaHandler(map, answer));
+  public void createCaptchaPacket(MapDataPacket packet, MapDataPacket[] packets17, String answer) {
+    if (Settings.IMP.MAIN.CAPTCHA_GENERATOR.PREPARE_CAPTCHA_PACKETS) {
+      PreparedPacket prepared = FilterPlugin.getInstance().getFactory().createPreparedPacket();
+      this.captchas.add(
+          new CaptchaHandler(
+              prepared.prepare(
+                  packet, ProtocolVersion.MINECRAFT_1_8
+              ).prepare(
+                  packets17, ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_7_6
+              ), answer
+          )
+      );
+    } else {
+      this.captchas.add(new CaptchaHandler(packet, packets17, answer));
+    }
   }
 
   public CaptchaHandler randomCaptcha() {
