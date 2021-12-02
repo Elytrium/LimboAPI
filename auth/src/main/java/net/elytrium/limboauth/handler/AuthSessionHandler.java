@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboSessionHandler;
@@ -137,6 +138,17 @@ public class AuthSessionHandler implements LimboSessionHandler {
     return (playerList != null ? playerList.size() : 0) == 0 ? null : playerList.get(0);
   }
 
+  public static RegisteredPlayer fetchInfo(Dao<RegisteredPlayer, String> playerDao, UUID uuid) {
+    List<RegisteredPlayer> playerList = null;
+    try {
+      playerList = playerDao.queryForEq("UUID", uuid.toString());
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return (playerList != null ? playerList.size() : 0) == 0 ? null : playerList.get(0);
+  }
+
   private RegisteredPlayer fetchInfo(String nickname) {
     return fetchInfo(this.playerDao, nickname);
   }
@@ -214,7 +226,8 @@ public class AuthSessionHandler implements LimboSessionHandler {
         this.ip,
         "",
         System.currentTimeMillis(),
-        this.proxyPlayer.getUniqueId().toString()
+        this.proxyPlayer.getUniqueId().toString(),
+        ""
     );
 
     try {
