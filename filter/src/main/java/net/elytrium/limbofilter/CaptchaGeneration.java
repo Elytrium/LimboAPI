@@ -56,7 +56,7 @@ public class CaptchaGeneration {
   public static void init() {
     try {
       if (!Settings.IMP.MAIN.CAPTCHA_GENERATOR.BACKPLATE_PATH.equals("")) {
-        cachedBackgroundMap.drawImage(0, 0, ImageIO.read(new File(Settings.IMP.MAIN.CAPTCHA_GENERATOR.BACKPLATE_PATH)));
+        cachedBackgroundMap.drawImage(0, 0, ImageIO.read(new File(Settings.IMP.MAIN.CAPTCHA_GENERATOR.BACKPLATE_PATH)), false);
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -130,7 +130,7 @@ public class CaptchaGeneration {
     }
 
     BufferedImage image = painter.draw(fonts.get(fontNumber), randomNotWhiteColor(), answer);
-    map.drawImage(0, 0, image);
+    map.drawImage(0, 0, image, Settings.IMP.MAIN.CAPTCHA_GENERATOR.COLORIFY);
 
     MapDataPacket packet = new MapDataPacket(0, (byte) 0, map.getMapData());
     MapDataPacket[] packets17 = new MapDataPacket[128];

@@ -150,6 +150,7 @@ public class Settings extends Config {
       public boolean FONT_BLUR = true;
       public boolean STRIKETHROUGH = false;
       public boolean UNDERLINE = true;
+      public boolean COLORIFY = false;
       public String PATTERN = "abcdefghijklmnopqrtuvwxyz1234567890";
       public int LENGTH = 3;
     }
