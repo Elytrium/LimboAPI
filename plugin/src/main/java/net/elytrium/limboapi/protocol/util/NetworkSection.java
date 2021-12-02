@@ -31,6 +31,7 @@ import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3d;
 import net.elytrium.limboapi.protocol.data.BiomeStorage118;
 import net.elytrium.limboapi.protocol.data.BlockStorage17;
 import net.elytrium.limboapi.protocol.data.BlockStorage19;
+import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class NetworkSection {
@@ -73,8 +74,8 @@ public class NetworkSection {
     if (storage == null) {
       synchronized (this.biomeStorages) {
         storage = new BiomeStorage118(version);
-        final int offset = this.index * 64;
-        for (int biomeIndex = 0, biomeArrayIndex = offset; biomeIndex < 64; biomeIndex++, biomeArrayIndex++) {
+        final int offset = this.index * SimpleChunk.MAX_BIOMES_PER_SECTION;
+        for (int biomeIndex = 0, biomeArrayIndex = offset; biomeIndex < SimpleChunk.MAX_BIOMES_PER_SECTION; biomeIndex++, biomeArrayIndex++) {
           storage.set(biomeIndex, this.biomes[biomeArrayIndex]);
         }
         this.biomeStorages.put(version, storage);
@@ -96,6 +97,10 @@ public class NetworkSection {
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
       dataLength += 2; //Block count short
+    }
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
+      BiomeStorage118 biomeStorage = this.ensureBiomeCreated(version);
+      dataLength += biomeStorage.getDataLength(version);
     }
 
     return dataLength;

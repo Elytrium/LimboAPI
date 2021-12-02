@@ -22,6 +22,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.util.UuidUtils;
+import java.sql.SQLException;
 import java.util.UUID;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboauth.AuthPlugin;
@@ -57,16 +58,31 @@ public class AuthListener {
 
   @Subscribe
   public void onProfile(GameProfileRequestEvent e) {
-    if (!Settings.IMP.MAIN.ONLINE_UUID_IF_POSSIBLE) {
-      e.setGameProfile(e.getOriginalProfile().withId(UuidUtils.generateOfflinePlayerUuid(e.getUsername())));
-    }
-
     if (Settings.IMP.MAIN.SAVE_UUID) {
-      RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, e.getUsername());
+      RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, e.getOriginalProfile().getId());
 
       if (registeredPlayer != null) {
         e.setGameProfile(e.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
+        return;
       }
+
+      registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, e.getUsername());
+
+      if (registeredPlayer != null) {
+        if (e.isOnlineMode()) {
+          try {
+            registeredPlayer.premiumUuid = e.getOriginalProfile().getId().toString();
+            this.playerDao.update(registeredPlayer);
+          } catch (SQLException ex) {
+            ex.printStackTrace();
+          }
+        }
+        e.setGameProfile(e.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
+      }
+    }
+
+    if (!Settings.IMP.MAIN.ONLINE_UUID_IF_POSSIBLE) {
+      e.setGameProfile(e.getOriginalProfile().withId(UuidUtils.generateOfflinePlayerUuid(e.getUsername())));
     }
   }
 }
