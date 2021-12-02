@@ -51,8 +51,6 @@ public class CachedPackets {
   private PreparedPacket checkingChat;
   private PreparedPacket checkingTitle;
   private PreparedPacket kickClientCheckSettings;
-  private PreparedPacket kickClientCheckSettingsChat;
-  private PreparedPacket kickClientCheckSettingsSkin;
   private PreparedPacket kickClientCheckBrand;
   private PreparedPacket successfulBotFilterChat;
   private PreparedPacket successfulBotFilterDisconnect;
@@ -61,9 +59,7 @@ public class CachedPackets {
 
   public void createPackets() {
     Settings.MAIN.STRINGS strings = Settings.IMP.MAIN.STRINGS;
-    this.experience = this.createExpPackets();
 
-    this.noAbilities = this.prepare(this.createAbilitiesPacket());
     this.tooBigPacket = this.prepare((version) -> this.createDisconnectPacket(strings.TOO_BIG_PACKET, version));
     this.captchaFailed = this.prepare((version) -> this.createDisconnectPacket(strings.CAPTCHA_FAILED, version));
     this.fallingCheckFailed = this.prepare((version) -> this.createDisconnectPacket(strings.FALLING_CHECK_FAILED, version));
@@ -76,14 +72,16 @@ public class CachedPackets {
 
     this.resetSlot = this.prepare(this.createSetSlotPacket(0, 36, SimpleItem.fromItem(Item.AIR), 0, 0, null));
     this.checkingChat = this.createChatPacket(strings.CHECKING_CHAT);
-    this.successfulBotFilterChat = this.createChatPacket(strings.SUCCESSFUL_CRACKED);
-    this.successfulBotFilterDisconnect = this.prepare((version) -> this.createDisconnectPacket(strings.SUCCESSFUL_PREMIUM, version));
     this.checkingTitle = this.createTitlePacket(strings.CHECKING_TITLE, strings.CHECKING_SUBTITLE);
 
     this.kickClientCheckSettings = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_SETTINGS, version));
-    this.kickClientCheckSettingsChat = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_SETTINGS_CHAT_COLOR, version));
-    this.kickClientCheckSettingsSkin = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_SETTINGS_SKIN_PARTS, version));
     this.kickClientCheckBrand = this.prepare(version -> this.createDisconnectPacket(strings.KICK_CLIENT_CHECK_BRAND, version));
+
+    this.successfulBotFilterChat = this.createChatPacket(strings.SUCCESSFUL_CRACKED);
+    this.successfulBotFilterDisconnect = this.prepare((version) -> this.createDisconnectPacket(strings.SUCCESSFUL_PREMIUM, version));
+
+    this.noAbilities = this.prepare(this.createAbilitiesPacket());
+    this.experience = this.createExpPackets();
   }
 
   private PlayerAbilities createAbilitiesPacket() {
@@ -210,14 +208,6 @@ public class CachedPackets {
 
   public PreparedPacket getKickClientCheckSettings() {
     return this.kickClientCheckSettings;
-  }
-
-  public PreparedPacket getKickClientCheckSettingsChat() {
-    return this.kickClientCheckSettingsChat;
-  }
-
-  public PreparedPacket getKickClientCheckSettingsSkin() {
-    return this.kickClientCheckSettingsSkin;
   }
 
   public PreparedPacket getKickClientCheckBrand() {

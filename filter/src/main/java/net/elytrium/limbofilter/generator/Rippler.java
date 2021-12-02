@@ -125,8 +125,8 @@ public class Rippler {
 
     final int[] horizontalDelta = this.calcDeltaArray(this.horizontal, height);
 
-    for (int x = 0; x < width; x++) {
-      for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; ++x) {
+      for (int y = 0; y < height; ++y) {
         final int ny = (y + verticalDelta[x] + height) % height;
         final int nx = (x + horizontalDelta[ny] + width) % width;
         dest.setRGB(nx, ny, src.getRGB(x, y));
@@ -150,7 +150,7 @@ public class Rippler {
     final double period = axisConfig.getLength() / num;
     final double amplitude = axisConfig.getAmplitude();
 
-    for (int fi = 0; fi < num; fi++) {
+    for (int fi = 0; fi < num; ++fi) {
       delta[fi] = (int) Math.round(amplitude * Math.sin(start + fi * period));
     }
 

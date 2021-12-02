@@ -20,12 +20,10 @@ package net.elytrium.limboauth.handler;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.j256.ormlite.dao.Dao;
 import com.velocitypowered.api.proxy.Player;
-import dev.samstevens.totp.code.CodeGenerator;
 import dev.samstevens.totp.code.CodeVerifier;
 import dev.samstevens.totp.code.DefaultCodeGenerator;
 import dev.samstevens.totp.code.DefaultCodeVerifier;
 import dev.samstevens.totp.time.SystemTimeProvider;
-import dev.samstevens.totp.time.TimeProvider;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.List;
@@ -42,9 +40,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class AuthSessionHandler implements LimboSessionHandler {
 
-  private static final TimeProvider timeProvider = new SystemTimeProvider();
-  private static final CodeGenerator codeGenerator = new DefaultCodeGenerator();
-  private static final CodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+  private static final CodeVerifier verifier = new DefaultCodeVerifier(new DefaultCodeGenerator(), new SystemTimeProvider());
 
   private final Dao<RegisteredPlayer, String> playerDao;
   private final Player proxyPlayer;
@@ -86,7 +82,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
         case "/r": {
           if (!this.totp && this.playerInfo == null && this.checkPasswordsRepeat(args)) {
             this.register(args[1]);
-            this.finish();
+            this.finishAuth();
           } else {
             this.sendMessage();
           }
@@ -98,7 +94,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
           if (!this.totp && this.playerInfo != null) {
             if (this.checkPassword(args[1])) {
               this.finishOrTotp();
-            } else if (this.attempts-- != 0) {
+            } else if (--this.attempts != 0) {
               this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
             } else {
               this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
@@ -111,7 +107,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
         case "/2fa": {
           if (this.totp) {
             if (verifier.isValidCode(this.playerInfo.totpToken, args[1])) {
-              this.finish();
+              this.finishAuth();
             } else {
               this.sendMessage();
             }
@@ -230,14 +226,14 @@ public class AuthSessionHandler implements LimboSessionHandler {
 
   private void finishOrTotp() {
     if (this.playerInfo.totpToken.isEmpty()) {
-      this.finish();
+      this.finishAuth();
     } else {
       this.totp = true;
       this.sendMessage();
     }
   }
 
-  private void finish() {
+  private void finishAuth() {
     this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.LOGIN_SUCCESS));
     AuthPlugin.getInstance().cacheAuthUser(this.proxyPlayer);
     this.player.disconnect();

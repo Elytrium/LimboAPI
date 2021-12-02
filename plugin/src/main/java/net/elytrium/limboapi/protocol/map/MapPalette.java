@@ -60,7 +60,7 @@ public final class MapPalette {
       clr(52, 90, 180), clr(63, 110, 220), clr(74, 128, 255), clr(39, 67, 135),
       clr(0, 153, 40), clr(0, 187, 50), clr(0, 217, 58), clr(0, 114, 30),
       clr(91, 60, 34), clr(111, 74, 42), clr(129, 86, 49), clr(68, 45, 25),
-      clr(79, 1, 0), clr(96, 1, 0), clr(112, 2, 0), clr(59, 1, 0),
+      clr(79, 1, 0), clr(96, 1, 0), clr(112, 2, 0), clr(59, 1, 0)
   };
 
   public static final byte WHITE = 34;

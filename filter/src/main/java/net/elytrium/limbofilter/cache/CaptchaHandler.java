@@ -17,20 +17,40 @@
 
 package net.elytrium.limbofilter.cache;
 
+import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class CaptchaHandler {
 
-  private final MapDataPacket map;
+  private final MapDataPacket mapPacket;
+  private final MapDataPacket[] mapPackets17;
+  private final PreparedPacket preparedMapPacket;
   private final String answer;
 
-  public CaptchaHandler(MapDataPacket map, String answer) {
-    this.map = map;
+  public CaptchaHandler(MapDataPacket packet, MapDataPacket[] packets17, String answer) {
+    this.mapPacket = packet;
+    this.mapPackets17 = packets17;
+    this.preparedMapPacket = null;
     this.answer = answer;
   }
 
-  public MapDataPacket getMap() {
-    return this.map;
+  public CaptchaHandler(PreparedPacket preparedPacket, String answer) {
+    this.mapPacket = null;
+    this.mapPackets17 = null;
+    this.preparedMapPacket = preparedPacket;
+    this.answer = answer;
+  }
+
+  public MinecraftPacket[] getMapPacket(ProtocolVersion version) {
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+      return this.mapPacket == null ? new MinecraftPacket[] {this.preparedMapPacket} : new MinecraftPacket[] {this.mapPacket};
+    } else {
+      return this.mapPackets17 == null ? new MinecraftPacket[] {this.preparedMapPacket} : this.mapPackets17;
+    }
   }
 
   public String getAnswer() {

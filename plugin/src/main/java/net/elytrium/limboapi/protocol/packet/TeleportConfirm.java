@@ -28,14 +28,6 @@ public class TeleportConfirm implements MinecraftPacket {
 
   private int teleportId;
 
-  public TeleportConfirm(int teleportId) {
-    this.teleportId = teleportId;
-  }
-
-  public TeleportConfirm() {
-
-  }
-
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     this.teleportId = ProtocolUtils.readVarInt(buf);
@@ -52,21 +44,17 @@ public class TeleportConfirm implements MinecraftPacket {
       return ((LimboSessionHandlerImpl) handler).handle(this);
     }
 
-    return false;
+    return true;
   }
 
   public int getTeleportId() {
     return this.teleportId;
   }
 
-  public void setTeleportId(int teleportId) {
-    this.teleportId = teleportId;
-  }
-
   @Override
   public String toString() {
     return "TeleportConfirm{"
-        + "teleportId=" + this.getTeleportId()
+        + "teleportId=" + this.teleportId
         + "}";
   }
 }

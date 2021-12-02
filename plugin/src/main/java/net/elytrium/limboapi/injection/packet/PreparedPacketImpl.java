@@ -18,12 +18,14 @@
 package net.elytrium.limboapi.injection.packet;
 
 import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -31,16 +33,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 
 public class PreparedPacketImpl implements PreparedPacket {
 
   private final Map<ProtocolVersion, List<ByteBuf>> packets = new ConcurrentHashMap<>();
+  private final ProtocolVersion minVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MIN_VERSION);
+  private final ProtocolVersion maxVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MAX_VERSION);
 
   @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(T packet) {
     return this.prepare((Function<ProtocolVersion, T>) (version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
+  }
+
+  @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(T[] packets) {
+    return this.prepare(Arrays.asList(packets));
   }
 
   @Override
@@ -63,6 +73,34 @@ public class PreparedPacketImpl implements PreparedPacket {
   }
 
   @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(T[] packets, ProtocolVersion from) {
+    return this.prepare(Arrays.asList(packets), from);
+  }
+
+  @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(T[] packets, ProtocolVersion from, ProtocolVersion to) {
+    return this.prepare(Arrays.asList(packets), from, to);
+  }
+
+  @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(List<T> packets, ProtocolVersion from) {
+    for (T packet : packets) {
+      this.prepare(packet, from, ProtocolVersion.MAXIMUM_VERSION);
+    }
+
+    return this;
+  }
+
+  @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(List<T> packets, ProtocolVersion from, ProtocolVersion to) {
+    for (T packet : packets) {
+      this.prepare(packet, from, to);
+    }
+
+    return this;
+  }
+
+  @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet) {
     return this.prepare(packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
   }
@@ -74,6 +112,8 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to) {
+    from = from.compareTo(this.minVersion) >= 0 ? from : this.minVersion;
+    to = to.compareTo(this.maxVersion) <= 0 ? to : this.maxVersion;
     for (ProtocolVersion protocolVersion : EnumSet.range(from, to)) {
       ByteBuf buf = this.encodePacket(packet.apply(protocolVersion), protocolVersion);
       if (this.packets.containsKey(protocolVersion)) {
@@ -116,5 +156,20 @@ public class PreparedPacketImpl implements PreparedPacket {
           LimboProtocol.getLimboRegistry().clientbound, (Class<? extends MinecraftPacket>) packet.getClass().getSuperclass(), version
       );
     }
+  }
+
+  @Override
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+
+  }
+
+  @Override
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+
+  }
+
+  @Override
+  public boolean handle(MinecraftSessionHandler handler) {
+    return true;
   }
 }

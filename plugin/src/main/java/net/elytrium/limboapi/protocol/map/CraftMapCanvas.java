@@ -22,25 +22,38 @@ import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 
+@SuppressFBWarnings("EI_EXPOSE_REP")
 public class CraftMapCanvas {
 
+  public static final int MAP_SIZE = 16384; // 128 x 128
+
   private final byte[] canvas;
-  private static final int MAP_SIZE = 16384; //128x128
+  private final byte[][] canvas17; // 1.7.x canvas
 
   public CraftMapCanvas() {
     this.canvas = new byte[MAP_SIZE];
     Arrays.fill(this.canvas, MapPalette.WHITE);
+
+    this.canvas17 = new byte[128][128];
+    for (int x = 0; x < 128; ++x) {
+      for (int y = 0; y < 128; ++y) {
+        this.canvas17[x][y] = MapPalette.WHITE;
+      }
+    }
   }
 
-  public CraftMapCanvas(byte[] canvas) {
-    final byte[] canvasBuf = new byte[MAP_SIZE];
-    System.arraycopy(canvas, 0, canvasBuf, 0, MAP_SIZE);
+  public CraftMapCanvas(CraftMapCanvas another) {
+    byte[] canvasBuf = new byte[MAP_SIZE];
+    System.arraycopy(another.getCanvas(), 0, canvasBuf, 0, MAP_SIZE);
     this.canvas = canvasBuf;
+
+    this.canvas17 = Arrays.stream(another.get17Canvas()).map(byte[]::clone).toArray(byte[][]::new);
   }
 
   public void setPixel(int x, int y, byte color) {
     if (x >= 0 && y >= 0 && x < 128 && y < 128) {
       this.canvas[y * 128 + x] = color;
+      this.canvas17[x][y] = color;
     }
   }
 
@@ -60,11 +73,23 @@ public class CraftMapCanvas {
   }
 
   public MapDataPacket.MapData getMapData() {
-    return new MapDataPacket.MapData(128, 128, 0, 0, this.canvas);
+    return new MapDataPacket.MapData(this.canvas);
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
+  public MapDataPacket.MapData[] get17MapsData() {
+    MapDataPacket.MapData[] maps = new MapDataPacket.MapData[128];
+    for (int i = 0; i < 128; i++) {
+      maps[i] = new MapDataPacket.MapData(i, this.canvas17[i]);
+    }
+
+    return maps;
+  }
+
   public byte[] getCanvas() {
     return this.canvas;
+  }
+
+  public byte[][] get17Canvas() {
+    return this.canvas17;
   }
 }
