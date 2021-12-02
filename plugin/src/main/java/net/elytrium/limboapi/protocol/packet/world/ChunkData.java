@@ -57,7 +57,7 @@ public class ChunkData implements MinecraftPacket {
   public ChunkData(ChunkSnapshot chunkSnapshot, boolean skyLight) {
     this.chunk = chunkSnapshot;
     int mask = 0;
-    for (int i = 0; i < this.chunk.getSections().length; i++) {
+    for (int i = 0; i < this.chunk.getSections().length; ++i) {
       if (this.chunk.getSections()[i] != null) {
         mask |= 1 << i;
         LightSection light = this.chunk.getLight()[i];
@@ -93,8 +93,7 @@ public class ChunkData implements MinecraftPacket {
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0) {
       buf.writeBoolean(this.chunk.isFullChunk());
 
-      if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) >= 0
-          && version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) < 0) {
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) >= 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) < 0) {
         buf.writeBoolean(true); // Ignore old data
       }
 
@@ -165,7 +164,7 @@ public class ChunkData implements MinecraftPacket {
     }
 
     ByteBuf data = Unpooled.buffer(dataLength);
-    for (int pass = 0; pass < 4; pass++) {
+    for (int pass = 0; pass < 4; ++pass) {
       int finalPass = pass;
       this.sections.forEach(ns -> ns.writeData(data, finalPass, version));
     }
@@ -180,7 +179,7 @@ public class ChunkData implements MinecraftPacket {
     }
 
     if (dataLength != data.readableBytes()) {
-      LimboAPI.getInstance().getLogger().warn("Data length missmatch: " + dataLength + " != " + data.readableBytes() + ". Version: " + version);
+      LimboAPI.getInstance().getLogger().warn("Data length mismatch: " + dataLength + " != " + data.readableBytes() + ". Version: " + version);
     }
 
     return data;
@@ -190,9 +189,9 @@ public class ChunkData implements MinecraftPacket {
     CompactStorage surface = pre116 ? new BitStorage19(9, 256) : new BitStorage116(9, 256);
     CompactStorage motionBlocking = pre116 ? new BitStorage19(9, 256) : new BitStorage116(9, 256);
 
-    for (int y = 0; y < 256; y++) {
-      for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
+    for (int y = 0; y < 256; ++y) {
+      for (int x = 0; x < 16; ++x) {
+        for (int z = 0; z < 16; ++z) {
           VirtualBlock block = this.chunk.getBlock(x, y, z);
           if (!block.isAir()) {
             surface.set(x + z * 16, y + 1);
@@ -248,7 +247,7 @@ public class ChunkData implements MinecraftPacket {
 
     public BiomeData(ChunkSnapshot chunk) {
       VirtualBiome[] biomes = chunk.getBiomes();
-      for (int i = 0; i < biomes.length; i++) {
+      for (int i = 0; i < biomes.length; ++i) {
         this.post115Biomes[i] = biomes[i].getId();
       }
 
@@ -266,8 +265,8 @@ public class ChunkData implements MinecraftPacket {
               .max(Entry.comparingByValue())
               .orElseThrow(RuntimeException::new)
               .getKey();
-          for (int xl = x; xl < x + 4; xl++) {
-            for (int zl = z; zl < z + 4; zl++) {
+          for (int xl = x; xl < x + 4; ++xl) {
+            for (int zl = z; zl < z + 4; ++zl) {
               this.pre115Biomes[zl * 16 + xl] = (byte) id;
             }
           }

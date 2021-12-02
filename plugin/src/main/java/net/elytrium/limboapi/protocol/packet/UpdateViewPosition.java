@@ -25,8 +25,8 @@ import io.netty.buffer.ByteBuf;
 
 public class UpdateViewPosition implements MinecraftPacket {
 
-  private int x;
-  private int z;
+  private final int x;
+  private final int z;
 
   public UpdateViewPosition(int x, int z) {
     this.x = x;
@@ -34,7 +34,7 @@ public class UpdateViewPosition implements MinecraftPacket {
   }
 
   public UpdateViewPosition() {
-
+    throw new IllegalStateException();
   }
 
   @Override
@@ -49,31 +49,15 @@ public class UpdateViewPosition implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
-    return false;
-  }
-
-  public int getX() {
-    return this.x;
-  }
-
-  public int getZ() {
-    return this.z;
-  }
-
-  public void setX(int x) {
-    this.x = x;
-  }
-
-  public void setZ(int z) {
-    this.z = z;
+  public boolean handle(MinecraftSessionHandler handler) {
+    return true;
   }
 
   @Override
   public String toString() {
     return "UpdateViewPosition{"
-        + "x=" + this.getX()
-        + ", z=" + this.getZ()
+        + "x=" + this.x
+        + ", z=" + this.z
         + "}";
   }
 }

@@ -12,15 +12,25 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import java.util.List;
 import java.util.function.Function;
 
-public interface PreparedPacket {
+public interface PreparedPacket extends MinecraftPacket {
 
   <T extends MinecraftPacket> PreparedPacket prepare(T packet);
+
+  <T extends MinecraftPacket> PreparedPacket prepare(T[] packets);
 
   <T extends MinecraftPacket> PreparedPacket prepare(List<T> packets);
 
   <T extends MinecraftPacket> PreparedPacket prepare(T packet, ProtocolVersion from);
 
   <T extends MinecraftPacket> PreparedPacket prepare(T packet, ProtocolVersion from, ProtocolVersion to);
+
+  <T extends MinecraftPacket> PreparedPacket prepare(T[] packets, ProtocolVersion from);
+
+  <T extends MinecraftPacket> PreparedPacket prepare(T[] packets, ProtocolVersion from, ProtocolVersion to);
+
+  <T extends MinecraftPacket> PreparedPacket prepare(List<T> packets, ProtocolVersion from);
+
+  <T extends MinecraftPacket> PreparedPacket prepare(List<T> packets, ProtocolVersion from, ProtocolVersion to);
 
   <T extends MinecraftPacket> PreparedPacket prepare(Function<ProtocolVersion, T> packet);
 
