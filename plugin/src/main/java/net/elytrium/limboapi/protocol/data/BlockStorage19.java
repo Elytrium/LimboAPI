@@ -134,7 +134,7 @@ public class BlockStorage19 implements BlockStorage {
   }
 
   private void resize(int newSize) {
-    newSize = this.fixBitsPerEntry(newSize);
+    newSize = StorageUtils19.fixBitsPerEntry(this.version, newSize);
     CompactStorage newStorage = this.createStorage(newSize);
 
     for (int i = 0; i < SimpleChunk.MAX_BLOCKS_PER_SECTION; ++i) {
@@ -142,20 +142,6 @@ public class BlockStorage19 implements BlockStorage {
       newStorage.set(i, newId);
     }
     this.storage = newStorage;
-  }
-
-  private int fixBitsPerEntry(int newSize) {
-    if (newSize < 4) {
-      return 4;
-    } else if (newSize < 9) {
-      return newSize;
-    } else if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
-      return 13;
-    } else if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_16_4) < 0) {
-      return 14;
-    } else {
-      return 15;
-    }
   }
 
   private CompactStorage createStorage(int bits) {
