@@ -33,6 +33,7 @@ import net.elytrium.limboapi.server.world.SimpleBlock;
 public class SimpleChunk implements VirtualChunk {
 
   public static final int MAX_BLOCKS_PER_SECTION = 16 * 16 * 16;
+  public static final int MAX_BIOMES_PER_SECTION = 4 * 4 * 4;
 
   private final int x;
   private final int z;

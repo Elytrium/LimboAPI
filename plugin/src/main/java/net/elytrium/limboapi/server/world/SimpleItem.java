@@ -78,7 +78,8 @@ public class SimpleItem implements VirtualItem {
     MINECRAFT_1_15(EnumSet.range(ProtocolVersion.MINECRAFT_1_15, ProtocolVersion.MINECRAFT_1_15_2)),
     MINECRAFT_1_16(ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_16_1),
     MINECRAFT_1_16_2(EnumSet.range(ProtocolVersion.MINECRAFT_1_16_2, ProtocolVersion.MINECRAFT_1_16_4)),
-    MINECRAFT_1_17(EnumSet.range(ProtocolVersion.MINECRAFT_1_17, ProtocolVersion.MINECRAFT_1_17_1));
+    MINECRAFT_1_17(EnumSet.range(ProtocolVersion.MINECRAFT_1_17, ProtocolVersion.MAXIMUM_VERSION));
+    // MINECRAFT_1_18(ProtocolVersion.MAXIMUM_VERSION);
 
     private static final EnumMap<ProtocolVersion, Version> mcVersionToItemVersions = new EnumMap<>(ProtocolVersion.class);
 
@@ -105,6 +106,9 @@ public class SimpleItem implements VirtualItem {
         case "1.17": {
           return MINECRAFT_1_17;
         }
+        // case "1.18": {
+        //   return MINECRAFT_1_18;
+        // }
         default: {
           return LEGACY;
         }
