@@ -52,13 +52,13 @@ public class BiomeStorage118 {
     this.storage = storage;
   }
 
-  public void set(int x, int y, int z, @NonNull VirtualBiome block) {
-    int id = this.getIndex(block);
+  public void set(int x, int y, int z, @NonNull VirtualBiome biome) {
+    int id = this.getIndex(biome);
     this.storage.set(index(x, y, z), id);
   }
 
-  public void set(int index, @NonNull VirtualBiome block) {
-    int id = this.getIndex(block);
+  public void set(int index, @NonNull VirtualBiome biome) {
+    int id = this.getIndex(biome);
     this.storage.set(index, id);
   }
 
@@ -81,8 +81,8 @@ public class BiomeStorage118 {
     buf.writeByte(this.storage.getBitsPerEntry());
     if (this.storage.getBitsPerEntry() <= 8) {
       ProtocolUtils.writeVarInt(buf, this.palette.size());
-      for (VirtualBiome state : this.palette) {
-        ProtocolUtils.writeVarInt(buf, state.getId());
+      for (VirtualBiome biome : this.palette) {
+        ProtocolUtils.writeVarInt(buf, biome.getId());
       }
     }
 
@@ -93,8 +93,8 @@ public class BiomeStorage118 {
     int length = 1;
     if (this.storage.getBitsPerEntry() <= 8) {
       length += ProtocolUtils.varIntBytes(this.palette.size());
-      for (VirtualBiome state : this.palette) {
-        length += ProtocolUtils.varIntBytes(state.getId());
+      for (VirtualBiome biome : this.palette) {
+        length += ProtocolUtils.varIntBytes(biome.getId());
       }
     }
 

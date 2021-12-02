@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.field.FieldType;
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import com.velocitypowered.api.command.CommandManager;
@@ -42,8 +43,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -147,9 +153,10 @@ public class AuthPlugin {
     }
 
     TableUtils.createTableIfNotExists(connectionSource, RegisteredPlayer.class);
-
     this.playerDao = DaoManager.createDao(connectionSource, RegisteredPlayer.class);
     this.nicknameValidationPattern = Pattern.compile(Settings.IMP.MAIN.ALLOWED_NICKNAME_REGEX);
+
+    this.migrateDb(this.playerDao);
 
     CommandManager manager = this.server.getCommandManager();
     manager.unregister("unregister");
@@ -204,9 +211,62 @@ public class AuthPlugin {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
 
     scheduler.scheduleAtFixedRate(() ->
-        this.checkCache(this.cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
+            this.checkCache(this.cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
         Settings.IMP.MAIN.PURGE_CACHE_MILLIS, Settings.IMP.MAIN.PURGE_CACHE_MILLIS, TimeUnit.MILLISECONDS
     );
+  }
+
+  public void migrateDb(Dao<RegisteredPlayer, String> playerDao) {
+    Set<FieldType> tables = new HashSet<>();
+    Collections.addAll(tables, playerDao.getTableInfo().getFieldTypes());
+
+    String findSql;
+
+    switch (Settings.IMP.DATABASE.STORAGE_TYPE) {
+      case "sqlite": {
+        findSql = "SELECT sql AS COLUMN_NAME FROM sqlite_master WHERE tbl_name = `"
+            + playerDao.getTableInfo().getTableName() + "` AND type = 'table'";
+        break;
+      }
+      case "h2":
+      case "postgresql":
+      case "mysql": {
+        findSql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + Settings.IMP.DATABASE.DATABASE
+            + "' AND TABLE_NAME = '" + playerDao.getTableInfo().getTableName() + "';";
+        break;
+      }
+      default: {
+        this.logger.error("WRONG DATABASE TYPE.");
+        this.server.shutdown();
+        return;
+      }
+    }
+
+    try {
+      playerDao.queryRaw(findSql).forEach(e -> tables.removeIf(q -> q.getColumnName().equalsIgnoreCase(e[0])));
+
+      tables.forEach(t -> {
+        try {
+          String columnDefinition = t.getColumnDefinition();
+          StringBuilder sb = new StringBuilder("ALTER TABLE `auth` ADD ");
+          List<String> dummy = new ArrayList<>();
+          if (columnDefinition == null) {
+            playerDao.getConnectionSource().getDatabaseType()
+                .appendColumnArg(t.getTableName(), sb, t, dummy, dummy, dummy, dummy);
+          } else {
+            playerDao.getConnectionSource().getDatabaseType()
+                .appendEscapedEntityName(sb, t.getColumnName());
+            sb.append(' ').append(columnDefinition).append(' ');
+          }
+
+          playerDao.executeRawNoArgs(sb.toString());
+        } catch (SQLException e) {
+          e.printStackTrace();
+        }
+      });
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
   }
 
   public void cacheAuthUser(Player player) {
