@@ -28,7 +28,9 @@ public class RegisteredPlayer {
 
   }
 
-  public RegisteredPlayer(String nickname, String lowercaseNickname, String hash, String ip, String totpToken, Long regDate, String uuid) {
+  public RegisteredPlayer(
+      String nickname, String lowercaseNickname, String hash, String ip,
+      String totpToken, Long regDate, String uuid, String premiumUuid) {
     this.nickname = nickname;
     this.lowercaseNickname = lowercaseNickname;
     this.hash = hash;
@@ -36,6 +38,7 @@ public class RegisteredPlayer {
     this.totpToken = totpToken;
     this.regDate = regDate;
     this.uuid = uuid;
+    this.premiumUuid = premiumUuid;
   }
 
   @DatabaseField(canBeNull = false)
@@ -58,4 +61,7 @@ public class RegisteredPlayer {
 
   @DatabaseField
   public String uuid;
+
+  @DatabaseField
+  public String premiumUuid;
 }
