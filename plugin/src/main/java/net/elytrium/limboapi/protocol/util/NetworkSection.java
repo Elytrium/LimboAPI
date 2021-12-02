@@ -132,14 +132,14 @@ public class NetworkSection {
 
   private void fillBlocks(BlockStorage storage) {
     int blockCount = 0;
-    for (int y = 0; y < 16; y++) {
-      for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
+    for (int y = 0; y < 16; ++y) {
+      for (int x = 0; x < 16; ++x) {
+        for (int z = 0; z < 16; ++z) {
           VirtualBlock block = this.section.getBlockAt(x, y, z);
           if (block.isAir()) {
             continue;
           }
-          blockCount++;
+          ++blockCount;
           storage.set(x, y, z, block);
         }
       }

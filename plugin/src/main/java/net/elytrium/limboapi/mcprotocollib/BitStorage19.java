@@ -31,7 +31,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
 
-@SuppressFBWarnings({"EI_EXPOSE_REP2", "EI_EXPOSE_REP"})
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class BitStorage19 implements CompactStorage {
 
   private final long[] data;
@@ -95,8 +95,7 @@ public class BitStorage19 implements CompactStorage {
     int startIndex = bitIndex / 64;
     int endIndex = ((index + 1) * this.bitsPerEntry - 1) / 64;
     int startBitSubIndex = bitIndex % 64;
-    this.data[startIndex] = this.data[startIndex]
-        & ~(this.maxEntryValue << startBitSubIndex) | ((long) value & this.maxEntryValue) << startBitSubIndex;
+    this.data[startIndex] = this.data[startIndex] & ~(this.maxEntryValue << startBitSubIndex) | ((long) value & this.maxEntryValue) << startBitSubIndex;
     if (startIndex != endIndex) {
       int endBitSubIndex = 64 - startBitSubIndex;
       this.data[endIndex] = this.data[endIndex] >>> endBitSubIndex << endBitSubIndex | ((long) value & this.maxEntryValue) >> endBitSubIndex;
@@ -121,7 +120,6 @@ public class BitStorage19 implements CompactStorage {
     return new BitStorage19(this.bitsPerEntry, Arrays.copyOf(this.data, this.data.length));
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   @Override
   public long[] getData() {
     return this.data;

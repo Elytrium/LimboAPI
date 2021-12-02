@@ -118,14 +118,14 @@ public class SimpleChunk implements VirtualChunk {
 
   private ChunkSnapshot createSnapshot(boolean full, long previousUpdate) {
     SimpleSection[] sectionsSnapshot = new SimpleSection[this.sections.length];
-    for (int i = 0; i < this.sections.length; i++) {
+    for (int i = 0; i < this.sections.length; ++i) {
       if (this.sections[i] != null && this.sections[i].getLastUpdate() > previousUpdate) {
         sectionsSnapshot[i] = this.sections[i].getSnapshot();
       }
     }
 
     LightSection[] lightSnapshot = new LightSection[18];
-    for (int i = 0; i < this.light.length; i++) {
+    for (int i = 0; i < this.light.length; ++i) {
       if (this.light[i] == null) {
         lightSnapshot[i] = SimpleLightSection.DEFAULT;
       } else if (this.light[i].getLastUpdate() > previousUpdate) {

@@ -25,7 +25,6 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-@SuppressWarnings("unused")
 public class PlayerPositionAndLook implements MinecraftPacket {
 
   private double x;
@@ -36,10 +35,6 @@ public class PlayerPositionAndLook implements MinecraftPacket {
   private int teleportId;
   private boolean onGround;
   private boolean dismountVehicle;
-
-  public PlayerPositionAndLook() {
-
-  }
 
   public PlayerPositionAndLook(double x, double y, double z, float yaw, float pitch, int teleportId, boolean onGround, boolean dismountVehicle) {
     this.x = x;
@@ -52,82 +47,27 @@ public class PlayerPositionAndLook implements MinecraftPacket {
     this.dismountVehicle = dismountVehicle;
   }
 
-  public double getX() {
-    return this.x;
-  }
+  public PlayerPositionAndLook() {
 
-  public void setX(double x) {
-    this.x = x;
-  }
-
-  public double getY() {
-    return this.y;
-  }
-
-  public void setY(double y) {
-    this.y = y;
-  }
-
-  public double getZ() {
-    return this.z;
-  }
-
-  public void setZ(double z) {
-    this.z = z;
-  }
-
-  public float getYaw() {
-    return this.yaw;
-  }
-
-  public void setYaw(float yaw) {
-    this.yaw = yaw;
-  }
-
-  public float getPitch() {
-    return this.pitch;
-  }
-
-  public void setPitch(float pitch) {
-    this.pitch = pitch;
-  }
-
-  public int getTeleportId() {
-    return this.teleportId;
-  }
-
-  public void setTeleportId(int teleportId) {
-    this.teleportId = teleportId;
-  }
-
-  public boolean isOnGround() {
-    return this.onGround;
-  }
-
-  public void setOnGround(boolean onGround) {
-    this.onGround = onGround;
-  }
-
-  public boolean isDismountVehicle() {
-    return this.dismountVehicle;
-  }
-
-  public void setDismountVehicle(boolean dismountVehicle) {
-    this.dismountVehicle = dismountVehicle;
   }
 
   @Override
-  public String toString() {
-    return "PlayerPositionAndLook{"
-        + "x=" + this.getX()
-        + ", y=" + this.getY()
-        + ", z=" + this.getZ()
-        + ", yaw=" + this.getYaw()
-        + ", pitch=" + this.getPitch()
-        + ", teleportId=" + this.getTeleportId()
-        + ", onGround=" + this.isOnGround()
-        + ", dismountVehicle=" + this.isDismountVehicle()
-        + "}";
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+    this.x = buf.readDouble();
+    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      buf.skipBytes(8);
+    }
+    this.y = buf.readDouble();
+    this.z = buf.readDouble();
+    this.yaw = buf.readFloat();
+    this.pitch = buf.readFloat();
+
+    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      this.onGround = buf.readBoolean();
+    }
+
+    // Ignore other data (flags, teleportID, dismount vehicle, etc)
+    buf.clear();
   }
 
   @Override
@@ -138,36 +78,19 @@ public class PlayerPositionAndLook implements MinecraftPacket {
     buf.writeFloat(this.yaw);
     buf.writeFloat(this.pitch);
 
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-      buf.writeByte(0x00);
-    }
-
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_9) >= 0) {
-      ProtocolUtils.writeVarInt(buf, this.teleportId);
-    }
-
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       buf.writeBoolean(this.onGround);
+    } else {
+      buf.writeByte(0x00);
+
+      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_9) >= 0) {
+        ProtocolUtils.writeVarInt(buf, this.teleportId);
+      }
+
+      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
+        buf.writeBoolean(this.dismountVehicle);
+      }
     }
-
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
-      buf.writeBoolean(this.dismountVehicle);
-    }
-  }
-
-  @Override
-  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
-    this.x = buf.readDouble();
-    this.y = buf.readDouble();
-
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      buf.readDouble(); //Skip HeadY
-    }
-
-    this.z = buf.readDouble();
-    this.yaw = buf.readFloat();
-    this.pitch = buf.readFloat();
-    this.onGround = buf.readBoolean();
   }
 
   @Override
@@ -176,6 +99,44 @@ public class PlayerPositionAndLook implements MinecraftPacket {
       return ((LimboSessionHandlerImpl) handler).handle(this);
     }
 
-    return false;
+    return true;
+  }
+
+  public double getX() {
+    return this.x;
+  }
+
+  public double getY() {
+    return this.y;
+  }
+
+  public double getZ() {
+    return this.z;
+  }
+
+  public float getYaw() {
+    return this.yaw;
+  }
+
+  public float getPitch() {
+    return this.pitch;
+  }
+
+  public boolean isOnGround() {
+    return this.onGround;
+  }
+
+  @Override
+  public String toString() {
+    return "PlayerPositionAndLook{"
+        + "x=" + this.x
+        + ", y=" + this.y
+        + ", z=" + this.z
+        + ", yaw=" + this.yaw
+        + ", pitch=" + this.pitch
+        + ", teleportId=" + this.teleportId
+        + ", onGround=" + this.onGround
+        + ", dismountVehicle=" + this.dismountVehicle
+        + "}";
   }
 }

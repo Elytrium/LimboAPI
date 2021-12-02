@@ -72,7 +72,7 @@ public class NibbleArray3d {
   }
 
   public void fill(int val) {
-    for (int index = 0; index < this.data.length << 1; index++) {
+    for (int index = 0; index < this.data.length << 1; ++index) {
       this.set(index, val);
     }
   }

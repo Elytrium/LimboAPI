@@ -137,7 +137,7 @@ public class BlockStorage19 implements BlockStorage {
     newSize = this.fixBitsPerEntry(newSize);
     CompactStorage newStorage = this.createStorage(newSize);
 
-    for (int i = 0; i < SimpleChunk.MAX_BLOCKS_PER_SECTION; i++) {
+    for (int i = 0; i < SimpleChunk.MAX_BLOCKS_PER_SECTION; ++i) {
       int newId = newSize > 8 ? toRaw(this.palette.get(this.storage.get(i)), this.version) : this.storage.get(i);
       newStorage.set(i, newId);
     }

@@ -43,7 +43,7 @@ public class SchematicFile implements WorldFile {
   public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ) {
     short[] blockIds = new short[this.blocks.length];
 
-    for (int index = 0; index < this.blocks.length; index++) {
+    for (int index = 0; index < this.blocks.length; ++index) {
       if ((index >> 1) >= this.addBlocks.length) {
         blockIds[index] = (short) (this.blocks[index] & 0xFF);
       } else {

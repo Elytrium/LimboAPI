@@ -40,11 +40,11 @@ public class CaptchaPainter {
   private final Color background = Color.WHITE;
   private final Random rnd = new Random();
 
-  public BufferedImage draw(Font font, Color foreGround, String text) {
+  public BufferedImage draw(Font font, Color foreground, String text) {
     if (font == null) {
       throw new IllegalArgumentException("Font can not be null.");
     }
-    if (foreGround == null) {
+    if (foreground == null) {
       throw new IllegalArgumentException("Foreground color can not be null.");
     }
     if (text == null || text.length() < 1) {
@@ -53,9 +53,9 @@ public class CaptchaPainter {
 
     BufferedImage img = this.createImage();
 
-    final Graphics g = img.getGraphics();
+    Graphics g = img.getGraphics();
     try {
-      final Graphics2D g2 = this.configureGraphics(g, font, foreGround);
+      Graphics2D g2 = this.configureGraphics(g, font, foreground);
       this.draw(g2, text);
     } finally {
       g.dispose();
@@ -67,27 +67,29 @@ public class CaptchaPainter {
   }
 
   protected void draw(Graphics2D g, String text) {
-    final GlyphVector vector = g.getFont().createGlyphVector(g.getFontRenderContext(), text);
+    GlyphVector vector = g.getFont().createGlyphVector(g.getFontRenderContext(), text);
 
-    this.transform(g, text, vector);
+    this.transform(vector);
 
-    final Rectangle bounds = vector.getPixelBounds(null, 0, height);
-    final float bw = (float) bounds.getWidth();
-    final float bh = (float) bounds.getHeight();
+    Rectangle bounds = vector.getPixelBounds(null, 0, height);
+    float bw = (float) bounds.getWidth();
+    float bh = (float) bounds.getHeight();
 
-    final boolean outlineEnabled = Settings.IMP.MAIN.CAPTCHA_GENERATOR.FONT_OUTLINE;
+    boolean outlineEnabled = Settings.IMP.MAIN.CAPTCHA_GENERATOR.FONT_OUTLINE;
 
-    final float wr = width / bw * (this.rnd.nextFloat() / 20 + (outlineEnabled ? 0.89f : 0.92f)) * 1;
-    final float hr = height / bh * (this.rnd.nextFloat() / 20 + (outlineEnabled ? 0.68f : 0.75f)) * 1;
+    float wr = width / bw * (this.rnd.nextFloat() / 20 + (outlineEnabled ? 0.89f : 0.92f)) * 1;
+    float hr = height / bh * (this.rnd.nextFloat() / 20 + (outlineEnabled ? 0.68f : 0.75f)) * 1;
     g.translate((width - bw * wr) / 2, (height - bh * hr) / 2);
     g.scale(wr, hr);
 
-    final float bx = (float) bounds.getX();
-    final float by = (float) bounds.getY();
+    float bx = (float) bounds.getX();
+    float by = (float) bounds.getY();
     if (outlineEnabled) {
-      g.draw(vector.getOutline(Math.signum(this.rnd.nextFloat() - 0.5f) * 1
-          * width / 200 - bx, Math.signum(this.rnd.nextFloat() - 0.5f) * 1
-          * height / 70 + height - by));
+      g.draw(
+          vector.getOutline(
+              Math.signum(this.rnd.nextFloat() - 0.5f) * 1 * width / 200 - bx, Math.signum(this.rnd.nextFloat() - 0.5f) * 1 * height / 70 + height - by
+          )
+      );
     }
 
     g.drawGlyphVector(vector, -bx, height - by);
@@ -97,15 +99,15 @@ public class CaptchaPainter {
     return new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
   }
 
-  protected Graphics2D configureGraphics(Graphics g, Font font, Color foreGround) {
+  protected Graphics2D configureGraphics(Graphics g, Font font, Color foreground) {
     if (!(g instanceof Graphics2D)) {
       throw new IllegalStateException("Graphics (" + g + ") that is not an instance of Graphics2D.");
     }
-    final Graphics2D g2 = (Graphics2D) g;
+    Graphics2D g2 = (Graphics2D) g;
 
     this.configureGraphicsQuality(g2);
 
-    g2.setColor(foreGround);
+    g2.setColor(foreground);
     g2.setBackground(this.background);
     g2.setFont(font);
 
@@ -125,34 +127,36 @@ public class CaptchaPainter {
     g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
   }
 
-  protected void transform(Graphics2D g, String text, GlyphVector v) {
-    final int glyphNum = v.getNumGlyphs();
+  protected void transform(GlyphVector v) {
+    int glyphNum = v.getNumGlyphs();
 
     Point2D prePos = null;
     Rectangle2D preBounds = null;
 
     double rotateCur = (this.rnd.nextDouble() - 0.5) * Math.PI / 8;
     double rotateStep = Math.signum(rotateCur) * (this.rnd.nextDouble() * 3 * Math.PI / 8 / glyphNum);
-    final boolean rotateEnabled = Settings.IMP.MAIN.CAPTCHA_GENERATOR.FONT_ROTATE;
+    boolean rotateEnabled = Settings.IMP.MAIN.CAPTCHA_GENERATOR.FONT_ROTATE;
 
-    for (int fi = 0; fi < glyphNum; fi++) {
+    for (int fi = 0; fi < glyphNum; ++fi) {
       if (rotateEnabled) {
-        final AffineTransform tr = AffineTransform.getRotateInstance(rotateCur);
+        AffineTransform tr = AffineTransform.getRotateInstance(rotateCur);
         if (this.rnd.nextDouble() < 0.25) {
           rotateStep *= -1;
         }
         rotateCur += rotateStep;
         v.setGlyphTransform(fi, tr);
       }
-      final Point2D pos = v.getGlyphPosition(fi);
-      final Rectangle2D bounds = v.getGlyphVisualBounds(fi).getBounds2D();
+      Point2D pos = v.getGlyphPosition(fi);
+      Rectangle2D bounds = v.getGlyphVisualBounds(fi).getBounds2D();
       Point2D newPos;
       if (prePos == null) {
         newPos = new Point2D.Double(pos.getX() - bounds.getX(), pos.getY());
       } else {
         newPos = new Point2D.Double(
             preBounds.getMaxX() + pos.getX() - bounds.getX() - Math.min(preBounds.getWidth(),
-                bounds.getWidth()) * (this.rnd.nextDouble() / 20 + (rotateEnabled ? 0.27 : 0.1)), pos.getY());
+            bounds.getWidth()) * (this.rnd.nextDouble() / 20 + (rotateEnabled ? 0.27 : 0.1)),
+            pos.getY()
+        );
       }
       v.setGlyphPosition(fi, newPos);
       prePos = newPos;
@@ -162,19 +166,21 @@ public class CaptchaPainter {
 
   protected BufferedImage postProcess(BufferedImage img) {
     if (Settings.IMP.MAIN.CAPTCHA_GENERATOR.FONT_RIPPLE) {
-      final Rippler.AxisConfig vertical = new Rippler.AxisConfig(
-          this.rnd.nextDouble() * 2 * Math.PI, (1 + this.rnd.nextDouble() * 2) * Math.PI, img.getHeight() / 10.0);
-      final Rippler.AxisConfig horizontal = new Rippler.AxisConfig(
-          this.rnd.nextDouble() * 2 * Math.PI, (2 + this.rnd.nextDouble() * 2) * Math.PI, img.getWidth() / 100.0);
-      final Rippler op = new Rippler(vertical, horizontal);
+      Rippler.AxisConfig vertical = new Rippler.AxisConfig(
+          this.rnd.nextDouble() * 2 * Math.PI, (1 + this.rnd.nextDouble() * 2) * Math.PI, img.getHeight() / 10.0
+      );
+      Rippler.AxisConfig horizontal = new Rippler.AxisConfig(
+          this.rnd.nextDouble() * 2 * Math.PI, (2 + this.rnd.nextDouble() * 2) * Math.PI, img.getWidth() / 100.0
+      );
+      Rippler op = new Rippler(vertical, horizontal);
 
       img = op.filter(img, this.createImage());
     }
 
     if (Settings.IMP.MAIN.CAPTCHA_GENERATOR.FONT_BLUR) {
-      final float[] blurArray = new float[9];
+      float[] blurArray = new float[9];
       this.fillBlurArray(blurArray);
-      final ConvolveOp op = new ConvolveOp(new Kernel(3, 3, blurArray), ConvolveOp.EDGE_NO_OP, null);
+      ConvolveOp op = new ConvolveOp(new Kernel(3, 3, blurArray), ConvolveOp.EDGE_NO_OP, null);
 
       img = op.filter(img, this.createImage());
     }
@@ -184,12 +190,12 @@ public class CaptchaPainter {
 
   protected void fillBlurArray(float[] array) {
     float sum = 0;
-    for (int fi = 0; fi < array.length; fi++) {
+    for (int fi = 0; fi < array.length; ++fi) {
       array[fi] = this.rnd.nextFloat();
       sum += array[fi];
     }
 
-    for (int fi = 0; fi < array.length; fi++) {
+    for (int fi = 0; fi < array.length; ++fi) {
       array[fi] /= sum;
     }
   }

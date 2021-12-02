@@ -24,7 +24,7 @@ import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 
-@SuppressFBWarnings({"EI_EXPOSE_REP2", "EI_EXPOSE_REP"})
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class SimpleChunkSnapshot implements ChunkSnapshot {
 
   private final int x;

@@ -160,6 +160,7 @@ public class LoginTasksQueue {
   }
 
   // Ported from Velocity
+  // TODO: Пофиксить ситуацию когда при подключении после лимбы внутренний сервер кикает и причину не пишет клиенту
   private void initialize(MinecraftConnection connection) throws IllegalAccessException {
     association.set(connection, this.player);
 
