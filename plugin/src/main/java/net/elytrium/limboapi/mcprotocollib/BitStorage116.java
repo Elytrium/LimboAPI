@@ -31,6 +31,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
 
+@SuppressFBWarnings("EI_EXPOSE_REP")
 public class BitStorage116 implements CompactStorage {
 
   private static final int[] MAGIC_VALUES = {
@@ -142,7 +143,6 @@ public class BitStorage116 implements CompactStorage {
   }
 
   @Override
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public long[] getData() {
     return this.data;
   }

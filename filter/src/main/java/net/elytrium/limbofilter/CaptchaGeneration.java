@@ -43,7 +43,7 @@ import org.slf4j.Logger;
  * @author Leymooo
  * @author hevav
  */
-public final class CaptchaGeneration {
+public class CaptchaGeneration {
 
   private static final CraftMapCanvas cachedBackgroundMap = new CraftMapCanvas();
   private static final FilterPlugin plugin = FilterPlugin.getInstance();
@@ -52,10 +52,6 @@ public final class CaptchaGeneration {
   private static final List<Font> fonts = new ArrayList<>();
   private static final AtomicInteger fontCounter = new AtomicInteger(0);
   private static final AtomicInteger colorCounter = new AtomicInteger(0);
-
-  private CaptchaGeneration() {
-    throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
-  }
 
   public static void init() {
     try {
@@ -109,7 +105,7 @@ public final class CaptchaGeneration {
   @SuppressWarnings("StatementWithEmptyBody")
   public static void generateImages() {
     ThreadPoolExecutor ex = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    for (int i = 100; i <= 999; i++) {
+    for (int i = 100; i <= 999; ++i) {
       ex.execute(CaptchaGeneration::genNewPacket);
     }
 
@@ -125,16 +121,24 @@ public final class CaptchaGeneration {
 
   public static void genNewPacket() {
     String answer = randomAnswer();
-    final CraftMapCanvas map = new CraftMapCanvas(cachedBackgroundMap.getCanvas());
+    CraftMapCanvas map = new CraftMapCanvas(cachedBackgroundMap);
+
     int fontNumber = fontCounter.getAndIncrement();
     if (fontNumber >= fonts.size()) {
       fontNumber = 0;
       fontCounter.set(0);
     }
+
     BufferedImage image = painter.draw(fonts.get(fontNumber), randomNotWhiteColor(), answer);
     map.drawImage(0, 0, image);
+
     MapDataPacket packet = new MapDataPacket(0, (byte) 0, map.getMapData());
-    plugin.getCachedCaptcha().createCaptchaPacket(packet, answer);
+    MapDataPacket[] packets17 = new MapDataPacket[128];
+    for (int i = 0; i < 128; ++i) {
+      packets17[i] = new MapDataPacket(0, (byte) 0, map.get17MapsData()[i]);
+    }
+
+    plugin.getCachedCaptcha().createCaptchaPacket(packet, packets17, answer);
   }
 
   private static Color randomNotWhiteColor() {
@@ -157,7 +161,7 @@ public final class CaptchaGeneration {
     String pattern = Settings.IMP.MAIN.CAPTCHA_GENERATOR.PATTERN;
 
     char[] text = new char[length];
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < length; ++i) {
       text[i] = pattern.charAt(ThreadLocalRandom.current().nextInt(pattern.length()));
     }
 

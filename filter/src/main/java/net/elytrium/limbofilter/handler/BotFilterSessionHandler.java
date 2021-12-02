@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.packet.SetExp;
 import net.elytrium.limboapi.server.LimboImpl;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
@@ -85,13 +86,11 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   public void onGeneric(MinecraftPacket packet) {
     if (packet instanceof PluginMessage) {
       PluginMessage pluginMessage = (PluginMessage) packet;
-      int singleLength = pluginMessage.content().readableBytes();
-      singleLength += pluginMessage.getChannel().length() * 4;
+      int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
       this.genericBytes += singleLength;
       if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH || this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
-        this.connection.closeWith(this.packets.getTooBigPacket());
+        this.disconnect(this.packets.getTooBigPacket(), true);
         this.logger.error("{} sent too big packet", this.player);
-        this.statistics.addBlockedConnection();
       }
       if (PluginMessageUtil.isMcBrand(pluginMessage) && !this.checkedByBrand) {
         String brand = PluginMessageUtil.readBrandMessage(pluginMessage.content());
@@ -101,24 +100,9 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         }
       }
     } else if (packet instanceof ClientSettings) {
-      ClientSettings clientSettings = (ClientSettings) packet;
       if (!this.checkedBySettings && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
-        if (packet.toString().contains("null")) {
-          this.connection.closeWith(this.packets.getKickClientCheckSettings());
-          this.logger.error("{} has null in settings packet", this.player);
-          this.statistics.addBlockedConnection();
-        } else if (!clientSettings.isChatColors()) {
-          this.connection.closeWith(this.packets.getKickClientCheckSettingsChat());
-          this.logger.error("{} didn't send isChatColors packet", this.player);
-          this.statistics.addBlockedConnection();
-        } else if (clientSettings.getSkinParts() == 0) {
-          this.connection.closeWith(this.packets.getKickClientCheckSettingsSkin());
-          this.logger.error("{} didn't send skin parts packet", this.player);
-          this.statistics.addBlockedConnection();
-        }
+        this.checkedBySettings = true;
       }
-
-      this.checkedBySettings = true;
     }
   }
 
@@ -131,8 +115,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       } else if (--this.attempts != 0) {
         this.sendCaptcha();
       } else {
-        this.statistics.addBlockedConnection();
-        this.connection.closeWith(this.packets.getCaptchaFailed());
+        this.disconnect(this.packets.getCaptchaFailed(), true);
       }
     }
   }
@@ -145,20 +128,17 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
           this.changeStateToCaptcha();
         } else {
-          this.statistics.addBlockedConnection();
-          this.connection.closeWith(this.packets.getFallingCheckFailed());
+          this.disconnect(this.packets.getFallingCheckFailed(), true);
         }
       }
       return;
     }
 
-    if ((!this.checkedBySettings) && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
-      this.connection.closeWith(this.packets.getKickClientCheckSettings());
-      this.statistics.addBlockedConnection();
+    if (!this.checkedBySettings && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
+      this.disconnect(this.packets.getKickClientCheckSettings(), true);
     }
-    if ((!this.checkedByBrand) && Settings.IMP.MAIN.CHECK_CLIENT_BRAND) {
-      this.connection.closeWith(this.packets.getKickClientCheckBrand());
-      this.statistics.addBlockedConnection();
+    if (!this.checkedByBrand && Settings.IMP.MAIN.CHECK_CLIENT_BRAND) {
+      this.disconnect(this.packets.getKickClientCheckBrand(), true);
     }
 
     this.state = CheckState.SUCCESSFUL;
@@ -166,7 +146,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
     if (this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.ONLINE_MODE_VERIFY)
         || this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.NEED_TO_RECONNECT)) {
-      this.connection.closeWith(this.packets.getSuccessfulBotFilterDisconnect());
+      this.disconnect(this.packets.getSuccessfulBotFilterDisconnect(), false);
     } else {
       this.connection.write(this.packets.getSuccessfulBotFilterChat());
       this.limboPlayer.disconnect();
@@ -185,9 +165,9 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       }
 
       this.lastY = this.validY;
-      this.nonValidPacketsSize++;
+      ++this.nonValidPacketsSize;
     }
-    if (this.startedListening) {
+    if (this.startedListening && this.state != CheckState.SUCCESSFUL) {
       if (this.lastY == CAPTCHA_Y || this.onGround) {
         return;
       }
@@ -198,7 +178,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         return;
       }
       if (this.lastY - this.y == 0) {
-        this.ignoredTicks++;
+        ++this.ignoredTicks;
         return;
       }
       if (this.ticks >= TOTAL_TICKS) {
@@ -225,14 +205,12 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
         this.fallingCheckFailed();
         return;
       }
-      if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED || this.state == CheckState.ONLY_POSITION) {
-        SetExp expBuf = this.packets.getExperience().get(this.ticks);
-        if (expBuf != null) {
-          this.connection.write(expBuf);
-        }
+      SetExp expBuf = this.packets.getExperience().get(this.ticks);
+      if (expBuf != null) {
+        this.connection.write(expBuf);
       }
 
-      this.ticks++;
+      ++this.ticks;
     }
   }
 
@@ -243,7 +221,9 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
     Settings.MAIN.COORDS coords = Settings.IMP.MAIN.COORDS;
     this.fallingCheckPos = ((LimboImpl) this.server).createPlayerPosAndLookPacket(
-        this.validX, this.validY, this.validZ, (float) coords.FALLING_CHECK_YAW, (float) coords.FALLING_CHECK_PITCH
+        this.validX, this.validY, this.validZ,
+        (float) (this.state == CheckState.CAPTCHA_POSITION ? coords.CAPTCHA_YAW : coords.FALLING_CHECK_YAW),
+        (float) (this.state == CheckState.CAPTCHA_POSITION ? coords.CAPTCHA_PITCH : coords.FALLING_CHECK_PITCH)
     );
     this.fallingCheckChunk = ((LimboImpl) this.server).createChunkDataPacket(new SimpleChunk(this.validX >> 4, this.validZ >> 4), 256);
     this.fallingCheckView = ((LimboImpl) this.server).createUpdateViewPosition(this.validX, this.validZ);
@@ -264,6 +244,13 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.connection.flush();
   }
 
+  private void disconnect(PreparedPacket reason, boolean blocked) {
+    this.connection.closeWith(reason);
+    if (blocked) {
+      this.statistics.addBlockedConnection();
+    }
+  }
+
   private void sendFallingCheckPackets() {
     this.connection.delayedWrite(this.fallingCheckPos);
     if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
@@ -274,13 +261,14 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   }
 
   private void sendCaptcha() {
+    ProtocolVersion version = this.player.getProtocolVersion();
     CaptchaHandler captchaHandler = this.plugin.getCachedCaptcha().randomCaptcha();
     String captchaAnswer = captchaHandler.getAnswer();
     this.setCaptchaAnswer(captchaAnswer);
     Settings.MAIN.STRINGS strings = Settings.IMP.MAIN.STRINGS;
     if (this.attempts == Settings.IMP.MAIN.CAPTCHA_ATTEMPTS) {
       this.connection.delayedWrite(this.packets.createChatPacket(MessageFormat.format(strings.CHECKING_CAPTCHA_CHAT, this.attempts)));
-      if (this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
         this.connection.delayedWrite(
             this.packets.createTitlePacket(strings.CHECKING_CAPTCHA_TITLE, MessageFormat.format(strings.CHECKING_CAPTCHA_SUBTITLE, this.attempts))
         );
@@ -289,12 +277,14 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       this.connection.delayedWrite(this.packets.createChatPacket(MessageFormat.format(strings.CHECKING_WRONG_CAPTCHA_CHAT, this.attempts)));
     }
     this.connection.delayedWrite(this.packets.getSetSlot());
-    this.connection.delayedWrite(captchaHandler.getMap());
+    for (MinecraftPacket packet : captchaHandler.getMapPacket(version)) {
+      this.connection.delayedWrite(packet);
+    }
     this.connection.flush();
   }
 
   private boolean checkY() {
-    return (Math.abs(this.lastY - this.y - getLoadedChunkSpeed(this.ticks)) > Settings.IMP.MAIN.MAX_VALID_POSITION_DIFFERENCE);
+    return Math.abs(this.lastY - this.y - getLoadedChunkSpeed(this.ticks)) > Settings.IMP.MAIN.MAX_VALID_POSITION_DIFFERENCE;
   }
 
   private void fallingCheckFailed() {
@@ -305,8 +295,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       return;
     }
 
-    this.statistics.addBlockedConnection();
-    this.connection.closeWith(this.packets.getFallingCheckFailed());
+    this.disconnect(this.packets.getFallingCheckFailed(), true);
   }
 
   @SuppressWarnings("SameParameterValue")

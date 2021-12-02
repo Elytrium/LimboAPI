@@ -54,7 +54,7 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     this.validX = rnd.nextInt(256, 16384);
     // See https://media.discordapp.net/attachments/878241549857738793/915165038464098314/unknown.png
-    this.validY = rnd.nextInt(256, 512);
+    this.validY = rnd.nextInt(256 + (this.version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0 ? 100 : 0), 512);
     this.validZ = rnd.nextInt(256, 16384);
     this.validTeleportId = rnd.nextInt(65535);
 

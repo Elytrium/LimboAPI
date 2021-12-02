@@ -52,6 +52,25 @@ public class PlayerPositionAndLook implements MinecraftPacket {
   }
 
   @Override
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+    this.x = buf.readDouble();
+    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      buf.skipBytes(8);
+    }
+    this.y = buf.readDouble();
+    this.z = buf.readDouble();
+    this.yaw = buf.readFloat();
+    this.pitch = buf.readFloat();
+
+    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      this.onGround = buf.readBoolean();
+    }
+
+    // Ignore other data (flags, teleportID, dismount vehicle, etc)
+    buf.clear();
+  }
+
+  @Override
   public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     buf.writeDouble(this.x);
     buf.writeDouble(this.y);
@@ -72,25 +91,6 @@ public class PlayerPositionAndLook implements MinecraftPacket {
         buf.writeBoolean(this.dismountVehicle);
       }
     }
-  }
-
-  @Override
-  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
-    this.x = buf.readDouble();
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      buf.skipBytes(8);
-    }
-    this.y = buf.readDouble();
-    this.z = buf.readDouble();
-    this.yaw = buf.readFloat();
-    this.pitch = buf.readFloat();
-
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      this.onGround = buf.readBoolean();
-    }
-
-    // Ignore other data (flags, teleportID, dismount vehicle, etc)
-    buf.clear();
   }
 
   @Override

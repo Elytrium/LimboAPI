@@ -28,6 +28,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.elytrium.limboapi.protocol.map.CraftMapCanvas;
 import net.elytrium.limboapi.protocol.map.MapPalette;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
@@ -48,14 +49,25 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void sendImage(int mapId, BufferedImage image) {
-    byte[] canvas = new byte[16384];
+    // TODO: Check 1.7.x
+    byte[] canvas = new byte[CraftMapCanvas.MAP_SIZE];
+    byte[][] canvas17 = new byte[128][128]; // 1.7.x canvas
     int[] toWrite = MapPalette.imageToBytes(image);
 
-    for (int i = 0; i < 16384; i++) {
+    for (int i = 0; i < CraftMapCanvas.MAP_SIZE; ++i) {
       canvas[i] = (byte) toWrite[i];
+      canvas17[i & ~128][i >> 7] = (byte) toWrite[i];
     }
 
-    this.player.getConnection().write(new MapDataPacket(mapId, (byte) 0, new MapDataPacket.MapData(128, 128, 0, 0, canvas)));
+    if (this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      for (int i = 0; i < 128; ++i) {
+        this.player.getConnection().write(
+            new MapDataPacket(mapId, (byte) 0, new MapDataPacket.MapData(i, canvas17[i]))
+        );
+      }
+    } else {
+      this.player.getConnection().write(new MapDataPacket(mapId, (byte) 0, new MapDataPacket.MapData(canvas)));
+    }
   }
 
   @Override

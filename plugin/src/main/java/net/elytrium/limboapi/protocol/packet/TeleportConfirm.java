@@ -44,7 +44,7 @@ public class TeleportConfirm implements MinecraftPacket {
       return ((LimboSessionHandlerImpl) handler).handle(this);
     }
 
-    return false;
+    return true;
   }
 
   public int getTeleportId() {

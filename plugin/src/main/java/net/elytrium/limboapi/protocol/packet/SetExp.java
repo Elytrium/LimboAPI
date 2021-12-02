@@ -46,12 +46,11 @@ public class SetExp implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    buf.writeFloat(this.expBar);
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-      buf.writeFloat(this.expBar);
       ProtocolUtils.writeVarInt(buf, this.level);
       ProtocolUtils.writeVarInt(buf, this.totalExp);
     } else {
-      buf.writeFloat(this.expBar);
       buf.writeShort(this.level);
       buf.writeShort(this.totalExp);
     }

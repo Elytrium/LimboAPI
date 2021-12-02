@@ -53,38 +53,42 @@ public class SetSlot implements MinecraftPacket {
   }
 
   @Override
-  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     buf.writeByte(this.windowId);
 
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) >= 0) {
+    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17_1) >= 0) {
       ProtocolUtils.writeVarInt(buf, 0);
     }
 
     buf.writeShort(this.slot);
-    int id = this.item.getId(version);
+    int id = this.item.getId(protocolVersion);
     boolean present = id > 0;
 
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_13_2) >= 0) {
+    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_13_2) >= 0) {
       buf.writeBoolean(present);
     }
 
-    if (!present && version.compareTo(ProtocolVersion.MINECRAFT_1_13_2) < 0) {
+    if (!present && protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_13_2) < 0) {
       buf.writeShort(-1);
     }
 
     if (present) {
-      if (version.compareTo(ProtocolVersion.MINECRAFT_1_13_2) < 0) {
+      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_13_2) < 0) {
         buf.writeShort(id);
       } else {
         ProtocolUtils.writeVarInt(buf, id);
       }
       buf.writeByte(this.count);
-      if (version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
+      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
         buf.writeShort(this.data);
       }
 
       if (this.nbt == null) {
-        buf.writeByte(0);
+        if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+          buf.writeShort(-1);
+        } else {
+          buf.writeByte(0);
+        }
       } else {
         ProtocolUtils.writeCompoundTag(buf, this.nbt);
       }

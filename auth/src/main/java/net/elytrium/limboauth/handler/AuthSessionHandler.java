@@ -94,7 +94,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
           if (!this.totp && this.playerInfo != null) {
             if (this.checkPassword(args[1])) {
               this.finishOrTotp();
-            } else if (this.attempts-- != 0) {
+            } else if (--this.attempts != 0) {
               this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
             } else {
               this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));

@@ -18,12 +18,14 @@
 package net.elytrium.limboapi.injection.packet;
 
 import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,11 @@ public class PreparedPacketImpl implements PreparedPacket {
   }
 
   @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(T[] packets) {
+    return this.prepare(Arrays.asList(packets));
+  }
+
+  @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(List<T> packets) {
     for (T packet : packets) {
       this.prepare((Function<ProtocolVersion, T>) (version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
@@ -60,6 +67,34 @@ public class PreparedPacketImpl implements PreparedPacket {
   @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(T packet, ProtocolVersion from, ProtocolVersion to) {
     return this.prepare((Function<ProtocolVersion, T>) (version) -> packet, from, to);
+  }
+
+  @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(T[] packets, ProtocolVersion from) {
+    return this.prepare(Arrays.asList(packets), from);
+  }
+
+  @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(T[] packets, ProtocolVersion from, ProtocolVersion to) {
+    return this.prepare(Arrays.asList(packets), from, to);
+  }
+
+  @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(List<T> packets, ProtocolVersion from) {
+    for (T packet : packets) {
+      this.prepare(packet, from, ProtocolVersion.MAXIMUM_VERSION);
+    }
+
+    return this;
+  }
+
+  @Override
+  public <T extends MinecraftPacket> PreparedPacket prepare(List<T> packets, ProtocolVersion from, ProtocolVersion to) {
+    for (T packet : packets) {
+      this.prepare(packet, from, to);
+    }
+
+    return this;
   }
 
   @Override
@@ -116,5 +151,20 @@ public class PreparedPacketImpl implements PreparedPacket {
           LimboProtocol.getLimboRegistry().clientbound, (Class<? extends MinecraftPacket>) packet.getClass().getSuperclass(), version
       );
     }
+  }
+
+  @Override
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+
+  }
+
+  @Override
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+
+  }
+
+  @Override
+  public boolean handle(MinecraftSessionHandler handler) {
+    return false;
   }
 }

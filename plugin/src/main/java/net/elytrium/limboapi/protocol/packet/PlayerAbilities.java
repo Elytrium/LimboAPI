@@ -25,9 +25,9 @@ import io.netty.buffer.ByteBuf;
 
 public class PlayerAbilities implements MinecraftPacket {
 
-  private byte flags;
-  private float speed;
-  private float field;
+  private final byte flags;
+  private final float speed;
+  private final float field;
 
   public PlayerAbilities(byte flags, float speed, float field) {
     this.flags = flags;
@@ -36,7 +36,7 @@ public class PlayerAbilities implements MinecraftPacket {
   }
 
   public PlayerAbilities() {
-
+    throw new IllegalStateException();
   }
 
   @Override
@@ -53,39 +53,15 @@ public class PlayerAbilities implements MinecraftPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    return false;
-  }
-
-  public byte getFlags() {
-    return this.flags;
-  }
-
-  public float getSpeed() {
-    return this.speed;
-  }
-
-  public float getField() {
-    return this.field;
-  }
-
-  public void setFlags(byte flags) {
-    this.flags = flags;
-  }
-
-  public void setSpeed(float speed) {
-    this.speed = speed;
-  }
-
-  public void setField(float field) {
-    this.field = field;
+    return true;
   }
 
   @Override
   public String toString() {
     return "PlayerAbilities{"
-        + "flags=" + this.getFlags()
-        + ", speed=" + this.getSpeed()
-        + ", field=" + this.getField()
+        + "flags=" + this.flags
+        + ", speed=" + this.speed
+        + ", field=" + this.field
         + "}";
   }
 }

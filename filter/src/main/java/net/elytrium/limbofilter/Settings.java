@@ -33,17 +33,27 @@ public class Settings extends Config {
 
   public static class MAIN {
 
+    @Comment("Check if player's Minecraft client sends the network packet with the settings.")
     public boolean CHECK_CLIENT_SETTINGS = true;
+    @Comment("Check if player's Minecraft client has a brand.")
     public boolean CHECK_CLIENT_BRAND = true;
+    @Comment("If player's Minecraft client brand (e.g. fabric or forge) is set here, then this player will be kicked.")
     public List<String> BLOCKED_CLIENT_BRANDS = List.of("brand1", "brand2");
+    @Comment("Time in milliseconds, how frequently will the cache list with verified players be reset. Before that time, verified players can join the server without passing antibot checks.")
     public long PURGE_CACHE_MILLIS = 3600000;
+    @Comment("Max attempts, which a player has to solve the captcha.")
     public int CAPTCHA_ATTEMPTS = 2;
+    @Comment("Duration of Falling Check in Minecraft ticks (1 tick = 0.05 second, 20 ticks = 1 second).")
+    public int FALLING_CHECK_TICKS = 128;
+    @Comment("Prepares Captcha packets, uses ~0.5GB RAM, but improves CPU performance during bot attacks. It's recommended to disable it, if you have less than 2GB of RAM.")
+    public boolean PREPARE_CAPTCHA_PACKETS = false;
+    @Comment("Change the parameters below only if you know what they mean.")
     public int NON_VALID_POSITION_XZ_ATTEMPTS = 10;
     public int NON_VALID_POSITION_Y_ATTEMPTS = 10;
-    public int FALLING_CHECK_TICKS = 128;
     public double MAX_VALID_POSITION_DIFFERENCE = 0.01;
     public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 2048;
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
+    @Comment("Parameter for developers and contributors.")
     public boolean FALLING_CHECK_DEBUG = false;
 
     @Comment("Available - ONLY_POSITION, ONLY_CAPTCHA, CAPTCHA_POSITION, CAPTCHA_ON_POSITION_FAILED, SUCCESSFULLY")
@@ -74,6 +84,7 @@ public class Settings extends Config {
     })
     public static class FILTER_AUTO_TOGGLE {
 
+      // TODO: Норм комменты
       @Comment({
           "All players will bypass all anti-bot checks"
       })
@@ -172,8 +183,6 @@ public class Settings extends Config {
       public String STATS_DISABLED = "{PRFX} &fYou're no longer see statistics in your action bar.";
 
       public String KICK_CLIENT_CHECK_SETTINGS = "&cYour client doesn't send settings packets.";
-      public String KICK_CLIENT_CHECK_SETTINGS_CHAT_COLOR = "&cPlease enable colors in chat settings to join the server.{NL}&eOptions > Chat Settings";
-      public String KICK_CLIENT_CHECK_SETTINGS_SKIN_PARTS = "&cPlease enable any option from the skin customization to join the server.{NL}&eOptions > Skin Customization";
       public String KICK_CLIENT_CHECK_BRAND = "&cYour client doesn't send brand packet or it's blocked.";
     }
 
@@ -183,6 +192,7 @@ public class Settings extends Config {
     public static class COORDS {
 
       public double CAPTCHA_X = 0;
+      @Comment("If your server supports Minecraft 1.7, don't set captcha-y to 0. https://media.discordapp.net/attachments/878241549857738793/915165038464098314/unknown.png")
       public double CAPTCHA_Y = 0;
       public double CAPTCHA_Z = 0;
       public double CAPTCHA_YAW = 90;
