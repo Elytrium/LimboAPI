@@ -69,6 +69,9 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
   }
 
   @Override
+  public abstract void onSpawn(Limbo server, LimboPlayer player);
+
+  @Override
   public void onMove(double x, double y, double z) {
     if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_8) <= 0
         && x == this.validX && y == this.validY && z == this.validZ && this.waitingTeleportId == this.validTeleportId) {
@@ -83,9 +86,6 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
     this.z = z;
     this.onMove();
   }
-
-  @Override
-  public abstract void onSpawn(Limbo server, LimboPlayer player);
 
   public abstract void onMove();
 
