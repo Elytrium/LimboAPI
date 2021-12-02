@@ -19,28 +19,37 @@ package net.elytrium.limboapi.protocol.util;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.EnumMap;
 import java.util.Map;
+import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.BlockSection;
 import net.elytrium.limboapi.api.chunk.data.BlockStorage;
 import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3d;
+import net.elytrium.limboapi.protocol.data.BiomeStorage118;
 import net.elytrium.limboapi.protocol.data.BlockStorage17;
 import net.elytrium.limboapi.protocol.data.BlockStorage19;
 
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class NetworkSection {
 
   private final Map<ProtocolVersion, BlockStorage> storages = new EnumMap<>(ProtocolVersion.class);
+  private final Map<ProtocolVersion, BiomeStorage118> biomeStorages = new EnumMap<>(ProtocolVersion.class);
   private final NibbleArray3d blockLight;
   private final NibbleArray3d skyLight;
   private final BlockSection section;
+  private final VirtualBiome[] biomes;
+  private final int index;
   private int blockCount = -1;
 
-  public NetworkSection(BlockSection section, @NonNull NibbleArray3d blockLight, NibbleArray3d skyLight) {
+  public NetworkSection(int index, BlockSection section, @NonNull NibbleArray3d blockLight, NibbleArray3d skyLight, VirtualBiome[] biomes) {
+    this.index = index;
     this.section = section;
     this.blockLight = blockLight;
     this.skyLight = skyLight;
+    this.biomes = biomes;
   }
 
   public BlockStorage ensureCreated(ProtocolVersion version) {
@@ -54,6 +63,21 @@ public class NetworkSection {
           this.storages.put(protocolVersion, blockStorage);
         }
         storage = blockStorage;
+      }
+    }
+    return storage;
+  }
+
+  public BiomeStorage118 ensureBiomeCreated(ProtocolVersion version) {
+    BiomeStorage118 storage = this.biomeStorages.get(version);
+    if (storage == null) {
+      synchronized (this.biomeStorages) {
+        storage = new BiomeStorage118(version);
+        final int offset = this.index * 64;
+        for (int biomeIndex = 0, biomeArrayIndex = offset; biomeIndex < 64; biomeIndex++, biomeArrayIndex++) {
+          storage.set(biomeIndex, this.biomes[biomeArrayIndex]);
+        }
+        this.biomeStorages.put(version, storage);
       }
     }
     return storage;
@@ -91,6 +115,11 @@ public class NetworkSection {
         this.write19Data(data, storage, version);
       } else {
         this.write114Data(data, storage, version);
+
+        if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
+          BiomeStorage118 biomeStorage = this.ensureBiomeCreated(version);
+          this.write118Biomes(data, biomeStorage, version);
+        }
       }
     }
   }
@@ -128,6 +157,10 @@ public class NetworkSection {
   private void write114Data(ByteBuf data, BlockStorage storage, ProtocolVersion version) {
     data.writeShort(this.blockCount);
     storage.write(data, version);
+  }
+
+  private void write118Biomes(ByteBuf buf, BiomeStorage118 storage, ProtocolVersion version) {
+    storage.write(buf, version);
   }
 
   private void fillBlocks(BlockStorage storage) {
