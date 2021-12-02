@@ -45,8 +45,6 @@ public class Settings extends Config {
     public int CAPTCHA_ATTEMPTS = 2;
     @Comment("Duration of Falling Check in Minecraft ticks (1 tick = 0.05 second, 20 ticks = 1 second).")
     public int FALLING_CHECK_TICKS = 128;
-    @Comment("Prepares Captcha packets, uses ~0.5GB RAM, but improves CPU performance during bot attacks. It's recommended to disable it, if you have less than 2GB of RAM.")
-    public boolean PREPARE_CAPTCHA_PACKETS = false;
     @Comment("Change the parameters below only if you know what they mean.")
     public int NON_VALID_POSITION_XZ_ATTEMPTS = 10;
     public int NON_VALID_POSITION_Y_ATTEMPTS = 10;
@@ -56,7 +54,14 @@ public class Settings extends Config {
     @Comment("Parameter for developers and contributors.")
     public boolean FALLING_CHECK_DEBUG = false;
 
-    @Comment("Available - ONLY_POSITION, ONLY_CAPTCHA, CAPTCHA_POSITION, CAPTCHA_ON_POSITION_FAILED, SUCCESSFULLY")
+    @Comment({
+        "Available states: ONLY_POSITION, ONLY_CAPTCHA, CAPTCHA_POSITION, CAPTCHA_ON_POSITION_FAILED",
+        "Meaning: ",
+        "ONLY_POSITION -> Only falling check (Player will be spawned in the void, server will check player's coordinates, speed, acceleration).",
+        "ONLY_CAPTCHA -> Only captcha (Map items with a captcha image will be given to the players, players need to solve captcha, and send the answer in the chat).",
+        "CAPTCHA_POSITION -> Falling and Captcha checking concurrently (Player will be kicked, if he fails either falling check or captcha checking).",
+        "CAPTCHA_ON_POSITION_FAILED -> Initially, the falling check will be started, but if the player fails that check, the captcha checking will be started."
+    })
     public String CHECK_STATE = "CAPTCHA_POSITION";
 
     public boolean LOAD_WORLD = false;
@@ -129,6 +134,8 @@ public class Settings extends Config {
 
     public static class CAPTCHA_GENERATOR {
 
+      @Comment("Prepares Captcha packets, uses ~0.5GB RAM, but improves CPU performance during bot attacks. It's recommended to disable it, if you have less than 2GB of RAM.")
+      public boolean PREPARE_CAPTCHA_PACKETS = false;
       @Comment("Path to the background image to draw on captcha (any format, 128x128), none if empty")
       public String BACKPLATE_PATH = "";
       @Comment("Path to the font files to draw on captcha (ttf), can be empty")

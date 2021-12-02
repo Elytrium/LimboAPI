@@ -36,7 +36,7 @@ public class CachedCaptcha {
   private final AtomicInteger counterAtomic = new AtomicInteger(0);
 
   public void createCaptchaPacket(MapDataPacket packet, MapDataPacket[] packets17, String answer) {
-    if (Settings.IMP.MAIN.PREPARE_CAPTCHA_PACKETS) {
+    if (Settings.IMP.MAIN.CAPTCHA_GENERATOR.PREPARE_CAPTCHA_PACKETS) {
       PreparedPacket prepared = FilterPlugin.getInstance().getFactory().createPreparedPacket();
       this.captchas.add(
           new CaptchaHandler(

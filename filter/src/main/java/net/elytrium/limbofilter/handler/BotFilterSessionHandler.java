@@ -26,7 +26,6 @@ import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import java.text.MessageFormat;
 import java.util.List;
-import java.util.Objects;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
@@ -83,74 +82,33 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   }
 
   @Override
-  public void onGeneric(MinecraftPacket packet) {
-    if (packet instanceof PluginMessage) {
-      PluginMessage pluginMessage = (PluginMessage) packet;
-      int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
-      this.genericBytes += singleLength;
-      if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH || this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
-        this.disconnect(this.packets.getTooBigPacket(), true);
-        this.logger.error("{} sent too big packet", this.player);
-      }
-      if (PluginMessageUtil.isMcBrand(pluginMessage) && !this.checkedByBrand) {
-        String brand = PluginMessageUtil.readBrandMessage(pluginMessage.content());
-        this.logger.info("{} has client brand {}", this.player, brand);
-        if (!Settings.IMP.MAIN.BLOCKED_CLIENT_BRANDS.contains(brand)) {
-          this.checkedByBrand = true;
-        }
-      }
-    } else if (packet instanceof ClientSettings) {
-      if (!this.checkedBySettings && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
-        this.checkedBySettings = true;
-      }
-    }
-  }
+  public void onSpawn(Limbo server, LimboPlayer player) {
+    this.server = server;
+    this.limboPlayer = player;
 
-  @Override
-  public void onChat(String message) {
-    if ((this.state == CheckState.CAPTCHA_POSITION || this.state == CheckState.ONLY_CAPTCHA) && message.length() <= 256) {
-      if (message.equals(this.captchaAnswer)) {
-        this.connection.write(this.packets.getResetSlot());
-        this.finishCheck();
-      } else if (--this.attempts != 0) {
-        this.sendCaptcha();
-      } else {
-        this.disconnect(this.packets.getCaptchaFailed(), true);
-      }
-    }
-  }
+    Settings.MAIN.COORDS coords = Settings.IMP.MAIN.COORDS;
+    this.fallingCheckPos = ((LimboImpl) this.server).createPlayerPosAndLookPacket(
+        this.validX, this.validY, this.validZ,
+        (float) (this.state == CheckState.CAPTCHA_POSITION ? coords.CAPTCHA_YAW : coords.FALLING_CHECK_YAW),
+        (float) (this.state == CheckState.CAPTCHA_POSITION ? coords.CAPTCHA_PITCH : coords.FALLING_CHECK_PITCH)
+    );
+    this.fallingCheckChunk = ((LimboImpl) this.server).createChunkDataPacket(new SimpleChunk(this.validX >> 4, this.validZ >> 4), 256);
+    this.fallingCheckView = ((LimboImpl) this.server).createUpdateViewPosition(this.validX, this.validZ);
 
-  private void finishCheck() {
-    if (System.currentTimeMillis() - this.joinTime < TOTAL_TIME && this.state != CheckState.ONLY_CAPTCHA) {
-      if (this.state == CheckState.CAPTCHA_POSITION && this.ticks < TOTAL_TICKS) {
-        this.state = CheckState.ONLY_POSITION;
-      } else {
-        if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
-          this.changeStateToCaptcha();
-        } else {
-          this.disconnect(this.packets.getFallingCheckFailed(), true);
-        }
+    if (this.state == CheckState.ONLY_CAPTCHA) {
+      this.sendCaptcha();
+    } else if (this.state == CheckState.CAPTCHA_POSITION) {
+      this.sendFallingCheckPackets();
+      this.sendCaptcha();
+    } else if (this.state == CheckState.ONLY_POSITION || this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
+      if (this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+        this.connection.delayedWrite(this.packets.getCheckingTitle());
       }
-      return;
+      this.connection.delayedWrite(this.packets.getCheckingChat());
+      this.sendFallingCheckPackets();
     }
 
-    if (!this.checkedBySettings && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
-      this.disconnect(this.packets.getKickClientCheckSettings(), true);
-    }
-    if (!this.checkedByBrand && Settings.IMP.MAIN.CHECK_CLIENT_BRAND) {
-      this.disconnect(this.packets.getKickClientCheckBrand(), true);
-    }
-
-    this.state = CheckState.SUCCESSFUL;
-    this.plugin.cacheFilterUser(this.player);
-
-    if (this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.ONLINE_MODE_VERIFY)
-        || this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.NEED_TO_RECONNECT)) {
-      this.disconnect(this.packets.getSuccessfulBotFilterDisconnect(), false);
-    } else {
-      this.connection.write(this.packets.getSuccessfulBotFilterChat());
-      this.limboPlayer.disconnect();
-    }
+    this.connection.flush();
   }
 
   @Override
@@ -215,39 +173,73 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   }
 
   @Override
-  public void onSpawn(Limbo server, LimboPlayer player) {
-    this.server = server;
-    this.limboPlayer = player;
-
-    Settings.MAIN.COORDS coords = Settings.IMP.MAIN.COORDS;
-    this.fallingCheckPos = ((LimboImpl) this.server).createPlayerPosAndLookPacket(
-        this.validX, this.validY, this.validZ,
-        (float) (this.state == CheckState.CAPTCHA_POSITION ? coords.CAPTCHA_YAW : coords.FALLING_CHECK_YAW),
-        (float) (this.state == CheckState.CAPTCHA_POSITION ? coords.CAPTCHA_PITCH : coords.FALLING_CHECK_PITCH)
-    );
-    this.fallingCheckChunk = ((LimboImpl) this.server).createChunkDataPacket(new SimpleChunk(this.validX >> 4, this.validZ >> 4), 256);
-    this.fallingCheckView = ((LimboImpl) this.server).createUpdateViewPosition(this.validX, this.validZ);
-
-    if (this.state == CheckState.ONLY_CAPTCHA) {
-      this.sendCaptcha();
-    } else if (this.state == CheckState.CAPTCHA_POSITION) {
-      this.sendFallingCheckPackets();
-      this.sendCaptcha();
-    } else if (this.state == CheckState.ONLY_POSITION || this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
-      if (this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-        this.connection.delayedWrite(this.packets.getCheckingTitle());
+  public void onChat(String message) {
+    if ((this.state == CheckState.CAPTCHA_POSITION || this.state == CheckState.ONLY_CAPTCHA) && message.length() <= 256) {
+      if (message.equals(this.captchaAnswer)) {
+        this.connection.write(this.packets.getResetSlot());
+        this.finishCheck();
+      } else if (--this.attempts != 0) {
+        this.sendCaptcha();
+      } else {
+        this.disconnect(this.packets.getCaptchaFailed(), true);
       }
-      this.connection.delayedWrite(this.packets.getCheckingChat());
-      this.sendFallingCheckPackets();
     }
-
-    this.connection.flush();
   }
 
-  private void disconnect(PreparedPacket reason, boolean blocked) {
-    this.connection.closeWith(reason);
-    if (blocked) {
-      this.statistics.addBlockedConnection();
+  @Override
+  public void onGeneric(MinecraftPacket packet) {
+    if (packet instanceof PluginMessage) {
+      PluginMessage pluginMessage = (PluginMessage) packet;
+      int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
+      this.genericBytes += singleLength;
+      if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH || this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
+        this.disconnect(this.packets.getTooBigPacket(), true);
+        this.logger.error("{} sent too big packet", this.player);
+      }
+      if (PluginMessageUtil.isMcBrand(pluginMessage) && !this.checkedByBrand) {
+        String brand = PluginMessageUtil.readBrandMessage(pluginMessage.content());
+        this.logger.info("{} has client brand {}", this.player, brand);
+        if (!Settings.IMP.MAIN.BLOCKED_CLIENT_BRANDS.contains(brand)) {
+          this.checkedByBrand = true;
+        }
+      }
+    } else if (packet instanceof ClientSettings) {
+      if (!this.checkedBySettings && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
+        this.checkedBySettings = true;
+      }
+    }
+  }
+
+  private void finishCheck() {
+    if (System.currentTimeMillis() - this.joinTime < TOTAL_TIME && this.state != CheckState.ONLY_CAPTCHA) {
+      if (this.state == CheckState.CAPTCHA_POSITION && this.ticks < TOTAL_TICKS) {
+        this.state = CheckState.ONLY_POSITION;
+      } else {
+        if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
+          this.changeStateToCaptcha();
+        } else {
+          this.disconnect(this.packets.getFallingCheckFailed(), true);
+        }
+      }
+      return;
+    }
+
+    if (!this.checkedBySettings && Settings.IMP.MAIN.CHECK_CLIENT_SETTINGS) {
+      this.disconnect(this.packets.getKickClientCheckSettings(), true);
+    }
+    if (!this.checkedByBrand && Settings.IMP.MAIN.CHECK_CLIENT_BRAND) {
+      this.disconnect(this.packets.getKickClientCheckBrand(), true);
+    }
+
+    this.state = CheckState.SUCCESSFUL;
+    this.plugin.cacheFilterUser(this.player);
+
+    if (this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.ONLINE_MODE_VERIFY)
+        || this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.NEED_TO_RECONNECT)) {
+      this.disconnect(this.packets.getSuccessfulBotFilterDisconnect(), false);
+    } else {
+      this.connection.write(this.packets.getSuccessfulBotFilterChat());
+      this.limboPlayer.disconnect();
     }
   }
 
@@ -283,10 +275,6 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.connection.flush();
   }
 
-  private boolean checkY() {
-    return Math.abs(this.lastY - this.y - getLoadedChunkSpeed(this.ticks)) > Settings.IMP.MAIN.MAX_VALID_POSITION_DIFFERENCE;
-  }
-
   private void fallingCheckFailed() {
     if (this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
       List<SetExp> expList = this.packets.getExperience();
@@ -296,6 +284,17 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     }
 
     this.disconnect(this.packets.getFallingCheckFailed(), true);
+  }
+
+  private void disconnect(PreparedPacket reason, boolean blocked) {
+    this.connection.closeWith(reason);
+    if (blocked) {
+      this.statistics.addBlockedConnection();
+    }
+  }
+
+  private boolean checkY() {
+    return Math.abs(this.lastY - this.y - getLoadedChunkSpeed(this.ticks)) > Settings.IMP.MAIN.MAX_VALID_POSITION_DIFFERENCE;
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -308,6 +307,10 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     this.waitingTeleportId = this.validTeleportId;
   }
 
+  public void setCaptchaAnswer(String captchaAnswer) {
+    this.captchaAnswer = captchaAnswer;
+  }
+
   private void changeStateToCaptcha() {
     this.state = CheckState.ONLY_CAPTCHA;
     this.joinTime = System.currentTimeMillis() + TOTAL_TIME;
@@ -317,31 +320,10 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     }
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    return this.player.getUsername().equals(((BotFilterSessionHandler) o).player.getUsername());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.player.getUsername());
-  }
-
   public static void reload() {
     TOTAL_TICKS = Settings.IMP.MAIN.FALLING_CHECK_TICKS;
     TOTAL_TIME = (TOTAL_TICKS * 50) - 100;
     CAPTCHA_Y = Settings.IMP.MAIN.COORDS.CAPTCHA_Y;
-  }
-
-  public void setCaptchaAnswer(String captchaAnswer) {
-    this.captchaAnswer = captchaAnswer;
   }
 
   public static long getTotalTicks() {
@@ -350,6 +332,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
   @SuppressWarnings("unused")
   public enum CheckState {
+
     ONLY_POSITION,
     ONLY_CAPTCHA,
     CAPTCHA_POSITION,

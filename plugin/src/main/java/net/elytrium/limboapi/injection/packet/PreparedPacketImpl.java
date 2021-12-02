@@ -33,12 +33,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 
 public class PreparedPacketImpl implements PreparedPacket {
 
   private final Map<ProtocolVersion, List<ByteBuf>> packets = new ConcurrentHashMap<>();
+  private final ProtocolVersion minVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MIN_VERSION);
+  private final ProtocolVersion maxVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MAX_VERSION);
 
   @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(T packet) {
@@ -109,6 +112,8 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   @Override
   public <T extends MinecraftPacket> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to) {
+    from = from.compareTo(this.minVersion) >= 0 ? from : this.minVersion;
+    to = to.compareTo(this.maxVersion) <= 0 ? to : this.maxVersion;
     for (ProtocolVersion protocolVersion : EnumSet.range(from, to)) {
       ByteBuf buf = this.encodePacket(packet.apply(protocolVersion), protocolVersion);
       if (this.packets.containsKey(protocolVersion)) {
@@ -165,6 +170,6 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    return false;
+    return true;
   }
 }

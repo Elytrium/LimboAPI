@@ -31,7 +31,7 @@ public class CachedPackets {
 
   public void createPackets() {
     this.tooBigPacket = LimboAPI.getInstance().createPreparedPacket()
-        .prepare((Function<ProtocolVersion, Disconnect>) (version) -> this.createDisconnectPacket(Settings.IMP.MESSAGES.TOO_BIG_PACKET, version));
+        .prepare((Function<ProtocolVersion, Disconnect>) (version) -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TOO_BIG_PACKET, version));
   }
 
   private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {

@@ -64,11 +64,6 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
   }
 
   @Override
-  public String toString() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  @Override
   public void onGround(boolean onGround) {
     this.onGround = onGround;
   }
@@ -89,6 +84,9 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
     this.onMove();
   }
 
+  @Override
+  public abstract void onSpawn(Limbo server, LimboPlayer player);
+
   public abstract void onMove();
 
   @Override
@@ -108,7 +106,4 @@ public abstract class FallingCheckHandler implements LimboSessionHandler {
 
     return loadedChunkSpeedCache[ticks];
   }
-
-  @Override
-  public abstract void onSpawn(Limbo server, LimboPlayer player);
 }
