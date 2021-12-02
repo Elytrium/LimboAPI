@@ -20,6 +20,7 @@ package net.elytrium.limboapi.protocol.map;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 
 @SuppressFBWarnings("EI_EXPOSE_REP")
@@ -57,15 +58,25 @@ public class CraftMapCanvas {
     }
   }
 
-  public void drawImage(int x, int y, BufferedImage image) {
+  public void drawImage(int x, int y, BufferedImage image, boolean colorify) {
     int[] bytes = MapPalette.imageToBytes(image);
     int width = image.getWidth(null);
     int height = image.getHeight(null);
+    byte randomizedColor = 0;
+    if (colorify) {
+      randomizedColor = (byte) ThreadLocalRandom.current().nextInt(MapPalette.getColors().length);
+    }
 
     for (int x2 = 0; x2 < width; ++x2) {
       for (int y2 = 0; y2 < height; ++y2) {
         byte color = (byte) bytes[y2 * width + x2];
         if (color != MapPalette.WHITE) {
+          if (colorify) {
+            color -= randomizedColor;
+            if (color < 0) {
+              color += MapPalette.getColors().length;
+            }
+          }
           this.setPixel(x + x2, y + y2, color);
         }
       }
