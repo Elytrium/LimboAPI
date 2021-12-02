@@ -59,7 +59,7 @@ Velocity | Offline Mode | 2 sec | 55%
         <dependency>
             <groupId>net.elytrium</groupId>
             <artifactId>limboapi-api</artifactId>
-            <version>1.0.1</version>
+            <version>1.0.2</version>
             <scope>provided</scope>
         </dependency>
 ```
@@ -68,7 +68,7 @@ Velocity | Offline Mode | 2 sec | 55%
         <dependency>
             <groupId>net.elytrium</groupId>
             <artifactId>limboapi-api</artifactId>
-            <version>1.0.1</version>
+            <version>1.0.2</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/limboapi-api.jar</systemPath>
         </dependency>
