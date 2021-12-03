@@ -24,23 +24,6 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable(tableName = "auth")
 public class RegisteredPlayer {
 
-  public RegisteredPlayer() {
-
-  }
-
-  public RegisteredPlayer(
-      String nickname, String lowercaseNickname, String hash, String ip,
-      String totpToken, Long regDate, String uuid, String premiumUuid) {
-    this.nickname = nickname;
-    this.lowercaseNickname = lowercaseNickname;
-    this.hash = hash;
-    this.ip = ip;
-    this.totpToken = totpToken;
-    this.regDate = regDate;
-    this.uuid = uuid;
-    this.premiumUuid = premiumUuid;
-  }
-
   @DatabaseField(canBeNull = false)
   public String nickname;
 
@@ -64,4 +47,20 @@ public class RegisteredPlayer {
 
   @DatabaseField
   public String premiumUuid;
+
+  public RegisteredPlayer(String nickname, String lowercaseNickname,
+      String hash, String ip, String totpToken, Long regDate, String uuid, String premiumUuid) {
+    this.nickname = nickname;
+    this.lowercaseNickname = lowercaseNickname;
+    this.hash = hash;
+    this.ip = ip;
+    this.totpToken = totpToken;
+    this.regDate = regDate;
+    this.uuid = uuid;
+    this.premiumUuid = premiumUuid;
+  }
+
+  public RegisteredPlayer() {
+
+  }
 }

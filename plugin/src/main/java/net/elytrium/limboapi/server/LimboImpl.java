@@ -198,14 +198,9 @@ public class LimboImpl implements Limbo {
       e.printStackTrace();
     }
 
-    try {
-      joinGame.setSimulationDistance(0);
-    } catch (Exception ignored) {
-      // For old velocity to work
-    }
-
     joinGame.setLevelType("flat");
     joinGame.setViewDistance(10);
+    joinGame.setSimulationDistance(0);
     joinGame.setReducedDebugInfo(true);
     joinGame.setIsHardcore(true);
 
