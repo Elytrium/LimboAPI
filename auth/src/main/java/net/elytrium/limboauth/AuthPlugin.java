@@ -226,13 +226,13 @@ public class AuthPlugin {
 
     switch (Settings.IMP.DATABASE.STORAGE_TYPE) {
       case "sqlite": {
-        findSql = "SELECT sql AS COLUMN_NAME FROM sqlite_master WHERE tbl_name = `"
-            + playerDao.getTableInfo().getTableName() + "` AND type = 'table'";
+        findSql = "SELECT name FROM PRAGMA_TABLE_INFO('"
+            + playerDao.getTableInfo().getTableName() + "')";
         break;
       }
       case "h2": {
         findSql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '"
-            + playerDao.getTableInfo().getTableName().toUpperCase(Locale.ROOT) + "';";
+            + playerDao.getTableInfo().getTableName() + "';";
         break;
       }
       case "postgresql":
