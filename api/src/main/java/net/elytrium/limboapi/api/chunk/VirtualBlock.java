@@ -85,9 +85,11 @@ public interface VirtualBlock {
         case "1.17": {
           return MINECRAFT_1_17;
         }
-        // case "1.18": {
-        //  return MINECRAFT_1_18;
-        // }
+        /*
+        case "1.18": {
+         return MINECRAFT_1_18;
+        }
+        */
         default: {
           return LEGACY;
         }
@@ -110,22 +112,6 @@ public interface VirtualBlock {
 
     Version(Set<ProtocolVersion> versions) {
       this.versions = versions;
-    }
-
-    public boolean isBefore(Version other) {
-      return this.compareTo(other) < 0;
-    }
-
-    public boolean isBeforeOrEq(Version other) {
-      return this.compareTo(other) <= 0;
-    }
-
-    public boolean isAfter(Version other) {
-      return this.compareTo(other) > 0;
-    }
-
-    public boolean isAfterOrEq(Version other) {
-      return this.compareTo(other) >= 0;
     }
 
     public Set<ProtocolVersion> getVersions() {

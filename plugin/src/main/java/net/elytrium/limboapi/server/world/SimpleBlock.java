@@ -61,7 +61,7 @@ public class SimpleBlock implements VirtualBlock {
   private final Map<Version, BlockInfo> blockInfos;
   private final boolean solid;
   private final boolean air;
-  private final boolean motionBlocking; //1.14+
+  private final boolean motionBlocking; // 1.14+
 
   public SimpleBlock(boolean solid, boolean air, boolean motionBlocking, BlockInfo... blockInfos) {
     this.blockInfos = new EnumMap<>(Version.class);

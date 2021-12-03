@@ -74,13 +74,14 @@ public class NetworkSection {
     if (storage == null) {
       synchronized (this.biomeStorages) {
         storage = new BiomeStorage118(version);
-        final int offset = this.index * SimpleChunk.MAX_BIOMES_PER_SECTION;
-        for (int biomeIndex = 0, biomeArrayIndex = offset; biomeIndex < SimpleChunk.MAX_BIOMES_PER_SECTION; biomeIndex++, biomeArrayIndex++) {
+        int offset = this.index * SimpleChunk.MAX_BIOMES_PER_SECTION;
+        for (int biomeIndex = 0, biomeArrayIndex = offset; biomeIndex < SimpleChunk.MAX_BIOMES_PER_SECTION; ++biomeIndex, ++biomeArrayIndex) {
           storage.set(biomeIndex, this.biomes[biomeArrayIndex]);
         }
         this.biomeStorages.put(version, storage);
       }
     }
+
     return storage;
   }
 
@@ -96,11 +97,11 @@ public class NetworkSection {
       }
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
-      dataLength += 2; //Block count short
+      dataLength += 2; // Block count short
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
       BiomeStorage118 biomeStorage = this.ensureBiomeCreated(version);
-      dataLength += biomeStorage.getDataLength(version);
+      dataLength += biomeStorage.getDataLength();
     }
 
     return dataLength;
