@@ -89,7 +89,7 @@ public class BiomeStorage118 {
     this.storage.write(buf, version);
   }
 
-  public int getDataLength(ProtocolVersion version) {
+  public int getDataLength() {
     int length = 1;
     if (this.storage.getBitsPerEntry() <= 8) {
       length += ProtocolUtils.varIntBytes(this.palette.size());

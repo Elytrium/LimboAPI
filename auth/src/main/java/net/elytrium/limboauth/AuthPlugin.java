@@ -111,6 +111,8 @@ public class AuthPlugin {
 
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) throws SQLException {
+    System.setProperty("com.j256.simplelogging.level", "ERROR");
+
     this.reload();
   }
 
@@ -119,8 +121,6 @@ public class AuthPlugin {
     Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
 
     this.cachedAuthChecks = new ConcurrentHashMap<>();
-
-    System.setProperty("com.j256.simplelogging.level", "ERROR");
 
     Settings.DATABASE dbConfig = Settings.IMP.DATABASE;
 
@@ -211,8 +211,10 @@ public class AuthPlugin {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, task -> new Thread(task, "purge-cache"));
 
     scheduler.scheduleAtFixedRate(() ->
-            this.checkCache(this.cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
-        Settings.IMP.MAIN.PURGE_CACHE_MILLIS, Settings.IMP.MAIN.PURGE_CACHE_MILLIS, TimeUnit.MILLISECONDS
+        this.checkCache(this.cachedAuthChecks, Settings.IMP.MAIN.PURGE_CACHE_MILLIS),
+        Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
+        Settings.IMP.MAIN.PURGE_CACHE_MILLIS,
+        TimeUnit.MILLISECONDS
     );
   }
 
@@ -248,18 +250,16 @@ public class AuthPlugin {
       tables.forEach(t -> {
         try {
           String columnDefinition = t.getColumnDefinition();
-          StringBuilder sb = new StringBuilder("ALTER TABLE `auth` ADD ");
+          StringBuilder builder = new StringBuilder("ALTER TABLE `auth` ADD ");
           List<String> dummy = new ArrayList<>();
           if (columnDefinition == null) {
-            playerDao.getConnectionSource().getDatabaseType()
-                .appendColumnArg(t.getTableName(), sb, t, dummy, dummy, dummy, dummy);
+            playerDao.getConnectionSource().getDatabaseType().appendColumnArg(t.getTableName(), builder, t, dummy, dummy, dummy, dummy);
           } else {
-            playerDao.getConnectionSource().getDatabaseType()
-                .appendEscapedEntityName(sb, t.getColumnName());
-            sb.append(' ').append(columnDefinition).append(' ');
+            playerDao.getConnectionSource().getDatabaseType().appendEscapedEntityName(builder, t.getColumnName());
+            builder.append(" ").append(columnDefinition).append(" ");
           }
 
-          playerDao.executeRawNoArgs(sb.toString());
+          playerDao.executeRawNoArgs(builder.toString());
         } catch (SQLException e) {
           e.printStackTrace();
         }
@@ -272,8 +272,7 @@ public class AuthPlugin {
   public void cacheAuthUser(Player player) {
     String username = player.getUsername();
     this.cachedAuthChecks.remove(username);
-    InetSocketAddress adr = player.getRemoteAddress();
-    this.cachedAuthChecks.put(username, new CachedUser(adr.getAddress(), System.currentTimeMillis()));
+    this.cachedAuthChecks.put(username, new CachedUser(player.getRemoteAddress().getAddress(), System.currentTimeMillis()));
   }
 
   public boolean needAuth(Player player) {

@@ -106,9 +106,11 @@ public class SimpleItem implements VirtualItem {
         case "1.17": {
           return MINECRAFT_1_17;
         }
-        // case "1.18": {
-        //   return MINECRAFT_1_18;
-        // }
+        /*
+        case "1.18": {
+          return MINECRAFT_1_18;
+        }
+        */
         default: {
           return LEGACY;
         }

@@ -93,6 +93,7 @@ public class LoginListener {
       Class.forName("com.velocitypowered.proxy.connection.client.LoginInboundConnection");
     } catch (ClassNotFoundException e) {
       LimboAPI.getInstance().getLogger().error("Please update your Velocity binary to 3.1.x", e);
+      LimboAPI.getInstance().getServer().shutdown();
     }
 
     closed = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), LimboAPI.getInstance().getServer());

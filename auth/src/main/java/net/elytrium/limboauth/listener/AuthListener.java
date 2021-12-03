@@ -77,6 +77,7 @@ public class AuthListener {
             ex.printStackTrace();
           }
         }
+
         e.setGameProfile(e.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
       }
     }

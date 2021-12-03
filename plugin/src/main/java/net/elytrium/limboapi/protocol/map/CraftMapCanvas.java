@@ -89,7 +89,7 @@ public class CraftMapCanvas {
 
   public MapDataPacket.MapData[] get17MapsData() {
     MapDataPacket.MapData[] maps = new MapDataPacket.MapData[128];
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < 128; ++i) {
       maps[i] = new MapDataPacket.MapData(i, this.canvas17[i]);
     }
 
