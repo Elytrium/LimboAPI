@@ -1,6 +1,7 @@
 <img src="https://elytrium.net/src/img/elytrium.webp" alt="Elytrium" align="right">
 
 # LimboAPI (ex. ElytraProxy Virtual Server)
+
 [![Join our Discord](https://img.shields.io/discord/775778822334709780.svg?logo=discord&label=Discord)](https://ely.su/discord)
 [![Proxy Stats](https://img.shields.io/bstats/servers/12530?logo=minecraft&label=Servers)](https://bstats.org/plugin/velocity/LimboAPI/12530)
 [![Proxy Stats](https://img.shields.io/bstats/players/12530?logo=minecraft&label=Players)](https://bstats.org/plugin/velocity/LimboAPI/12530)
@@ -55,6 +56,7 @@ Velocity | Offline Mode | 2 sec | 55%
 ### How to include it
 
 - Build the project and use local maven repo:
+
 ```
         <dependency>
             <groupId>net.elytrium</groupId>
@@ -63,7 +65,9 @@ Velocity | Offline Mode | 2 sec | 55%
             <scope>provided</scope>
         </dependency>
 ```
+
 - Or use the precompiled .jar file (e.g. from Releases or Actions):
+
 ```
         <dependency>
             <groupId>net.elytrium</groupId>

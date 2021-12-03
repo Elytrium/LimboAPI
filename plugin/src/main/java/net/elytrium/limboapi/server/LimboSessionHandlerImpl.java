@@ -102,8 +102,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.callback.onDisconnect();
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
       this.limboAPI.getLogger().info(
-          this.player.getUsername() + " (" + this.player.getRemoteAddress() + ")"
-          + " has disconnected from the " + this.callback.getClass().getSimpleName() + " Limbo"
+          this.player.getUsername() + " (" + this.player.getRemoteAddress() + ") has disconnected from the "
+              + this.callback.getClass().getSimpleName() + " Limbo"
       );
     }
 

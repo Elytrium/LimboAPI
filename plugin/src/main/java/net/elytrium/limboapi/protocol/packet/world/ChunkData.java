@@ -235,7 +235,7 @@ public class ChunkData implements MinecraftPacket {
   }
 
   private long[] create117Mask() {
-    return BitSet.valueOf(new long[]{this.mask}).toLongArray();
+    return BitSet.valueOf(new long[] {this.mask}).toLongArray();
   }
 
   private void write17(ByteBuf out, ByteBuf data) {

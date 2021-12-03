@@ -18,10 +18,9 @@
 package net.elytrium.limboapi.protocol.data;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class StorageUtils19 {
+
   public static int fixBitsPerEntry(ProtocolVersion version, int newSize) {
     if (newSize < 4) {
       return 4;

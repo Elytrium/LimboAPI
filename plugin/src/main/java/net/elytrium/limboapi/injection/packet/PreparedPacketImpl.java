@@ -85,7 +85,7 @@ public class PreparedPacketImpl implements PreparedPacket {
   @Override
   public <T extends MinecraftPacket> PreparedPacket prepare(List<T> packets, ProtocolVersion from) {
     for (T packet : packets) {
-      this.prepare(packet, from, ProtocolVersion.MAXIMUM_VERSION);
+      this.prepare(packet, from);
     }
 
     return this;
