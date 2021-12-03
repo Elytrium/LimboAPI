@@ -21,31 +21,31 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @SuppressWarnings("unused")
-@DatabaseTable(tableName = "auth")
+@DatabaseTable(tableName = "AUTH")
 public class RegisteredPlayer {
 
-  @DatabaseField(canBeNull = false)
+  @DatabaseField(canBeNull = false, columnName = "NICKNAME")
   public String nickname;
 
-  @DatabaseField(id = true)
+  @DatabaseField(id = true, columnName = "LOWERCASENICKNAME")
   public String lowercaseNickname;
 
-  @DatabaseField(canBeNull = false)
+  @DatabaseField(canBeNull = false, columnName = "HASH")
   public String hash;
 
-  @DatabaseField
+  @DatabaseField(columnName = "IP")
   public String ip;
 
-  @DatabaseField
+  @DatabaseField(columnName = "TOTPTOKEN")
   public String totpToken;
 
-  @DatabaseField
+  @DatabaseField(columnName = "REGDATE")
   public Long regDate;
 
-  @DatabaseField
+  @DatabaseField(columnName = "UUID")
   public String uuid;
 
-  @DatabaseField
+  @DatabaseField(columnName = "PREMIUMUUID")
   public String premiumUuid;
 
   public RegisteredPlayer(String nickname, String lowercaseNickname,
