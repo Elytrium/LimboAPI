@@ -230,7 +230,11 @@ public class AuthPlugin {
             + playerDao.getTableInfo().getTableName() + "` AND type = 'table'";
         break;
       }
-      case "h2":
+      case "h2": {
+        findSql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '"
+            + playerDao.getTableInfo().getTableName().toUpperCase(Locale.ROOT) + "';";
+        break;
+      }
       case "postgresql":
       case "mysql": {
         findSql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + Settings.IMP.DATABASE.DATABASE
