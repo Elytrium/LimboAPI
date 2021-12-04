@@ -29,7 +29,6 @@ import dev.samstevens.totp.secret.SecretGenerator;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.Locale;
 import net.elytrium.limboauth.Settings;
 import net.elytrium.limboauth.handler.AuthSessionHandler;
 import net.elytrium.limboauth.model.RegisteredPlayer;
@@ -60,7 +59,7 @@ public class TotpCommand implements SimpleCommand {
 
       switch (args[0]) {
         case "enable": {
-          playerInfo = AuthSessionHandler.fetchInfo(this.playerDao, username.toLowerCase(Locale.ROOT));
+          playerInfo = AuthSessionHandler.fetchInfo(this.playerDao, username);
 
           if (playerInfo == null) {
             source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_NON_REGISTERED));
@@ -117,7 +116,7 @@ public class TotpCommand implements SimpleCommand {
             return;
           }
 
-          playerInfo = AuthSessionHandler.fetchInfo(this.playerDao, username.toLowerCase(Locale.ROOT));
+          playerInfo = AuthSessionHandler.fetchInfo(this.playerDao, username);
 
           if (playerInfo == null) {
             source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_NON_REGISTERED));
