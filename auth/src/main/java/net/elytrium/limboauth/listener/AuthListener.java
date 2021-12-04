@@ -18,6 +18,7 @@
 package net.elytrium.limboauth.listener;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.UpdateBuilder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.util.UuidUtils;
@@ -92,6 +93,15 @@ public class AuthListener {
             ex.printStackTrace();
           }
         }
+      }
+    } else if (e.isOnlineMode()) {
+      try {
+        UpdateBuilder<RegisteredPlayer, String> updateBuilder = this.playerDao.updateBuilder();
+        updateBuilder.where().eq("nickname", e.getUsername());
+        updateBuilder.updateColumnValue("hash", "");
+        updateBuilder.update();
+      } catch (SQLException ex) {
+        ex.printStackTrace();
       }
     }
 
