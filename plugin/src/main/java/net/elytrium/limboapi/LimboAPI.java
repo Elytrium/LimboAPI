@@ -163,6 +163,13 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
+  public void passLoginLimbo(Player player) {
+    if (this.loginQueue.containsKey(player)) {
+      this.loginQueue.get(player).next();
+    }
+  }
+
+  @Override
   public VirtualItem getItem(Item item) {
     return SimpleItem.fromItem(item);
   }

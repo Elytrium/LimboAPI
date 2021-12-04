@@ -33,7 +33,7 @@ public class Settings extends Config {
   public static class MAIN {
 
     public boolean ONLINE_MODE_NEED_AUTH = true;
-    public boolean ONLINE_UUID_IF_POSSIBLE = true;
+    public boolean FORCE_OFFLINE_UUID = false;
     @Comment({
         "Forcibly set player's UUID to the value from the database",
         "If the player had the cracked account, and switched to the premium account, the cracked UUID will be used."

@@ -282,10 +282,6 @@ public class AuthPlugin {
   public boolean needAuth(Player player) {
     String username = player.getUsername();
 
-    if (!Settings.IMP.MAIN.ONLINE_MODE_NEED_AUTH && player.isOnlineMode()) {
-      return false;
-    }
-
     if (!this.cachedAuthChecks.containsKey(username)) {
       return true;
     }
@@ -299,6 +295,15 @@ public class AuthPlugin {
     if (!this.nicknameValidationPattern.matcher(nickname).matches()) {
       player.disconnect(this.nicknameInvalid);
       return;
+    }
+
+    if (!Settings.IMP.MAIN.ONLINE_MODE_NEED_AUTH && player.isOnlineMode()) {
+      RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, player.getUsername());
+
+      if (registeredPlayer == null || registeredPlayer.hash.equals("")) {
+        this.factory.passLoginLimbo(player);
+        return;
+      }
     }
 
     this.sendToAuthServer(player, nickname);

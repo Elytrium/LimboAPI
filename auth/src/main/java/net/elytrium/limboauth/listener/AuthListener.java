@@ -20,11 +20,11 @@ package net.elytrium.limboauth.listener;
 import com.j256.ormlite.dao.Dao;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
-import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.util.UuidUtils;
 import java.sql.SQLException;
 import java.util.UUID;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
+import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
 import net.elytrium.limboauth.AuthPlugin;
 import net.elytrium.limboauth.Settings;
 import net.elytrium.limboauth.handler.AuthSessionHandler;
@@ -57,7 +57,7 @@ public class AuthListener {
   }
 
   @Subscribe
-  public void onProfile(GameProfileRequestEvent e) {
+  public void onProfile(SafeGameProfileRequestEvent e) {
     if (Settings.IMP.MAIN.SAVE_UUID) {
       RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, e.getOriginalProfile().getId());
 
@@ -72,17 +72,30 @@ public class AuthListener {
         if (e.isOnlineMode()) {
           try {
             registeredPlayer.premiumUuid = e.getOriginalProfile().getId().toString();
+            registeredPlayer.hash = "";
+
+            if (registeredPlayer.uuid.equals("")) {
+              registeredPlayer.uuid = UuidUtils.generateOfflinePlayerUuid(e.getUsername()).toString();
+            }
+
+            this.playerDao.update(registeredPlayer);
+          } catch (SQLException ex) {
+            ex.printStackTrace();
+          }
+
+          e.setGameProfile(e.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
+        } else if (registeredPlayer.uuid.equals("")) {
+          try {
+            registeredPlayer.uuid = e.getGameProfile().getId().toString();
             this.playerDao.update(registeredPlayer);
           } catch (SQLException ex) {
             ex.printStackTrace();
           }
         }
-
-        e.setGameProfile(e.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
       }
     }
 
-    if (!Settings.IMP.MAIN.ONLINE_UUID_IF_POSSIBLE) {
+    if (!Settings.IMP.MAIN.FORCE_OFFLINE_UUID) {
       e.setGameProfile(e.getOriginalProfile().withId(UuidUtils.generateOfflinePlayerUuid(e.getUsername())));
     }
   }
