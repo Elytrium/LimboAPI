@@ -38,7 +38,7 @@ public class Settings extends Config {
         "Forcibly set player's UUID to the value from the database",
         "If the player had the cracked account, and switched to the premium account, the cracked UUID will be used."
     })
-    public boolean SAVE_UUID = false;
+    public boolean SAVE_UUID = true;
     public boolean ENABLE_TOTP = true;
     public boolean REPEAT_PASSWORD = true;
     @Comment({
