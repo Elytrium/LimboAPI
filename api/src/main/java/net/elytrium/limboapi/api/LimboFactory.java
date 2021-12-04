@@ -7,6 +7,7 @@
 
 package net.elytrium.limboapi.api;
 
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import java.util.function.Supplier;
 import net.elytrium.limboapi.api.chunk.Dimension;
@@ -81,6 +82,13 @@ public interface LimboFactory {
    * @param packetMappings Packet id mappings
    */
   void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping[] packetMappings);
+
+  /**
+   * Pass the player to the next Login Limbo, without spawning at current Limbo.
+   *
+   * @param player Player to pass
+   */
+  void passLoginLimbo(Player player);
 
   /**
    * Creates new virtual item from Item enum.

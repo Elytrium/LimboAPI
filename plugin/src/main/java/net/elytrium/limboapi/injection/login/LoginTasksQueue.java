@@ -56,6 +56,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
 import net.kyori.adventure.text.Component;
 
 public class LoginTasksQueue {
@@ -65,6 +66,7 @@ public class LoginTasksQueue {
   private static Field defaultPermissions;
   private static Field association;
   private static Field state;
+  private static Field profile;
   private static Method setPermissionFunction;
   private static Method connectToInitialServer;
 
@@ -99,6 +101,9 @@ public class LoginTasksQueue {
       state = MinecraftConnection.class.getDeclaredField("state");
       state.setAccessible(true);
 
+      profile = ConnectedPlayer.class.getDeclaredField("profile");
+      profile.setAccessible(true);
+
       setPermissionFunction = ConnectedPlayer.class.getDeclaredMethod("setPermissionFunction", PermissionFunction.class);
       setPermissionFunction.setAccessible(true);
 
@@ -125,38 +130,43 @@ public class LoginTasksQueue {
     this.limboAPI.removeLoginQueue(this.player);
     MinecraftConnection connection = this.player.getConnection();
 
-    try {
-      // from Velocity
-      this.server.getEventManager()
-          .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) defaultPermissions.get(null)))
-          .thenAcceptAsync(event -> {
-            if (!connection.isClosed()) {
-              // wait for permissions to load, then set the players permission function
-              final PermissionFunction function = event.createFunction(this.player);
-              if (function == null) {
-                this.limboAPI.getLogger().error(
-                    "A plugin permission provider {} provided an invalid permission function"
-                        + " for player {}. This is a bug in the plugin, not in Velocity. Falling"
-                        + " back to the default permission function.",
-                    event.getProvider().getClass().getName(),
-                    this.player.getUsername());
-              } else {
-                try {
-                  setPermissionFunction.invoke(this.player, function);
-                } catch (IllegalAccessException | InvocationTargetException ex) {
-                  this.limboAPI.getLogger().error("Exception while completing injection to {}", this.player, ex);
-                }
-              }
-              try {
-                this.initialize(connection);
-              } catch (IllegalAccessException e) {
-                e.printStackTrace();
-              }
-            }
-          });
-    } catch (IllegalAccessException ex) {
-      this.limboAPI.getLogger().error("Exception while completing injection to {}", this.player, ex);
-    }
+    this.server.getEventManager()
+        .fire(new SafeGameProfileRequestEvent(this.player.getGameProfile(), this.player.isOnlineMode()))
+        .thenAcceptAsync(gameProfile -> {
+          try {
+            profile.set(this.player, gameProfile.getGameProfile());
+            // from Velocity
+            this.server.getEventManager()
+                .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) defaultPermissions.get(null)))
+                .thenAcceptAsync(event -> {
+                  if (!connection.isClosed()) {
+                    // wait for permissions to load, then set the players permission function
+                    final PermissionFunction function = event.createFunction(this.player);
+                    if (function == null) {
+                      this.limboAPI.getLogger().error(
+                          "A plugin permission provider {} provided an invalid permission function"
+                              + " for player {}. This is a bug in the plugin, not in Velocity. Falling"
+                              + " back to the default permission function.",
+                          event.getProvider().getClass().getName(),
+                          this.player.getUsername());
+                    } else {
+                      try {
+                        setPermissionFunction.invoke(this.player, function);
+                      } catch (IllegalAccessException | InvocationTargetException ex) {
+                        this.limboAPI.getLogger().error("Exception while completing injection to {}", this.player, ex);
+                      }
+                    }
+                    try {
+                      this.initialize(connection);
+                    } catch (IllegalAccessException e) {
+                      e.printStackTrace();
+                    }
+                  }
+                });
+          } catch (IllegalAccessException ex) {
+            this.limboAPI.getLogger().error("Exception while completing injection to {}", this.player, ex);
+          }
+        }, connection.eventLoop());
   }
 
   // Ported from Velocity
