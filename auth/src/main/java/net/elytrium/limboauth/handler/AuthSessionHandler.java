@@ -130,7 +130,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
   public static RegisteredPlayer fetchInfo(Dao<RegisteredPlayer, String> playerDao, String nickname) {
     List<RegisteredPlayer> playerList = null;
     try {
-      playerList = playerDao.queryForEq("NICKNAME", nickname);
+      playerList = playerDao.queryForEq("LOWERCASENICKNAME", nickname);
     } catch (SQLException e) {
       e.printStackTrace();
     }
@@ -141,7 +141,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
   public static RegisteredPlayer fetchInfo(Dao<RegisteredPlayer, String> playerDao, UUID uuid) {
     List<RegisteredPlayer> playerList = null;
     try {
-      playerList = playerDao.queryForEq("UUID", uuid.toString());
+      playerList = playerDao.queryForEq("PREMIUMUUID", uuid.toString());
     } catch (SQLException e) {
       e.printStackTrace();
     }
