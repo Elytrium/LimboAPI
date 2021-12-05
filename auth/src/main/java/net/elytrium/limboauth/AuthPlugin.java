@@ -49,6 +49,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -125,24 +126,27 @@ public class AuthPlugin {
     Settings.DATABASE dbConfig = Settings.IMP.DATABASE;
 
     JdbcPooledConnectionSource connectionSource;
+    // requireNonNull prevents the shade plugin from excluding the drivers in minimized jar.
     switch (dbConfig.STORAGE_TYPE.toLowerCase(Locale.ROOT)) {
-      case "sqlite": {
-        connectionSource = new JdbcPooledConnectionSource("jdbc:sqlite:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + "limboauth.db");
-        break;
-      }
       case "h2": {
+        Objects.requireNonNull(org.h2.Driver.class);
+        Objects.requireNonNull(org.h2.engine.Engine.class);
         connectionSource = new JdbcPooledConnectionSource("jdbc:h2:" + this.dataDirectory.toFile().getAbsoluteFile() + "/" + "limboauth");
         break;
       }
       case "mysql": {
+        Objects.requireNonNull(com.mysql.cj.jdbc.Driver.class);
+        Objects.requireNonNull(com.mysql.cj.conf.url.SingleConnectionUrl.class);
         connectionSource = new JdbcPooledConnectionSource(
-            "jdbc:mysql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE
-                + "?autoReconnect=true&initialTimeout=1&useSSL=false", dbConfig.USER, dbConfig.PASSWORD);
+            "jdbc:mysql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE + "?" + dbConfig.CONNECTION_PARAMETERS, dbConfig.USER, dbConfig.PASSWORD
+        );
         break;
       }
       case "postgresql": {
+        Objects.requireNonNull(org.postgresql.Driver.class);
         connectionSource = new JdbcPooledConnectionSource(
-            "jdbc:postgresql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE + "?autoReconnect=true", dbConfig.USER, dbConfig.PASSWORD);
+            "jdbc:postgresql://" + dbConfig.HOSTNAME + "/" + dbConfig.DATABASE + "?" + dbConfig.CONNECTION_PARAMETERS, dbConfig.USER, dbConfig.PASSWORD
+        );
         break;
       }
       default: {
@@ -223,13 +227,7 @@ public class AuthPlugin {
     Collections.addAll(tables, playerDao.getTableInfo().getFieldTypes());
 
     String findSql;
-
     switch (Settings.IMP.DATABASE.STORAGE_TYPE) {
-      case "sqlite": {
-        findSql = "SELECT name FROM PRAGMA_TABLE_INFO('"
-            + playerDao.getTableInfo().getTableName() + "')";
-        break;
-      }
       case "h2": {
         findSql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '"
             + playerDao.getTableInfo().getTableName() + "';";
