@@ -29,6 +29,7 @@ import dev.samstevens.totp.secret.SecretGenerator;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import net.elytrium.limboauth.Settings;
 import net.elytrium.limboauth.handler.AuthSessionHandler;
 import net.elytrium.limboauth.model.RegisteredPlayer;
@@ -45,12 +46,17 @@ public class TotpCommand implements SimpleCommand {
   }
 
   @Override
-  public void execute(final Invocation invocation) {
-    final CommandSource source = invocation.source();
-    final String[] args = invocation.arguments();
+  public void execute(SimpleCommand.Invocation invocation) {
+    CommandSource source = invocation.source();
+    String[] args = invocation.arguments();
 
-    if (args.length == 0 || !(source instanceof Player)) {
-      this.sendUsage(source);
+    if (!(source instanceof Player)) {
+      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NOT_PLAYER));
+      return;
+    }
+
+    if (args.length == 0) {
+      this.showUsage(source);
     } else {
       String username = ((Player) source).getUsername();
 
@@ -59,67 +65,81 @@ public class TotpCommand implements SimpleCommand {
 
       switch (args[0]) {
         case "enable": {
-          playerInfo = AuthSessionHandler.fetchInfo(this.playerDao, username);
+          boolean needPass = Settings.IMP.MAIN.TOTP_NEED_PASS;
+          if (needPass ? args.length == 2 : args.length == 1) {
+            playerInfo = AuthSessionHandler.fetchInfo(this.playerDao, username);
 
-          if (playerInfo == null) {
-            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_NON_REGISTERED));
-            return;
+            if (playerInfo == null) {
+              source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NOT_REGISTERED));
+              return;
+            } else if (needPass && !AuthSessionHandler.checkPassword(args[1], playerInfo, this.playerDao)) {
+              source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+              return;
+            }
+
+            if (!playerInfo.totpToken.isBlank()) {
+              source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_ALREADY_ENABLED));
+              return;
+            }
+
+            String secret = this.secretGenerator.generate();
+
+            updateBuilder = this.playerDao.updateBuilder();
+            try {
+              updateBuilder.where().eq("nickname", username);
+              updateBuilder.updateColumnValue("totpToken", secret);
+              updateBuilder.update();
+            } catch (SQLException e) {
+              e.printStackTrace();
+
+              source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
+            }
+
+            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_SUCCESSFUL));
+
+            QrData data = new QrData.Builder()
+                .label(username)
+                .secret(secret)
+                .issuer(Settings.IMP.MAIN.TOTP_ISSUER)
+                .build();
+
+            String qrUrl = Settings.IMP.MAIN.QR_GENERATOR_URL.replace("{data}", URLEncoder.encode(data.getUri(), StandardCharsets.UTF_8));
+
+            source.sendMessage(
+                LegacyComponentSerializer.legacyAmpersand().deserialize(
+                    Settings.IMP.MAIN.STRINGS.TOTP_QR
+                ).clickEvent(ClickEvent.openUrl(qrUrl))
+            );
+
+            source.sendMessage(
+                LegacyComponentSerializer.legacyAmpersand().deserialize(
+                    MessageFormat.format(Settings.IMP.MAIN.STRINGS.TOTP_TOKEN, secret)
+                ).clickEvent(ClickEvent.suggestCommand(secret))
+            );
+
+            RecoveryCodeGenerator recoveryCodes = new RecoveryCodeGenerator();
+            String codes = String.join(", ", recoveryCodes.generateCodes(16));
+
+            source.sendMessage(
+                LegacyComponentSerializer.legacyAmpersand().deserialize(
+                    MessageFormat.format(Settings.IMP.MAIN.STRINGS.TOTP_RECOVERY, codes)
+                ).clickEvent(ClickEvent.suggestCommand(codes))
+            );
+          } else {
+            this.showUsage(source);
           }
-
-          if (!playerInfo.totpToken.isBlank()) {
-            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_ALREADY_ENABLED));
-            return;
-          }
-
-          String secret = this.secretGenerator.generate();
-
-          updateBuilder = this.playerDao.updateBuilder();
-          try {
-            updateBuilder.where().eq("nickname", username);
-            updateBuilder.updateColumnValue("totpToken", secret);
-            updateBuilder.update();
-          } catch (SQLException e) {
-            e.printStackTrace();
-
-            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
-          }
-
-          source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_SUCCESSFUL));
-
-          QrData data = new QrData.Builder()
-              .label(username)
-              .secret(secret)
-              .issuer(Settings.IMP.MAIN.TOTP_ISSUER)
-              .build();
-
-          String qrUrl = Settings.IMP.MAIN.QR_GENERATOR_URL.replace("{data}", URLEncoder.encode(data.getUri(), StandardCharsets.UTF_8));
-
-          source.sendMessage(
-              LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_QR)
-                  .clickEvent(ClickEvent.openUrl(qrUrl))
-          );
-
-          source.sendMessage(
-              LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_TOKEN + secret)
-                  .clickEvent(ClickEvent.suggestCommand(secret))
-          );
-
-          RecoveryCodeGenerator recoveryCodes = new RecoveryCodeGenerator();
-          String[] codes = recoveryCodes.generateCodes(16);
-
-          source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_RECOVERY + String.join(", ", codes)));
           break;
         }
         case "disable": {
           if (args.length != 2) {
-            this.sendUsage(source);
+            this.showUsage(source);
             return;
           }
 
           playerInfo = AuthSessionHandler.fetchInfo(this.playerDao, username);
 
           if (playerInfo == null) {
-            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_NON_REGISTERED));
+            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NOT_REGISTERED));
             return;
           }
 
@@ -133,7 +153,6 @@ public class TotpCommand implements SimpleCommand {
               source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_DISABLED));
             } catch (SQLException e) {
               e.printStackTrace();
-
               source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
             }
           } else {
@@ -142,14 +161,14 @@ public class TotpCommand implements SimpleCommand {
           break;
         }
         default: {
-          this.sendUsage(source);
+          this.showUsage(source);
           break;
         }
       }
     }
   }
 
-  private void sendUsage(CommandSource source) {
+  private void showUsage(CommandSource source) {
     source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.TOTP_USAGE));
   }
 }

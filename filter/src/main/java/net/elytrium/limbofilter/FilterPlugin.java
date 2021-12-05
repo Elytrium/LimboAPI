@@ -49,7 +49,7 @@ import net.elytrium.limboapi.api.file.SchematicFile;
 import net.elytrium.limboapi.api.file.WorldFile;
 import net.elytrium.limbofilter.cache.CachedCaptcha;
 import net.elytrium.limbofilter.cache.CachedPackets;
-import net.elytrium.limbofilter.commands.FilterCommand;
+import net.elytrium.limbofilter.commands.LimboFilterCommand;
 import net.elytrium.limbofilter.handler.BotFilterSessionHandler;
 import net.elytrium.limbofilter.listener.FilterListener;
 import net.elytrium.limbofilter.stats.Statistics;
@@ -155,7 +155,7 @@ public class FilterPlugin {
 
     CommandManager manager = this.server.getCommandManager();
     manager.unregister("limbofilter");
-    manager.register("limbofilter", new FilterCommand((VelocityServer) this.server, this), "lf", "botfilter", "bf");
+    manager.register("limbofilter", new LimboFilterCommand((VelocityServer) this.server, this), "lf", "botfilter", "bf", "lfilter");
   }
 
   public void cacheFilterUser(Player player) {

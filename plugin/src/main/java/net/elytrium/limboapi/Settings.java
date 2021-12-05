@@ -37,6 +37,11 @@ public class Settings extends Config {
   @Comment("Don't use \\n, use {NL} for new line, and {PRFX} for prefix. Ampersand (&) color codes are supported too.")
   public static class MAIN {
 
+    public int MAX_CHAT_MESSAGE_LENGTH = 256;
+    public int MAX_UNKNOWN_PACKET_LENGTH = 2048;
+    public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 3072;
+    public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
+
     @Comment("Logging for connect and disconnect messages.")
     public boolean LOGGING_ENABLED = true;
     @Comment({
@@ -53,7 +58,7 @@ public class Settings extends Config {
 
     public static class MESSAGES {
 
-      public String TOO_BIG_PACKET = "{PRFX} Packet is too big.";
+      public String TOO_BIG_PACKET = "{PRFX} &cYour client sent too big packet!";
     }
   }
 

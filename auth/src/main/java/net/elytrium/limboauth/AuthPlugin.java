@@ -36,7 +36,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -63,8 +62,10 @@ import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.file.SchematicFile;
 import net.elytrium.limboapi.api.file.WorldFile;
-import net.elytrium.limboauth.command.AuthReloadCommand;
 import net.elytrium.limboauth.command.ChangePasswordCommand;
+import net.elytrium.limboauth.command.DestroySessionCommand;
+import net.elytrium.limboauth.command.ForceUnregisterCommand;
+import net.elytrium.limboauth.command.LimboAuthCommand;
 import net.elytrium.limboauth.command.TotpCommand;
 import net.elytrium.limboauth.command.UnregisterCommand;
 import net.elytrium.limboauth.handler.AuthSessionHandler;
@@ -164,16 +165,20 @@ public class AuthPlugin {
 
     CommandManager manager = this.server.getCommandManager();
     manager.unregister("unregister");
-    manager.unregister("changepass");
+    manager.unregister("forceunregister");
+    manager.unregister("changepassword");
+    manager.unregister("destroysession");
     manager.unregister("2fa");
-    manager.unregister("authreload");
+    manager.unregister("limboauth");
 
-    manager.register("unregister", new UnregisterCommand(this.playerDao));
-    manager.register("changepass", new ChangePasswordCommand(this.playerDao));
+    manager.register("unregister", new UnregisterCommand(this.playerDao), "unreg");
+    manager.register("forceunregister", new ForceUnregisterCommand(this.server, this.playerDao), "forceunreg");
+    manager.register("changepassword", new ChangePasswordCommand(this.playerDao), "changepass");
+    manager.register("destroysession", new DestroySessionCommand(this));
     if (Settings.IMP.MAIN.ENABLE_TOTP) {
-      manager.register("2fa", new TotpCommand(this.playerDao));
+      manager.register("2fa", new TotpCommand(this.playerDao), "totp");
     }
-    manager.register("authreload", new AuthReloadCommand());
+    manager.register("limboauth", new LimboAuthCommand(), "la", "auth", "lauth");
 
     Settings.MAIN.AUTH_COORDS authCoords = Settings.IMP.MAIN.AUTH_COORDS;
     VirtualWorld authWorld = this.factory.createVirtualWorld(
@@ -277,6 +282,10 @@ public class AuthPlugin {
     this.cachedAuthChecks.put(username, new CachedUser(player.getRemoteAddress().getAddress(), System.currentTimeMillis()));
   }
 
+  public void removePlayerFromCache(Player player) {
+    this.cachedAuthChecks.remove(player.getUsername());
+  }
+
   public boolean needAuth(Player player) {
     String username = player.getUsername();
 
@@ -284,11 +293,10 @@ public class AuthPlugin {
       return true;
     }
 
-    InetSocketAddress adr = player.getRemoteAddress();
-    return !this.cachedAuthChecks.get(username).getInetAddress().equals(adr.getAddress());
+    return !this.cachedAuthChecks.get(username).getInetAddress().equals(player.getRemoteAddress().getAddress());
   }
 
-  public void auth(Player player) {
+  public void authPlayer(Player player) {
     String nickname = player.getUsername();
     if (!this.nicknameValidationPattern.matcher(nickname).matches()) {
       player.disconnect(this.nicknameInvalid);
@@ -304,10 +312,7 @@ public class AuthPlugin {
       }
     }
 
-    this.sendToAuthServer(player, nickname);
-  }
-
-  private void sendToAuthServer(Player player, String nickname) {
+    // Send player to auth virtual server.
     try {
       this.authServer.spawnPlayer(player, new AuthSessionHandler(this.playerDao, player, nickname));
     } catch (Throwable t) {

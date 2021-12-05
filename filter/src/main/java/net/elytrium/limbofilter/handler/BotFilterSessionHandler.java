@@ -63,7 +63,6 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   private int attempts = Settings.IMP.MAIN.CAPTCHA_ATTEMPTS;
   private int ignoredTicks = 0;
   private int nonValidPacketsSize = 0;
-  private int genericBytes = 0;
   private long joinTime = System.currentTimeMillis();
   private boolean startedListening = false;
   private boolean checkedBySettings = false;
@@ -102,7 +101,9 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
       this.sendCaptcha();
     } else if (this.state == CheckState.ONLY_POSITION || this.state == CheckState.CAPTCHA_ON_POSITION_FAILED) {
       if (this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-        this.connection.delayedWrite(this.packets.getCheckingTitle());
+        if (!Settings.IMP.MAIN.STRINGS.CHECKING_TITLE.isEmpty() && !Settings.IMP.MAIN.STRINGS.CHECKING_SUBTITLE.isEmpty()) {
+          this.connection.delayedWrite(this.packets.getCheckingTitle());
+        }
       }
       this.connection.delayedWrite(this.packets.getCheckingChat());
       this.sendFallingCheckPackets();
@@ -174,7 +175,7 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
 
   @Override
   public void onChat(String message) {
-    if ((this.state == CheckState.CAPTCHA_POSITION || this.state == CheckState.ONLY_CAPTCHA) && message.length() <= 256) {
+    if ((this.state == CheckState.CAPTCHA_POSITION || this.state == CheckState.ONLY_CAPTCHA)) {
       if (message.equals(this.captchaAnswer)) {
         this.connection.write(this.packets.getResetSlot());
         this.finishCheck();
@@ -190,12 +191,6 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
   public void onGeneric(MinecraftPacket packet) {
     if (packet instanceof PluginMessage) {
       PluginMessage pluginMessage = (PluginMessage) packet;
-      int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
-      this.genericBytes += singleLength;
-      if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH || this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
-        this.disconnect(this.packets.getTooBigPacket(), true);
-        this.logger.error("{} sent too big packet", this.player);
-      }
       if (PluginMessageUtil.isMcBrand(pluginMessage) && !this.checkedByBrand) {
         String brand = PluginMessageUtil.readBrandMessage(pluginMessage.content());
         this.logger.info("{} has client brand {}", this.player, brand);
@@ -261,9 +256,11 @@ public class BotFilterSessionHandler extends FallingCheckHandler {
     if (this.attempts == Settings.IMP.MAIN.CAPTCHA_ATTEMPTS) {
       this.connection.delayedWrite(this.packets.createChatPacket(MessageFormat.format(strings.CHECKING_CAPTCHA_CHAT, this.attempts)));
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-        this.connection.delayedWrite(
-            this.packets.createTitlePacket(strings.CHECKING_CAPTCHA_TITLE, MessageFormat.format(strings.CHECKING_CAPTCHA_SUBTITLE, this.attempts))
-        );
+        if (!strings.CHECKING_CAPTCHA_TITLE.isEmpty() && !strings.CHECKING_CAPTCHA_SUBTITLE.isEmpty()) {
+          this.connection.delayedWrite(
+              this.packets.createTitlePacket(strings.CHECKING_CAPTCHA_TITLE, MessageFormat.format(strings.CHECKING_CAPTCHA_SUBTITLE, this.attempts))
+          );
+        }
       }
     } else {
       this.connection.delayedWrite(this.packets.createChatPacket(MessageFormat.format(strings.CHECKING_WRONG_CAPTCHA_CHAT, this.attempts)));

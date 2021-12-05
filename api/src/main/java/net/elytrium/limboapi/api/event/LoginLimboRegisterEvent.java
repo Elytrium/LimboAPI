@@ -16,7 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * This event is fired during login process before the player has been authenticated, e.g. to enable or disable
  * custom authentication.
  */
-public final class LoginLimboRegisterEvent {
+public class LoginLimboRegisterEvent {
 
   private final Player player;
   private final Queue<Runnable> callbacks;
@@ -34,7 +34,7 @@ public final class LoginLimboRegisterEvent {
   public String toString() {
     return "LoginLimboRegisterEvent{"
         + "player=" + this.player
-        + '}';
+        + "}";
   }
 
   public Queue<Runnable> getCallbacks() {
