@@ -19,27 +19,29 @@ package net.elytrium.limboauth.command;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
 import net.elytrium.limboauth.AuthPlugin;
 import net.elytrium.limboauth.Settings;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-public class AuthReloadCommand implements SimpleCommand {
+public class DestroySessionCommand implements SimpleCommand {
 
-  @Override
-  public void execute(final Invocation invocation) {
-    final CommandSource source = invocation.source();
+  private final AuthPlugin plugin;
 
-    try {
-      AuthPlugin.getInstance().reload();
-      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.RELOAD));
-    } catch (Exception e) {
-      e.printStackTrace();
-      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.RELOAD_FAILED));
-    }
+  public DestroySessionCommand(AuthPlugin plugin) {
+    this.plugin = plugin;
   }
 
   @Override
-  public boolean hasPermission(final Invocation invocation) {
-    return invocation.source().hasPermission("limboauth.reload");
+  public void execute(SimpleCommand.Invocation invocation) {
+    CommandSource source = invocation.source();
+
+    if (!(source instanceof Player)) {
+      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NOT_PLAYER));
+      return;
+    }
+
+    this.plugin.removePlayerFromCache((Player) source);
+    source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.DESTROY_SESSION_SUCCESS));
   }
 }

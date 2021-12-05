@@ -32,6 +32,7 @@ public class Settings extends Config {
 
   public static class MAIN {
 
+    //public boolean ENABLE_BOSSBAR = true;
     public boolean ONLINE_MODE_NEED_AUTH = true;
     public boolean FORCE_OFFLINE_UUID = false;
     @Comment({
@@ -40,7 +41,9 @@ public class Settings extends Config {
     })
     public boolean SAVE_UUID = true;
     public boolean ENABLE_TOTP = true;
-    public boolean REPEAT_PASSWORD = true;
+    public boolean TOTP_NEED_PASS = true;
+    public boolean REGISTER_NEED_REPEAT_PASSWORD = true;
+    public boolean CHANGE_PASSWORD_NEED_OLD_PASS = true;
     @Comment({
         "If you want to migrate your database from another plugin, which is not using BCrypt",
         "You can set an old hash algorithm to migrate from. Currently, only AUTHME is supported yet"
@@ -91,42 +94,60 @@ public class Settings extends Config {
     @Create
     public MAIN.STRINGS STRINGS;
 
+    //@Comment("Leave empty to disable.")
     public static class STRINGS {
 
-      public String RELOAD = "{PRFX} Reloaded successfully";
+      public String RELOAD = "{PRFX} &aReloaded successfully!";
       public String RELOAD_FAILED = "{PRFX} &cReload failed, check console for details.";
-      public String NOT_PLAYER = "{PRFX} &cСonsole is not allowed to execute this command!";
       public String ERROR_OCCURRED = "{PRFX} &cAn internal error has occurred!";
 
-      public String LOGIN = "{PRFX} Please, login using &a/l &6password!";
-      public String LOGIN_SUCCESS = "{PRFX} &aSuccessfully logged in!";
+      public String NOT_PLAYER = "{PRFX} &cСonsole is not allowed to execute this command!";
+      public String NOT_REGISTERED = "{PRFX} &cYou are not registered!";
       public String PASSWORD_WRONG = "{PRFX} &cPassword is wrong!";
 
-      @Comment("Or if repeat-password change to one password")
-      public String REGISTER = "{PRFX} Please, register using &a/reg &6password password.";
+      public String LOGIN = "{PRFX} Please, login using &6/login &6<password>";
+      public String LOGIN_SUCCESS = "{PRFX} &aSuccessfully logged in!";
+      //public String LOGIN_TITLE = "";
+      //public String LOGIN_SUBTITLE = "";
+      //public String LOGIN_SUCCESS_TITLE = "";
+      //public String LOGIN_SUCCESS_SUBTITLE = "";
+
+      @Comment("Or if register-need-repeat-password set to false remove the \"<repeat password>\" part.")
+      public String REGISTER = "{PRFX} Please, register using &6/register <password> <repeat password>";
+      //public String REGISTER_TITLE = "";
+      //public String REGISTER_SUBTITLE = "";
       public String DIFFERENT_PASSWORDS = "{PRFX} The entered passwords differ from each other.";
+      public String KICK_PASSWORD_WRONG = "{NL}{NL}&cYou've entered the wrong password numerous times!";
 
       public String WRONG_NICKNAME_CASE = "{NL}{NL}&cThe case of your nickname is wrong. Nickname is CaSe SeNsItIvE.";
-      public String NICKNAME_INVALID = "{NL}{NL}&cYour nickname contains forbidden characters. Please, change your nickname";
+      public String NICKNAME_INVALID = "{NL}{NL}&cYour nickname contains forbidden characters. Please, change your nickname!";
       @Comment("6 hours by default in ip-limit-valid-time")
-      public String IP_LIMIT = "{PRFX} Your IP has reached max registered accounts. If this is an error, restart your router, or wait about 6 hours";
+      public String IP_LIMIT = "{PRFX} &cYour IP has reached max registered accounts. If this is an error, restart your router, or wait about 6 hours.";
 
-      public String UNREGISTER_SUCCESSFUL = "{PRFX} Successfully unregistered player";
-      public String UNREGISTER_USAGE = "{PRFX} Usage: /unregister <nickname>";
+      public String UNREGISTER_SUCCESSFUL = "{PRFX}{NL}{NL}&aSuccessfully unregistered!";
+      public String UNREGISTER_USAGE = "{PRFX} Usage: &6/unregister <current password> confirm";
 
-      public String CHANGE_PASSWORD_USAGE = "{PRFX} Usage: /changepass <new password>";
-      public String CHANGE_PASSWORD_SUCCESSFUL = "{PRFX} Successfully changed password";
+      public String FORCE_UNREGISTER_SUCCESSFUL = "{PRFX} &a{0} successfully unregistered!";
+      public String FORCE_UNREGISTER_SUCCESSFUL_PLAYER = "{PRFX}{NL}{NL}&aYou have been unregistered by administrator!";
+      public String FORCE_UNREGISTER_ERROR = "{PRFX} &cUnable to unregister {0}. Most likely this player has never been on this server.";
+      public String FORCE_UNREGISTER_USAGE = "{PRFX} Usage: &6/forceunregister <nickname>";
 
-      public String TOTP = "{PRFX} Please, enter your 2FA key using &a/2fa key";
-      public String TOTP_SUCCESSFUL = "{PRFX} Successfully enabled 2FA";
-      public String TOTP_DISABLED = "{PRFX} Successfully disabled 2FA";
-      public String TOTP_USAGE = "{PRFX} Usage: &a/2fa enable &for &a/2fa disable <totp key>";
-      public String TOTP_WRONG = "{PRFX} &cWrong totp key!";
-      public String TOTP_ALREADY_ENABLED = "{PRFX} 2FA is already enabled. Disable it using /2fa disable <totp key>";
-      public String TOTP_NON_REGISTERED = "{PRFX} You are not registered!";
-      public String TOTP_QR = "{PRFX} Click to open 2FA QR code in browser. ";
-      public String TOTP_TOKEN = "{PRFX} Your TOTP token (Click to copy): ";
-      public String TOTP_RECOVERY = "{PRFX} Your recovery codes: ";
+      public String CHANGE_PASSWORD_SUCCESSFUL = "{PRFX} &aSuccessfully changed password!";
+      @Comment("Or if change-password-need-old-pass set to false remove the \"<old password>\" part.")
+      public String CHANGE_PASSWORD_USAGE = "{PRFX} Usage: &6/changepassword <old password> <new password>";
+
+      public String TOTP = "{PRFX} Please, enter your 2FA key using &6/2fa <key>";
+      public String TOTP_SUCCESSFUL = "{PRFX} &aSuccessfully enabled 2FA!";
+      public String TOTP_DISABLED = "{PRFX} &aSuccessfully disabled 2FA!";
+      @Comment("Or if totp-need-pass set to false remove the \"<current password>\" part.")
+      public String TOTP_USAGE = "{PRFX} Usage: &6/2fa enable <current password>&f or &6/2fa disable <totp key>&f.";
+      public String TOTP_WRONG = "{PRFX} &cWrong 2FA key!";
+      public String TOTP_ALREADY_ENABLED = "{PRFX} &c2FA is already enabled. Disable it using &6/2fa disable <key>&c.";
+      public String TOTP_QR = "{PRFX} Click here to open 2FA QR code in browser.";
+      public String TOTP_TOKEN = "{PRFX} &aYour 2FA token &7(Click to copy)&a: &6{0}";
+      public String TOTP_RECOVERY = "{PRFX} &aYour recovery codes &7(Click to copy)&a: &6{0}";
+
+      public String DESTROY_SESSION_SUCCESS = "{PRFX} &eYour session is now destroyed, you'll need to log in again after reconnecting.";
     }
 
     @Create

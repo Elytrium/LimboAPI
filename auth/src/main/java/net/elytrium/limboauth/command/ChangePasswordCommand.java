@@ -37,30 +37,43 @@ public class ChangePasswordCommand implements SimpleCommand {
   }
 
   @Override
-  public void execute(final Invocation invocation) {
-    final CommandSource source = invocation.source();
-    final String[] args = invocation.arguments();
+  public void execute(SimpleCommand.Invocation invocation) {
+    CommandSource source = invocation.source();
+    String[] args = invocation.arguments();
 
     if (!(source instanceof Player)) {
       source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NOT_PLAYER));
       return;
     }
 
-    if (args.length != 1) {
-      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_USAGE));
-    } else {
+    boolean needOldPass = Settings.IMP.MAIN.CHANGE_PASSWORD_NEED_OLD_PASS;
+    if (needOldPass ? args.length == 2 : args.length == 1) {
+      if (needOldPass) {
+        RegisteredPlayer player = AuthSessionHandler.fetchInfo(this.playerDao, ((Player) source).getUsername());
+        if (player == null) {
+          source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NOT_REGISTERED));
+          return;
+        } else if (!AuthSessionHandler.checkPassword(args[0], player, this.playerDao)) {
+          source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+          return;
+        }
+      }
+
       try {
         UpdateBuilder<RegisteredPlayer, String> updateBuilder = this.playerDao.updateBuilder();
         updateBuilder.where().eq("nickname", ((Player) source).getUsername());
-        updateBuilder.updateColumnValue("hash", AuthSessionHandler.genHash(args[0]));
+        updateBuilder.updateColumnValue("hash", AuthSessionHandler.genHash(needOldPass ? args[1] : args[0]));
         updateBuilder.update();
 
         source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_SUCCESSFUL));
       } catch (SQLException e) {
-        e.printStackTrace();
-
         source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
+        e.printStackTrace();
       }
+
+      return;
     }
+
+    source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.CHANGE_PASSWORD_USAGE));
   }
 }

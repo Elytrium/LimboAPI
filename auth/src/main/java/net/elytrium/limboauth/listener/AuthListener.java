@@ -40,43 +40,43 @@ public class AuthListener {
   }
 
   @Subscribe
-  public void onProxyConnect(PreLoginEvent e) {
-    if (!e.getResult().isForceOfflineMode()) {
-      if (Settings.IMP.MAIN.ONLINE_MODE_NEED_AUTH || !AuthPlugin.getInstance().isPremium(e.getUsername())) {
-        e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
+  public void onProxyConnect(PreLoginEvent event) {
+    if (!event.getResult().isForceOfflineMode()) {
+      if (Settings.IMP.MAIN.ONLINE_MODE_NEED_AUTH || !AuthPlugin.getInstance().isPremium(event.getUsername())) {
+        event.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
       } else {
-        e.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
+        event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
       }
     }
   }
 
   @Subscribe
-  public void onLogin(LoginLimboRegisterEvent e) {
-    if (AuthPlugin.getInstance().needAuth(e.getPlayer())) {
-      e.addCallback(() -> AuthPlugin.getInstance().auth(e.getPlayer()));
+  public void onLogin(LoginLimboRegisterEvent event) {
+    if (AuthPlugin.getInstance().needAuth(event.getPlayer())) {
+      event.addCallback(() -> AuthPlugin.getInstance().authPlayer(event.getPlayer()));
     }
   }
 
   @Subscribe
-  public void onProfile(SafeGameProfileRequestEvent e) {
+  public void onProfile(SafeGameProfileRequestEvent event) {
     if (Settings.IMP.MAIN.SAVE_UUID) {
-      RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, e.getOriginalProfile().getId());
+      RegisteredPlayer registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, event.getOriginalProfile().getId());
 
       if (registeredPlayer != null) {
-        e.setGameProfile(e.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
+        event.setGameProfile(event.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
         return;
       }
 
-      registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, e.getUsername());
+      registeredPlayer = AuthSessionHandler.fetchInfo(this.playerDao, event.getUsername());
 
       if (registeredPlayer != null) {
-        if (e.isOnlineMode()) {
+        if (event.isOnlineMode()) {
           try {
-            registeredPlayer.premiumUuid = e.getOriginalProfile().getId().toString();
+            registeredPlayer.premiumUuid = event.getOriginalProfile().getId().toString();
             registeredPlayer.hash = "";
 
             if (registeredPlayer.uuid.equals("")) {
-              registeredPlayer.uuid = UuidUtils.generateOfflinePlayerUuid(e.getUsername()).toString();
+              registeredPlayer.uuid = UuidUtils.generateOfflinePlayerUuid(event.getUsername()).toString();
             }
 
             this.playerDao.update(registeredPlayer);
@@ -84,29 +84,29 @@ public class AuthListener {
             ex.printStackTrace();
           }
 
-          e.setGameProfile(e.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
+          event.setGameProfile(event.getOriginalProfile().withId(UUID.fromString(registeredPlayer.uuid)));
         } else if (registeredPlayer.uuid.equals("")) {
           try {
-            registeredPlayer.uuid = e.getGameProfile().getId().toString();
+            registeredPlayer.uuid = event.getGameProfile().getId().toString();
             this.playerDao.update(registeredPlayer);
           } catch (SQLException ex) {
             ex.printStackTrace();
           }
         }
       }
-    } else if (e.isOnlineMode()) {
+    } else if (event.isOnlineMode()) {
       try {
         UpdateBuilder<RegisteredPlayer, String> updateBuilder = this.playerDao.updateBuilder();
-        updateBuilder.where().eq("nickname", e.getUsername());
+        updateBuilder.where().eq("nickname", event.getUsername());
         updateBuilder.updateColumnValue("hash", "");
         updateBuilder.update();
-      } catch (SQLException ex) {
-        ex.printStackTrace();
+      } catch (SQLException e) {
+        e.printStackTrace();
       }
     }
 
     if (!Settings.IMP.MAIN.FORCE_OFFLINE_UUID) {
-      e.setGameProfile(e.getOriginalProfile().withId(UuidUtils.generateOfflinePlayerUuid(e.getUsername())));
+      event.setGameProfile(event.getOriginalProfile().withId(UuidUtils.generateOfflinePlayerUuid(event.getUsername())));
     }
   }
 }

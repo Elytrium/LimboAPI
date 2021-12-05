@@ -31,26 +31,26 @@ public class FallbackListener {
   private final AtomicInteger counter = new AtomicInteger();
 
   @Subscribe
-  public void onProxyConnect(PlayerChooseInitialServerEvent e) {
-    RegisteredServer srv = e.getInitialServer().get();
+  public void onProxyConnect(PlayerChooseInitialServerEvent event) {
+    RegisteredServer srv = event.getInitialServer().get();
     if (srv.getServerInfo().getName().startsWith("Limbo_")) {
-      FallbackPlugin.getInstance().sendToFallBackServer(e.getPlayer(), srv);
-    } else if (e.getInitialServer().isEmpty() || srv.getServerInfo() == null) {
-      FallbackPlugin.getInstance().sendToFallBackServer(e.getPlayer(), srv);
+      FallbackPlugin.getInstance().sendToFallBackServer(event.getPlayer(), srv);
+    } else if (event.getInitialServer().isEmpty() || srv.getServerInfo() == null) {
+      FallbackPlugin.getInstance().sendToFallBackServer(event.getPlayer(), srv);
     }
   }
 
   @Subscribe
-  public void onKick(KickedFromServerEvent e) {
+  public void onKick(KickedFromServerEvent event) {
     FallbackPlugin.getInstance().getLogger().info("Sending player to limbo.");
     int i = this.counter.incrementAndGet();
     if (i > 255) {
       this.counter.set(0);
       i = 0;
     }
-    e.setResult(KickedFromServerEvent.RedirectPlayer.create(
+    event.setResult(KickedFromServerEvent.RedirectPlayer.create(
         FallbackPlugin.getInstance().getServer().registerServer(
-            new ServerInfo("Limbo_" + i + "_" + e.getPlayer().getUsername(), InetSocketAddress.createUnresolved("192.168.44." + i, i))
+            new ServerInfo("Limbo_" + i + "_" + event.getPlayer().getUsername(), InetSocketAddress.createUnresolved("192.168.44." + i, i))
         )
     ));
   }
