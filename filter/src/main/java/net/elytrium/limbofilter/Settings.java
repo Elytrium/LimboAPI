@@ -49,8 +49,6 @@ public class Settings extends Config {
     public int NON_VALID_POSITION_XZ_ATTEMPTS = 10;
     public int NON_VALID_POSITION_Y_ATTEMPTS = 10;
     public double MAX_VALID_POSITION_DIFFERENCE = 0.01;
-    public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 2048;
-    public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
     @Comment("Parameter for developers and contributors.")
     public boolean FALLING_CHECK_DEBUG = false;
 
@@ -163,35 +161,33 @@ public class Settings extends Config {
     @Create
     public MAIN.STRINGS STRINGS;
 
+    @Comment("Leave titles empty to disable.")
     public static class STRINGS {
 
-      public String RELOAD = "{PRFX} Reloaded successfully";
+      public String RELOAD = "{PRFX} &aReloaded successfully!";
       public String RELOAD_FAILED = "{PRFX} &cReload failed, check console for details.";
 
       public String CHECKING_CHAT = "{PRFX} Bot-Filter check was started, please wait and don't move..";
-
       public String CHECKING_TITLE = "{PRFX}";
       public String CHECKING_SUBTITLE = "&aPlease wait..";
 
       public String CHECKING_CAPTCHA_CHAT = "{PRFX} &aPlease, solve the captcha, you have &6{0} &aattempts.";
       public String CHECKING_WRONG_CAPTCHA_CHAT = "{PRFX} &cYou entered the captcha incorrectly, you have &6{0} &cattempts";
-
-      public String CHECKING_CAPTCHA_TITLE = "&aSolve the captcha.";
+      public String CHECKING_CAPTCHA_TITLE = "&aPlease solve the captcha.";
       public String CHECKING_CAPTCHA_SUBTITLE = "&aYou have &6{0} &aattempts.";
 
-      public String SUCCESSFUL_CRACKED = "{PRFX} Successfully passed Bot-Filter check.";
-      public String SUCCESSFUL_PREMIUM = "{PRFX} Successfully passed Bot-Filter check. Please, rejoin the server";
+      public String SUCCESSFUL_CRACKED = "{PRFX} &aSuccessfully passed Bot-Filter check.";
+      public String SUCCESSFUL_PREMIUM = "{PRFX} &aSuccessfully passed Bot-Filter check.{NL}&6Please, rejoin the server!";
 
-      public String CAPTCHA_FAILED = "{PRFX} You've mistaken in captcha check. Please, rejoin the server.";
-      public String TOO_BIG_PACKET = "{PRFX} Your client sent too big packet.";
-      public String FALLING_CHECK_FAILED = "{PRFX} Falling Check was failed. Please, rejoin the server.";
+      public String CAPTCHA_FAILED = "{PRFX} &cYou've mistaken in captcha check.{NL}&6Please, rejoin the server.";
+      public String FALLING_CHECK_FAILED = "{PRFX} &cFalling Check was failed.{NL}&6Please, rejoin the server.";
 
       public String STATS_FORMAT = "&c&lTotal Blocked: &6&l{0} &c&l| Connections: &6&l{1} &c&l| Pings: &6&l{2} &c&l| Total Connections: &6&l{3} &c&l| Ping: &6&l{4}";
-      public String STATS_ENABLED = "{PRFX} &fNow you see statistics in your action bar.";
-      public String STATS_DISABLED = "{PRFX} &fYou're no longer see statistics in your action bar.";
+      public String STATS_ENABLED = "{PRFX} &aNow you see statistics in your action bar.";
+      public String STATS_DISABLED = "{PRFX} &cYou're no longer see statistics in your action bar.";
 
-      public String KICK_CLIENT_CHECK_SETTINGS = "&cYour client doesn't send settings packets.";
-      public String KICK_CLIENT_CHECK_BRAND = "&cYour client doesn't send brand packet or it's blocked.";
+      public String KICK_CLIENT_CHECK_SETTINGS = "{NL}{NL}&cYour client doesn't send settings packets.";
+      public String KICK_CLIENT_CHECK_BRAND = "{NL}{NL}&cYour client doesn't send brand packet or it's blocked.";
     }
 
     @Create

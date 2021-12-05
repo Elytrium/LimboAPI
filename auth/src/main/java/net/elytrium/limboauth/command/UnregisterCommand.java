@@ -20,9 +20,11 @@ package net.elytrium.limboauth.command;
 import com.j256.ormlite.dao.Dao;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
 import java.sql.SQLException;
 import java.util.Locale;
 import net.elytrium.limboauth.Settings;
+import net.elytrium.limboauth.handler.AuthSessionHandler;
 import net.elytrium.limboauth.model.RegisteredPlayer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
@@ -35,27 +37,36 @@ public class UnregisterCommand implements SimpleCommand {
   }
 
   @Override
-  public void execute(final Invocation invocation) {
-    final CommandSource source = invocation.source();
-    final String[] args = invocation.arguments();
+  public void execute(SimpleCommand.Invocation invocation) {
+    CommandSource source = invocation.source();
+    String[] args = invocation.arguments();
 
-    if (args.length != 1) {
-      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_USAGE));
-    } else {
-      try {
-        this.playerDao.deleteById(args[0].toLowerCase(Locale.ROOT));
+    if (!(source instanceof Player)) {
+      source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NOT_PLAYER));
+      return;
+    }
 
-        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_SUCCESSFUL));
-      } catch (SQLException e) {
-        e.printStackTrace();
+    if (args.length == 2) {
+      if (args[1].equalsIgnoreCase("confirm")) {
+        RegisteredPlayer player = AuthSessionHandler.fetchInfo(this.playerDao, ((Player) source).getUsername());
+        if (player == null) {
+          source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.NOT_REGISTERED));
+        } else if (AuthSessionHandler.checkPassword(args[0], player, this.playerDao)) {
+          try {
+            this.playerDao.deleteById(((Player) source).getUsername().toLowerCase(Locale.ROOT));
+            ((Player) source).disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_SUCCESSFUL));
+          } catch (SQLException e) {
+            source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
+            e.printStackTrace();
+          }
+        } else {
+          source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+        }
 
-        source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.ERROR_OCCURRED));
+        return;
       }
     }
-  }
 
-  @Override
-  public boolean hasPermission(final Invocation invocation) {
-    return invocation.source().hasPermission("limboauth.unregister");
+    source.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.UNREGISTER_USAGE));
   }
 }

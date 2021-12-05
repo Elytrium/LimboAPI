@@ -36,32 +36,32 @@ public class FilterListener {
   }
 
   @Subscribe(order = PostOrder.FIRST)
-  public void onProxyConnect(PreLoginEvent e) {
+  public void onProxyConnect(PreLoginEvent event) {
     this.plugin.getStatistics().addConnection();
     if (this.plugin.checkCpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.ONLINE_MODE_VERIFY)
-        && this.plugin.shouldCheck(e.getUsername(), e.getConnection().getRemoteAddress().getAddress())) {
-      e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
+        && this.plugin.shouldCheck(event.getUsername(), event.getConnection().getRemoteAddress().getAddress())) {
+      event.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
     }
   }
 
   @Subscribe(order = PostOrder.FIRST)
-  public void onLogin(LoginLimboRegisterEvent e) {
-    if (this.plugin.shouldCheck((ConnectedPlayer) e.getPlayer())) {
-      e.addCallback(() -> this.plugin.filter(e.getPlayer()));
+  public void onLogin(LoginLimboRegisterEvent event) {
+    if (this.plugin.shouldCheck((ConnectedPlayer) event.getPlayer())) {
+      event.addCallback(() -> this.plugin.filter(event.getPlayer()));
     }
   }
 
   @Subscribe(order = PostOrder.LAST)
-  public void onPing(ProxyPingEvent e) {
+  public void onPing(ProxyPingEvent event) {
     if (this.plugin.checkPpsLimit(Settings.IMP.MAIN.FILTER_AUTO_TOGGLE.DISABLE_MOTD_PICTURE)) {
-      e.setPing(e.getPing().asBuilder().clearFavicon().build());
+      event.setPing(event.getPing().asBuilder().clearFavicon().build());
     }
 
     this.plugin.getStatistics().addPing();
   }
 
   @Subscribe
-  public void onQuery(ProxyQueryEvent e) {
+  public void onQuery(ProxyQueryEvent event) {
     this.plugin.getStatistics().addPing();
   }
 }

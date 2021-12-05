@@ -23,6 +23,7 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.Chat;
+import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import net.elytrium.limboapi.LimboAPI;
@@ -42,6 +43,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final LimboSessionHandler callback;
   private final MinecraftSessionHandler originalHandler;
   private RegisteredServer previousServer;
+
+  private int genericBytes = 0;
 
   public LimboSessionHandlerImpl(LimboAPI limboAPI, ConnectedPlayer player, LimboSessionHandler callback, MinecraftSessionHandler originalHandler) {
     this.limboAPI = limboAPI;
@@ -81,20 +84,41 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(Chat packet) {
-    this.callback.onChat(packet.getMessage());
+    String message = packet.getMessage();
+    if (message.length() > Settings.IMP.MAIN.MAX_CHAT_MESSAGE_LENGTH) {
+      this.kickTooBigPacket("chat");
+      return true;
+    }
+
+    this.callback.onChat(message);
     return true;
   }
 
   @Override
   public void handleUnknown(ByteBuf packet) {
-    if (packet.readableBytes() > 2048) {
-      this.player.getConnection().closeWith(this.limboAPI.getPackets().getTooBigPacket());
+    if (packet.readableBytes() > Settings.IMP.MAIN.MAX_UNKNOWN_PACKET_LENGTH) {
+      this.kickTooBigPacket("unknown");
     }
   }
 
   @Override
   public void handleGeneric(MinecraftPacket packet) {
+    if (packet instanceof PluginMessage) {
+      PluginMessage pluginMessage = (PluginMessage) packet;
+      int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
+      this.genericBytes += singleLength;
+      if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH || this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
+        this.kickTooBigPacket("generic");
+        return;
+      }
+    }
+
     this.callback.onGeneric(packet);
+  }
+
+  private void kickTooBigPacket(String type) {
+    this.player.getConnection().closeWith(this.limboAPI.getPackets().getTooBigPacket());
+    this.limboAPI.getLogger().warn("{} sent too big packet ({})", this.player, type);
   }
 
   @Override

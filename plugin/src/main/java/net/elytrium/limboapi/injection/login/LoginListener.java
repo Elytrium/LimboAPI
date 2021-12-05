@@ -122,24 +122,24 @@ public class LoginListener {
   }
 
   @Subscribe(order = PostOrder.LAST)
-  public void hookPreLogin(PreLoginEvent e) {
-    PreLoginEvent.PreLoginComponentResult result = e.getResult();
+  public void hookPreLogin(PreLoginEvent event) {
+    PreLoginEvent.PreLoginComponentResult result = event.getResult();
     if (!result.isForceOfflineMode() && (this.server.getConfiguration().isOnlineMode() || result.isOnlineModeAllowed())) {
-      this.onlineMode.add(e.getUsername());
+      this.onlineMode.add(event.getUsername());
     }
   }
 
   @Subscribe
-  public void onDisconnect(DisconnectEvent e) {
-    this.limboAPI.removeLoginQueue(e.getPlayer());
-    this.onlineMode.remove(e.getPlayer().getUsername());
+  public void onDisconnect(DisconnectEvent event) {
+    this.limboAPI.removeLoginQueue(event.getPlayer());
+    this.onlineMode.remove(event.getPlayer().getUsername());
   }
 
   @Subscribe(order = PostOrder.LAST)
-  public void hookLoginSession(GameProfileRequestEvent e) throws IllegalAccessException {
+  public void hookLoginSession(GameProfileRequestEvent event) throws IllegalAccessException {
     // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
     // method (which checks mcConnection.isActive()) and to override it. :)
-    MinecraftConnection connection = ((InitialInboundConnection) delegate.get(e.getConnection())).getConnection();
+    MinecraftConnection connection = ((InitialInboundConnection) delegate.get(event.getConnection())).getConnection();
     LoginSessionHandler handler = (LoginSessionHandler) connection.getSessionHandler();
     loginConnectionField.set(handler, closed);
     if (connection.isClosed()) {
@@ -150,9 +150,9 @@ public class LoginListener {
       try {
         // Initiate a regular connection and move over to it.
         ConnectedPlayer player = ctor.newInstance(
-            this.server, e.getGameProfile(), connection,
-            e.getConnection().getVirtualHost().orElse(null),
-            this.onlineMode.contains(e.getUsername())
+            this.server, event.getGameProfile(), connection,
+            event.getConnection().getVirtualHost().orElse(null),
+            this.onlineMode.contains(event.getUsername())
         );
 
         if (!this.server.canRegisterConnection(player)) {
@@ -197,8 +197,8 @@ public class LoginListener {
   }
 
   @Subscribe
-  public void hookPlaySession(ServerConnectedEvent e) {
-    ConnectedPlayer player = (ConnectedPlayer) e.getPlayer();
+  public void hookPlaySession(ServerConnectedEvent event) {
+    ConnectedPlayer player = (ConnectedPlayer) event.getPlayer();
     MinecraftConnection connection = player.getConnection();
 
     connection.eventLoop().execute(() -> {
