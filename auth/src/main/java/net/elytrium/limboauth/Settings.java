@@ -148,7 +148,7 @@ public class Settings extends Config {
   @Comment("Database settings")
   public static class DATABASE {
 
-    @Comment("Database type: mysql, postgresql, h2, or sqlite")
+    @Comment("Database type: mysql, postgresql or h2.")
     public String STORAGE_TYPE = "h2";
 
     @Comment("Settings for Network-based database (like MySQL, PostgreSQL): ")
@@ -156,6 +156,7 @@ public class Settings extends Config {
     public String USER = "user";
     public String PASSWORD = "password";
     public String DATABASE = "limboauth";
+    public String CONNECTION_PARAMETERS = "autoReconnect=true&initialTimeout=1&useSSL=false";
   }
 
   public void reload(File file) {
