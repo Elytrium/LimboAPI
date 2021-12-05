@@ -53,7 +53,7 @@ javadoc {
     options.charSet = "UTF-8"
     options.source = "8"
     options.links(
-            "https://docs.oracle.com/en/java/javase/11/docs/api/"
+        "https://docs.oracle.com/en/java/javase/11/docs/api/"
     )
 
     // Disable the crazy super-strict doclint tool in Java 8
