@@ -93,18 +93,19 @@ public class AuthSessionHandler implements LimboSessionHandler {
         case "/login":
         case "/l": {
           if (!this.totp && this.playerInfo != null) {
-            if (this.checkPassword(args[1])) {
+            if (checkPassword(args[1], this.playerInfo, this.playerDao)) {
               this.finishOrTotp();
             } else if (--this.attempts != 0) {
               this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
             } else {
-              this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.PASSWORD_WRONG));
+              this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.KICK_PASSWORD_WRONG));
             }
           } else {
             this.sendMessage();
           }
           break;
         }
+        case "/totp":
         case "/2fa": {
           if (this.totp) {
             if (verifier.isValidCode(this.playerInfo.totpToken, args[1])) {
@@ -157,17 +158,18 @@ public class AuthSessionHandler implements LimboSessionHandler {
     return verifier;
   }
 
-  private boolean checkPassword(String password) {
-    boolean isCorrect = BCrypt.verifyer()
-        .verify(password.getBytes(StandardCharsets.UTF_8), this.playerInfo.hash.getBytes(StandardCharsets.UTF_8)).verified;
+  public static boolean checkPassword(String password, RegisteredPlayer player, Dao<RegisteredPlayer, String> playerDao) {
+    boolean isCorrect = BCrypt.verifyer().verify(
+        password.getBytes(StandardCharsets.UTF_8), player.hash.getBytes(StandardCharsets.UTF_8)
+    ).verified;
 
     if (!isCorrect && !Settings.IMP.MAIN.MIGRATION_HASH.isEmpty()) {
-      isCorrect = MigrationHash.valueOf(Settings.IMP.MAIN.MIGRATION_HASH).checkPassword(this.playerInfo.hash, password);
+      isCorrect = MigrationHash.valueOf(Settings.IMP.MAIN.MIGRATION_HASH).checkPassword(player.hash, password);
 
       if (isCorrect) {
-        this.playerInfo.hash = genHash(password);
+        player.hash = genHash(password);
         try {
-          this.playerDao.update(this.playerInfo);
+          playerDao.update(player);
         } catch (SQLException e) {
           e.printStackTrace();
         }
@@ -204,8 +206,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
       }
 
       if (sizeOfValid.get() >= Settings.IMP.MAIN.IP_LIMIT_REGISTRATIONS) {
-        this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.IP_LIMIT)
-        );
+        this.proxyPlayer.disconnect(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.IP_LIMIT));
       }
     } catch (SQLException e) {
       e.printStackTrace();
@@ -263,7 +264,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
   }
 
   private boolean checkPasswordsRepeat(String[] args) {
-    if (Settings.IMP.MAIN.REPEAT_PASSWORD && !args[1].equals(args[2])) {
+    if (Settings.IMP.MAIN.REGISTER_NEED_REPEAT_PASSWORD && !args[1].equals(args[2])) {
       this.proxyPlayer.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(Settings.IMP.MAIN.STRINGS.DIFFERENT_PASSWORDS));
       return false;
     }
@@ -272,7 +273,7 @@ public class AuthSessionHandler implements LimboSessionHandler {
   }
 
   private boolean checkArgsLength(int argsLength) {
-    if (this.playerInfo == null && Settings.IMP.MAIN.REPEAT_PASSWORD) {
+    if (this.playerInfo == null && Settings.IMP.MAIN.REGISTER_NEED_REPEAT_PASSWORD) {
       return argsLength == 3;
     } else {
       return argsLength == 2;

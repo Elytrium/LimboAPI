@@ -30,7 +30,7 @@ public class DisconnectListener {
   }
 
   @Subscribe
-  public void onDisconnect(DisconnectEvent e) {
-    this.limboAPI.unsetLimboJoined(e.getPlayer());
+  public void onDisconnect(DisconnectEvent event) {
+    this.limboAPI.unsetLimboJoined(event.getPlayer());
   }
 }

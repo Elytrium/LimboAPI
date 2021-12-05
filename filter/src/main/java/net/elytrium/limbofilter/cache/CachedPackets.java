@@ -43,7 +43,6 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class CachedPackets {
 
-  private PreparedPacket tooBigPacket;
   private PreparedPacket captchaFailed;
   private PreparedPacket fallingCheckFailed;
   private PreparedPacket setSlot;
@@ -60,7 +59,6 @@ public class CachedPackets {
   public void createPackets() {
     Settings.MAIN.STRINGS strings = Settings.IMP.MAIN.STRINGS;
 
-    this.tooBigPacket = this.prepare((version) -> this.createDisconnectPacket(strings.TOO_BIG_PACKET, version));
     this.captchaFailed = this.prepare((version) -> this.createDisconnectPacket(strings.CAPTCHA_FAILED, version));
     this.fallingCheckFailed = this.prepare((version) -> this.createDisconnectPacket(strings.FALLING_CHECK_FAILED, version));
 
@@ -176,10 +174,6 @@ public class CachedPackets {
     }
 
     return preparedPacket;
-  }
-
-  public PreparedPacket getTooBigPacket() {
-    return this.tooBigPacket;
   }
 
   public PreparedPacket getCaptchaFailed() {

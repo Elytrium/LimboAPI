@@ -10,10 +10,11 @@ package net.elytrium.limboapi.api.event;
 import com.google.common.base.Preconditions;
 import com.velocitypowered.api.util.GameProfile;
 
-/*
-  Safe GameProfileRequestEvent, which executes only after all the login limbo server.
+/**
+ * Safe GameProfileRequestEvent, which executes only after all the login limbo server.
  */
 public class SafeGameProfileRequestEvent {
+
   private final String username;
   private final GameProfile originalProfile;
   private final boolean onlineMode;
@@ -37,15 +38,19 @@ public class SafeGameProfileRequestEvent {
     return this.onlineMode;
   }
 
-  public GameProfile getGameProfile() {
-    return this.gameProfile == null ? this.originalProfile : this.gameProfile;
-  }
-
   public void setGameProfile(GameProfile gameProfile) {
     this.gameProfile = gameProfile;
   }
 
+  public GameProfile getGameProfile() {
+    return this.gameProfile == null ? this.originalProfile : this.gameProfile;
+  }
+
   public String toString() {
-    return "SafeGameProfileRequestEvent{username=" + this.username + ", gameProfile=" + this.gameProfile + "}";
+    return "SafeGameProfileRequestEvent{"
+        + "username=" + this.username
+        + ", originalProfile=" + this.originalProfile
+        + ", gameProfile=" + this.gameProfile
+        + "}";
   }
 }
