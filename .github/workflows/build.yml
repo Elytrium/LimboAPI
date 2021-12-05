@@ -44,4 +44,4 @@ jobs:
         uses: actions/upload-artifact@v2.2.4
         with:
           name: LimboAuth Built On ${{ matrix.java }} JDK
-          path: "limboauth*-all.jar"
+          path: "limboauth*.jar"
