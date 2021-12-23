@@ -7,8 +7,8 @@
 
 package net.elytrium.limboapi.api.chunk.data;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public interface BlockSection {
 
