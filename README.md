@@ -45,7 +45,7 @@ Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
     <repositories>
         <repository>
             <id>elytrium-repo</id>
-            <url>https://maven.spigotmc.org/repo/</url>
+            <url>https://maven.elytrium.net/repo/</url>
         </repository>
     </repositories>
 
