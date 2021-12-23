@@ -13,8 +13,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * This event is fired during login process before the player has been authenticated, e.g. to enable or disable
- * custom authentication.
+ * This event is fired during login process before the player has been authenticated, e.g. to enable or disable custom authentication.
  */
 public class LoginLimboRegisterEvent {
 

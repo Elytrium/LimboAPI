@@ -35,18 +35,18 @@ public class SimpleChunk implements VirtualChunk {
   public static final int MAX_BLOCKS_PER_SECTION = 16 * 16 * 16;
   public static final int MAX_BIOMES_PER_SECTION = 4 * 4 * 4;
 
-  private final int x;
-  private final int z;
+  private final int posX;
+  private final int posZ;
 
   private final SimpleSection[] sections = new SimpleSection[16];
   private final LightSection[] light = new LightSection[18];
   private final VirtualBiome[] biomes = new VirtualBiome[1024];
 
-  public SimpleChunk(int x, int z) {
-    this.x = x;
-    this.z = z;
-    Arrays.fill(this.biomes, Biome.PLAINS);
+  public SimpleChunk(int posX, int posZ) {
+    this.posX = posX;
+    this.posZ = posZ;
     //Arrays.fill(this.light, LightSection.DEFAULT);
+    Arrays.fill(this.biomes, Biome.PLAINS);
   }
 
   @Override
@@ -100,11 +100,11 @@ public class SimpleChunk implements VirtualChunk {
   }
 
   public int getX() {
-    return this.x;
+    return this.posX;
   }
 
   public int getZ() {
-    return this.z;
+    return this.posZ;
   }
 
   @Override
@@ -134,7 +134,7 @@ public class SimpleChunk implements VirtualChunk {
       }
     }
 
-    return new SimpleChunkSnapshot(this.x, this.z, full, sectionsSnapshot, lightSnapshot, Arrays.copyOf(this.biomes, this.biomes.length));
+    return new SimpleChunkSnapshot(this.posX, this.posZ, full, sectionsSnapshot, lightSnapshot, Arrays.copyOf(this.biomes, this.biomes.length));
   }
 
   private SimpleSection getSection(int y) {

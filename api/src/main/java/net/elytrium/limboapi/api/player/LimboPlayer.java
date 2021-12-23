@@ -19,6 +19,14 @@ import net.kyori.adventure.text.Component;
 @SuppressWarnings("unused")
 public interface LimboPlayer {
 
+  void writePacket(Object packetObj);
+
+  void writePacketAndFlush(Object packetObj);
+
+  void flushPackets();
+
+  void closeWith(Object packetObj);
+
   void sendImage(int mapId, BufferedImage image);
 
   void setInventory(int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt);
@@ -36,4 +44,6 @@ public interface LimboPlayer {
   Limbo getServer();
 
   Player getProxyPlayer();
+
+  long getPing();
 }

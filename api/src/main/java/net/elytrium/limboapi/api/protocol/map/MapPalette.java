@@ -1,28 +1,19 @@
 /*
  * Copyright (C) 2021 Elytrium
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * The LimboAPI (excluding the LimboAPI plugin) is licensed under the terms of the MIT License. For more details,
+ * reference the LICENSE file in the api top-level directory.
  */
 
-package net.elytrium.limboapi.protocol.map;
+package net.elytrium.limboapi.api.protocol.map;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.image.BufferedImage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class MapPalette {
+@SuppressFBWarnings("MS_EXPOSE_REP")
+public class MapPalette {
 
   private static final Color[] colors = new Color[] {
       clr(0, 0, 0), clr(0, 0, 0), clr(0, 0, 0), clr(0, 0, 0),
@@ -150,7 +141,6 @@ public final class MapPalette {
     return (rgb & 0xff000000) >>> 24;
   }
 
-  @SuppressFBWarnings("MS_EXPOSE_REP")
   public static Color[] getColors() {
     return MapPalette.colors;
   }

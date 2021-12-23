@@ -21,8 +21,8 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
+import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 
 public class MapDataPacket implements MinecraftPacket {
 
@@ -91,51 +91,5 @@ public class MapDataPacket implements MinecraftPacket {
         + ", scale=" + this.scale
         + ", data=" + this.data
         + "}";
-  }
-
-  @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
-  public static class MapData {
-
-    private final int columns;
-    private final int rows;
-    private final int x;
-    private final int y;
-    private final byte[] data;
-
-    public MapData(int columns, int rows, int x, int y, byte[] data) {
-      this.columns = columns;
-      this.rows = rows;
-      this.x = x;
-      this.y = y;
-      this.data = data;
-    }
-
-    public MapData(int x, byte[] data) {
-      this(128, 128, x, 0, data);
-    }
-
-    public MapData(byte[] data) {
-      this(128, 128, 0, 0, data);
-    }
-
-    public int getColumns() {
-      return this.columns;
-    }
-
-    public int getRows() {
-      return this.rows;
-    }
-
-    public int getX() {
-      return this.x;
-    }
-
-    public int getY() {
-      return this.y;
-    }
-
-    public byte[] getData() {
-      return this.data;
-    }
   }
 }
