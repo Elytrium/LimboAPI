@@ -26,19 +26,19 @@ import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
 public class PlayerPosition implements MinecraftPacket {
 
-  private double x;
-  private double y;
-  private double z;
+  private double posX;
+  private double posY;
+  private double posZ;
   private boolean onGround;
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    this.x = buf.readDouble();
+    this.posX = buf.readDouble();
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       buf.skipBytes(8);
     }
-    this.y = buf.readDouble();
-    this.z = buf.readDouble();
+    this.posY = buf.readDouble();
+    this.posZ = buf.readDouble();
     this.onGround = buf.readBoolean();
   }
 
@@ -57,15 +57,15 @@ public class PlayerPosition implements MinecraftPacket {
   }
 
   public double getX() {
-    return this.x;
+    return this.posX;
   }
 
   public double getY() {
-    return this.y;
+    return this.posY;
   }
 
   public double getZ() {
-    return this.z;
+    return this.posZ;
   }
 
   public boolean isOnGround() {
@@ -75,9 +75,9 @@ public class PlayerPosition implements MinecraftPacket {
   @Override
   public String toString() {
     return "PlayerPosition{"
-        + "x=" + this.x
-        + ", y=" + this.y
-        + ", z=" + this.z
+        + "x=" + this.posX
+        + ", y=" + this.posY
+        + ", z=" + this.posZ
         + ", onGround=" + this.onGround
         + "}";
   }

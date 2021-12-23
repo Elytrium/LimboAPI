@@ -1,15 +1,9 @@
-rootProject.name = "LimboAPI"
+rootProject.name = "limboapi"
 
 include(
     "api",
-    "plugin",
-    "auth",
-    "filter",
-    "fallback"
+    "plugin"
 )
 
-findProject(":api")?.name = "limboapi-api"
-findProject(":plugin")?.name = "limboapi-plugin"
-findProject(":auth")?.name = "limboauth"
-findProject(":filter")?.name = "limbofilter"
-findProject(":fallback")?.name = "limbofallback"
+findProject(":api")?.setName("limboapi-api")
+findProject(":plugin")?.setName("limboapi-plugin")

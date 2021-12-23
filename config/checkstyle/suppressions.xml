@@ -13,17 +13,6 @@
     <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="MemberName"/>
     <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="RequireThis"/>
     <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="AbbreviationAsWordInName"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Config.java" checks="AbbreviationAsWordInName"/>
 
     <suppress files=".*[\\/]net[\\/]elytrium[\\/]limboapi[\\/]server[\\/]LimboPlayerImpl.java" checks="Indentation"/>
-
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/]limboapi[\\/]protocol[\\/]packet[\\/]MapDataPacket.java" checks="MemberName"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/]limboapi[\\/]protocol[\\/]packet[\\/]PlayerPosition.java" checks="MemberName"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/]limboapi[\\/]protocol[\\/]packet[\\/]UpdateViewPosition.java" checks="MemberName"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/]limboapi[\\/]protocol[\\/]packet[\\/]PlayerPositionAndLook.java" checks="MemberName"/>
-
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/]limboapi[\\/]server[\\/]world[\\/]chunk[\\/]SimpleChunk.java" checks="MemberName"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/]limboapi[\\/]server[\\/]world[\\/]chunk[\\/]SimpleChunkSnapshot.java" checks="MemberName"/>
-
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/]limbofilter[\\/]handler[\\/]FallingCheckHandler.java" checks="MemberName"/>
 </suppressions>

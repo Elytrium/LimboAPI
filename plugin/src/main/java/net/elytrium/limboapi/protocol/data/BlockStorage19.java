@@ -77,7 +77,11 @@ public class BlockStorage19 implements BlockStorage {
   }
 
   @Override
-  public void write(ByteBuf buf, ProtocolVersion version) {
+  public void write(Object byteBufObject, ProtocolVersion version) {
+    if (!(byteBufObject instanceof ByteBuf)) {
+      throw new IllegalArgumentException("Not ByteBuf");
+    }
+    ByteBuf buf = (ByteBuf) byteBufObject;
     buf.writeByte(this.storage.getBitsPerEntry());
     if (this.storage.getBitsPerEntry() > 8) {
       if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {

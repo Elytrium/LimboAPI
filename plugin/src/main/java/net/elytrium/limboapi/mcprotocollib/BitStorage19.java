@@ -26,12 +26,10 @@ package net.elytrium.limboapi.mcprotocollib;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
 
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class BitStorage19 implements CompactStorage {
 
   private final long[] data;
@@ -53,32 +51,6 @@ public class BitStorage19 implements CompactStorage {
 
     this.size = this.data.length * 64 / this.bitsPerEntry;
     this.maxEntryValue = (1L << this.bitsPerEntry) - 1;
-  }
-
-  public int getBitsPerEntry() {
-    return this.bitsPerEntry;
-  }
-
-  public int getSize() {
-    return this.size;
-  }
-
-  @Override
-  public int get(int index) {
-    if (index < 0 || index > this.size - 1) {
-      throw new IndexOutOfBoundsException();
-    }
-
-    int bitIndex = index * this.bitsPerEntry;
-    int startIndex = bitIndex / 64;
-    int endIndex = ((index + 1) * this.bitsPerEntry - 1) / 64;
-    int startBitSubIndex = bitIndex % 64;
-    if (startIndex == endIndex) {
-      return (int) (this.data[startIndex] >>> startBitSubIndex & this.maxEntryValue);
-    } else {
-      int endBitSubIndex = 64 - startBitSubIndex;
-      return (int) ((this.data[startIndex] >>> startBitSubIndex | this.data[endIndex] << endBitSubIndex) & this.maxEntryValue);
-    }
   }
 
   @Override
@@ -103,12 +75,29 @@ public class BitStorage19 implements CompactStorage {
   }
 
   @Override
-  public int getDataLength() {
-    return ProtocolUtils.varIntBytes(this.data.length) + this.data.length * 8;
+  public int get(int index) {
+    if (index < 0 || index > this.size - 1) {
+      throw new IndexOutOfBoundsException();
+    }
+
+    int bitIndex = index * this.bitsPerEntry;
+    int startIndex = bitIndex / 64;
+    int endIndex = ((index + 1) * this.bitsPerEntry - 1) / 64;
+    int startBitSubIndex = bitIndex % 64;
+    if (startIndex == endIndex) {
+      return (int) (this.data[startIndex] >>> startBitSubIndex & this.maxEntryValue);
+    } else {
+      int endBitSubIndex = 64 - startBitSubIndex;
+      return (int) ((this.data[startIndex] >>> startBitSubIndex | this.data[endIndex] << endBitSubIndex) & this.maxEntryValue);
+    }
   }
 
   @Override
-  public void write(ByteBuf buf, ProtocolVersion version) {
+  public void write(Object byteBufObject, ProtocolVersion version) {
+    if (!(byteBufObject instanceof ByteBuf)) {
+      throw new IllegalArgumentException("Not ByteBuf");
+    }
+    ByteBuf buf = (ByteBuf) byteBufObject;
     ProtocolUtils.writeVarInt(buf, this.data.length);
     for (long l : this.data) {
       buf.writeLong(l);
@@ -116,13 +105,23 @@ public class BitStorage19 implements CompactStorage {
   }
 
   @Override
-  public CompactStorage copy() {
-    return new BitStorage19(this.bitsPerEntry, Arrays.copyOf(this.data, this.data.length));
+  public int getBitsPerEntry() {
+    return this.bitsPerEntry;
+  }
+
+  @Override
+  public int getDataLength() {
+    return ProtocolUtils.varIntBytes(this.data.length) + this.data.length * 8;
   }
 
   @Override
   public long[] getData() {
     return this.data;
+  }
+
+  @Override
+  public CompactStorage copy() {
+    return new BitStorage19(this.bitsPerEntry, Arrays.copyOf(this.data, this.data.length));
   }
 
   @SuppressWarnings("SameParameterValue")

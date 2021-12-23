@@ -1,79 +1,91 @@
 //file:noinspection GroovyAssignabilityCheck
 
 plugins {
-    id "java-library"
-    id "checkstyle"
-    id "maven-publish"
+    id("java-library")
+    id("maven-publish")
 }
-
-apply plugin: "org.cadixdev.licenser"
-apply from: "../gradle/checkstyle.gradle"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-license {
-    matching(includes: ["**/mcprotocollib/**"]) {
-        header = project.rootProject.file("HEADER_MCPROTOCOLLIB.txt")
-    }
-
-    header = project.file("HEADER.txt")
+    setSourceCompatibility(JavaVersion.VERSION_1_8)
+    setTargetCompatibility(JavaVersion.VERSION_1_8)
 }
 
 dependencies {
-    compileOnly files("../libs/3.1.0.jar")
+    compileOnly("com.velocitypowered:velocity-api:3.1.0-SNAPSHOT")
+
+    api("net.kyori:adventure-nbt:4.9.3")
 
     compileOnly "com.github.spotbugs:spotbugs-annotations:4.5.0"
 }
 
+license {
+    matching(includes: ["**/mcprotocollib/**"]) {
+        setHeader(getRootProject().file("HEADER_MCPROTOCOLLIB.txt"))
+    }
+
+    setHeader(file("HEADER.txt"))
+}
+
 task javadocJar(type: Jar) {
-    classifier "javadoc"
-    from javadoc
+    getArchiveClassifier().set("javadoc")
+    from(javadoc)
+}
+
+task sourcesJar(type: Jar) {
+    getArchiveClassifier().set("sources")
+    from(sourceSets.main.getAllSource())
 }
 
 publishing {
+    repositories {
+        maven {
+            credentials {
+                setUsername(System.getenv("PUBLISH_USERNAME"))
+                setPassword(System.getenv("PUBLISH_PASSWORD"))
+            }
+
+            setName("elytrium-repo")
+            setUrl("https://maven.elytrium.net/repo/")
+        }
+    }
+
     publications {
         maven(MavenPublication) {
-            groupId = this.getProject().getGroup()
-            artifactId = this.getProject().getName()
-            version = this.getProject().getVersion()
-            from components.java
+            from(components.java)
+
+            artifact(javadocJar)
+            artifact(sourcesJar)
         }
     }
 }
 
-artifacts {
-    archives javadocJar
-}
-
 javadoc {
-    options.encoding = "UTF-8"
-    options.charSet = "UTF-8"
-    options.source = "8"
-    options.links(
-        "https://docs.oracle.com/en/java/javase/11/docs/api/"
-    )
-
-    // Disable the crazy super-strict doclint tool in Java 8
-    options.addStringOption("Xdoclint:none", "-quiet")
-
+    getOptions().setEncoding("UTF-8")
+    getOptions().setCharSet("UTF-8")
     // Mark sources as Java 8 source compatible
-    options.source = "8"
+    getOptions().setSource("8")
+    getOptions().links("https://docs.oracle.com/en/java/javase/11/docs/api/", "https://jd.adventure.kyori.net/nbt/4.9.3/")
 
-    // Remove "undefined" from seach paths when generating javadoc for a non-modular project (JDK-8215291)
+    // Disable the crazy super-strict DocLint tool in Java 8
+    getOptions().addStringOption("Xdoclint:none", "-quiet")
+
+    // Remove "undefined" from search paths when generating javadoc for a non-modular project (JDK-8215291)
     if (JavaVersion.current() >= JavaVersion.VERSION_1_9 && JavaVersion.current() < JavaVersion.VERSION_12) {
-        options.addBooleanOption("-no-module-directories", true)
+        getOptions().addBooleanOption("-no-module-directories", true)
     }
 }
 
-sourceSets.main.java.srcDir(tasks.register("generateTemplates", Copy) { task ->
-    task.inputs.properties "version": project.version
+artifacts {
+    archives(javadocJar)
+    archives(sourcesJar)
+}
 
-    task.from file("src/main/templates")
-    task.into layout.buildDirectory.dir("../build/generated/sources/templates")
-    task.expand "version": project.version
+sourceSets.main.getJava().srcDir(getTasks().register("generateTemplates", Copy) { task ->
+    task.getInputs().properties("version": getVersion())
+
+    task.from(file("src/main/templates"))
+        .into(getLayout().getBuildDirectory().dir("generated/sources/templates"))
+        .expand("version": getVersion())
 }.map {
-    it.outputs
+    it.getOutputs()
 })

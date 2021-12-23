@@ -37,6 +37,8 @@ public class Settings extends Config {
   @Comment("Don't use \\n, use {NL} for new line, and {PRFX} for prefix. Ampersand (&) color codes are supported too.")
   public static class MAIN {
 
+    public boolean CHECK_FOR_UPDATES = true;
+
     public int MAX_CHAT_MESSAGE_LENGTH = 256;
     public int MAX_UNKNOWN_PACKET_LENGTH = 2048;
     public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 3072;
@@ -59,6 +61,7 @@ public class Settings extends Config {
     public static class MESSAGES {
 
       public String TOO_BIG_PACKET = "{PRFX} &cYour client sent too big packet!";
+      public String INVALID_PING = "{PRFX} &cYour client sent invalid ping packet!";
     }
   }
 

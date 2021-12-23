@@ -25,12 +25,12 @@ import io.netty.buffer.ByteBuf;
 
 public class UpdateViewPosition implements MinecraftPacket {
 
-  private final int x;
-  private final int z;
+  private final int posX;
+  private final int posZ;
 
-  public UpdateViewPosition(int x, int z) {
-    this.x = x;
-    this.z = z;
+  public UpdateViewPosition(int posX, int posZ) {
+    this.posX = posX;
+    this.posZ = posZ;
   }
 
   public UpdateViewPosition() {
@@ -44,8 +44,8 @@ public class UpdateViewPosition implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    ProtocolUtils.writeVarInt(buf, this.x);
-    ProtocolUtils.writeVarInt(buf, this.z);
+    ProtocolUtils.writeVarInt(buf, this.posX);
+    ProtocolUtils.writeVarInt(buf, this.posZ);
   }
 
   @Override
@@ -56,8 +56,8 @@ public class UpdateViewPosition implements MinecraftPacket {
   @Override
   public String toString() {
     return "UpdateViewPosition{"
-        + "x=" + this.x
-        + ", z=" + this.z
+        + "x=" + this.posX
+        + ", z=" + this.posZ
         + "}";
   }
 }

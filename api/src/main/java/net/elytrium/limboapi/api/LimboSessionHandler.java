@@ -7,7 +7,6 @@
 
 package net.elytrium.limboapi.api;
 
-import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 
 @SuppressWarnings("unused")
@@ -17,9 +16,11 @@ public interface LimboSessionHandler {
 
   }
 
-  //void onMove(double x, double y, double z, float yaw, float pitch);
-
   default void onMove(double x, double y, double z) {
+
+  }
+
+  default void onMove(double x, double y, double z, float yaw, float pitch) {
 
   }
 
@@ -39,7 +40,10 @@ public interface LimboSessionHandler {
 
   }
 
-  default void onGeneric(MinecraftPacket packet) {
+  /**
+   * @param packet Any velocity built-in packet or any packet registered via {@link LimboFactory#registerPacket}
+   */
+  default void onGeneric(Object packet) {
 
   }
 

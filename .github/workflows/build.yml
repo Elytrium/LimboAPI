@@ -23,25 +23,10 @@ jobs:
           path: ~/.gradle
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
-      - name: Download required libraries
-        run: bash scripts/init_libs.sh
       - name: Build plugins
         run: ./gradlew build
-      - name: Move plugins to root dir
-        shell: bash
-        run: mv */*/*/limbo*.jar ./
       - name: Upload LimboAPI Plugin
         uses: actions/upload-artifact@v2.2.4
         with:
           name: LimboAPI Plugin Built On ${{ matrix.java }} JDK
-          path: "limboapi-plugin*-all.jar"
-      - name: Upload LimboFilter
-        uses: actions/upload-artifact@v2.2.4
-        with:
-          name: LimboFilter Built On ${{ matrix.java }} JDK
-          path: "limbofilter*.jar"
-      - name: Upload LimboAuth
-        uses: actions/upload-artifact@v2.2.4
-        with:
-          name: LimboAuth Built On ${{ matrix.java }} JDK
-          path: "limboauth*.jar"
+          path: "build/libs/limboapi-plugin*.jar"
