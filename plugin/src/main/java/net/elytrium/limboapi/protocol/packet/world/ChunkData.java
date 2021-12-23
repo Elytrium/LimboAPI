@@ -23,27 +23,22 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.zip.Deflater;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
+import net.elytrium.limboapi.api.protocol.packets.data.BiomeData;
 import net.elytrium.limboapi.mcprotocollib.BitStorage116;
 import net.elytrium.limboapi.mcprotocollib.BitStorage19;
 import net.elytrium.limboapi.protocol.util.NetworkSection;
-import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
 public class ChunkData implements MinecraftPacket {
@@ -263,49 +258,5 @@ public class ChunkData implements MinecraftPacket {
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     return true;
-  }
-
-  @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
-  public static class BiomeData {
-
-    private final byte[] pre115Biomes = new byte[256];
-    private final int[] post115Biomes = new int[1024];
-
-    public BiomeData(ChunkSnapshot chunk) {
-      VirtualBiome[] biomes = chunk.getBiomes();
-      for (int i = 0; i < biomes.length; ++i) {
-        this.post115Biomes[i] = biomes[i].getId();
-      }
-
-      // Down sample 4x4x4 3d biomes to 2d XZ
-      Map<Integer, Integer> samples = new HashMap<>(256 / 4);
-      for (int x = 0; x < 16; x += 4) {
-        for (int z = 0; z < 16; z += 4) {
-          samples.clear();
-          for (int y = 0; y < 256; y += 16) {
-            VirtualBiome biome = biomes[SimpleChunk.getBiomeIndex(x, y, z)];
-            int curr = samples.getOrDefault(biome.getId(), 0);
-            samples.put(biome.getId(), curr + 1);
-          }
-          int id = samples.entrySet().stream()
-              .max(Entry.comparingByValue())
-              .orElseThrow(RuntimeException::new)
-              .getKey();
-          for (int xl = x; xl < x + 4; ++xl) {
-            for (int zl = z; zl < z + 4; ++zl) {
-              this.pre115Biomes[zl * 16 + xl] = (byte) id;
-            }
-          }
-        }
-      }
-    }
-
-    public byte[] getPre115Biomes() {
-      return this.pre115Biomes;
-    }
-
-    public int[] getPost115Biomes() {
-      return this.post115Biomes;
-    }
   }
 }

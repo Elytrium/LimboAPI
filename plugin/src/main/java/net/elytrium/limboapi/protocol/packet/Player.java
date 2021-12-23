@@ -28,10 +28,6 @@ public class Player implements MinecraftPacket {
 
   private boolean onGround;
 
-  public Player(boolean onGround) {
-    this.onGround = onGround;
-  }
-
   public Player() {
 
   }

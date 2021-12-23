@@ -53,7 +53,11 @@ public class BlockStorage17 implements BlockStorage {
   }
 
   @Override
-  public void write(ByteBuf buf, ProtocolVersion version) {
+  public void write(Object byteBufObject, ProtocolVersion version) {
+    if (!(byteBufObject instanceof ByteBuf)) {
+      throw new IllegalArgumentException("Not ByteBuf");
+    }
+    ByteBuf buf = (ByteBuf) byteBufObject;
     if (this.pass == 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
         this.writeBlocks17(buf);

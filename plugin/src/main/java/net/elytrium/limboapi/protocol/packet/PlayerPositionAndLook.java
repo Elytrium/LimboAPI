@@ -27,19 +27,19 @@ import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
 public class PlayerPositionAndLook implements MinecraftPacket {
 
-  private double x;
-  private double y;
-  private double z;
+  private double posX;
+  private double posY;
+  private double posZ;
   private float yaw;
   private float pitch;
   private int teleportId;
   private boolean onGround;
   private boolean dismountVehicle;
 
-  public PlayerPositionAndLook(double x, double y, double z, float yaw, float pitch, int teleportId, boolean onGround, boolean dismountVehicle) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
+  public PlayerPositionAndLook(double posX, double posY, double posZ, float yaw, float pitch, int teleportId, boolean onGround, boolean dismountVehicle) {
+    this.posX = posX;
+    this.posY = posY;
+    this.posZ = posZ;
     this.yaw = yaw;
     this.pitch = pitch;
     this.teleportId = teleportId;
@@ -53,12 +53,12 @@ public class PlayerPositionAndLook implements MinecraftPacket {
 
   @Override
   public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
-    this.x = buf.readDouble();
+    this.posX = buf.readDouble();
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       buf.skipBytes(8);
     }
-    this.y = buf.readDouble();
-    this.z = buf.readDouble();
+    this.posY = buf.readDouble();
+    this.posZ = buf.readDouble();
     this.yaw = buf.readFloat();
     this.pitch = buf.readFloat();
 
@@ -72,9 +72,9 @@ public class PlayerPositionAndLook implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
-    buf.writeDouble(this.x);
-    buf.writeDouble(this.y);
-    buf.writeDouble(this.z);
+    buf.writeDouble(this.posX);
+    buf.writeDouble(this.posY);
+    buf.writeDouble(this.posZ);
     buf.writeFloat(this.yaw);
     buf.writeFloat(this.pitch);
 
@@ -103,15 +103,15 @@ public class PlayerPositionAndLook implements MinecraftPacket {
   }
 
   public double getX() {
-    return this.x;
+    return this.posX;
   }
 
   public double getY() {
-    return this.y;
+    return this.posY;
   }
 
   public double getZ() {
-    return this.z;
+    return this.posZ;
   }
 
   public float getYaw() {
@@ -129,9 +129,9 @@ public class PlayerPositionAndLook implements MinecraftPacket {
   @Override
   public String toString() {
     return "PlayerPositionAndLook{"
-        + "x=" + this.x
-        + ", y=" + this.y
-        + ", z=" + this.z
+        + "x=" + this.posX
+        + ", y=" + this.posY
+        + ", z=" + this.posZ
         + ", yaw=" + this.yaw
         + ", pitch=" + this.pitch
         + ", teleportId=" + this.teleportId

@@ -23,19 +23,19 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 
-public class SetExp implements MinecraftPacket {
+public class SetExperience implements MinecraftPacket {
 
   private final float expBar;
   private final int level;
   private final int totalExp;
 
-  public SetExp(float expBar, int level, int totalExp) {
+  public SetExperience(float expBar, int level, int totalExp) {
     this.expBar = expBar;
     this.level = level;
     this.totalExp = totalExp;
   }
 
-  public SetExp() {
+  public SetExperience() {
     throw new IllegalStateException();
   }
 
@@ -63,7 +63,7 @@ public class SetExp implements MinecraftPacket {
 
   @Override
   public String toString() {
-    return "SetExp{"
+    return "SetExperience{"
         + "expBar=" + this.expBar
         + ", level=" + this.level
         + ", totalExp=" + this.totalExp

@@ -17,26 +17,24 @@
 
 package net.elytrium.limboapi.server.world.chunk;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class SimpleChunkSnapshot implements ChunkSnapshot {
 
-  private final int x;
-  private final int z;
+  private final int posX;
+  private final int posZ;
   private final boolean fullChunk;
   private final SimpleSection[] sections;
   private final LightSection[] light;
   private final VirtualBiome[] biomes;
 
-  public SimpleChunkSnapshot(int x, int z, boolean fullChunk, SimpleSection[] sections, LightSection[] light, VirtualBiome[] biomes) {
-    this.x = x;
-    this.z = z;
+  public SimpleChunkSnapshot(int posX, int posZ, boolean fullChunk, SimpleSection[] sections, LightSection[] light, VirtualBiome[] biomes) {
+    this.posX = posX;
+    this.posZ = posZ;
     this.fullChunk = fullChunk;
     this.sections = sections;
     this.light = light;
@@ -51,12 +49,12 @@ public class SimpleChunkSnapshot implements ChunkSnapshot {
 
   @Override
   public int getX() {
-    return this.x;
+    return this.posX;
   }
 
   @Override
   public int getZ() {
-    return this.z;
+    return this.posZ;
   }
 
   @Override
