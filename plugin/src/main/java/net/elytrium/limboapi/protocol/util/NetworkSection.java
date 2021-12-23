@@ -18,7 +18,6 @@
 package net.elytrium.limboapi.protocol.util;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import java.util.EnumMap;
 import java.util.Map;
@@ -31,6 +30,7 @@ import net.elytrium.limboapi.protocol.data.BiomeStorage118;
 import net.elytrium.limboapi.protocol.data.BlockStorage17;
 import net.elytrium.limboapi.protocol.data.BlockStorage19;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class NetworkSection {
 

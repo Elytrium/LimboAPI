@@ -17,15 +17,15 @@
 
 package net.elytrium.limboapi.material;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.material.Biome.Effects.MoodSound;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.CompoundBinaryTag.Builder;
 import net.kyori.adventure.nbt.ListBinaryTag;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @SuppressWarnings("unused")
 public enum Biome implements VirtualBiome {
