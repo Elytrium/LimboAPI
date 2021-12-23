@@ -17,7 +17,6 @@
 
 package net.elytrium.limboapi.injection.dummy;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -34,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 @SuppressWarnings("ConstantConditions")
 @SuppressFBWarnings(value = "NP_NONNULL_RETURN_VIOLATION", justification = "This is dummy class.")

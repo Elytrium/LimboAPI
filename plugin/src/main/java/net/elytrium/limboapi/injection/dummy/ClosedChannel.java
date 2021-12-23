@@ -17,7 +17,6 @@
 
 package net.elytrium.limboapi.injection.dummy;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelConfig;
@@ -31,6 +30,7 @@ import io.netty.channel.EventLoop;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import java.net.SocketAddress;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class ClosedChannel implements Channel {
 

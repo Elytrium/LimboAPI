@@ -18,7 +18,6 @@
 package net.elytrium.limboapi.protocol.data;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
@@ -26,6 +25,7 @@ import net.elytrium.limboapi.api.chunk.data.BlockStorage;
 import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3d;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class BlockStorage17 implements BlockStorage {
 
