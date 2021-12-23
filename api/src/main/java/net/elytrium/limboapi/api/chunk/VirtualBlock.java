@@ -8,12 +8,12 @@
 package net.elytrium.limboapi.api.chunk;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 @SuppressWarnings("unused")
 public interface VirtualBlock {

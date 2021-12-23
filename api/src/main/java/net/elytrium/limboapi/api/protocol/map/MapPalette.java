@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings("unused")
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class MapPalette {
 

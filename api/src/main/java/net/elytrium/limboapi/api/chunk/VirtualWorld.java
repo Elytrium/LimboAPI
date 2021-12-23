@@ -7,9 +7,9 @@
 
 package net.elytrium.limboapi.api.chunk;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @SuppressWarnings("unused")
 public interface VirtualWorld {
