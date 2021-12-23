@@ -64,8 +64,8 @@ Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
 ```groovy
     repositories {
         maven {
-            name = "elytrium-repo"
-            url = "https://maven.elytrium.net/repo/"
+            setName("elytrium-repo")
+            setUrl("https://maven.elytrium.net/repo/")
         }
     }
 

@@ -18,8 +18,6 @@
 package net.elytrium.limboapi.server.world;
 
 import com.google.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +30,8 @@ import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SimpleWorld implements VirtualWorld {
 
