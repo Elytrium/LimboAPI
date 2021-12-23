@@ -8,8 +8,8 @@
 package net.elytrium.limboapi.api.chunk.data;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 public interface BlockStorage {
 
