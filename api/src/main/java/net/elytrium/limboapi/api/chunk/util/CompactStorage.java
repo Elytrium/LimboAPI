@@ -8,7 +8,6 @@
 package net.elytrium.limboapi.api.chunk.util;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import io.netty.buffer.ByteBuf;
 
 public interface CompactStorage {
 
@@ -16,7 +15,7 @@ public interface CompactStorage {
 
   int get(int index);
 
-  void write(ByteBuf buf, ProtocolVersion version);
+  void write(Object byteBufObject, ProtocolVersion version);
 
   int getBitsPerEntry();
 

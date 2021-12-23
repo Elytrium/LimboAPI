@@ -26,12 +26,10 @@ package net.elytrium.limboapi.mcprotocollib;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
 
-@SuppressFBWarnings("EI_EXPOSE_REP")
 public class BitStorage116 implements CompactStorage {
 
   private static final int[] MAGIC_VALUES = {
@@ -125,7 +123,11 @@ public class BitStorage116 implements CompactStorage {
   }
 
   @Override
-  public void write(ByteBuf buf, ProtocolVersion version) {
+  public void write(Object byteBufObject, ProtocolVersion version) {
+    if (!(byteBufObject instanceof ByteBuf)) {
+      throw new IllegalArgumentException("Not ByteBuf");
+    }
+    ByteBuf buf = (ByteBuf) byteBufObject;
     ProtocolUtils.writeVarInt(buf, this.data.length);
     for (long l : this.data) {
       buf.writeLong(l);

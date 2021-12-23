@@ -24,13 +24,14 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import net.elytrium.limboapi.Settings;
 import org.slf4j.Logger;
 
 public class UpdatesChecker {
 
-  public static void checkForUpdates(Logger logger, String currentVersion, String url, String pluginName, String downloadUrl) {
+  public static void checkForUpdates(Logger logger) {
     try {
-      URLConnection conn = new URL(url).openConnection();
+      URLConnection conn = new URL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION").openConnection();
       int timeout = (int) TimeUnit.SECONDS.toMillis(5);
       conn.setConnectTimeout(timeout);
       conn.setReadTimeout(timeout);
@@ -41,25 +42,25 @@ public class UpdatesChecker {
           return;
         }
         String latestVersion0 = getCleanVersion(latestVersion.trim());
-        String currentVersion0 = getCleanVersion(currentVersion);
-        int latestVersionID = Integer.parseInt(latestVersion0.replace(".", "").replace("$", ""));
-        int currentVersionID = Integer.parseInt(currentVersion0.replace(".", "").replace("$", ""));
+        String currentVersion0 = getCleanVersion(Settings.IMP.VERSION);
+        int latestVersionId = Integer.parseInt(latestVersion0.replace(".", "").replace("$", ""));
+        int currentVersionId = Integer.parseInt(currentVersion0.replace(".", "").replace("$", ""));
         if (latestVersion0.endsWith("$")) {
-          --latestVersionID;
+          --latestVersionId;
         }
         if (currentVersion0.endsWith("$")) {
-          --currentVersionID;
+          --currentVersionId;
         }
 
-        if (currentVersionID < latestVersionID) {
+        if (currentVersionId < latestVersionId) {
           logger.error("****************************************");
-          logger.warn("The new " + pluginName + " update was found, please update.");
-          logger.error(downloadUrl);
+          logger.warn("The new LimboAPI update was found, please update.");
+          logger.error("https://github.com/Elytrium/LimboAPI/releases/");
           logger.error("****************************************");
         }
       }
-    } catch (IOException ex) {
-      logger.warn("Unable to check for updates.", ex);
+    } catch (IOException e) {
+      logger.warn("Unable to check for updates.", e);
     }
   }
 

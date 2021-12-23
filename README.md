@@ -6,36 +6,18 @@
 [![Proxy Stats](https://img.shields.io/bstats/servers/12530?logo=minecraft&label=Servers)](https://bstats.org/plugin/velocity/LimboAPI/12530)
 [![Proxy Stats](https://img.shields.io/bstats/players/12530?logo=minecraft&label=Players)](https://bstats.org/plugin/velocity/LimboAPI/12530)
 
-Library for sending players to virtual servers (called limbo)<br>
-[MC-Market](https://www.mc-market.org/resources/21097/) <br>
-[SpigotMC.org](https://www.spigotmc.org/resources/limboapi-limboauth-limbofilter.95748/) <br>
-[Описание и обсуждение на русском языке (spigotmc.ru)](https://spigotmc.ru/resources/limboapi-limboauth-limbofilter-virtualnye-servera-dlja-velocity.715/) <br>
+Library for sending players to virtual servers (called limbo) \
+[MC-Market](https://www.mc-market.org/resources/21097/) \
+[SpigotMC.org](https://www.spigotmc.org/resources/limboapi-limboauth-limbofilter.95748/) \
+[Описание и обсуждение на русском языке (spigotmc.ru)](https://spigotmc.ru/resources/limboapi-limboauth-limbofilter-virtualnye-servera-dlja-velocity.715/) \
 [Описание и обсуждение на русском языке (rubukkit.org)](http://rubukkit.org/threads/limboapi-limboauth-limbofilter-virtualnye-servera-dlja-velocity.177904/)
 
 Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
 
 ## See also
 
-- [LimboAuth](https://github.com/Elytrium/LimboAPI/tree/master/auth) - Auth System built in virtual server (Limbo). Uses BCrypt, has TOTP 2FA feature. Supports literally any database due to OrmLite.
-- [LimboFilter](https://github.com/Elytrium/LimboAPI/tree/master/filter) - Most powerful bot filtering solution for Minecraft proxies. Built with LimboAPI.
-
-### LimboFilter /vs/ popular antibot solutions:
-
-Test server: i7-3770 (4c/8t 3.4GHz) Dedicated server, Ubuntu Server 20.04, OpenJDK 11, 16GB DDR3 1600MHz RAM, 4GB RAM is allocated to proxy. <br>
-Attack: Motd + Join bot attack (100k joins per seconds, 1.17 Protocol)
-
-Proxy server | Info | Boot time | % CPU on attack
---- | --- | --- | ---
-Velocity | LimboFilter + LimboAuth Online/Offline Mode | 2 sec | 20%
-Velocity | LimboFilter + Offline Mode | 2 sec | 20%
-Leymooo's BungeeCord BotFilter | JPremium Online/Offline Mode | 8 sec | 95%
-Leymooo's BungeeCord BotFilter | Offline Mode | 8 sec | 40%
-yooniks' BungeeCord Aegis Escanor 1.3.1 | Offline Mode | 10 sec | 20%
-yooniks' BungeeCord Aegis 9.2.1 | Offline Mode | 10 sec | 100% (what?)
-Velocity | JPremium Online/Offline Mode | 2 sec | 95%
-Velocity | BotSentry 9.2 + Online Mode | 2 sec | 70%
-Velocity | Online Mode | 2 sec | 70%
-Velocity | Offline Mode | 2 sec | 55%
+- [LimboAuth](https://github.com/Elytrium/LimboAuth) - Auth System built in virtual server (Limbo). Uses BCrypt, has TOTP 2FA feature. Supports literally any database due to OrmLite.
+- [LimboFilter](https://github.com/Elytrium/LimboFilter) - Most powerful bot filtering solution for Minecraft proxies. Built with LimboAPI.
 
 ## Features of LimboAPI
 
@@ -53,40 +35,49 @@ Velocity | Offline Mode | 2 sec | 55%
 - Subscribe to ``LoginLimboRegisterEvent`` to send players to the Limbo server during login process
 - Use ``LimboFactory`` to send players to the Limbo server during play process
 
-### How to include it
+## How to include it
 
-- Build the project and use local maven repo:
+#### Setup your project via adding our maven repository to your pom.xml or build.gradle file.
 
-```
+- Maven:
+
+```xml
+    <repositories>
+        <repository>
+            <id>elytrium-repo</id>
+            <url>https://maven.spigotmc.org/repo/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
         <dependency>
             <groupId>net.elytrium</groupId>
             <artifactId>limboapi-api</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.3</version>
             <scope>provided</scope>
         </dependency>
+    </dependencies>
 ```
 
-- Or use the precompiled .jar file (e.g. from Releases or Actions):
+- Gradle:
 
+```groovy
+    repositories {
+        maven {
+            name = "elytrium-repo"
+            url = "https://maven.elytrium.net/repo/"
+        }
+    }
+
+    dependencies {
+        compileOnly("net.elytrium:limboapi-api:1.0.3")
+    }
 ```
-        <dependency>
-            <groupId>net.elytrium</groupId>
-            <artifactId>limboapi-api</artifactId>
-            <version>1.0.2</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/limboapi-api.jar</systemPath>
-        </dependency>
-```
 
-### Demo
+## Demo
 
-- [LimboAuth](https://github.com/Elytrium/LimboAPI/tree/master/auth) - Simple usage, using special api
-- [LimboFilter](https://github.com/Elytrium/LimboAPI/tree/master/filter) - Advanced usage, using plugin's api
-
-## Building
-
-- To build this project you need to download Velocity 3.1.+ jar file to the "libs" folder
-- You can use the ```./scripts/init_libs.sh``` script
+- [LimboAuth](https://github.com/Elytrium/LimboAuth) - The auth plugin, that uses LimboAPI as a dependency at the basic level.
+- [LimboFilter](https://github.com/Elytrium/LimboFilter) - The antibot solution, that uses LimboAPI as a dependency, using almost all available API methods, like Low-level Minecraft packet control.
 
 ## Donation
 

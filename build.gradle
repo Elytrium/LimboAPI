@@ -1,51 +1,62 @@
 //file:noinspection GroovyAssignabilityCheck
 
-import com.github.spotbugs.snom.SpotBugsTask
-
-buildscript {
-    dependencies {
-        classpath "gradle.plugin.com.github.jengelman.gradle.plugins:shadow:7.0.0"
-    }
-}
-
 plugins {
-    id "java"
-    id "com.github.spotbugs" version "4.7.1" apply false
-    id "org.cadixdev.licenser" version "0.6.1" apply false
+    id("java")
+    id("checkstyle")
+    id("com.github.spotbugs").version("5.0.3").apply(false)
+    id("org.cadixdev.licenser").version("0.6.1").apply(false)
 }
 
 allprojects {
+    apply plugin: "checkstyle"
     apply plugin: "com.github.spotbugs"
-    compileJava.options.encoding = "UTF-8"
+    apply plugin: "org.cadixdev.licenser"
 
-    group = "net.elytrium"
-    version = "1.0.3-SNAPSHOT"
+    setGroup("net.elytrium")
+    setVersion("1.0.3-SNAPSHOT")
 
-    tasks.withType(JavaCompile) {
-        options.encoding = "UTF-8"
+    compileJava {
+        getOptions().setEncoding("UTF-8")
     }
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        setSourceCompatibility(JavaVersion.VERSION_11)
+        setTargetCompatibility(JavaVersion.VERSION_11)
     }
 
     repositories {
-        mavenLocal()
         mavenCentral()
 
         maven {
-            name = "velocitypowered-repo"
-            url = "https://repo.velocitypowered.com/snapshots/"
+            setName("velocitypowered-repo")
+            setUrl("https://repo.velocitypowered.com/snapshots/")
+        }
+        maven {
+            setName("elytrium-repo")
+            setUrl("https://maven.elytrium.net/repo/")
         }
     }
 
-    tasks.withType(SpotBugsTask) {
+    checkstyle {
+        setToolVersion("9.2")
+        setConfigFile(file("${this.getRootDir()}/config/checkstyle/checkstyle.xml"))
+        setConfigProperties("configDirectory": "${this.getRootDir()}/config/checkstyle")
+
+        // The build should immediately fail if we have errors.
+        setMaxErrors(0)
+        setMaxWarnings(0)
+    }
+
+    spotbugs {
+        setExcludeFilter(file("${this.getRootDir()}/config/spotbugs/suppressions.xml"))
+    }
+
+    spotbugsMain {
         reports {
             html {
-                enabled = true
-                destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
-                stylesheet = "fancy-hist.xsl"
+                getRequired().set(true)
+                getOutputLocation().set(file("${this.getBuildDir()}/reports/spotbugs/main/spotbugs.html"))
+                setStylesheet("fancy-hist.xsl")
             }
         }
     }

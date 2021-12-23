@@ -9,7 +9,6 @@ package net.elytrium.limboapi.api.chunk.data;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 
 public interface BlockStorage {
@@ -19,7 +18,7 @@ public interface BlockStorage {
   @NonNull
   VirtualBlock get(int x, int y, int z);
 
-  void write(ByteBuf buf, ProtocolVersion version);
+  void write(Object byteBufObject, ProtocolVersion version);
 
   int getDataLength(ProtocolVersion version);
 

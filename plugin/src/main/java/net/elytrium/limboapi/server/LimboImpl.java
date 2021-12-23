@@ -101,7 +101,7 @@ public class LimboImpl implements Limbo {
     this.chunks = LimboAPI.getInstance().createPreparedPacket().prepare(this.createChunksPackets());
     this.spawnPosition = LimboAPI.getInstance().createPreparedPacket()
         .prepare(
-            this.createPlayerPosAndLookPacket(
+            this.createPlayerPosAndLook(
                 this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
             )
         ).prepare(
@@ -154,13 +154,13 @@ public class LimboImpl implements Limbo {
 
       this.limboAPI.setLimboJoined(player);
 
-      LimboSessionHandlerImpl limboSessionHandlerImpl = new LimboSessionHandlerImpl(this.limboAPI, player, handler, connection.getSessionHandler());
+      LimboSessionHandlerImpl sessionHandler = new LimboSessionHandlerImpl(this.limboAPI, player, handler, connection.getSessionHandler());
 
-      connection.setSessionHandler(limboSessionHandlerImpl);
+      connection.setSessionHandler(sessionHandler);
 
       connection.flush();
       this.respawnPlayer(player);
-      limboSessionHandlerImpl.onSpawn(this, new LimboPlayerImpl(player, this));
+      sessionHandler.onSpawn(this, new LimboPlayerImpl(player, this));
     });
   }
 
@@ -231,7 +231,7 @@ public class LimboImpl implements Limbo {
   private List<ChunkData> createChunksPackets() {
     List<ChunkData> packets = new ArrayList<>();
     for (VirtualChunk chunk : this.world.getChunks()) {
-      packets.add(this.createChunkDataPacket(chunk, (int) this.world.getSpawnY()));
+      packets.add(this.createChunkData(chunk, (int) this.world.getSpawnY()));
     }
 
     return packets;
@@ -296,16 +296,16 @@ public class LimboImpl implements Limbo {
     return packets;
   }
 
-  public ChunkData createChunkDataPacket(VirtualChunk chunk, int skyLightY) {
+  private ChunkData createChunkData(VirtualChunk chunk, int skyLightY) {
     chunk.setSkyLight(chunk.getX() % 16, skyLightY, chunk.getZ() % 16, (byte) 1);
     return new ChunkData(chunk.getFullChunkSnapshot(), true);
   }
 
-  public PlayerPositionAndLook createPlayerPosAndLookPacket(double x, double y, double z, float yaw, float pitch) {
+  private PlayerPositionAndLook createPlayerPosAndLook(double x, double y, double z, float yaw, float pitch) {
     return new PlayerPositionAndLook(x, y, z, yaw, pitch, -133, false, true);
   }
 
-  public UpdateViewPosition createUpdateViewPosition(int x, int z) {
+  private UpdateViewPosition createUpdateViewPosition(int x, int z) {
     return new UpdateViewPosition(x >> 4, z >> 4);
   }
 }

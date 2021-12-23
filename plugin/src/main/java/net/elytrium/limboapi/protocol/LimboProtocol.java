@@ -21,12 +21,21 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
+import com.velocitypowered.proxy.protocol.packet.BossBar;
 import com.velocitypowered.proxy.protocol.packet.Chat;
 import com.velocitypowered.proxy.protocol.packet.ClientSettings;
 import com.velocitypowered.proxy.protocol.packet.Disconnect;
+import com.velocitypowered.proxy.protocol.packet.HeaderAndFooter;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
+import com.velocitypowered.proxy.protocol.packet.KeepAlive;
+import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
+import com.velocitypowered.proxy.protocol.packet.ResourcePackRequest;
+import com.velocitypowered.proxy.protocol.packet.ResourcePackResponse;
 import com.velocitypowered.proxy.protocol.packet.Respawn;
+import com.velocitypowered.proxy.protocol.packet.TabCompleteRequest;
+import com.velocitypowered.proxy.protocol.packet.TabCompleteResponse;
 import com.velocitypowered.proxy.protocol.packet.title.LegacyTitlePacket;
 import com.velocitypowered.proxy.protocol.packet.title.TitleActionbarPacket;
 import com.velocitypowered.proxy.protocol.packet.title.TitleClearPacket;
@@ -39,16 +48,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Supplier;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
+import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.Player;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
 import net.elytrium.limboapi.protocol.packet.PlayerPosition;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
-import net.elytrium.limboapi.protocol.packet.SetExp;
+import net.elytrium.limboapi.protocol.packet.SetExperience;
 import net.elytrium.limboapi.protocol.packet.SetSlot;
 import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
 import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
@@ -202,7 +213,7 @@ public class LimboProtocol {
             map(0x32, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register(PacketDirection.CLIENTBOUND,
-        SetExp.class, SetExp::new,
+        SetExperience.class, SetExperience::new,
         new StateRegistry.PacketMapping[] {
             map(0x1F, ProtocolVersion.MINECRAFT_1_7_2, true),
             map(0x3D, ProtocolVersion.MINECRAFT_1_9, true),
@@ -223,6 +234,10 @@ public class LimboProtocol {
         });
 
     register(PacketDirection.SERVERBOUND,
+        TabCompleteRequest.class, TabCompleteRequest::new,
+        getMappingsForPacket(StateRegistry.PLAY.serverbound, TabCompleteRequest.class, false)
+    );
+    register(PacketDirection.SERVERBOUND,
         Chat.class, Chat::new,
         getMappingsForPacket(StateRegistry.PLAY.serverbound, Chat.class, false)
     );
@@ -234,45 +249,58 @@ public class LimboProtocol {
         PluginMessage.class, PluginMessage::new,
         getMappingsForPacket(StateRegistry.PLAY.serverbound, PluginMessage.class, false)
     );
+    register(PacketDirection.SERVERBOUND,
+        KeepAlive.class, KeepAlive::new,
+        getMappingsForPacket(StateRegistry.PLAY.serverbound, KeepAlive.class, false)
+    );
+    register(PacketDirection.SERVERBOUND,
+        ResourcePackResponse.class, ResourcePackResponse::new,
+        getMappingsForPacket(StateRegistry.PLAY.serverbound, ProtocolVersion.MINECRAFT_1_8, ResourcePackResponse.class, false)
+    );
+
+    register(PacketDirection.CLIENTBOUND,
+        BossBar.class, BossBar::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_9, BossBar.class, false)
+    );
     register(PacketDirection.CLIENTBOUND,
         Chat.class, Chat::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound, Chat.class, true)
     );
     register(PacketDirection.CLIENTBOUND,
-        JoinGame.class, JoinGame::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, JoinGame.class, true)
+        TabCompleteResponse.class, TabCompleteResponse::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, TabCompleteResponse.class, false)
     );
     register(PacketDirection.CLIENTBOUND,
-        Disconnect.class, Disconnect::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, Disconnect.class, true)
+        AvailableCommands.class, AvailableCommands::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_13, AvailableCommands.class, false)
     );
     register(PacketDirection.CLIENTBOUND,
         PluginMessage.class, PluginMessage::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, PluginMessage.class, true)
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, PluginMessage.class, false)
+    );
+    register(PacketDirection.CLIENTBOUND,
+        Disconnect.class, Disconnect::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, Disconnect.class, false)
+    );
+    register(PacketDirection.CLIENTBOUND,
+        KeepAlive.class, KeepAlive::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, KeepAlive.class, false)
+    );
+    register(PacketDirection.CLIENTBOUND,
+        JoinGame.class, JoinGame::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, JoinGame.class, false)
     );
     register(PacketDirection.CLIENTBOUND,
         Respawn.class, Respawn::new,
         getMappingsForPacket(StateRegistry.PLAY.clientbound, Respawn.class, true)
     );
     register(PacketDirection.CLIENTBOUND,
-        TitleActionbarPacket.class, TitleActionbarPacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleActionbarPacket.class, true)
+        ResourcePackRequest.class, ResourcePackRequest::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_8, ResourcePackRequest.class, false)
     );
     register(PacketDirection.CLIENTBOUND,
-        TitleClearPacket.class, TitleClearPacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleClearPacket.class, true)
-    );
-    register(PacketDirection.CLIENTBOUND,
-        TitleSubtitlePacket.class, TitleSubtitlePacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleSubtitlePacket.class, true)
-    );
-    register(PacketDirection.CLIENTBOUND,
-        TitleTextPacket.class, TitleTextPacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleTextPacket.class, true)
-    );
-    register(PacketDirection.CLIENTBOUND,
-        TitleTimesPacket.class, TitleTimesPacket::new,
-        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleTimesPacket.class, true)
+        HeaderAndFooter.class, HeaderAndFooter::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_8, HeaderAndFooter.class, true)
     );
     register(PacketDirection.CLIENTBOUND,
         LegacyTitlePacket.class, LegacyTitlePacket::new,
@@ -283,6 +311,30 @@ public class LimboProtocol {
             LegacyTitlePacket.class,
             true
         )
+    );
+    register(PacketDirection.CLIENTBOUND,
+        TitleSubtitlePacket.class, TitleSubtitlePacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleSubtitlePacket.class, true)
+    );
+    register(PacketDirection.CLIENTBOUND,
+        TitleTextPacket.class, TitleTextPacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleTextPacket.class, true)
+    );
+    register(PacketDirection.CLIENTBOUND,
+        TitleActionbarPacket.class, TitleActionbarPacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleActionbarPacket.class, true)
+    );
+    register(PacketDirection.CLIENTBOUND,
+        TitleTimesPacket.class, TitleTimesPacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleTimesPacket.class, true)
+    );
+    register(PacketDirection.CLIENTBOUND,
+        TitleClearPacket.class, TitleClearPacket::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, ProtocolVersion.MINECRAFT_1_17, TitleClearPacket.class, true)
+    );
+    register(PacketDirection.CLIENTBOUND,
+        PlayerListItem.class, PlayerListItem::new,
+        getMappingsForPacket(StateRegistry.PLAY.clientbound, PlayerListItem.class, false)
     );
   }
 
@@ -307,6 +359,16 @@ public class LimboProtocol {
     } catch (IllegalAccessException | InvocationTargetException e) {
       e.printStackTrace();
     }
+  }
+
+  public static void register(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings) {
+    register(direction, packetClass, packetSupplier, (StateRegistry.PacketMapping[]) Arrays.stream(packetMappings).map(packetMapping -> {
+      try {
+        return map(packetMapping.getId(), packetMapping.getProtocolVersion(), packetMapping.getLastValidProtocolVersion(), packetMapping.isEncodeOnly());
+      } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+    }).toArray());
   }
 
   private static StateRegistry.PacketMapping map(int id, ProtocolVersion version, boolean encodeOnly)

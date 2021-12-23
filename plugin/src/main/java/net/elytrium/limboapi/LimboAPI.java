@@ -25,8 +25,9 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.protocol.StateRegistry;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -37,12 +38,15 @@ import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.material.Block;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
+import net.elytrium.limboapi.api.protocol.packets.BuiltInPackets;
+import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
@@ -53,6 +57,7 @@ import net.elytrium.limboapi.server.LimboImpl;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.elytrium.limboapi.server.world.SimpleWorld;
+import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.elytrium.limboapi.utils.UpdatesChecker;
 import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
@@ -65,7 +70,7 @@ import org.slf4j.Logger;
     url = "ely.su",
     authors = {"hevav", "mdxd44"}
 )
-
+@SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
   private static LimboAPI instance;
@@ -109,13 +114,10 @@ public class LimboAPI implements LimboFactory {
     this.players.clear();
 
     this.reload();
-    UpdatesChecker.checkForUpdates(
-        this.getLogger(),
-        Settings.IMP.VERSION,
-        "https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION",
-        "LimboAPI",
-        "https://github.com/Elytrium/LimboAPI/releases/"
-    );
+
+    if (Settings.IMP.MAIN.CHECK_FOR_UPDATES) {
+      UpdatesChecker.checkForUpdates(this.getLogger());
+    }
   }
 
   public void reload() {
@@ -143,13 +145,18 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
-  public Limbo createLimbo(VirtualWorld world) {
-    return new LimboImpl(this, world);
+  public VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch) {
+    return new SimpleWorld(dimension, x, y, z, yaw, pitch);
   }
 
   @Override
-  public VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch) {
-    return new SimpleWorld(dimension, x, y, z, yaw, pitch);
+  public VirtualChunk createVirtualChunk(int x, int z) {
+    return new SimpleChunk(x, z);
+  }
+
+  @Override
+  public Limbo createLimbo(VirtualWorld world) {
+    return new LimboImpl(this, world);
   }
 
   @Override
@@ -158,7 +165,23 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
-  public void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping[] packetMappings) {
+  public Object instantiatePacket(BuiltInPackets packetType, Object... data) {
+    // TODO: Support for constructors with same arguments count
+    try {
+      for (Constructor<?> constructor : packetType.getPacketClass().getDeclaredConstructors()) {
+        if (constructor.getParameterCount() == data.length) {
+          return constructor.newInstance(data);
+        }
+      }
+
+      throw new IllegalStateException("No constructor found with the correct number of arguments!");
+    } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings) {
     LimboProtocol.register(direction, packetClass, packetSupplier, packetMappings);
   }
 

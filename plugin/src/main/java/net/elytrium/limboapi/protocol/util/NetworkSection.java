@@ -19,7 +19,6 @@ package net.elytrium.limboapi.protocol.util;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import java.util.EnumMap;
 import java.util.Map;
@@ -33,7 +32,6 @@ import net.elytrium.limboapi.protocol.data.BlockStorage17;
 import net.elytrium.limboapi.protocol.data.BlockStorage19;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class NetworkSection {
 
   private final Map<ProtocolVersion, BlockStorage> storages = new EnumMap<>(ProtocolVersion.class);

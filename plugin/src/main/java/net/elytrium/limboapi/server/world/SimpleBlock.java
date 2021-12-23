@@ -37,7 +37,7 @@ public class SimpleBlock implements VirtualBlock {
   public static final SimpleBlock AIR = air(BlockInfo.info(Version.LEGACY, 0));
 
   private static final Gson gson = new Gson();
-  private static final HashMap<Short, SimpleBlock> legacyIDsMap = new HashMap<>();
+  private static final HashMap<Short, SimpleBlock> legacyIdsMap = new HashMap<>();
 
   @SuppressWarnings("unchecked")
   public static void init() {
@@ -52,10 +52,10 @@ public class SimpleBlock implements VirtualBlock {
           .map(e -> BlockInfo.info(Version.parse(e.getKey()), Integer.parseInt(e.getValue())))
           .toArray(BlockInfo[]::new);
 
-      legacyIDsMap.put(Short.valueOf(legacyBlockId), solid(info));
+      legacyIdsMap.put(Short.valueOf(legacyBlockId), solid(info));
     });
 
-    legacyIDsMap.put((short) 0, AIR);
+    legacyIdsMap.put((short) 0, AIR);
   }
 
   private final Map<Version, BlockInfo> blockInfos;
@@ -151,8 +151,8 @@ public class SimpleBlock implements VirtualBlock {
 
   @NonNull
   public static SimpleBlock fromLegacyId(short id) {
-    if (legacyIDsMap.containsKey(id)) {
-      return legacyIDsMap.get(id);
+    if (legacyIdsMap.containsKey(id)) {
+      return legacyIdsMap.get(id);
     } else {
       LimboAPI.getInstance().getLogger().warn("Block #" + id + " is not supported, and was replaced with air");
       return AIR;

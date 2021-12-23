@@ -28,8 +28,8 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.player.LimboPlayer;
-import net.elytrium.limboapi.protocol.map.CraftMapCanvas;
-import net.elytrium.limboapi.protocol.map.MapPalette;
+import net.elytrium.limboapi.api.protocol.map.MapPalette;
+import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
@@ -48,13 +48,34 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
+  public void writePacket(Object packetObj) {
+    this.player.getConnection().delayedWrite(packetObj);
+  }
+
+  @Override
+  public void writePacketAndFlush(Object packetObj) {
+    this.player.getConnection().write(packetObj);
+  }
+
+  @Override
+  public void flushPackets() {
+    this.player.getConnection().flush();
+  }
+
+  @Override
+  public void closeWith(Object packetObj) {
+    this.player.getConnection().closeWith(packetObj);
+  }
+
+  @Override
   public void sendImage(int mapId, BufferedImage image) {
     // TODO: Check 1.7.x
-    byte[] canvas = new byte[CraftMapCanvas.MAP_SIZE];
+    // 16384 == 128 * 128 (Map size)
+    byte[] canvas = new byte[16384];
     byte[][] canvas17 = new byte[128][128]; // 1.7.x canvas
     int[] toWrite = MapPalette.imageToBytes(image);
 
-    for (int i = 0; i < CraftMapCanvas.MAP_SIZE; ++i) {
+    for (int i = 0; i < 16384; ++i) {
       canvas[i] = (byte) toWrite[i];
       canvas17[i & ~128][i >> 7] = (byte) toWrite[i];
     }
@@ -62,11 +83,11 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       for (int i = 0; i < 128; ++i) {
         this.player.getConnection().write(
-            new MapDataPacket(mapId, (byte) 0, new MapDataPacket.MapData(i, canvas17[i]))
+            new MapDataPacket(mapId, (byte) 0, new MapData(i, canvas17[i]))
         );
       }
     } else {
-      this.player.getConnection().write(new MapDataPacket(mapId, (byte) 0, new MapDataPacket.MapData(canvas)));
+      this.player.getConnection().write(new MapDataPacket(mapId, (byte) 0, new MapData(canvas)));
     }
   }
 
@@ -145,5 +166,15 @@ public class LimboPlayerImpl implements LimboPlayer {
   @Override
   public Player getProxyPlayer() {
     return this.player;
+  }
+
+  @Override
+  public long getPing() {
+    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.player.getConnection().getSessionHandler();
+    if (handler != null) {
+      return handler.getPing();
+    }
+
+    return 0;
   }
 }

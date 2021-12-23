@@ -19,7 +19,6 @@ package net.elytrium.limboapi.server;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.packet.Disconnect;
-import java.util.function.Function;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
@@ -28,20 +27,24 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 public class CachedPackets {
 
   private PreparedPacket tooBigPacket;
+  private PreparedPacket invalidPing;
 
   public void createPackets() {
     this.tooBigPacket = LimboAPI.getInstance().createPreparedPacket()
-        .prepare((Function<ProtocolVersion, Disconnect>) (version) -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TOO_BIG_PACKET, version));
+        .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TOO_BIG_PACKET, version));
+    this.invalidPing = LimboAPI.getInstance().createPreparedPacket()
+        .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.INVALID_PING, version));
   }
 
   private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {
-    return Disconnect.create(
-        LegacyComponentSerializer
-            .legacyAmpersand()
-            .deserialize(message), version);
+    return Disconnect.create(LegacyComponentSerializer.legacyAmpersand().deserialize(message), version);
   }
 
   public PreparedPacket getTooBigPacket() {
     return this.tooBigPacket;
+  }
+
+  public PreparedPacket getInvalidPing() {
+    return this.invalidPing;
   }
 }

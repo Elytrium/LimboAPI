@@ -22,7 +22,7 @@ atlassian-ide-plugin.xml
 # BlueJ files
 *.ctxt
 
-# Package Files #
+# Package Files
 *.jar
 *.war
 *.nar
@@ -31,12 +31,12 @@ atlassian-ide-plugin.xml
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
 *~
 
-# temporary files which can be created if a process still has a handle open of a deleted file
+# Temporary files which can be created if a process still has a handle open of a deleted file
 .fuse_hidden*
 
 # KDE directory preferences
@@ -100,6 +100,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Gradle
 .gradle
 build/
 
@@ -109,6 +110,7 @@ gradle-app.setting
 # Cache of project
 .gradletasknamecache
 
+# Gradle Patch
 **/build/
 
 # Common working directory
