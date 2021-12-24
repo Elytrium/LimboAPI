@@ -17,13 +17,13 @@ jobs:
         with:
           distribution: adopt
           java-version: ${{ matrix.java }}
-      - name: Cache gradle
+      - name: Cache Gradle
         uses: actions/cache@v2.1.6
         with:
           path: ~/.gradle
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
-      - name: Build plugins
+      - name: Build LimboAPI
         run: ./gradlew build
       - name: Upload LimboAPI Plugin
         uses: actions/upload-artifact@v2.2.4

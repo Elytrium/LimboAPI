@@ -19,6 +19,15 @@ dependencies {
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.5.2")
 }
 
+shadowJar {
+    getArchiveClassifier().set("")
+
+    exclude("META-INF/versions/**")
+    exclude("net/kyori/**")
+
+    relocate("org.bstats", "net.elytrium.limboapi.bstats")
+}
+
 license {
     matching(includes: ["**/mcprotocollib/**"]) {
         setHeader(getRootProject().file("HEADER_MCPROTOCOLLIB.txt"))
@@ -28,15 +37,6 @@ license {
     }
 
     setHeader(getRootProject().file("HEADER.txt"))
-}
-
-shadowJar {
-    getArchiveClassifier().set("")
-
-    exclude("META-INF/versions/**")
-    exclude("net/kyori/**")
-
-    relocate("org.bstats", "net.elytrium.limboapi.bstats")
 }
 
 assemble.dependsOn(shadowJar)
