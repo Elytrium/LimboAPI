@@ -68,7 +68,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
     this.keepAliveTask = this.plugin.getServer().getScheduler().buildTask(this.plugin, () -> {
       KeepAlive keepAlive = new KeepAlive();
-      keepAlive.setRandomId(this.keepAliveId = ThreadLocalRandom.current().nextLong());
+      keepAlive.setRandomId(this.keepAliveId = ThreadLocalRandom.current().nextInt());
       this.player.getConnection().write(keepAlive);
       this.keepAliveLastSend = System.currentTimeMillis();
     }).repeat(this.plugin.getServer().getConfiguration().getReadTimeout() / 2, TimeUnit.MILLISECONDS).schedule();
