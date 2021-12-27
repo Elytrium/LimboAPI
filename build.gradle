@@ -28,8 +28,8 @@ allprojects {
         mavenCentral()
 
         maven {
-            setName("velocitypowered-repo")
-            setUrl("https://repo.velocitypowered.com/snapshots/")
+            setName("papermc-repo")
+            setUrl("https://papermc.io/repo/repository/maven-public/")
         }
         maven {
             setName("elytrium-repo")
