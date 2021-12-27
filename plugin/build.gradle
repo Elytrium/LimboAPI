@@ -25,7 +25,7 @@ shadowJar {
     exclude("META-INF/versions/**")
     exclude("net/kyori/**")
 
-    relocate("org.bstats", "net.elytrium.limboapi.bstats")
+    relocate("org.bstats", "net.elytrium.limboapi.thirdparty.org.bstats")
 }
 
 license {
