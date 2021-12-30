@@ -24,7 +24,7 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import java.awt.image.BufferedImage;
-import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.LimboApi;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.player.LimboPlayer;
@@ -39,12 +39,14 @@ import net.kyori.adventure.text.Component;
 
 public class LimboPlayerImpl implements LimboPlayer {
 
-  private final ConnectedPlayer player;
+  private final LimboApi plugin;
   private final LimboImpl server;
+  private final ConnectedPlayer player;
 
-  public LimboPlayerImpl(ConnectedPlayer player, LimboImpl server) {
-    this.player = player;
+  public LimboPlayerImpl(LimboApi plugin, LimboImpl server, ConnectedPlayer player) {
+    this.plugin = plugin;
     this.server = server;
+    this.player = player;
   }
 
   @Override
@@ -136,8 +138,8 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (handler != null) {
       handler.disconnected();
 
-      if (LimboAPI.getInstance().hasLoginQueue(this.player)) {
-        LimboAPI.getInstance().getLoginQueue(this.player).next();
+      if (this.plugin.hasLoginQueue(this.player)) {
+        this.plugin.getLoginQueue(this.player).next();
       } else if (handler.getPreviousServer() != null) {
         this.player.createConnectionRequest(handler.getPreviousServer()).fireAndForget();
       }
@@ -150,7 +152,7 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (handler != null) {
       handler.disconnected();
 
-      if (LimboAPI.getInstance().hasLoginQueue(this.player)) {
+      if (this.plugin.hasLoginQueue(this.player)) {
         throw new IllegalArgumentException("Cannot send to server while login");
       } else {
         this.player.getConnection().eventLoop().execute(this.player.createConnectionRequest(server)::fireAndForget);

@@ -66,7 +66,7 @@ public class PlayerPositionAndLook implements MinecraftPacket {
       this.onGround = buf.readBoolean();
     }
 
-    // Ignore other data (flags, teleportID, dismount vehicle, etc)
+    // Ignore other data. (flags, teleportID, dismount vehicle, etc)
     buf.clear();
   }
 
@@ -81,7 +81,7 @@ public class PlayerPositionAndLook implements MinecraftPacket {
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       buf.writeBoolean(this.onGround);
     } else {
-      buf.writeByte(0x00);
+      buf.writeByte(0x00); // Flags.
 
       if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_9) >= 0) {
         ProtocolUtils.writeVarInt(buf, this.teleportId);

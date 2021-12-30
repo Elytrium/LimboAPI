@@ -28,7 +28,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.LimboApi;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 
@@ -54,9 +54,10 @@ public class SimpleItem implements VirtualItem {
   public static void init() {
     LinkedTreeMap<String, LinkedTreeMap<String, String>> map = gson.fromJson(
         new InputStreamReader(
-            Objects.requireNonNull(LimboAPI.getInstance().getClass().getClassLoader().getResourceAsStream("mapping/items.json")),
+            Objects.requireNonNull(LimboApi.class.getResourceAsStream("/mapping/items.json")),
             StandardCharsets.UTF_8
-        ), LinkedTreeMap.class);
+        ), LinkedTreeMap.class
+    );
 
     for (Item item : Item.values()) {
       SimpleItem simpleItem = new SimpleItem();
