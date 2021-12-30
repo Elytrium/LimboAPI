@@ -26,7 +26,7 @@ public class BiomeData {
       this.post115Biomes[i] = biomes[i].getId();
     }
 
-    // Down sample 4x4x4 3d biomes to 2d XZ
+    // Down sample 4x4x4 3d biomes to 2d XZ.
     Map<Integer, Integer> samples = new HashMap<>(256 / 4);
     for (int x = 0; x < 16; x += 4) {
       for (int z = 0; z < 16; z += 4) {

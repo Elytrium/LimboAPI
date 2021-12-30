@@ -62,7 +62,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.LimboApi;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
@@ -74,29 +74,22 @@ public class LoginListener {
 
   private static final ClosedMinecraftConnection closed;
 
-  private static Constructor<ConnectedPlayer> ctor;
-  private static Field loginConnectionField;
-  private static Field delegate;
-  private static Field spawned;
+  private static final Constructor<ConnectedPlayer> ctor;
+  private static final Field loginConnectionField;
+  private static final Field delegate;
+  private static final Field spawned;
 
-  private final LimboAPI limboAPI;
+  private final LimboApi plugin;
   private final VelocityServer server;
   private final List<String> onlineMode = new ArrayList<>();
 
-  public LoginListener(LimboAPI limboAPI, VelocityServer server) {
-    this.limboAPI = limboAPI;
+  public LoginListener(LimboApi plugin, VelocityServer server) {
+    this.plugin = plugin;
     this.server = server;
   }
 
   static {
-    try {
-      Class.forName("com.velocitypowered.proxy.connection.client.LoginInboundConnection");
-    } catch (ClassNotFoundException e) {
-      LimboAPI.getInstance().getLogger().error("Please update your Velocity binary to 3.1.x", e);
-      LimboAPI.getInstance().getServer().shutdown();
-    }
-
-    closed = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), LimboAPI.getInstance().getServer());
+    closed = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), null);
 
     try {
       ctor = ConnectedPlayer.class.getDeclaredConstructor(
@@ -117,7 +110,7 @@ public class LoginListener {
       spawned = ClientPlaySessionHandler.class.getDeclaredField("spawned");
       spawned.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
@@ -131,7 +124,7 @@ public class LoginListener {
 
   @Subscribe
   public void onDisconnect(DisconnectEvent event) {
-    this.limboAPI.removeLoginQueue(event.getPlayer());
+    this.plugin.removeLoginQueue(event.getPlayer());
     this.onlineMode.remove(event.getPlayer().getUsername());
   }
 
@@ -185,9 +178,9 @@ public class LoginListener {
         this.server.getEventManager()
             .fire(new LoginLimboRegisterEvent(player))
             .thenAcceptAsync(limboEvent -> {
-              LoginTasksQueue queue = new LoginTasksQueue(this.limboAPI, handler, this.server, player, limboEvent.getCallbacks());
+              LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, limboEvent.getCallbacks());
 
-              this.limboAPI.addLoginQueue(player, queue);
+              this.plugin.addLoginQueue(player, queue);
               queue.next();
             }, connection.eventLoop());
       } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
@@ -205,9 +198,9 @@ public class LoginListener {
       if (!(connection.getSessionHandler() instanceof ClientPlaySessionHandler)) {
         ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
         try {
-          spawned.set(playHandler, this.limboAPI.isLimboJoined(player));
+          spawned.set(playHandler, this.plugin.isLimboJoined(player));
         } catch (IllegalAccessException ex) {
-          this.limboAPI.getLogger().error("Exception while hooking into ClientPlaySessionHandler of {}", player, ex);
+          this.plugin.getLogger().error("Exception while hooking into ClientPlaySessionHandler of {}", player, ex);
         }
 
         connection.setSessionHandler(playHandler);

@@ -95,7 +95,7 @@ public class NetworkSection {
       }
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
-      dataLength += 2; // Block count short
+      dataLength += 2; // Block count short.
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
       BiomeStorage118 biomeStorage = this.ensureBiomeCreated(version);

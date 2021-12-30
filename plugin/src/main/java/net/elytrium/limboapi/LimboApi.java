@@ -64,36 +64,42 @@ import org.slf4j.Logger;
 
 @Plugin(
     id = "limboapi",
-    name = "LimboAPI",
+    name = "LimboApi",
     version = BuildConstants.LIMBO_VERSION,
     description = "Velocity plugin for making virtual servers ",
     url = "ely.su",
-    authors = {"hevav", "mdxd44"}
+    authors = {
+        "hevav",
+        "mdxd44"
+    }
 )
 @SuppressFBWarnings("MS_EXPOSE_REP")
-public class LimboAPI implements LimboFactory {
-
-  private static LimboAPI instance;
+public class LimboApi implements LimboFactory {
 
   private final VelocityServer server;
   private final Logger logger;
   private final Metrics.Factory metricsFactory;
   private final Path dataDirectory;
   private final List<Player> players;
+  private final CachedPackets packets;
   private final HashMap<Player, LoginTasksQueue> loginQueue;
 
-  private CachedPackets packets;
-
   @Inject
-  public LimboAPI(ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
-    setInstance(this);
-
+  public LimboApi(ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
     this.server = (VelocityServer) server;
     this.logger = logger;
     this.metricsFactory = metricsFactory;
     this.dataDirectory = dataDirectory;
     this.players = new ArrayList<>();
+    this.packets = new CachedPackets(this);
     this.loginQueue = new HashMap<>();
+
+    try {
+      Class.forName("com.velocitypowered.proxy.connection.client.LoginInboundConnection");
+    } catch (ClassNotFoundException e) {
+      this.logger.error("Please update your Velocity binary to 3.1.x", e);
+      this.server.shutdown();
+    }
 
     this.logger.info("Initializing Simple Virtual Block system...");
     SimpleBlock.init();
@@ -110,18 +116,16 @@ public class LimboAPI implements LimboFactory {
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
     this.metricsFactory.make(this, 12530);
-    this.packets = new CachedPackets();
-    this.players.clear();
 
     this.reload();
 
     if (Settings.IMP.MAIN.CHECK_FOR_UPDATES) {
-      UpdatesChecker.checkForUpdates(this.getLogger());
+      UpdatesChecker.checkForUpdates(this.logger);
     }
   }
 
   public void reload() {
-    Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"));
+    Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"), this.logger);
     this.logger.info("Creating and preparing packets...");
     this.packets.createPackets();
     this.server.getEventManager().register(this, new LoginListener(this, this.server));
@@ -161,7 +165,7 @@ public class LimboAPI implements LimboFactory {
 
   @Override
   public PreparedPacket createPreparedPacket() {
-    return new PreparedPacketImpl();
+    return new PreparedPacketImpl(this);
   }
 
   @Override
@@ -223,14 +227,6 @@ public class LimboAPI implements LimboFactory {
 
   public void removeLoginQueue(Player player) {
     this.loginQueue.remove(player);
-  }
-
-  private static void setInstance(LimboAPI instance) {
-    LimboAPI.instance = instance;
-  }
-
-  public static LimboAPI getInstance() {
-    return instance;
   }
 
   public VelocityServer getServer() {

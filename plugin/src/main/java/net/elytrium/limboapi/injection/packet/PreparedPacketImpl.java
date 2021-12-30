@@ -31,16 +31,23 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.LimboApi;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.LimboProtocol;
+import org.slf4j.Logger;
 
 public class PreparedPacketImpl implements PreparedPacket {
 
   private final Map<ProtocolVersion, List<ByteBuf>> packets = new ConcurrentHashMap<>();
   private final ProtocolVersion minVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MIN_VERSION);
   private final ProtocolVersion maxVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MAX_VERSION);
+
+  private final Logger logger;
+
+  public PreparedPacketImpl(LimboApi plugin) {
+    this.logger = plugin.getLogger();
+  }
 
   @Override
   public <T> PreparedPacketImpl prepare(T packet) {
@@ -141,7 +148,7 @@ public class PreparedPacketImpl implements PreparedPacket {
   private <T> ByteBuf encodePacket(T packet, ProtocolVersion version) {
     int id = this.getPacketId(packet, version);
     if (id == Integer.MIN_VALUE) {
-      LimboAPI.getInstance().getLogger().error("Bad packet id {}:{}", id, packet.getClass().getSimpleName());
+      this.logger.error("Bad packet id {}:{}", id, packet.getClass().getSimpleName());
     }
     ByteBuf byteBuf = Unpooled.buffer();
     ProtocolUtils.writeVarInt(byteBuf, id);

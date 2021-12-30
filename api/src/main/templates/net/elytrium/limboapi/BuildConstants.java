@@ -7,7 +7,7 @@
 
 package net.elytrium.limboapi;
 
-// The constants are replaced before compilation
+// The constants are replaced before compilation.
 public class BuildConstants {
 
   public static final String LIMBO_VERSION = "${version}";
