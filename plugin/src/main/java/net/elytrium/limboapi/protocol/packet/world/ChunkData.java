@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.zip.Deflater;
-import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
@@ -40,8 +39,12 @@ import net.elytrium.limboapi.mcprotocollib.BitStorage116;
 import net.elytrium.limboapi.mcprotocollib.BitStorage19;
 import net.elytrium.limboapi.protocol.util.NetworkSection;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ChunkData implements MinecraftPacket {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ChunkData.class);
 
   private final ChunkSnapshot chunk;
   private final List<NetworkSection> sections = new ArrayList<>(16);
@@ -81,7 +84,7 @@ public class ChunkData implements MinecraftPacket {
   @Override
   public void encode(ByteBuf buf, Direction direction, ProtocolVersion version) {
     if (!this.chunk.isFullChunk()) {
-      // 1.17 supports only full chunks
+      // 1.17 supports only full chunks.
       Preconditions.checkState(version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0);
     }
 
@@ -91,10 +94,10 @@ public class ChunkData implements MinecraftPacket {
       buf.writeBoolean(this.chunk.isFullChunk());
 
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) >= 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) < 0) {
-        buf.writeBoolean(true); // Ignore old data
+        buf.writeBoolean(true); // Ignore old data.
       }
 
-      // Mask
+      // Mask.
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) > 0) {
         ProtocolUtils.writeVarInt(buf, this.mask);
       } else {
@@ -103,7 +106,7 @@ public class ChunkData implements MinecraftPacket {
         buf.writeShort(this.mask == 0 ? 1 : this.mask);
       }
     } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) <= 0) {
-      // 1.17 mask
+      // 1.17 mask.
       long[] mask = this.create117Mask();
       ProtocolUtils.writeVarInt(buf, mask.length);
       for (long m : mask) {
@@ -111,7 +114,7 @@ public class ChunkData implements MinecraftPacket {
       }
     }
 
-    // 1.14+ HeightMap
+    // 1.14+ HeightMap.
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) < 0) {
         ProtocolUtils.writeCompoundTag(buf, this.heightmap114);
@@ -120,7 +123,7 @@ public class ChunkData implements MinecraftPacket {
       }
     }
 
-    // 1.15-1.17 Biomes
+    // 1.15 - 1.17 Biomes.
     if (this.chunk.isFullChunk() && version.compareTo(ProtocolVersion.MINECRAFT_1_15) >= 0
         && version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) <= 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) >= 0) {
@@ -141,21 +144,21 @@ public class ChunkData implements MinecraftPacket {
         ProtocolUtils.writeVarInt(buf, data.readableBytes());
         buf.writeBytes(data);
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_9_4) >= 0) {
-          ProtocolUtils.writeVarInt(buf, 0); // Tile entities currently doesnt supported
+          ProtocolUtils.writeVarInt(buf, 0); // Tile entities currently doesnt supported.
         }
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
           long[] mask = this.create117Mask();
-          buf.writeBoolean(true); // Trust edges
-          ProtocolUtils.writeVarInt(buf, mask.length); // Skylight mask
+          buf.writeBoolean(true); // Trust edges.
+          ProtocolUtils.writeVarInt(buf, mask.length); // Skylight mask.
           for (long m : mask) {
             buf.writeLong(m);
           }
-          ProtocolUtils.writeVarInt(buf, mask.length); // BlockLight mask
+          ProtocolUtils.writeVarInt(buf, mask.length); // BlockLight mask.
           for (long m : mask) {
             buf.writeLong(m);
           }
-          ProtocolUtils.writeVarInt(buf, 0); // EmptySkylight mask
-          ProtocolUtils.writeVarInt(buf, 0); // EmptyBlockLight mask
+          ProtocolUtils.writeVarInt(buf, 0); // EmptySkylight mask.
+          ProtocolUtils.writeVarInt(buf, 0); // EmptyBlockLight mask.
           ProtocolUtils.writeVarInt(buf, this.chunk.getLight().length);
           for (LightSection section : this.chunk.getLight()) {
             ProtocolUtils.writeByteArray(buf, section.getSkyLight().getData());
@@ -199,7 +202,7 @@ public class ChunkData implements MinecraftPacket {
     }
 
     if (dataLength != data.readableBytes()) {
-      LimboAPI.getInstance().getLogger().warn("Data length mismatch: " + dataLength + " != " + data.readableBytes() + ". Version: " + version);
+      LOGGER.warn("Data length mismatch: " + dataLength + " != " + data.readableBytes() + ". Version: " + version);
     }
 
     return data;
@@ -234,7 +237,7 @@ public class ChunkData implements MinecraftPacket {
   }
 
   private void write17(ByteBuf out, ByteBuf data) {
-    out.writeShort(0); // Extended bitmask
+    out.writeShort(0); // Extended bitmask.
     byte[] uncompressed = new byte[data.readableBytes()];
     data.readBytes(uncompressed);
     ByteBuf compressed = Unpooled.buffer();
@@ -247,7 +250,7 @@ public class ChunkData implements MinecraftPacket {
         int count = deflater.deflate(buffer);
         compressed.writeBytes(buffer, 0, count);
       }
-      out.writeInt(compressed.readableBytes()); // Compressed size
+      out.writeInt(compressed.readableBytes()); // Compressed size.
       out.writeBytes(compressed);
     } finally {
       deflater.end();

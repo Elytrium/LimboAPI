@@ -67,7 +67,7 @@ public class UpdatesChecker {
   private static String getCleanVersion(String version) {
     int indexOf = version.indexOf("-");
     if (indexOf > 0) {
-      return version.substring(0, indexOf) + "$"; // "$" - Indicates that the version is snapshot
+      return version.substring(0, indexOf) + "$"; // "$" - Indicates that the version is not release.
     } else {
       return version;
     }

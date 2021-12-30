@@ -29,7 +29,7 @@ public class Settings extends Config {
   @Final
   public String VERSION = BuildConstants.LIMBO_VERSION;
 
-  public String PREFIX = "LimboAPI &6>>&f";
+  public String PREFIX = "LimboApi &6>>&f";
 
   @Create
   public MAIN MAIN;
@@ -65,13 +65,12 @@ public class Settings extends Config {
     }
   }
 
-  public void reload(File file) {
+  public void reload(File file, Logger logger) {
     if (this.load(file, this.PREFIX)) {
       this.save(file);
     } else {
-      Logger logger = LimboAPI.getInstance().getLogger();
       logger.warn("************* FIRST LAUNCH *************");
-      logger.warn("Thanks for installing LimboAPI!");
+      logger.warn("Thanks for installing LimboApi!");
       logger.warn("(c) 2021 Elytrium");
       logger.warn("");
       logger.warn("Check out our plugins here: https://ely.su/github <3");
