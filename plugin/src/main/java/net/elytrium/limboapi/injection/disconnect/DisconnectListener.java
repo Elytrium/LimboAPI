@@ -19,18 +19,18 @@ package net.elytrium.limboapi.injection.disconnect;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
-import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.LimboApi;
 
 public class DisconnectListener {
 
-  private final LimboAPI limboAPI;
+  private final LimboApi plugin;
 
-  public DisconnectListener(LimboAPI limboAPI) {
-    this.limboAPI = limboAPI;
+  public DisconnectListener(LimboApi plugin) {
+    this.plugin = plugin;
   }
 
   @Subscribe
   public void onDisconnect(DisconnectEvent event) {
-    this.limboAPI.unsetLimboJoined(event.getPlayer());
+    this.plugin.unsetLimboJoined(event.getPlayer());
   }
 }

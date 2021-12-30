@@ -225,11 +225,11 @@ public class LimboProtocol {
             map(0x51, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register(PacketDirection.CLIENTBOUND,
-        UpdateViewPosition.class, UpdateViewPosition::new,
+        UpdateViewPosition.class, UpdateViewPosition::new, // ViewCentre, ChunkRenderDistanceCenter
         new StateRegistry.PacketMapping[] {
             map(0x40, ProtocolVersion.MINECRAFT_1_14, true),
             map(0x41, ProtocolVersion.MINECRAFT_1_15, true),
-            map(0x40, ProtocolVersion.MINECRAFT_1_16_1, true),
+            map(0x40, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x49, ProtocolVersion.MINECRAFT_1_17, true)
         });
 

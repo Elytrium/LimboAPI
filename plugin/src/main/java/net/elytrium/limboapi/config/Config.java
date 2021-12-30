@@ -39,13 +39,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import net.elytrium.limboapi.LimboAPI;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 public class Config {
 
-  private static final Logger LOGGER = LimboAPI.getInstance().getLogger();
+  private final Logger logger = LoggerFactory.getLogger(Config.class);
+
   private String oldPrefix = "";
   private String currentPrefix = "";
 
@@ -76,7 +77,7 @@ public class Config {
       }
     }
 
-    LOGGER.debug("Failed to set config option: " + key + ": " + value + " | " + instance + " | " + root.getSimpleName() + ".yml");
+    this.logger.debug("Failed to set config option: " + key + ": " + value + " | " + instance + " | " + root.getSimpleName() + ".yml");
   }
 
   @SuppressWarnings("unchecked")
@@ -109,7 +110,7 @@ public class Config {
     try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
       this.set(new Yaml().load(reader), "");
     } catch (IOException e) {
-      LOGGER.warn("Unable to load config ", e);
+      this.logger.warn("Unable to load config", e);
       return false;
     }
 
@@ -211,7 +212,7 @@ public class Config {
   private void save(PrintWriter writer, Class<?> clazz, Object instance, int indent) {
     try {
       String lineSeparator = System.lineSeparator();
-      String spacing = this.repeat(" ", indent);
+      String spacing = IntStream.range(0, indent).mapToObj(i -> " ").collect(Collectors.joining());
 
       for (Field field : clazz.getFields()) {
         if (field.getAnnotation(Ignore.class) != null) {
@@ -271,7 +272,7 @@ public class Config {
       this.setAccessible(field);
       return field;
     } catch (Throwable ignored) {
-      LOGGER.debug("Invalid config field: " + this.join(split, ".") + " for " + this.toNodeName(instance.getClass().getSimpleName()));
+      this.logger.debug("Invalid config field: " + this.join(split, ".") + " for " + this.toNodeName(instance.getClass().getSimpleName()));
       return null;
     }
   }
@@ -365,11 +366,6 @@ public class Config {
         throw new UnsupportedOperationException();
       }
     }
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private String repeat(String s, int n) {
-    return IntStream.range(0, n).mapToObj(i -> s).collect(Collectors.joining());
   }
 
   @SuppressWarnings("SameParameterValue")

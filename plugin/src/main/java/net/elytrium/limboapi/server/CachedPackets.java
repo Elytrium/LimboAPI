@@ -19,20 +19,26 @@ package net.elytrium.limboapi.server;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.packet.Disconnect;
-import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.LimboApi;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class CachedPackets {
 
+  private final LimboApi plugin;
+
   private PreparedPacket tooBigPacket;
   private PreparedPacket invalidPing;
 
+  public CachedPackets(LimboApi plugin) {
+    this.plugin = plugin;
+  }
+
   public void createPackets() {
-    this.tooBigPacket = LimboAPI.getInstance().createPreparedPacket()
+    this.tooBigPacket = this.plugin.createPreparedPacket()
         .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TOO_BIG_PACKET, version));
-    this.invalidPing = LimboAPI.getInstance().createPreparedPacket()
+    this.invalidPing = this.plugin.createPreparedPacket()
         .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.INVALID_PING, version));
   }
 
