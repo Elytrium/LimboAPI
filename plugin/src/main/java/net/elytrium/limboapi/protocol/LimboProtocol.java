@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
+import net.elytrium.limboapi.protocol.packet.ChangeGameState;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.Player;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
@@ -232,6 +233,12 @@ public class LimboProtocol {
             map(0x40, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x49, ProtocolVersion.MINECRAFT_1_17, true)
         });
+    register(PacketDirection.CLIENTBOUND,
+            ChangeGameState.class, ChangeGameState::new,
+            new StateRegistry.PacketMapping[] {
+                    map(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
+                    map(0x1E, ProtocolVersion.MINECRAFT_1_9, true)
+            });
 
     register(PacketDirection.SERVERBOUND,
         TabCompleteRequest.class, TabCompleteRequest::new,
