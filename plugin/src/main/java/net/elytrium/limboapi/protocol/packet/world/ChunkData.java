@@ -61,7 +61,12 @@ public class ChunkData implements MinecraftPacket {
         mask |= 1 << i;
         LightSection light = this.chunk.getLight()[i];
         NetworkSection section = new NetworkSection(
-            i, this.chunk.getSections()[i], light.getBlockLight(), skyLight ? light.getSkyLight() : null, this.chunk.getBiomes());
+            i,
+            this.chunk.getSections()[i],
+            light.getBlockLight(),
+            skyLight ? light.getSkyLight() : null,
+            this.chunk.getBiomes()
+        );
         this.sections.add(section);
       }
     }
@@ -114,7 +119,7 @@ public class ChunkData implements MinecraftPacket {
       }
     }
 
-    // 1.14+ HeightMap.
+    // 1.14+ heightMap.
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) < 0) {
         ProtocolUtils.writeCompoundTag(buf, this.heightmap114);
@@ -123,7 +128,7 @@ public class ChunkData implements MinecraftPacket {
       }
     }
 
-    // 1.15 - 1.17 Biomes.
+    // 1.15 - 1.17 biomes.
     if (this.chunk.isFullChunk() && version.compareTo(ProtocolVersion.MINECRAFT_1_15) >= 0
         && version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) <= 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) >= 0) {

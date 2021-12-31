@@ -76,7 +76,7 @@ public class LimboPlayerImpl implements LimboPlayer {
     // TODO: Check 1.7.x
     // 16384 == 128 * 128 (Map size)
     byte[] canvas = new byte[16384];
-    byte[][] canvas17 = new byte[128][128]; // 1.7.x canvas
+    byte[][] canvas17 = new byte[128][128]; // 1.7.x canvas.
     int[] toWrite = MapPalette.imageToBytes(image);
 
     for (int i = 0; i < 16384; ++i) {
@@ -103,8 +103,9 @@ public class LimboPlayerImpl implements LimboPlayer {
   @Override
   public void setGameMode(GameMode gameMode) {
     if (gameMode == GameMode.SPECTATOR && this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      return; // Spectator game mode was added in 1.8
+      return; // Spectator game mode was added in 1.8.
     }
+
     this.player.getConnection().write(new ChangeGameState(3, gameMode.getId()));
   }
 
