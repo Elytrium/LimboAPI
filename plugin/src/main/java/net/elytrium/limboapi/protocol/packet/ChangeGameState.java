@@ -39,6 +39,7 @@ public class ChangeGameState implements MinecraftPacket {
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+
   }
 
   @Override
@@ -55,8 +56,8 @@ public class ChangeGameState implements MinecraftPacket {
   @Override
   public String toString() {
     return "ChangeGameState{"
-            + "reason=" + this.reason
-            + ", value=" + this.value
-            + '}';
+        + "reason=" + this.reason
+        + ", value=" + this.value
+        + "}";
   }
 }
