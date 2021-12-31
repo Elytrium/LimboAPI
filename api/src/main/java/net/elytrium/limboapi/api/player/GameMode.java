@@ -9,11 +9,14 @@ package net.elytrium.limboapi.api.player;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+@SuppressWarnings("unused")
 public enum GameMode {
+
   SURVIVAL,
   CREATIVE,
   ADVENTURE,
   SPECTATOR;
+
   /**
    * Cached {@link #values()} array to avoid constant array allocation.
    */

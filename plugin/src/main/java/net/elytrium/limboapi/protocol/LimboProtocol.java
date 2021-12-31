@@ -234,11 +234,11 @@ public class LimboProtocol {
             map(0x49, ProtocolVersion.MINECRAFT_1_17, true)
         });
     register(PacketDirection.CLIENTBOUND,
-            ChangeGameState.class, ChangeGameState::new,
-            new StateRegistry.PacketMapping[] {
-                    map(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
-                    map(0x1E, ProtocolVersion.MINECRAFT_1_9, true)
-            });
+        ChangeGameState.class, ChangeGameState::new,
+        new StateRegistry.PacketMapping[] {
+            map(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x1E, ProtocolVersion.MINECRAFT_1_9, true)
+        });
 
     register(PacketDirection.SERVERBOUND,
         TabCompleteRequest.class, TabCompleteRequest::new,
