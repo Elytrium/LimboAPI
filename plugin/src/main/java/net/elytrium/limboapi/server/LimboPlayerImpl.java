@@ -27,9 +27,11 @@ import java.awt.image.BufferedImage;
 import net.elytrium.limboapi.LimboApi;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.api.protocol.map.MapPalette;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
+import net.elytrium.limboapi.protocol.packet.ChangeGameState;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
@@ -96,6 +98,14 @@ public class LimboPlayerImpl implements LimboPlayer {
   @Override
   public void setInventory(int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt) {
     this.player.getConnection().write(new SetSlot(0, slot, item, count, data, nbt));
+  }
+
+  @Override
+  public void setGameMode(GameMode gameMode) {
+    if (gameMode == GameMode.SPECTATOR && this.player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      return; // Spectator game mode was added in 1.8
+    }
+    this.player.getConnection().write(new ChangeGameState(3, gameMode.getId()));
   }
 
   @Override

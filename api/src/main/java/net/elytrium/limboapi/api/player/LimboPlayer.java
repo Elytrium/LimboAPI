@@ -31,6 +31,8 @@ public interface LimboPlayer {
 
   void setInventory(int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt);
 
+  void setGameMode(GameMode gameMode);
+
   void teleport(double x, double y, double z, float yaw, float pitch);
 
   void sendTitle(Component title, Component subtitle, ProtocolVersion version, int fadeIn, int stay, int fadeOut);
