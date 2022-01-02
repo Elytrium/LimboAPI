@@ -222,10 +222,10 @@ public class ChunkData implements MinecraftPacket {
         for (int z = 0; z < 16; ++z) {
           VirtualBlock block = this.chunk.getBlock(x, y, z);
           if (!block.isAir()) {
-            surface.set(x + z << 4, y + 1);
+            surface.set(x + (z << 4), y + 1);
           }
           if (block.isMotionBlocking()) {
-            motionBlocking.set(x + z << 4, y + 1);
+            motionBlocking.set(x + (z << 4), y + 1);
           }
         }
       }
