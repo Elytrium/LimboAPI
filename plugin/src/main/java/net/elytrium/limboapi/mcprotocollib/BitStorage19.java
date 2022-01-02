@@ -38,7 +38,7 @@ public class BitStorage19 implements CompactStorage {
   private final long maxEntryValue;
 
   public BitStorage19(int bitsPerEntry, int size) {
-    this(bitsPerEntry, new long[roundToNearest(size * bitsPerEntry, 64) / 64]);
+    this(bitsPerEntry, new long[(size * bitsPerEntry - 1) >> 6 + 1]);
   }
 
   public BitStorage19(int bitsPerEntry, long[] data) {
@@ -49,7 +49,7 @@ public class BitStorage19 implements CompactStorage {
     this.bitsPerEntry = bitsPerEntry;
     this.data = data;
 
-    this.size = this.data.length * 64 / this.bitsPerEntry;
+    this.size = this.data.length << 6 / this.bitsPerEntry;
     this.maxEntryValue = (1L << this.bitsPerEntry) - 1;
   }
 
@@ -64,9 +64,9 @@ public class BitStorage19 implements CompactStorage {
     }
 
     int bitIndex = index * this.bitsPerEntry;
-    int startIndex = bitIndex / 64;
-    int endIndex = ((index + 1) * this.bitsPerEntry - 1) / 64;
-    int startBitSubIndex = bitIndex % 64;
+    int startIndex = bitIndex >> 6;
+    int endIndex = ((index + 1) * this.bitsPerEntry - 1) >> 6;
+    int startBitSubIndex = bitIndex & 63;
     this.data[startIndex] = this.data[startIndex] & ~(this.maxEntryValue << startBitSubIndex) | ((long) value & this.maxEntryValue) << startBitSubIndex;
     if (startIndex != endIndex) {
       int endBitSubIndex = 64 - startBitSubIndex;
@@ -81,9 +81,9 @@ public class BitStorage19 implements CompactStorage {
     }
 
     int bitIndex = index * this.bitsPerEntry;
-    int startIndex = bitIndex / 64;
-    int endIndex = ((index + 1) * this.bitsPerEntry - 1) / 64;
-    int startBitSubIndex = bitIndex % 64;
+    int startIndex = bitIndex >> 6;
+    int endIndex = ((index + 1) * this.bitsPerEntry - 1) >> 6;
+    int startBitSubIndex = bitIndex & 63;
     if (startIndex == endIndex) {
       return (int) (this.data[startIndex] >>> startBitSubIndex & this.maxEntryValue);
     } else {
@@ -122,21 +122,5 @@ public class BitStorage19 implements CompactStorage {
   @Override
   public CompactStorage copy() {
     return new BitStorage19(this.bitsPerEntry, Arrays.copyOf(this.data, this.data.length));
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static int roundToNearest(int value, int roundTo) {
-    if (roundTo == 0) {
-      return 0;
-    } else if (value == 0) {
-      return roundTo;
-    } else {
-      if (value < 0) {
-        roundTo *= -1;
-      }
-
-      int remainder = value % roundTo;
-      return remainder != 0 ? value + roundTo - remainder : value;
-    }
   }
 }

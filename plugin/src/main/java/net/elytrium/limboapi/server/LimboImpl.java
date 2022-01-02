@@ -294,7 +294,7 @@ public class LimboImpl implements Limbo {
   }
 
   private ChunkData createChunkData(VirtualChunk chunk, int skyLightY) {
-    chunk.setSkyLight(chunk.getX() % 16, skyLightY, chunk.getZ() % 16, (byte) 1);
+    chunk.setSkyLight(chunk.getX() & 15, skyLightY, chunk.getZ() & 15, (byte) 1);
     return new ChunkData(chunk.getFullChunkSnapshot(), true);
   }
 
