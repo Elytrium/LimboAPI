@@ -62,7 +62,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import net.elytrium.limboapi.LimboApi;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
@@ -79,11 +79,11 @@ public class LoginListener {
   private static final Field delegate;
   private static final Field spawned;
 
-  private final LimboApi plugin;
+  private final LimboAPI plugin;
   private final VelocityServer server;
   private final List<String> onlineMode = new ArrayList<>();
 
-  public LoginListener(LimboApi plugin, VelocityServer server) {
+  public LoginListener(LimboAPI plugin, VelocityServer server) {
     this.plugin = plugin;
     this.server = server;
   }

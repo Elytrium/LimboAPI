@@ -24,7 +24,7 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import java.awt.image.BufferedImage;
-import net.elytrium.limboapi.LimboApi;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.player.GameMode;
@@ -41,11 +41,11 @@ import net.kyori.adventure.text.Component;
 
 public class LimboPlayerImpl implements LimboPlayer {
 
-  private final LimboApi plugin;
+  private final LimboAPI plugin;
   private final LimboImpl server;
   private final ConnectedPlayer player;
 
-  public LimboPlayerImpl(LimboApi plugin, LimboImpl server, ConnectedPlayer player) {
+  public LimboPlayerImpl(LimboAPI plugin, LimboImpl server, ConnectedPlayer player) {
     this.plugin = plugin;
     this.server = server;
     this.player = player;
