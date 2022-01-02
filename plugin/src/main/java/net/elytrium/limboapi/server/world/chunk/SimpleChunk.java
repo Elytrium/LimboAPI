@@ -52,13 +52,13 @@ public class SimpleChunk implements VirtualChunk {
   @Override
   public void setBlock(int x, int y, int z, @Nullable VirtualBlock block) {
     SimpleSection section = this.getSection(y);
-    section.setBlockAt(x, y % 16, z, block);
+    section.setBlockAt(x, y & 15, z, block);
   }
 
   @NonNull
   @Override
   public VirtualBlock getBlock(int x, int y, int z) {
-    return this.sectionAction(y, (s) -> s.getBlockAt(x, y % 16, z), () -> SimpleBlock.AIR);
+    return this.sectionAction(y, (s) -> s.getBlockAt(x, y & 15, z), () -> SimpleBlock.AIR);
   }
 
   @Override
@@ -81,22 +81,22 @@ public class SimpleChunk implements VirtualChunk {
 
   @Override
   public void setBlockLight(int x, int y, int z, byte light) {
-    this.getLightSection(y, true).setBlockLight(x, y % 16, z, light);
+    this.getLightSection(y, true).setBlockLight(x, y & 15, z, light);
   }
 
   @Override
   public byte getBlockLight(int x, int y, int z) {
-    return this.getLightSection(y, false).getBlockLight(x, y % 16, z);
+    return this.getLightSection(y, false).getBlockLight(x, y & 15, z);
   }
 
   @Override
   public void setSkyLight(int x, int y, int z, byte light) {
-    this.getLightSection(y, true).setSkyLight(x, y % 16, z, light);
+    this.getLightSection(y, true).setSkyLight(x, y & 15, z, light);
   }
 
   @Override
   public byte getSkyLight(int x, int y, int z) {
-    return this.getLightSection(y, false).getSkyLight(x, y % 16, z);
+    return this.getLightSection(y, false).getSkyLight(x, y & 15, z);
   }
 
   public int getX() {
@@ -167,7 +167,7 @@ public class SimpleChunk implements VirtualChunk {
   }
 
   private static int getSectionIndex(int y) {
-    return y / 16;
+    return y >> 4;
   }
 
   public static int getBiomeIndex(int x, int y, int z) {
