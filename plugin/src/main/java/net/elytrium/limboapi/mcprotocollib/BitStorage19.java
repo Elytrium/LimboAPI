@@ -38,7 +38,7 @@ public class BitStorage19 implements CompactStorage {
   private final long maxEntryValue;
 
   public BitStorage19(int bitsPerEntry, int size) {
-    this(bitsPerEntry, new long[(size * bitsPerEntry - 1) >> 6 + 1]);
+    this(bitsPerEntry, new long[((size * bitsPerEntry - 1) >> 6) + 1]);
   }
 
   public BitStorage19(int bitsPerEntry, long[] data) {
@@ -49,7 +49,7 @@ public class BitStorage19 implements CompactStorage {
     this.bitsPerEntry = bitsPerEntry;
     this.data = data;
 
-    this.size = this.data.length << 6 / this.bitsPerEntry;
+    this.size = (this.data.length << 6) / this.bitsPerEntry;
     this.maxEntryValue = (1L << this.bitsPerEntry) - 1;
   }
 
