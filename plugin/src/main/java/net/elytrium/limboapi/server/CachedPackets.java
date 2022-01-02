@@ -19,19 +19,19 @@ package net.elytrium.limboapi.server;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.packet.Disconnect;
-import net.elytrium.limboapi.LimboApi;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class CachedPackets {
 
-  private final LimboApi plugin;
+  private final LimboAPI plugin;
 
   private PreparedPacket tooBigPacket;
   private PreparedPacket invalidPing;
 
-  public CachedPackets(LimboApi plugin) {
+  public CachedPackets(LimboAPI plugin) {
     this.plugin = plugin;
   }
 

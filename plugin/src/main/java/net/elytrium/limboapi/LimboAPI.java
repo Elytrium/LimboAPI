@@ -64,7 +64,7 @@ import org.slf4j.Logger;
 
 @Plugin(
     id = "limboapi",
-    name = "LimboApi",
+    name = "LimboAPI",
     version = BuildConstants.LIMBO_VERSION,
     description = "Velocity plugin for making virtual servers ",
     url = "ely.su",
@@ -74,7 +74,7 @@ import org.slf4j.Logger;
     }
 )
 @SuppressFBWarnings("MS_EXPOSE_REP")
-public class LimboApi implements LimboFactory {
+public class LimboAPI implements LimboFactory {
 
   private final VelocityServer server;
   private final Logger logger;
@@ -85,7 +85,7 @@ public class LimboApi implements LimboFactory {
   private final HashMap<Player, LoginTasksQueue> loginQueue;
 
   @Inject
-  public LimboApi(ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
+  public LimboAPI(ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
     this.server = (VelocityServer) server;
     this.logger = logger;
     this.metricsFactory = metricsFactory;
