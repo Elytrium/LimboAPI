@@ -34,7 +34,7 @@ import io.netty.channel.ChannelPipeline;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import net.elytrium.limboapi.LimboApi;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboSessionHandler;
@@ -54,7 +54,7 @@ public class LimboImpl implements Limbo {
   private static Field partialHashedSeed;
   private static Field currentDimensionData;
 
-  private final LimboApi plugin;
+  private final LimboAPI plugin;
   private final VirtualWorld world;
 
   private PreparedPacket joinPackets;
@@ -75,7 +75,7 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  public LimboImpl(LimboApi plugin, VirtualWorld world) {
+  public LimboImpl(LimboAPI plugin, VirtualWorld world) {
     this.plugin = plugin;
     this.world = world;
 

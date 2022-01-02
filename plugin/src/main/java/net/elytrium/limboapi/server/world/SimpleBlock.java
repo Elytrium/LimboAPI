@@ -27,7 +27,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import net.elytrium.limboapi.LimboApi;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -47,7 +47,7 @@ public class SimpleBlock implements VirtualBlock {
   public static void init() {
     LinkedTreeMap<String, LinkedTreeMap<String, String>> map = gson.fromJson(
         new InputStreamReader(
-            Objects.requireNonNull(LimboApi.class.getResourceAsStream("/mapping/blocks.json")),
+            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/blocks.json")),
             StandardCharsets.UTF_8
         ), LinkedTreeMap.class
     );

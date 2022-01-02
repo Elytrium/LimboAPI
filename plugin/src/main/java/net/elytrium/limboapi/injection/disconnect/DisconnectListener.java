@@ -19,13 +19,13 @@ package net.elytrium.limboapi.injection.disconnect;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
-import net.elytrium.limboapi.LimboApi;
+import net.elytrium.limboapi.LimboAPI;
 
 public class DisconnectListener {
 
-  private final LimboApi plugin;
+  private final LimboAPI plugin;
 
-  public DisconnectListener(LimboApi plugin) {
+  public DisconnectListener(LimboAPI plugin) {
     this.plugin = plugin;
   }
 

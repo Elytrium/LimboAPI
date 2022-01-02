@@ -55,7 +55,7 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
-import net.elytrium.limboapi.LimboApi;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
 import net.kyori.adventure.text.Component;
 
@@ -70,13 +70,13 @@ public class LoginTasksQueue {
   private static Method setPermissionFunction;
   private static Method connectToInitialServer;
 
-  private final LimboApi plugin;
+  private final LimboAPI plugin;
   private final LoginSessionHandler handler;
   private final VelocityServer server;
   private final ConnectedPlayer player;
   private final Queue<Runnable> queue;
 
-  public LoginTasksQueue(LimboApi plugin, LoginSessionHandler handler, VelocityServer server, ConnectedPlayer player, Queue<Runnable> queue) {
+  public LoginTasksQueue(LimboAPI plugin, LoginSessionHandler handler, VelocityServer server, ConnectedPlayer player, Queue<Runnable> queue) {
     this.plugin = plugin;
     this.handler = handler;
     this.server = server;
