@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import net.elytrium.limboapi.LimboApi;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -45,7 +45,7 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   private final Logger logger;
 
-  public PreparedPacketImpl(LimboApi plugin) {
+  public PreparedPacketImpl(LimboAPI plugin) {
     this.logger = plugin.getLogger();
   }
 

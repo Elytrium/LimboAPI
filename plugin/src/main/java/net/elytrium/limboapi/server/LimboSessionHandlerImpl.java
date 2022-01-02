@@ -30,7 +30,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import net.elytrium.limboapi.LimboApi;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
@@ -42,7 +42,7 @@ import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
 
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
-  private final LimboApi plugin;
+  private final LimboAPI plugin;
   private final ConnectedPlayer player;
   private final LimboSessionHandler callback;
   private final MinecraftSessionHandler originalHandler;
@@ -54,7 +54,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private long ping;
   private int genericBytes = 0;
 
-  public LimboSessionHandlerImpl(LimboApi plugin, ConnectedPlayer player, LimboSessionHandler callback, MinecraftSessionHandler originalHandler) {
+  public LimboSessionHandlerImpl(LimboAPI plugin, ConnectedPlayer player, LimboSessionHandler callback, MinecraftSessionHandler originalHandler) {
     this.plugin = plugin;
     this.player = player;
     this.callback = callback;
