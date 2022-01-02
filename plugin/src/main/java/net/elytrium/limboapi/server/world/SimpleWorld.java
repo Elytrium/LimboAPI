@@ -166,11 +166,6 @@ public class SimpleWorld implements VirtualWorld {
   }
 
   private static int getChunkCoordinate(int xz) {
-    xz %= 16;
-    if (xz < 0) {
-      xz += 16;
-    }
-
-    return xz;
+    return xz & 15;
   }
 }
