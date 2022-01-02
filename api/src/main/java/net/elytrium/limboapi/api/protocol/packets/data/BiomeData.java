@@ -42,7 +42,7 @@ public class BiomeData {
             .getKey();
         for (int xl = x; xl < x + 4; ++xl) {
           for (int zl = z; zl < z + 4; ++zl) {
-            this.pre115Biomes[zl << 4 + xl] = (byte) id;
+            this.pre115Biomes[(zl << 4) + xl] = (byte) id;
           }
         }
       }
