@@ -38,8 +38,10 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
+import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
+import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -74,13 +76,16 @@ public class LoginTasksQueue {
   private final LoginSessionHandler handler;
   private final VelocityServer server;
   private final ConnectedPlayer player;
+  private final InboundConnection inbound;
   private final Queue<Runnable> queue;
 
-  public LoginTasksQueue(LimboAPI plugin, LoginSessionHandler handler, VelocityServer server, ConnectedPlayer player, Queue<Runnable> queue) {
+  public LoginTasksQueue(LimboAPI plugin, LoginSessionHandler handler, VelocityServer server, ConnectedPlayer player,
+                         InboundConnection inbound, Queue<Runnable> queue) {
     this.plugin = plugin;
     this.handler = handler;
     this.server = server;
     this.player = player;
+    this.inbound = inbound;
     this.queue = queue;
   }
 
@@ -131,42 +136,44 @@ public class LoginTasksQueue {
     MinecraftConnection connection = this.player.getConnection();
 
     this.server.getEventManager()
-        .fire(new SafeGameProfileRequestEvent(this.player.getGameProfile(), this.player.isOnlineMode()))
-        .thenAcceptAsync(gameProfile -> {
-          try {
-            profile.set(this.player, gameProfile.getGameProfile());
-            // From Velocity.
-            this.server.getEventManager()
-                .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) defaultPermissions.get(null)))
-                .thenAcceptAsync(event -> {
-                  if (!connection.isClosed()) {
-                    // Wait for permissions to load, then set the players' permission function.
-                    final PermissionFunction function = event.createFunction(this.player);
-                    if (function == null) {
-                      this.plugin.getLogger().error(
-                          "A plugin permission provider {} provided an invalid permission function"
-                              + " for player {}. This is a bug in the plugin, not in Velocity. Falling"
-                              + " back to the default permission function.",
-                          event.getProvider().getClass().getName(),
-                          this.player.getUsername());
-                    } else {
-                      try {
-                        setPermissionFunction.invoke(this.player, function);
-                      } catch (IllegalAccessException | InvocationTargetException ex) {
-                        this.plugin.getLogger().error("Exception while completing injection to {}", this.player, ex);
+        .fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode()))
+        .thenAcceptAsync(gameProfile -> this.server.getEventManager()
+            .fire(new SafeGameProfileRequestEvent(gameProfile.getGameProfile(), gameProfile.isOnlineMode()))
+            .thenAcceptAsync(safeGameProfile -> {
+              try {
+                profile.set(this.player, safeGameProfile.getGameProfile());
+                // From Velocity.
+                this.server.getEventManager()
+                    .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) defaultPermissions.get(null)))
+                    .thenAcceptAsync(event -> {
+                      if (!connection.isClosed()) {
+                        // Wait for permissions to load, then set the players' permission function.
+                        final PermissionFunction function = event.createFunction(this.player);
+                        if (function == null) {
+                          this.plugin.getLogger().error(
+                              "A plugin permission provider {} provided an invalid permission function"
+                                  + " for player {}. This is a bug in the plugin, not in Velocity. Falling"
+                                  + " back to the default permission function.",
+                              event.getProvider().getClass().getName(),
+                              this.player.getUsername());
+                        } else {
+                          try {
+                            setPermissionFunction.invoke(this.player, function);
+                          } catch (IllegalAccessException | InvocationTargetException ex) {
+                            this.plugin.getLogger().error("Exception while completing injection to {}", this.player, ex);
+                          }
+                        }
+                        try {
+                          this.initialize(connection);
+                        } catch (IllegalAccessException e) {
+                          e.printStackTrace();
+                        }
                       }
-                    }
-                    try {
-                      this.initialize(connection);
-                    } catch (IllegalAccessException e) {
-                      e.printStackTrace();
-                    }
-                  }
-                });
-          } catch (IllegalAccessException ex) {
-            this.plugin.getLogger().error("Exception while completing injection to {}", this.player, ex);
-          }
-        }, connection.eventLoop());
+                    });
+              } catch (IllegalAccessException ex) {
+                this.plugin.getLogger().error("Exception while completing injection to {}", this.player, ex);
+              }
+            }, connection.eventLoop()), connection.eventLoop());
   }
 
   // Ported from Velocity.
