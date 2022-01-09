@@ -12,7 +12,10 @@ import com.velocitypowered.api.util.GameProfile;
 
 /**
  * Safe GameProfileRequestEvent, which executes only after all the login limbo server.
+ *
+ * @deprecated Use Velocity built-in GameProfileRequestEvent
  */
+@Deprecated
 public class SafeGameProfileRequestEvent {
 
   private final String username;
