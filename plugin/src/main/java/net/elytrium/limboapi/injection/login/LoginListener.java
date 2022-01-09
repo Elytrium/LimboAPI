@@ -128,11 +128,11 @@ public class LoginListener {
     this.onlineMode.remove(event.getPlayer().getUsername());
   }
 
-  @Subscribe(order = PostOrder.LAST)
   public void hookLoginSession(GameProfileRequestEvent event) throws IllegalAccessException {
     // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
     // method (which checks mcConnection.isActive()) and to override it. :)
-    MinecraftConnection connection = ((InitialInboundConnection) delegate.get(event.getConnection())).getConnection();
+    InitialInboundConnection inbound = (InitialInboundConnection) delegate.get(event.getConnection());
+    MinecraftConnection connection = inbound.getConnection();
     LoginSessionHandler handler = (LoginSessionHandler) connection.getSessionHandler();
     loginConnectionField.set(handler, closed);
     if (connection.isClosed()) {
@@ -178,7 +178,7 @@ public class LoginListener {
         this.server.getEventManager()
             .fire(new LoginLimboRegisterEvent(player))
             .thenAcceptAsync(limboEvent -> {
-              LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, limboEvent.getCallbacks());
+              LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboEvent.getCallbacks());
 
               this.plugin.addLoginQueue(player, queue);
               queue.next();

@@ -48,6 +48,7 @@ import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.BuiltInPackets;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
+import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
@@ -84,6 +85,8 @@ public class LimboAPI implements LimboFactory {
   private final CachedPackets packets;
   private final HashMap<Player, LoginTasksQueue> loginQueue;
 
+  private LoginListener loginListener;
+
   @Inject
   public LimboAPI(ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
     this.server = (VelocityServer) server;
@@ -105,8 +108,9 @@ public class LimboAPI implements LimboFactory {
     SimpleBlock.init();
     this.logger.info("Initializing Simple Virtual Item system...");
     SimpleItem.init();
-    this.logger.info("Initializing LimboProtocol...");
+    this.logger.info("Hooking into EventManager and StateRegistry...");
     try {
+      EventManagerHook.init(this);
       LimboProtocol.init();
     } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
       e.printStackTrace();
@@ -128,7 +132,8 @@ public class LimboAPI implements LimboFactory {
     Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"), this.logger);
     this.logger.info("Creating and preparing packets...");
     this.packets.createPackets();
-    this.server.getEventManager().register(this, new LoginListener(this, this.server));
+    this.loginListener = new LoginListener(this, this.server);
+    this.server.getEventManager().register(this, this.loginListener);
     this.server.getEventManager().register(this, new DisconnectListener(this));
     this.logger.info("Loaded!");
   }
@@ -215,6 +220,10 @@ public class LimboAPI implements LimboFactory {
 
   public LoginTasksQueue getLoginQueue(Player player) {
     return this.loginQueue.get(player);
+  }
+
+  public LoginListener getLoginListener() {
+    return this.loginListener;
   }
 
   public boolean hasLoginQueue(Player player) {
