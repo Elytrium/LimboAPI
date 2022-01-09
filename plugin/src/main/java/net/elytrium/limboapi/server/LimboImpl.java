@@ -139,6 +139,7 @@ public class LimboImpl implements Limbo {
         connection.setState(LimboProtocol.getLimboRegistry());
         if (player.getConnectedServer() != null) {
           player.getConnectedServer().disconnect();
+          this.plugin.setLimboJoined(player);
         }
       }
 
