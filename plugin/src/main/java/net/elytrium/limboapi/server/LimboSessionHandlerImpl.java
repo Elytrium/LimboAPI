@@ -19,6 +19,7 @@ package net.elytrium.limboapi.server;
 
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
+import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
@@ -28,6 +29,8 @@ import com.velocitypowered.proxy.protocol.packet.KeepAlive;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import net.elytrium.limboapi.LimboAPI;
@@ -42,6 +45,8 @@ import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
 
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
+  private static Method teardown;
+
   private final LimboAPI plugin;
   private final ConnectedPlayer player;
   private final LimboSessionHandler callback;
@@ -53,6 +58,15 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private long keepAliveLastSend;
   private long ping;
   private int genericBytes = 0;
+
+  static {
+    try {
+      teardown = ConnectedPlayer.class.getDeclaredMethod("teardown");
+      teardown.setAccessible(true);
+    } catch (NoSuchMethodException e) {
+      e.printStackTrace();
+    }
+  }
 
   public LimboSessionHandlerImpl(LimboAPI plugin, ConnectedPlayer player, LimboSessionHandler callback, MinecraftSessionHandler originalHandler) {
     this.plugin = plugin;
@@ -166,10 +180,20 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       );
     }
 
-    if (!(this.originalHandler instanceof LoginSessionHandler) && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
-      this.player.getConnection().setSessionHandler(this.originalHandler);
+    MinecraftConnection connection = this.player.getConnection();
+    if (connection.isClosed()) {
+      try {
+        teardown.invoke(this.player);
+      } catch (IllegalAccessException | InvocationTargetException e) {
+        e.printStackTrace();
+      }
+      return;
     }
-    ChannelPipeline pipeline = this.player.getConnection().getChannel().pipeline();
+
+    if (!(this.originalHandler instanceof LoginSessionHandler) && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
+      connection.setSessionHandler(this.originalHandler);
+    }
+    ChannelPipeline pipeline = connection.getChannel().pipeline();
     if (pipeline.names().contains("prepared-encoder")) {
       pipeline.remove(PreparedPacketEncoder.class);
     }
