@@ -51,7 +51,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final ConnectedPlayer player;
   private final LimboSessionHandler callback;
   private final MinecraftSessionHandler originalHandler;
-  private RegisteredServer previousServer;
+  private final RegisteredServer previousServer;
 
   private ScheduledTask keepAliveTask;
   private long keepAliveId;
@@ -68,13 +68,13 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
   }
 
-  public LimboSessionHandlerImpl(LimboAPI plugin, ConnectedPlayer player, LimboSessionHandler callback, MinecraftSessionHandler originalHandler) {
+  public LimboSessionHandlerImpl(LimboAPI plugin, ConnectedPlayer player, LimboSessionHandler callback,
+                                 MinecraftSessionHandler originalHandler, RegisteredServer previousServer) {
     this.plugin = plugin;
     this.player = player;
     this.callback = callback;
     this.originalHandler = originalHandler;
-
-    this.player.getCurrentServer().ifPresent(e -> this.previousServer = e.getServer());
+    this.previousServer = previousServer;
   }
 
   public void onSpawn(LimboImpl server, LimboPlayer player) {

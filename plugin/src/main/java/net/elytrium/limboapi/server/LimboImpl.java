@@ -20,8 +20,10 @@ package net.elytrium.limboapi.server;
 import com.google.common.collect.ImmutableSet;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.ConnectionTypes;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.registry.DimensionData;
 import com.velocitypowered.proxy.connection.registry.DimensionInfo;
@@ -135,10 +137,15 @@ public class LimboImpl implements Limbo {
         pipeline.addAfter(Connections.MINECRAFT_ENCODER, "prepared-encoder", new PreparedPacketEncoder(connection.getProtocolVersion()));
       }
 
+      RegisteredServer previousServer = null;
       if (connection.getState() != LimboProtocol.getLimboRegistry()) {
         connection.setState(LimboProtocol.getLimboRegistry());
-        if (player.getConnectedServer() != null) {
-          player.getConnectedServer().disconnect();
+        VelocityServerConnection server = player.getConnectedServer();
+
+        if (server != null) {
+          server.disconnect();
+          player.setConnectedServer(null);
+          previousServer = server.getServer();
           this.plugin.setLimboJoined(player);
         }
       }
@@ -154,7 +161,9 @@ public class LimboImpl implements Limbo {
       }
       this.plugin.setLimboJoined(player);
 
-      LimboSessionHandlerImpl sessionHandler = new LimboSessionHandlerImpl(this.plugin, player, handler, connection.getSessionHandler());
+      LimboSessionHandlerImpl sessionHandler = new LimboSessionHandlerImpl(this.plugin, player, handler,
+          connection.getSessionHandler(), previousServer);
+
       connection.setSessionHandler(sessionHandler);
       connection.flush();
       this.respawnPlayer(player);
