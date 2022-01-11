@@ -151,8 +151,12 @@ public class LimboPlayerImpl implements LimboPlayer {
 
       if (this.plugin.hasLoginQueue(this.player)) {
         this.plugin.getLoginQueue(this.player).next();
-      } else if (handler.getPreviousServer() != null) {
-        this.player.createConnectionRequest(handler.getPreviousServer()).fireAndForget();
+        return;
+      }
+
+      RegisteredServer server = handler.getPreviousServer();
+      if (server != null) {
+        this.sendToRegisteredServer(server);
       }
     }
   }
@@ -166,9 +170,13 @@ public class LimboPlayerImpl implements LimboPlayer {
       if (this.plugin.hasLoginQueue(this.player)) {
         throw new IllegalArgumentException("Cannot send to server while login");
       } else {
-        this.player.getConnection().eventLoop().execute(this.player.createConnectionRequest(server)::fireAndForget);
+        this.sendToRegisteredServer(server);
       }
     }
+  }
+
+  private void sendToRegisteredServer(RegisteredServer server) {
+    this.player.getConnection().eventLoop().execute(this.player.createConnectionRequest(server)::fireAndForget);
   }
 
   @Override
