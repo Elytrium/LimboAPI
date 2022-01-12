@@ -30,7 +30,7 @@ import net.elytrium.limboapi.LimboAPI;
 
 public class EventManagerHook extends VelocityEventManager {
 
-  private static Field eventManager;
+  private static final Field eventManager;
 
   private final LimboAPI plugin;
   private final Set<GameProfile> proceededProfiles = new HashSet<>();
@@ -40,7 +40,7 @@ public class EventManagerHook extends VelocityEventManager {
       eventManager = VelocityServer.class.getDeclaredField("eventManager");
       eventManager.setAccessible(true);
     } catch (NoSuchFieldException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
@@ -54,7 +54,7 @@ public class EventManagerHook extends VelocityEventManager {
   }
 
   @Override
-  public void fireAndForget(final Object event) {
+  public void fireAndForget(Object event) {
     Object toReply = this.proxyHook(event);
     if (toReply == null) {
       super.fireAndForget(event);
@@ -62,7 +62,7 @@ public class EventManagerHook extends VelocityEventManager {
   }
 
   @Override
-  public <E> CompletableFuture<E> fire(final E event) {
+  public <E> CompletableFuture<E> fire(E event) {
     CompletableFuture<E> toReply = this.proxyHook(event);
     if (toReply == null) {
       return super.fire(event);
@@ -71,7 +71,7 @@ public class EventManagerHook extends VelocityEventManager {
     return toReply;
   }
 
-  private <E> CompletableFuture<E> proxyHook(final E event) {
+  private <E> CompletableFuture<E> proxyHook(E event) {
     if (event instanceof GameProfileRequestEvent) {
       try {
         GameProfileRequestEvent requestEvent = (GameProfileRequestEvent) event;

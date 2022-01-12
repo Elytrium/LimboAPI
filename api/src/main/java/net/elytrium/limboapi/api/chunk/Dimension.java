@@ -7,11 +7,10 @@
 
 package net.elytrium.limboapi.api.chunk;
 
-@SuppressWarnings("unused")
 public enum Dimension {
 
   OVERWORLD("minecraft:overworld", 0, 0),
-  NETHER("minecraft:nether", 2, 2),
+  NETHER("minecraft:nether", -1, 2),
   THE_END("minecraft:the_end", 1, 3);
 
   private final String key;

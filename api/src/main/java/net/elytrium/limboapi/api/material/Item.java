@@ -348,7 +348,7 @@ public enum Item {
 
   private final int id;
 
-  Item(final int id) {
+  Item(int id) {
     this.id = id;
   }
 
