@@ -46,30 +46,30 @@ import net.elytrium.limboapi.protocol.packet.SetSlot;
 import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
 import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
-import net.elytrium.limboapi.utils.OverlayIntMap;
+import net.elytrium.limboapi.utils.OverlayIntObjectMap;
 import net.elytrium.limboapi.utils.OverlayObject2IntMap;
 import sun.misc.Unsafe;
 
-@SuppressWarnings("SameParameterValue")
+@SuppressWarnings("unchecked")
 public class LimboProtocol {
 
-  private static Unsafe unsafe;
-  private static StateRegistry limboRegistry;
-  private static Method getProtocolRegistry;
-  private static Method register;
-  private static Constructor<StateRegistry.PacketMapping> ctor;
-  private static Field packetClassToId;
-  private static Field packetIdToSupplier;
-  private static Field versions;
-  private static Field direction;
-  private static Field fallback;
-  private static Field version;
+  private static final Unsafe unsafe;
+  private static final StateRegistry limboRegistry;
+  private static final Field direction;
+  private static final Field versions;
+  private static final Field fallback;
+  private static final Field version;
+  private static final Field packetClassToId;
+  private static final Field packetIdToSupplier;
+  private static final Method getProtocolRegistry;
+  private static final Method register;
+  private static final Constructor<StateRegistry.PacketMapping> ctor;
 
   static {
     try {
-      Constructor<?> unsafeCtor = Unsafe.class.getDeclaredConstructors()[0];
-      unsafeCtor.setAccessible(true);
-      unsafe = (Unsafe) unsafeCtor.newInstance();
+      Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+      unsafeField.setAccessible(true);
+      unsafe = (Unsafe) unsafeField.get(null);
       limboRegistry = (StateRegistry) unsafe.allocateInstance(StateRegistry.class);
 
       direction = StateRegistry.PacketRegistry.class.getDeclaredField("direction");
@@ -101,8 +101,8 @@ public class LimboProtocol {
 
       ctor = StateRegistry.PacketMapping.class.getDeclaredConstructor(int.class, ProtocolVersion.class, ProtocolVersion.class, boolean.class);
       ctor.setAccessible(true);
-    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
-      e.printStackTrace();
+    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | NoSuchFieldException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -148,6 +148,7 @@ public class LimboProtocol {
             map(0x15, ProtocolVersion.MINECRAFT_1_16, false),
             map(0x14, ProtocolVersion.MINECRAFT_1_17, false)
         });
+
     register(PacketDirection.CLIENTBOUND,
         PlayerPositionAndLook.class, PlayerPositionAndLook::new,
         new StateRegistry.PacketMapping[] {
@@ -233,7 +234,13 @@ public class LimboProtocol {
         ChangeGameState.class, ChangeGameState::new,
         new StateRegistry.PacketMapping[] {
             map(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
-            map(0x1E, ProtocolVersion.MINECRAFT_1_9, true)
+            map(0x1E, ProtocolVersion.MINECRAFT_1_9, true),
+            map(0x20, ProtocolVersion.MINECRAFT_1_13, true),
+            map(0x1E, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x1F, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x1E, ProtocolVersion.MINECRAFT_1_16, true),
+            map(0x1D, ProtocolVersion.MINECRAFT_1_16_2, true),
+            map(0x1E, ProtocolVersion.MINECRAFT_1_17, true)
         });
   }
 
@@ -280,7 +287,6 @@ public class LimboProtocol {
     return ctor.newInstance(id, version, lastValidProtocolVersion, encodeOnly);
   }
 
-  @SuppressWarnings("unchecked")
   private static void overlayRegistry(Field to) throws IllegalAccessException, InstantiationException {
     StateRegistry.PacketRegistry from = (StateRegistry.PacketRegistry) to.get(StateRegistry.PLAY);
     ProtocolUtils.Direction fromDirection = (ProtocolUtils.Direction) direction.get(from);
@@ -301,7 +307,7 @@ public class LimboProtocol {
         StateRegistry.PacketRegistry.ProtocolRegistry toRegistry =
             (StateRegistry.PacketRegistry.ProtocolRegistry) unsafe.allocateInstance(StateRegistry.PacketRegistry.ProtocolRegistry.class);
 
-        packetIdToSupplier.set(toRegistry, new OverlayIntMap<>(fromPacketIdToSupplier, new IntObjectHashMap<>(16, 0.5f)));
+        packetIdToSupplier.set(toRegistry, new OverlayIntObjectMap<>(fromPacketIdToSupplier, new IntObjectHashMap<>(16, 0.5f)));
         packetClassToId.set(toRegistry, new OverlayObject2IntMap<>(fromPacketClassToId, new Object2IntOpenHashMap<>(16, 0.5f)));
 
         version.set(toRegistry, fromVersion);
@@ -329,16 +335,15 @@ public class LimboProtocol {
     return getPacketId(protocolRegistry, packet);
   }
 
-  @SuppressWarnings("unchecked")
   public static int getPacketId(StateRegistry.PacketRegistry.ProtocolRegistry registry, Class<? extends MinecraftPacket> packet) {
-    Object2IntMap<Class<? extends MinecraftPacket>> map = null;
+    Object2IntMap<Class<? extends MinecraftPacket>> map;
     try {
       map = (Object2IntMap<Class<? extends MinecraftPacket>>) packetClassToId.get(registry);
     } catch (IllegalAccessException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
 
-    return map == null ? Integer.MIN_VALUE : map.getInt(packet);
+    return map.getInt(packet);
   }
 
   public static StateRegistry getLimboRegistry() {

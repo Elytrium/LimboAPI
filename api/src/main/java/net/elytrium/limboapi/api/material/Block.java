@@ -267,12 +267,12 @@ public enum Block {
   private final int id;
   private final byte data;
 
-  Block(final int id) {
+  Block(int id) {
     this.id = id;
     this.data = 0;
   }
 
-  Block(final int id, byte data) {
+  Block(int id, byte data) {
     this.id = id;
     this.data = data;
   }

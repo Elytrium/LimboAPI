@@ -158,7 +158,7 @@ public class SimpleWorld implements VirtualWorld {
   }
 
   private static long getChunkIndex(int x, int z) {
-    return (((long) x) << 32) | (z & 0xffffffffL);
+    return (((long) x) << 32) | (z & 0xFFFFFFFFL);
   }
 
   private static int getChunkXZ(int xz) {

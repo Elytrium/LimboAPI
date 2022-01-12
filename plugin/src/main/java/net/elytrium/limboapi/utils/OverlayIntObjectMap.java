@@ -26,8 +26,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
-public class OverlayIntMap<K> extends OverlayMap<Integer, K> implements IntObjectMap<K> {
-  public OverlayIntMap(Map<Integer, K> parent, Map<Integer, K> overlay) {
+public class OverlayIntObjectMap<K> extends OverlayMap<Integer, K> implements IntObjectMap<K> {
+
+  public OverlayIntObjectMap(Map<Integer, K> parent, Map<Integer, K> overlay) {
     super(parent, overlay);
   }
 

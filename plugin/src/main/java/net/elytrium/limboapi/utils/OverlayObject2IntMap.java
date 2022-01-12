@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 public class OverlayObject2IntMap<K> extends OverlayMap<K, Integer> implements Object2IntMap<K> {
+
   public OverlayObject2IntMap(Object2IntMap<K> parent, Object2IntMap<K> overlay) {
     super(parent, overlay);
     overlay.defaultReturnValue(parent.defaultReturnValue());

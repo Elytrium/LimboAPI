@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class OverlayMap<K, V> implements Map<K, V> {
+
   protected final Map<K, V> parent;
   protected final Map<K, V> overlay;
 
@@ -50,8 +51,8 @@ public abstract class OverlayMap<K, V> implements Map<K, V> {
     return this.parent.containsValue(o) || this.overlay.containsValue(o);
   }
 
-  @SuppressWarnings("SuspiciousMethodCalls")
   @Override
+  @SuppressWarnings("SuspiciousMethodCalls")
   public V get(Object o) {
     if (this.overlay.containsKey(o)) {
       return this.overlay.get(o);
