@@ -135,7 +135,7 @@ public class LimboPlayerImpl implements LimboPlayer {
       }
     }
 
-    int[] toWrite = MapPalette.imageToBytes(image);
+    int[] toWrite = MapPalette.imageToBytes(image, this.version);
     if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       byte[][] canvas = new byte[MapData.MAP_DIM_SIZE][MapData.MAP_DIM_SIZE];
       for (int i = 0; i < MapData.MAP_SIZE; ++i) {
