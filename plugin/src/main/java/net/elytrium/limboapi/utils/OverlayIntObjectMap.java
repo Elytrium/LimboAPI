@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import net.elytrium.limboapi.api.utils.OverlayMap;
 import org.jetbrains.annotations.NotNull;
 
 public class OverlayIntObjectMap<K> extends OverlayMap<Integer, K> implements IntObjectMap<K> {
