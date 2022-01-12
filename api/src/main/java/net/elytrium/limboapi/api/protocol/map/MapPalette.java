@@ -81,7 +81,7 @@ public class MapPalette {
    * @param image The image to convert.
    * @return A byte[] containing the pixels of the image.
    */
-  public static int[] imageToBytes(final BufferedImage image) {
+  public static int[] imageToBytes(BufferedImage image) {
     int[] result = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
     for (int i = 0; i < result.length; ++i) {
       result[i] = tryFastMatchColor(result[i]);

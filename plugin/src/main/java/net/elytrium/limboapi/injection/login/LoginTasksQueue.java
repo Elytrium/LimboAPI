@@ -63,14 +63,14 @@ import net.kyori.adventure.text.Component;
 
 public class LoginTasksQueue {
 
-  private static Constructor<InitialConnectSessionHandler> initialCtor;
-  private static Field loginConnectionField;
-  private static Field defaultPermissions;
-  private static Field association;
-  private static Field state;
-  private static Field profile;
-  private static Method setPermissionFunction;
-  private static Method connectToInitialServer;
+  private static final Constructor<InitialConnectSessionHandler> initialCtor;
+  private static final Field loginConnectionField;
+  private static final Field defaultPermissions;
+  private static final Field association;
+  private static final Field state;
+  private static final Field profile;
+  private static final Method setPermissionFunction;
+  private static final Method connectToInitialServer;
 
   private final LimboAPI plugin;
   private final LoginSessionHandler handler;
@@ -80,7 +80,7 @@ public class LoginTasksQueue {
   private final Queue<Runnable> queue;
 
   public LoginTasksQueue(LimboAPI plugin, LoginSessionHandler handler, VelocityServer server, ConnectedPlayer player,
-                         InboundConnection inbound, Queue<Runnable> queue) {
+      InboundConnection inbound, Queue<Runnable> queue) {
     this.plugin = plugin;
     this.handler = handler;
     this.server = server;
@@ -115,7 +115,7 @@ public class LoginTasksQueue {
       connectToInitialServer = LoginSessionHandler.class.getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
       connectToInitialServer.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 

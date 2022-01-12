@@ -12,6 +12,9 @@ package net.elytrium.limboapi.api.protocol.packets.data;
  */
 public class MapData {
 
+  public static final int MAP_DIM_SIZE = 128;
+  public static final int MAP_SIZE = MAP_DIM_SIZE * MAP_DIM_SIZE; // 16384
+
   private final int columns;
   private final int rows;
   private final int posX;
@@ -27,11 +30,11 @@ public class MapData {
   }
 
   public MapData(int posX, byte[] data) {
-    this(128, 128, posX, 0, data);
+    this(MAP_DIM_SIZE, MAP_DIM_SIZE, posX, 0, data);
   }
 
   public MapData(byte[] data) {
-    this(128, 128, 0, 0, data);
+    this(MAP_DIM_SIZE, MAP_DIM_SIZE, 0, 0, data);
   }
 
   public int getColumns() {
