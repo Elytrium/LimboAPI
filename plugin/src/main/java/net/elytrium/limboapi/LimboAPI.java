@@ -24,6 +24,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
@@ -84,6 +85,7 @@ public class LimboAPI implements LimboFactory {
   private final List<Player> players;
   private final CachedPackets packets;
   private final HashMap<Player, LoginTasksQueue> loginQueue;
+  private final HashMap<Player, RegisteredServer> nextServer;
 
   private LoginListener loginListener;
 
@@ -96,6 +98,7 @@ public class LimboAPI implements LimboFactory {
     this.players = new ArrayList<>();
     this.packets = new CachedPackets(this);
     this.loginQueue = new HashMap<>();
+    this.nextServer = new HashMap<>();
 
     try {
       Class.forName("com.velocitypowered.proxy.connection.client.LoginInboundConnection");
@@ -236,6 +239,22 @@ public class LimboAPI implements LimboFactory {
 
   public void removeLoginQueue(Player player) {
     this.loginQueue.remove(player);
+  }
+
+  public RegisteredServer getNextServer(Player player) {
+    return this.nextServer.get(player);
+  }
+
+  public boolean hasNextServer(Player player) {
+    return this.nextServer.containsKey(player);
+  }
+
+  public void setNextServer(Player player, RegisteredServer q) {
+    this.nextServer.put(player, q);
+  }
+
+  public void removeNextServer(Player player) {
+    this.nextServer.remove(player);
   }
 
   public VelocityServer getServer() {
