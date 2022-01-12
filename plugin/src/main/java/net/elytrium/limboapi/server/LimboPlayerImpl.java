@@ -243,7 +243,7 @@ public class LimboPlayerImpl implements LimboPlayer {
       handler.disconnected();
 
       if (this.plugin.hasLoginQueue(this.player)) {
-        throw new IllegalStateException("Cannot send to server while login!");
+        this.plugin.setNextServer(this.player, server);
       } else {
         this.sendToRegisteredServer(server);
       }

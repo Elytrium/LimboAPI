@@ -41,6 +41,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
+import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
@@ -123,8 +124,16 @@ public class LoginListener {
   }
 
   @Subscribe
+  public void hookInitialServer(PlayerChooseInitialServerEvent event) {
+    if (this.plugin.hasNextServer(event.getPlayer())) {
+      event.setInitialServer(this.plugin.getNextServer(event.getPlayer()));
+    }
+  }
+
+  @Subscribe
   public void onDisconnect(DisconnectEvent event) {
     this.plugin.removeLoginQueue(event.getPlayer());
+    this.plugin.removeNextServer(event.getPlayer());
     this.onlineMode.remove(event.getPlayer().getUsername());
   }
 
