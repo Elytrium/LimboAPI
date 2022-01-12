@@ -22,9 +22,10 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import org.jetbrains.annotations.NotNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class SetIsObjectSet<K> implements ObjectSet<K> {
+
   private final Set<K> set;
 
   public SetIsObjectSet(Set<K> set) {
@@ -51,15 +52,16 @@ public class SetIsObjectSet<K> implements ObjectSet<K> {
     return new IteratorIsObjectIterator<>(this.set.iterator());
   }
 
-  @NotNull
+  @NonNull
   @Override
   public Object[] toArray() {
     return this.set.toArray();
   }
 
-  @NotNull
+  @NonNull
   @Override
-  public <T> T[] toArray(@NotNull T[] ts) {
+  @SuppressWarnings("SuspiciousToArrayCall")
+  public <T> T[] toArray(T @NonNull [] ts) {
     return this.set.toArray(ts);
   }
 
@@ -74,22 +76,22 @@ public class SetIsObjectSet<K> implements ObjectSet<K> {
   }
 
   @Override
-  public boolean containsAll(@NotNull Collection<?> collection) {
+  public boolean containsAll(@NonNull Collection<?> collection) {
     return this.set.containsAll(collection);
   }
 
   @Override
-  public boolean addAll(@NotNull Collection<? extends K> collection) {
+  public boolean addAll(@NonNull Collection<? extends K> collection) {
     return this.set.addAll(collection);
   }
 
   @Override
-  public boolean removeAll(@NotNull Collection<?> collection) {
+  public boolean removeAll(@NonNull Collection<?> collection) {
     return this.set.removeAll(collection);
   }
 
   @Override
-  public boolean retainAll(@NotNull Collection<?> collection) {
+  public boolean retainAll(@NonNull Collection<?> collection) {
     return this.set.retainAll(collection);
   }
 

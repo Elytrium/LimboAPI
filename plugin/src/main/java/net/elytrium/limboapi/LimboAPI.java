@@ -183,7 +183,7 @@ public class LimboAPI implements LimboFactory {
         }
       }
 
-      throw new IllegalStateException("No constructor found with the correct number of arguments!");
+      throw new IllegalArgumentException("No constructor found with the correct number of arguments!");
     } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }

@@ -15,6 +15,7 @@ import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 
 @SuppressWarnings("unused")
 public interface LimboPlayer {
@@ -27,7 +28,19 @@ public interface LimboPlayer {
 
   void closeWith(Object packetObj);
 
+  void sendImage(BufferedImage image);
+
+  void sendImage(BufferedImage image, boolean sendItem);
+
   void sendImage(int mapId, BufferedImage image);
+
+  void sendImage(int mapId, BufferedImage image, boolean sendItem);
+
+  void sendImage(int mapId, BufferedImage image, boolean sendItem, boolean resize);
+
+  void setInventory(VirtualItem item, int count);
+
+  void setInventory(VirtualItem item, int slot, int count);
 
   void setInventory(int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt);
 
@@ -35,6 +48,10 @@ public interface LimboPlayer {
 
   void teleport(double x, double y, double z, float yaw, float pitch);
 
+  /**
+   * @deprecated Use {@link Player#showTitle(Title)}
+   */
+  @Deprecated
   void sendTitle(Component title, Component subtitle, ProtocolVersion version, int fadeIn, int stay, int fadeOut);
 
   void disableFalling();

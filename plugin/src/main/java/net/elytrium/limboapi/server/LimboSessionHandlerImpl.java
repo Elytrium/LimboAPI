@@ -45,7 +45,7 @@ import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
 
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
-  private static Method teardown;
+  private static final Method teardown;
 
   private final LimboAPI plugin;
   private final ConnectedPlayer player;
@@ -64,12 +64,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       teardown = ConnectedPlayer.class.getDeclaredMethod("teardown");
       teardown.setAccessible(true);
     } catch (NoSuchMethodException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
   public LimboSessionHandlerImpl(LimboAPI plugin, ConnectedPlayer player, LimboSessionHandler callback,
-                                 MinecraftSessionHandler originalHandler, RegisteredServer previousServer) {
+      MinecraftSessionHandler originalHandler, RegisteredServer previousServer) {
     this.plugin = plugin;
     this.player = player;
     this.callback = callback;
@@ -85,7 +85,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       keepAlive.setRandomId(this.keepAliveId = ThreadLocalRandom.current().nextInt());
       this.player.getConnection().write(keepAlive);
       this.keepAliveLastSend = System.currentTimeMillis();
-    }).repeat(this.plugin.getServer().getConfiguration().getReadTimeout() / 2, TimeUnit.MILLISECONDS).schedule();
+    }).delay(250, TimeUnit.MILLISECONDS) // Fix 1.7.x race condition with switching protocol states.
+      .repeat(this.plugin.getServer().getConfiguration().getReadTimeout() / 2, TimeUnit.MILLISECONDS)
+      .schedule();
   }
 
   public boolean handle(Player packet) {
@@ -187,6 +189,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       } catch (IllegalAccessException | InvocationTargetException e) {
         e.printStackTrace();
       }
+
       return;
     }
 

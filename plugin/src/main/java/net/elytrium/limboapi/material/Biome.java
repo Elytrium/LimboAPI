@@ -31,14 +31,14 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public enum Biome implements VirtualBiome {
 
   PLAINS("minecraft:plains", 1,
-      new Element("rain", 0.125f, 0.8f, 0.05f, 0.4f, "plains",
+      new Element("rain", 0.125F, 0.8F, 0.05F, 0.4F, "plains",
           Effects.builder(7907327, 329011, 12638463, 415920)
               .moodSound(MoodSound.of(6000, 2.0d, 8, "minecraft:ambient.cave"))
               .build()
       )
   ),
   SWAMP("minecraft:swamp", 6,
-      new Element("rain", -0.2F, 0.8f, 0.1F, 0.9F, "swamp",
+      new Element("rain", -0.2F, 0.8F, 0.1F, 0.9F, "swamp",
           Effects.builder(7907327, 329011, 12638463, 415920)
               .grassColorModifier("swamp")
               .foliageColor(6975545)
@@ -47,7 +47,7 @@ public enum Biome implements VirtualBiome {
       )
   ),
   SWAMP_HILLS("minecraft:swamp_hills", 134,
-      new Element("rain", -0.1F, 0.8f, 0.3F, 0.9F, "swamp",
+      new Element("rain", -0.1F, 0.8F, 0.3F, 0.9F, "swamp",
           Effects.builder(7907327, 329011, 12638463, 415920)
               .grassColorModifier("swamp")
               .foliageColor(6975545)
