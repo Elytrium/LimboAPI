@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import java.util.stream.Collectors;
+import net.elytrium.limboapi.api.utils.OverlayMap;
 import org.jetbrains.annotations.NotNull;
 
 public class OverlayObject2IntMap<K> extends OverlayMap<K, Integer> implements Object2IntMap<K> {
