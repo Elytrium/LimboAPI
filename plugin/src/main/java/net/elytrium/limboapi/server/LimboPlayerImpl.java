@@ -23,6 +23,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -251,6 +252,7 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   private void sendToRegisteredServer(RegisteredServer server) {
+    this.connection.eventLoop().execute(() -> this.connection.setState(StateRegistry.PLAY));
     this.connection.eventLoop().execute(this.player.createConnectionRequest(server)::fireAndForget);
   }
 
