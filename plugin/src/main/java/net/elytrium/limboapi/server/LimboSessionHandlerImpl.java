@@ -194,7 +194,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
 
     if (!(this.originalHandler instanceof LoginSessionHandler) && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
-      connection.setSessionHandler(this.originalHandler);
+      connection.eventLoop().execute(() -> connection.setSessionHandler(this.originalHandler));
     }
     ChannelPipeline pipeline = connection.getChannel().pipeline();
     if (pipeline.names().contains("prepared-encoder")) {
