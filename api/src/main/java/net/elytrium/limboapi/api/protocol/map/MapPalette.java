@@ -11,7 +11,9 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.image.BufferedImage;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import net.elytrium.limboapi.api.utils.OverlayVanillaMap;
 
@@ -85,6 +87,8 @@ public class MapPalette {
   };
 
   private static final Map<ProtocolVersion, Map<Color, Byte>> colorToIndexMap = new ConcurrentHashMap<>();
+  private static final Map<ProtocolVersion, Map<Color, Byte>> cachedColorToIndexMap = new ConcurrentHashMap<>();
+  private static final Set<Color> cachedColors = new HashSet<>();
 
   @Deprecated
   public static final byte WHITE = 34;
@@ -93,10 +97,15 @@ public class MapPalette {
 
   static {
     Map<Color, Byte> previous = new ConcurrentHashMap<>();
+    Map<Color, Byte> previousCached = new ConcurrentHashMap<>();
     for (ProtocolVersion version : EnumSet.range(ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION)) {
       Map<Color, Byte> current = new OverlayVanillaMap<>(previous, new ConcurrentHashMap<>());
       colorToIndexMap.put(version, current);
       previous = current;
+
+      Map<Color, Byte> currentCached = new OverlayVanillaMap<>(previousCached, new ConcurrentHashMap<>());
+      cachedColorToIndexMap.put(version, currentCached);
+      previousCached = currentCached;
     }
 
     for (byte i = 0; i < colors.length; i++) {
@@ -121,12 +130,19 @@ public class MapPalette {
   }
 
   private static void precacheColor(Color color) {
+    if (cachedColors.contains(color)) {
+      return;
+    }
+
     for (ProtocolVersion version : EnumSet.range(ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION)) {
-      Map<Color, Byte> current = colorToIndexMap.get(version);
-      if (!current.containsKey(color)) {
-        current.put(color, matchColor(color, version));
+      Map<Color, Byte> current = cachedColorToIndexMap.get(version);
+      byte matched = matchColor(color, version);
+      if (!current.containsKey(color) || current.get(color) != matched) {
+        current.put(color, matched);
       }
     }
+
+    cachedColors.add(color);
   }
 
   private static Color clr(int r, int g, int b) {
@@ -189,11 +205,9 @@ public class MapPalette {
     }
 
     Color color = downscaleRGB(rgb);
-    if (!colorToIndexMap.get(version).containsKey(color)) {
-      precacheColor(color);
-    }
+    precacheColor(color);
 
-    return colorToIndexMap.get(version).get(color);
+    return cachedColorToIndexMap.get(version).get(color);
   }
 
   /**
@@ -274,24 +288,24 @@ public class MapPalette {
     public Color multiplyAndDownscale(int multiplier) {
       switch (multiplier) {
         case 0: {
-          int red = ((this.red * 180) / 255) & ~15;
-          int green = ((this.green * 180) / 255) & ~15;
-          int blue = ((this.blue * 180) / 255) & ~15;
+          int red = ((this.red * 180) >> 8) & ~15;
+          int green = ((this.green * 180) >> 8) & ~15;
+          int blue = ((this.blue * 180) >> 8) & ~15;
           return new Color(red, green, blue, this.since);
         }
         case 1: {
-          int red = ((this.red * 220) / 255) & ~15;
-          int green = ((this.green * 220) / 255) & ~15;
-          int blue = ((this.blue * 220) / 255) & ~15;
+          int red = ((this.red * 220) >> 8) & ~15;
+          int green = ((this.green * 220) >> 8) & ~15;
+          int blue = ((this.blue * 220) >> 8) & ~15;
           return new Color(red, green, blue, this.since);
         }
         case 2: {
           return new Color(this.red & ~15, this.green & ~15, this.blue & ~15, this.since);
         }
         case 3: {
-          int red = ((this.red * 135) / 255) & ~15;
-          int green = ((this.green * 135) / 255) & ~15;
-          int blue = ((this.blue * 135) / 255) & ~15;
+          int red = ((this.red * 135) >> 8) & ~15;
+          int green = ((this.green * 135) >> 8) & ~15;
+          int blue = ((this.blue * 135) >> 8) & ~15;
           return new Color(red, green, blue, this.since);
         }
         default: {
