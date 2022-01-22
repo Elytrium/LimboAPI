@@ -33,6 +33,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.LimboSessionHandler;
@@ -52,6 +53,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final LimboSessionHandler callback;
   private final MinecraftSessionHandler originalHandler;
   private final RegisteredServer previousServer;
+  private final Supplier<String> limboName;
 
   private ScheduledTask keepAliveTask;
   private long keepAliveId;
@@ -69,12 +71,13 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   public LimboSessionHandlerImpl(LimboAPI plugin, ConnectedPlayer player, LimboSessionHandler callback,
-      MinecraftSessionHandler originalHandler, RegisteredServer previousServer) {
+      MinecraftSessionHandler originalHandler, RegisteredServer previousServer, Supplier<String> limboName) {
     this.plugin = plugin;
     this.player = player;
     this.callback = callback;
     this.originalHandler = originalHandler;
     this.previousServer = previousServer;
+    this.limboName = limboName;
   }
 
   public void onSpawn(LimboImpl server, LimboPlayer player) {
@@ -177,8 +180,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.keepAliveTask.cancel();
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
       this.plugin.getLogger().info(
-          this.player.getUsername() + " (" + this.player.getRemoteAddress() + ") has disconnected from the "
-              + this.callback.getClass().getSimpleName() + " Limbo"
+          this.player.getUsername() + " (" + this.player.getRemoteAddress() + ") has disconnected from the " + this.limboName.get() + " Limbo"
       );
     }
 
