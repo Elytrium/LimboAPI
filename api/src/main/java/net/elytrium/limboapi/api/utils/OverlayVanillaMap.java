@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 public class OverlayVanillaMap<K, V> extends OverlayMap<K, V> {
+
   public OverlayVanillaMap(Map<K, V> parent, Map<K, V> overlay) {
     super(parent, overlay);
   }

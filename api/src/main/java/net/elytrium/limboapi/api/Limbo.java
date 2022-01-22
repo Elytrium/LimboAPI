@@ -14,4 +14,6 @@ public interface Limbo {
   void spawnPlayer(Player player, LimboSessionHandler handler);
 
   void respawnPlayer(Player player);
+
+  Limbo setName(String name);
 }
