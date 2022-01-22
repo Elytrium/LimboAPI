@@ -121,17 +121,17 @@ public class MapPalette {
     }
   }
 
-  public static void preCache() {
-    for (int i = 0; i < 16; ++i) {
-      for (int j = 0; j < 16; ++j) {
-        for (int k = 0; k < 16; ++k) {
-          preCacheColor(color(i << 4, j << 4, k << 4));
+  public static void precache() {
+    for (int r = 0; r < 16; ++r) {
+      for (int g = 0; g < 16; ++g) {
+        for (int b = 0; b < 16; ++b) {
+          precacheColor(color(r << 4, g << 4, b << 4));
         }
       }
     }
   }
 
-  private static void preCacheColor(Color color) {
+  private static void precacheColor(Color color) {
     if (cachedColors.contains(color)) {
       return;
     }
@@ -207,7 +207,7 @@ public class MapPalette {
     }
 
     Color color = downscaleRGB(rgb);
-    preCacheColor(color);
+    precacheColor(color);
 
     return cachedColorToIndexMap.get(version).get(color);
   }
