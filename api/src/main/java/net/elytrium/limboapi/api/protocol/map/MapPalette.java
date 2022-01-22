@@ -21,75 +21,78 @@ import net.elytrium.limboapi.api.utils.OverlayVanillaMap;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class MapPalette {
 
-  private static final Color[] colors = new Color[]{
-      clr(0, 0, 0),
-      clr(127, 178, 56),
-      clr(247, 233, 163),
-      clr(199, 199, 199),
-      clr(255, 0, 0),
-      clr(160, 160, 255),
-      clr(167, 167, 167),
-      clr(0, 124, 0),
-      clr(255, 255, 255),
-      clr(164, 168, 184),
-      clr(151, 109, 77),
-      clr(112, 112, 112),
-      clr(64, 64, 255),
-      clr(143, 119, 72),
-      clr(255, 252, 245),
-      clr(216, 127, 51),
-      clr(178, 76, 216),
-      clr(102, 153, 216),
-      clr(229, 229, 51),
-      clr(127, 204, 25),
-      clr(242, 127, 165),
-      clr(76, 76, 76),
-      clr(153, 153, 153),
-      clr(76, 127, 153),
-      clr(127, 63, 178),
-      clr(51, 76, 178),
-      clr(102, 76, 51),
-      clr(102, 127, 51),
-      clr(153, 51, 51),
-      clr(25, 25, 25),
-      clr(250, 238, 77),
-      clr(92, 219, 213),
-      clr(74, 128, 255),
-      clr(0, 217, 58),
-      clr(129, 86, 49),
-      clr(112, 2, 0, ProtocolVersion.MINECRAFT_1_8),
-      clr(209, 177, 161, ProtocolVersion.MINECRAFT_1_12),
-      clr(159, 82, 36, ProtocolVersion.MINECRAFT_1_12),
-      clr(149, 87, 108, ProtocolVersion.MINECRAFT_1_12),
-      clr(112, 108, 138, ProtocolVersion.MINECRAFT_1_12),
-      clr(186, 133, 36, ProtocolVersion.MINECRAFT_1_12),
-      clr(103, 117, 53, ProtocolVersion.MINECRAFT_1_12),
-      clr(160, 77, 78, ProtocolVersion.MINECRAFT_1_12),
-      clr(57, 41, 35, ProtocolVersion.MINECRAFT_1_12),
-      clr(135, 107, 98, ProtocolVersion.MINECRAFT_1_12),
-      clr(87, 92, 92, ProtocolVersion.MINECRAFT_1_12),
-      clr(122, 73, 88, ProtocolVersion.MINECRAFT_1_12),
-      clr(76, 62, 92, ProtocolVersion.MINECRAFT_1_12),
-      clr(76, 50, 35, ProtocolVersion.MINECRAFT_1_12),
-      clr(76, 82, 42, ProtocolVersion.MINECRAFT_1_12),
-      clr(142, 60, 46, ProtocolVersion.MINECRAFT_1_12),
-      clr(37, 22, 16, ProtocolVersion.MINECRAFT_1_12),
-      clr(189, 48, 49, ProtocolVersion.MINECRAFT_1_16),
-      clr(148, 63, 97, ProtocolVersion.MINECRAFT_1_16),
-      clr(92, 25, 29, ProtocolVersion.MINECRAFT_1_16),
-      clr(22, 126, 134, ProtocolVersion.MINECRAFT_1_16),
-      clr(58, 142, 140, ProtocolVersion.MINECRAFT_1_16),
-      clr(86, 44, 62, ProtocolVersion.MINECRAFT_1_16),
-      clr(20, 180, 133, ProtocolVersion.MINECRAFT_1_16),
-      clr(100, 100, 100, ProtocolVersion.MINECRAFT_1_16),
-      clr(216, 175, 147, ProtocolVersion.MINECRAFT_1_17),
-      clr(127, 167, 150, ProtocolVersion.MINECRAFT_1_17),
+  private static final Color[] colors = new Color[] {
+      color(0, 0, 0),
+      color(127, 178, 56),
+      color(247, 233, 163),
+      color(199, 199, 199),
+      color(255, 0, 0),
+      color(160, 160, 255),
+      color(167, 167, 167),
+      color(0, 124, 0),
+      color(255, 255, 255),
+      color(164, 168, 184),
+      color(151, 109, 77),
+      color(112, 112, 112),
+      color(64, 64, 255),
+      color(143, 119, 72),
+      color(255, 252, 245),
+      color(216, 127, 51),
+      color(178, 76, 216),
+      color(102, 153, 216),
+      color(229, 229, 51),
+      color(127, 204, 25),
+      color(242, 127, 165),
+      color(76, 76, 76),
+      color(153, 153, 153),
+      color(76, 127, 153),
+      color(127, 63, 178),
+      color(51, 76, 178),
+      color(102, 76, 51),
+      color(102, 127, 51),
+      color(153, 51, 51),
+      color(25, 25, 25),
+      color(250, 238, 77),
+      color(92, 219, 213),
+      color(74, 128, 255),
+      color(0, 217, 58),
+      color(129, 86, 49),
+      color(112, 2, 0, ProtocolVersion.MINECRAFT_1_8),
+      color(209, 177, 161, ProtocolVersion.MINECRAFT_1_12),
+      color(159, 82, 36, ProtocolVersion.MINECRAFT_1_12),
+      color(149, 87, 108, ProtocolVersion.MINECRAFT_1_12),
+      color(112, 108, 138, ProtocolVersion.MINECRAFT_1_12),
+      color(186, 133, 36, ProtocolVersion.MINECRAFT_1_12),
+      color(103, 117, 53, ProtocolVersion.MINECRAFT_1_12),
+      color(160, 77, 78, ProtocolVersion.MINECRAFT_1_12),
+      color(57, 41, 35, ProtocolVersion.MINECRAFT_1_12),
+      color(135, 107, 98, ProtocolVersion.MINECRAFT_1_12),
+      color(87, 92, 92, ProtocolVersion.MINECRAFT_1_12),
+      color(122, 73, 88, ProtocolVersion.MINECRAFT_1_12),
+      color(76, 62, 92, ProtocolVersion.MINECRAFT_1_12),
+      color(76, 50, 35, ProtocolVersion.MINECRAFT_1_12),
+      color(76, 82, 42, ProtocolVersion.MINECRAFT_1_12),
+      color(142, 60, 46, ProtocolVersion.MINECRAFT_1_12),
+      color(37, 22, 16, ProtocolVersion.MINECRAFT_1_12),
+      color(189, 48, 49, ProtocolVersion.MINECRAFT_1_16),
+      color(148, 63, 97, ProtocolVersion.MINECRAFT_1_16),
+      color(92, 25, 29, ProtocolVersion.MINECRAFT_1_16),
+      color(22, 126, 134, ProtocolVersion.MINECRAFT_1_16),
+      color(58, 142, 140, ProtocolVersion.MINECRAFT_1_16),
+      color(86, 44, 62, ProtocolVersion.MINECRAFT_1_16),
+      color(20, 180, 133, ProtocolVersion.MINECRAFT_1_16),
+      color(100, 100, 100, ProtocolVersion.MINECRAFT_1_16),
+      color(216, 175, 147, ProtocolVersion.MINECRAFT_1_17),
+      color(127, 167, 150, ProtocolVersion.MINECRAFT_1_17)
   };
 
   private static final Map<ProtocolVersion, Map<Color, Byte>> colorToIndexMap = new ConcurrentHashMap<>();
   private static final Map<ProtocolVersion, Map<Color, Byte>> cachedColorToIndexMap = new ConcurrentHashMap<>();
   private static final Set<Color> cachedColors = new HashSet<>();
 
+  /**
+   * @deprecated Use {@link java.awt.Color#WHITE} instead.
+   */
   @Deprecated
   public static final byte WHITE = 34;
 
@@ -118,18 +121,17 @@ public class MapPalette {
     }
   }
 
-  public static void precache() {
+  public static void preCache() {
     for (int i = 0; i < 16; ++i) {
       for (int j = 0; j < 16; ++j) {
         for (int k = 0; k < 16; ++k) {
-          Color fastColor = clr(i << 4, j << 4, k << 4);
-          precacheColor(fastColor);
+          preCacheColor(color(i << 4, j << 4, k << 4));
         }
       }
     }
   }
 
-  private static void precacheColor(Color color) {
+  private static void preCacheColor(Color color) {
     if (cachedColors.contains(color)) {
       return;
     }
@@ -145,12 +147,12 @@ public class MapPalette {
     cachedColors.add(color);
   }
 
-  private static Color clr(int r, int g, int b) {
-    return new Color(r, g, b);
+  private static Color color(int red, int green, int blue) {
+    return new Color(red, green, blue);
   }
 
-  private static Color clr(int r, int g, int b, ProtocolVersion since) {
-    return new Color(r, g, b, since);
+  private static Color color(int red, int green, int blue, ProtocolVersion since) {
+    return new Color(red, green, blue, since);
   }
 
   private static double getDistance(Color c1, Color c2) {
@@ -205,7 +207,7 @@ public class MapPalette {
     }
 
     Color color = downscaleRGB(rgb);
-    precacheColor(color);
+    preCacheColor(color);
 
     return cachedColorToIndexMap.get(version).get(color);
   }
@@ -234,15 +236,15 @@ public class MapPalette {
   }
 
   private static Color downscaleRGB(int rgb) {
-    int r = ((rgb & 0xff0000) >>> 16) & ~15;
-    int g = ((rgb & 0xff00) >>> 8) & ~15;
-    int b = (rgb & 0xff) & ~15;
+    int r = ((rgb & 0xFF0000) >>> 16) & ~15;
+    int g = ((rgb & 0xFF00) >>> 8) & ~15;
+    int b = (rgb & 0xFF) & ~15;
 
     return new Color(r, g, b);
   }
 
   private static int getAlpha(int rgb) {
-    return (rgb & 0xff000000) >>> 24;
+    return (rgb & 0xFF000000) >>> 24;
   }
 
   public static Color[] getColors() {
