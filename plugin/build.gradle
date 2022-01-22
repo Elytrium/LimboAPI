@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("com.github.johnrengelman.shadow").version("7.1.0")
+    id("com.github.johnrengelman.shadow").version("7.1.2")
 }
 
 dependencies {
@@ -11,12 +11,12 @@ dependencies {
     compileOnly("com.velocitypowered:velocity-proxy:3.1.2-SNAPSHOT") // From Elytrium Repo
 
     // Needs for some velocity methods
-    compileOnly("io.netty:netty-codec:4.1.72.Final")
+    compileOnly("io.netty:netty-codec:4.1.73.Final")
     compileOnly("it.unimi.dsi:fastutil-core:8.5.6")
 
     implementation("org.bstats:bstats-velocity:2.2.1")
 
-    compileOnly("com.github.spotbugs:spotbugs-annotations:4.5.2")
+    compileOnly("com.github.spotbugs:spotbugs-annotations:4.5.3")
 }
 
 shadowJar {

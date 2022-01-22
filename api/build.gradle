@@ -15,7 +15,7 @@ dependencies {
 
     api("net.kyori:adventure-nbt:4.9.3")
 
-    compileOnly("com.github.spotbugs:spotbugs-annotations:4.5.2")
+    compileOnly("com.github.spotbugs:spotbugs-annotations:4.5.3")
 }
 
 license {
