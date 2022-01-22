@@ -65,7 +65,9 @@ public class LimboImpl implements Limbo {
 
   private final LimboAPI plugin;
   private final VirtualWorld world;
-  private final Map<Class<?>, PreparedPacket> brandMessages = new HashMap<>();
+  private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
+
+  private String limboName;
 
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
@@ -92,7 +94,7 @@ public class LimboImpl implements Limbo {
     this.refresh();
   }
 
-  public void refresh() {
+  protected void refresh() {
     // TODO: Fix 1.16+ nether dimension
     JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGame joinGame = this.createJoinGamePacket();
@@ -125,14 +127,15 @@ public class LimboImpl implements Limbo {
     ConnectedPlayer player = (ConnectedPlayer) apiPlayer;
     MinecraftConnection connection = player.getConnection();
     Class<? extends LimboSessionHandler> handlerClass = handler.getClass();
+    if (this.limboName == null) {
+      this.limboName = handlerClass.getSimpleName();
+    }
 
     connection.eventLoop().execute(() -> {
       ChannelPipeline pipeline = connection.getChannel().pipeline();
 
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-        this.plugin.getLogger().info(
-            player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + handlerClass.getSimpleName() + " Limbo"
-        );
+        this.plugin.getLogger().info(player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + this.limboName + " Limbo");
       }
 
       if (!pipeline.names().contains("prepared-encoder")) {
@@ -195,6 +198,18 @@ public class LimboImpl implements Limbo {
 
     connection.write(this.spawnPosition);
     connection.write(this.chunks);
+  }
+
+  @Override
+  public Limbo setName(String name) {
+    this.limboName = name;
+    if (!this.brandMessages.isEmpty()) {
+      this.brandMessages.forEach((handlerClass, packet) ->
+          this.brandMessages.replace(handlerClass, packet, this.plugin.createPreparedPacket().prepare(this::createBrandMessage))
+      );
+    }
+
+    return this;
   }
 
   private DimensionData createDimensionData(Dimension dimension) {
@@ -332,16 +347,15 @@ public class LimboImpl implements Limbo {
     if (this.brandMessages.containsKey(handlerClass)) {
       return this.brandMessages.get(handlerClass);
     } else {
-      String simpleName = handlerClass.getSimpleName();
       PreparedPacket preparedPacket = this.plugin.createPreparedPacket()
-          .prepare(version -> this.createBrandMessage(simpleName, version));
+          .prepare(this::createBrandMessage);
       this.brandMessages.put(handlerClass, preparedPacket);
       return preparedPacket;
     }
   }
 
-  private PluginMessage createBrandMessage(String handlerName, ProtocolVersion version) {
-    String brand = "LimboAPI -> (" + handlerName + ")";
+  private PluginMessage createBrandMessage(ProtocolVersion version) {
+    String brand = "LimboAPI -> (" + this.limboName + ")";
     ByteBuf bufWithBrandString = Unpooled.buffer();
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       bufWithBrandString.writeCharSequence(brand, StandardCharsets.UTF_8);

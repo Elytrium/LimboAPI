@@ -68,7 +68,7 @@ import org.slf4j.Logger;
     id = "limboapi",
     name = "LimboAPI",
     version = BuildConstants.LIMBO_VERSION,
-    description = "Velocity plugin for making virtual servers ",
+    description = "Velocity plugin for making virtual servers.",
     url = "ely.su",
     authors = {
         "hevav",
@@ -105,6 +105,7 @@ public class LimboAPI implements LimboFactory {
     } catch (ClassNotFoundException e) {
       this.logger.error("Please update your Velocity binary to 3.1.x", e);
       this.server.shutdown();
+      return;
     }
 
     this.logger.info("Initializing Simple Virtual Block system...");
@@ -233,8 +234,8 @@ public class LimboAPI implements LimboFactory {
     return this.loginQueue.containsKey(player);
   }
 
-  public void addLoginQueue(Player player, LoginTasksQueue q) {
-    this.loginQueue.put(player, q);
+  public void addLoginQueue(Player player, LoginTasksQueue queue) {
+    this.loginQueue.put(player, queue);
   }
 
   public void removeLoginQueue(Player player) {
@@ -249,8 +250,8 @@ public class LimboAPI implements LimboFactory {
     return this.nextServer.containsKey(player);
   }
 
-  public void setNextServer(Player player, RegisteredServer q) {
-    this.nextServer.put(player, q);
+  public void setNextServer(Player player, RegisteredServer nextServer) {
+    this.nextServer.put(player, nextServer);
   }
 
   public void removeNextServer(Player player) {

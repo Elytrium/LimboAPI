@@ -3,7 +3,7 @@
 plugins {
     id("java")
     id("checkstyle")
-    id("com.github.spotbugs").version("5.0.3").apply(false)
+    id("com.github.spotbugs").version("5.0.5").apply(false)
     id("org.cadixdev.licenser").version("0.6.1").apply(false)
 }
 
@@ -13,7 +13,7 @@ allprojects {
     apply plugin: "org.cadixdev.licenser"
 
     setGroup("net.elytrium")
-    setVersion("1.0.3-rc4")
+    setVersion("1.0.3-rc5")
 
     compileJava {
         getOptions().setEncoding("UTF-8")
@@ -28,17 +28,17 @@ allprojects {
         mavenCentral()
 
         maven {
-            setName("papermc-repo")
-            setUrl("https://papermc.io/repo/repository/maven-public/")
-        }
-        maven {
             setName("elytrium-repo")
             setUrl("https://maven.elytrium.net/repo/")
+        }
+        maven {
+            setName("papermc-repo")
+            setUrl("https://papermc.io/repo/repository/maven-public/")
         }
     }
 
     checkstyle {
-        setToolVersion("9.2")
+        setToolVersion("9.2.1")
         setConfigFile(file("${this.getRootDir()}/config/checkstyle/checkstyle.xml"))
         setConfigProperties("configDirectory": "${this.getRootDir()}/config/checkstyle")
 
