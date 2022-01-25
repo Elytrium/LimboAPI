@@ -54,6 +54,7 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialInboundConnection;
 import com.velocitypowered.proxy.connection.client.LoginInboundConnection;
 import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
+import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
 import com.velocitypowered.proxy.protocol.packet.SetCompression;
 import java.lang.reflect.Constructor;
@@ -184,6 +185,7 @@ public class LoginListener {
         success.setUuid(playerUniqueId);
         connection.write(success);
 
+        connection.setState(StateRegistry.PLAY);
         this.server.getEventManager()
             .fire(new LoginLimboRegisterEvent(player))
             .thenAcceptAsync(limboEvent -> {
