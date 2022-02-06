@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Supplier;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
@@ -78,6 +79,8 @@ import org.slf4j.Logger;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
+  private static LimboAPI instance;
+
   private final VelocityServer server;
   private final Logger logger;
   private final Metrics.Factory metricsFactory;
@@ -86,6 +89,7 @@ public class LimboAPI implements LimboFactory {
   private final CachedPackets packets;
   private final HashMap<Player, LoginTasksQueue> loginQueue;
   private final HashMap<Player, RegisteredServer> nextServer;
+  private final HashMap<Player, UUID> initialUUID;
 
   private LoginListener loginListener;
 
@@ -99,6 +103,8 @@ public class LimboAPI implements LimboFactory {
     this.packets = new CachedPackets(this);
     this.loginQueue = new HashMap<>();
     this.nextServer = new HashMap<>();
+    this.initialUUID = new HashMap<>();
+    instance = this;
 
     try {
       Class.forName("com.velocitypowered.proxy.connection.client.LoginInboundConnection");
@@ -258,6 +264,18 @@ public class LimboAPI implements LimboFactory {
     this.nextServer.remove(player);
   }
 
+  public UUID getInitialUUID(Player player) {
+    return this.initialUUID.get(player);
+  }
+
+  public void setInitialUUID(Player player, UUID nextServer) {
+    this.initialUUID.put(player, nextServer);
+  }
+
+  public void removeInitialUUID(Player player) {
+    this.initialUUID.remove(player);
+  }
+
   public VelocityServer getServer() {
     return this.server;
   }
@@ -268,5 +286,9 @@ public class LimboAPI implements LimboFactory {
 
   public CachedPackets getPackets() {
     return this.packets;
+  }
+
+  public static LimboAPI getInstance() {
+    return instance;
   }
 }
