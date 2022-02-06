@@ -84,8 +84,8 @@ public class PlayerListItemHook extends PlayerListItem {
           ConnectedPlayer player = ((VelocityServerConnection) serverConnField.get(handler)).getPlayer();
           UUID initialID = LimboAPI.getInstance().getInitialID(player);
 
-          if (initialID.equals(item.getUuid())) {
-            items.set(i, new Item(player.getUniqueId())
+          if (player.getUniqueId().equals(item.getUuid())) {
+            items.set(i, new Item(initialID)
                 .setDisplayName(item.getDisplayName())
                 .setGameMode(item.getGameMode())
                 .setLatency(item.getLatency())
