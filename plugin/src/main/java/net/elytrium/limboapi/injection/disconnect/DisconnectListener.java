@@ -34,6 +34,6 @@ public class DisconnectListener {
     this.plugin.unsetLimboJoined(event.getPlayer());
     this.plugin.removeLoginQueue(event.getPlayer());
     this.plugin.removeNextServer(event.getPlayer());
-    this.plugin.removeInitialUUID(event.getPlayer());
+    this.plugin.removeInitialID(event.getPlayer());
   }
 }
