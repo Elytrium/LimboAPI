@@ -32,5 +32,8 @@ public class DisconnectListener {
   @Subscribe
   public void onDisconnect(DisconnectEvent event) {
     this.plugin.unsetLimboJoined(event.getPlayer());
+    this.plugin.removeLoginQueue(event.getPlayer());
+    this.plugin.removeNextServer(event.getPlayer());
+    this.plugin.removeInitialUUID(event.getPlayer());
   }
 }
