@@ -53,6 +53,7 @@ import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
+import net.elytrium.limboapi.injection.packet.PlayerListItemHook;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.server.CachedPackets;
@@ -89,11 +90,12 @@ public class LimboAPI implements LimboFactory {
   private final CachedPackets packets;
   private final HashMap<Player, LoginTasksQueue> loginQueue;
   private final HashMap<Player, RegisteredServer> nextServer;
-  private final HashMap<Player, UUID> initialUUID;
+  private final HashMap<Player, UUID> initialID;
 
   private LoginListener loginListener;
 
   @Inject
+  @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
   public LimboAPI(ProxyServer server, Logger logger, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
     this.server = (VelocityServer) server;
     this.logger = logger;
@@ -103,7 +105,7 @@ public class LimboAPI implements LimboFactory {
     this.packets = new CachedPackets(this);
     this.loginQueue = new HashMap<>();
     this.nextServer = new HashMap<>();
-    this.initialUUID = new HashMap<>();
+    this.initialID = new HashMap<>();
     instance = this;
 
     try {
@@ -118,9 +120,10 @@ public class LimboAPI implements LimboFactory {
     SimpleBlock.init();
     this.logger.info("Initializing Simple Virtual Item system...");
     SimpleItem.init();
-    this.logger.info("Hooking into EventManager and StateRegistry...");
+    this.logger.info("Hooking into EventManager, PlayerList and StateRegistry...");
     try {
       EventManagerHook.init(this);
+      PlayerListItemHook.init();
       LimboProtocol.init();
     } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
       e.printStackTrace();
@@ -264,16 +267,16 @@ public class LimboAPI implements LimboFactory {
     this.nextServer.remove(player);
   }
 
-  public UUID getInitialUUID(Player player) {
-    return this.initialUUID.get(player);
+  public UUID getInitialID(Player player) {
+    return this.initialID.get(player);
   }
 
-  public void setInitialUUID(Player player, UUID nextServer) {
-    this.initialUUID.put(player, nextServer);
+  public void setInitialID(Player player, UUID nextServer) {
+    this.initialID.put(player, nextServer);
   }
 
-  public void removeInitialUUID(Player player) {
-    this.initialUUID.remove(player);
+  public void removeInitialID(Player player) {
+    this.initialID.remove(player);
   }
 
   public VelocityServer getServer() {
