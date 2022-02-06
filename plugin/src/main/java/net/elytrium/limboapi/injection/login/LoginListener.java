@@ -133,8 +133,6 @@ public class LoginListener {
 
   @Subscribe
   public void onDisconnect(DisconnectEvent event) {
-    this.plugin.removeLoginQueue(event.getPlayer());
-    this.plugin.removeNextServer(event.getPlayer());
     this.onlineMode.remove(event.getPlayer().getUsername());
   }
 
@@ -184,6 +182,8 @@ public class LoginListener {
         success.setUsername(player.getUsername());
         success.setUuid(playerUniqueId);
         connection.write(success);
+
+        plugin.setInitialUUID(player, playerUniqueId);
 
         connection.setState(StateRegistry.PLAY);
         this.server.getEventManager()
