@@ -183,7 +183,7 @@ public class LoginListener {
         success.setUuid(playerUniqueId);
         connection.write(success);
 
-        plugin.setInitialUUID(player, playerUniqueId);
+        this.plugin.setInitialID(player, playerUniqueId);
 
         connection.setState(StateRegistry.PLAY);
         this.server.getEventManager()
