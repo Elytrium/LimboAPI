@@ -17,10 +17,19 @@
 
 package net.elytrium.limboapi.server;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.mojang.brigadier.tree.RootCommandNode;
+import com.velocitypowered.api.command.Command;
+import com.velocitypowered.api.command.CommandMeta;
+import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.proxy.command.registrar.BrigadierCommandRegistrar;
+import com.velocitypowered.proxy.command.registrar.CommandRegistrar;
+import com.velocitypowered.proxy.command.registrar.RawCommandRegistrar;
+import com.velocitypowered.proxy.command.registrar.SimpleCommandRegistrar;
 import com.velocitypowered.proxy.connection.ConnectionTypes;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
@@ -31,6 +40,7 @@ import com.velocitypowered.proxy.connection.registry.DimensionRegistry;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.Respawn;
@@ -43,6 +53,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.Limbo;
@@ -62,12 +74,20 @@ public class LimboImpl implements Limbo {
 
   private static final Field partialHashedSeed;
   private static final Field currentDimensionData;
+  private static final Field rootNode;
 
   private final LimboAPI plugin;
   private final VirtualWorld world;
   private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
 
   private String limboName;
+  private final RootCommandNode<CommandSource> commandNode = new RootCommandNode<>();
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+  private final List<CommandRegistrar<?>> registrars = ImmutableList.of(
+      new BrigadierCommandRegistrar(this.commandNode, this.lock.writeLock()),
+      new SimpleCommandRegistrar(this.commandNode, this.lock.writeLock()),
+      new RawCommandRegistrar(this.commandNode, this.lock.writeLock()));
 
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
@@ -82,6 +102,9 @@ public class LimboImpl implements Limbo {
 
       currentDimensionData = JoinGame.class.getDeclaredField("currentDimensionData");
       currentDimensionData.setAccessible(true);
+
+      rootNode = AvailableCommands.class.getDeclaredField("rootNode");
+      rootNode.setAccessible(true);
     } catch (NoSuchFieldException e) {
       throw new RuntimeException(e);
     }
@@ -98,10 +121,12 @@ public class LimboImpl implements Limbo {
     // TODO: Fix 1.16+ nether dimension
     JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGame joinGame = this.createJoinGamePacket();
+    AvailableCommands commands = this.createAvailableCommandsPacket();
 
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
-        .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16);
+        .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16)
+        .prepare(commands, ProtocolVersion.MINECRAFT_1_13);
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
@@ -213,6 +238,31 @@ public class LimboImpl implements Limbo {
     return this;
   }
 
+  @Override
+  public Limbo registerCommand(CommandMeta meta, Command command) {
+    for (final CommandRegistrar<?> registrar : this.registrars) {
+      if (this.tryRegister(registrar, command, meta)) {
+        this.refresh();
+        return this;
+      }
+    }
+
+    throw new IllegalArgumentException(
+        command + " does not implement a registrable Command subinterface");
+  }
+
+  // Ported from Velocity.
+  private <T extends Command> boolean tryRegister(final CommandRegistrar<T> registrar,
+                                                  final Command command, final CommandMeta meta) {
+    final Class<T> superInterface = registrar.registrableSuperInterface();
+    if (!superInterface.isInstance(command)) {
+      return false;
+    }
+
+    registrar.register(meta, superInterface.cast(command));
+    return true;
+  }
+
   private DimensionData createDimensionData(Dimension dimension) {
     return new DimensionData(dimension.getKey(), dimension.getModernId(), true,
         0.0F, false, false, false, true,
@@ -267,6 +317,18 @@ public class LimboImpl implements Limbo {
     joinGame.setDimension(this.world.getDimension().getLegacyId());
 
     return joinGame;
+  }
+
+  private AvailableCommands createAvailableCommandsPacket() {
+    try {
+      AvailableCommands packet = new AvailableCommands();
+      rootNode.set(packet, this.commandNode);
+
+      return packet;
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+      return null;
+    }
   }
 
   private List<ChunkData> createChunksPackets() {

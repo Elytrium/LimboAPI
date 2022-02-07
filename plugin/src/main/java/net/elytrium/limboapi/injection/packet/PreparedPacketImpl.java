@@ -51,6 +51,10 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   @Override
   public <T> PreparedPacketImpl prepare(T packet) {
+    if (packet == null) {
+      return this;
+    }
+
     return this.prepare((version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
   }
 
@@ -61,6 +65,10 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   @Override
   public <T> PreparedPacketImpl prepare(List<T> packets) {
+    if (packets == null) {
+      return this;
+    }
+
     for (T packet : packets) {
       this.prepare((version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
     }
@@ -70,11 +78,19 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   @Override
   public <T> PreparedPacketImpl prepare(T packet, ProtocolVersion from) {
+    if (packet == null) {
+      return this;
+    }
+
     return this.prepare((version) -> packet, from, ProtocolVersion.MAXIMUM_VERSION);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(T packet, ProtocolVersion from, ProtocolVersion to) {
+    if (packet == null) {
+      return this;
+    }
+
     return this.prepare((version) -> packet, from, to);
   }
 
@@ -90,6 +106,10 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   @Override
   public <T> PreparedPacketImpl prepare(List<T> packets, ProtocolVersion from) {
+    if (packets == null) {
+      return this;
+    }
+
     for (T packet : packets) {
       this.prepare(packet, from);
     }
@@ -99,6 +119,10 @@ public class PreparedPacketImpl implements PreparedPacket {
 
   @Override
   public <T> PreparedPacketImpl prepare(List<T> packets, ProtocolVersion from, ProtocolVersion to) {
+    if (packets == null) {
+      return this;
+    }
+
     for (T packet : packets) {
       this.prepare(packet, from, to);
     }
