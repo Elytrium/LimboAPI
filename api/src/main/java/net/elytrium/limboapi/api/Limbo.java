@@ -7,6 +7,8 @@
 
 package net.elytrium.limboapi.api;
 
+import com.velocitypowered.api.command.Command;
+import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.proxy.Player;
 
 public interface Limbo {
@@ -16,4 +18,6 @@ public interface Limbo {
   void respawnPlayer(Player player);
 
   Limbo setName(String name);
+
+  Limbo registerCommand(CommandMeta meta, Command command);
 }
