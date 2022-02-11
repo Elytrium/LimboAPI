@@ -21,16 +21,19 @@ import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.plugin.PluginManager;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.command.VelocityCommandManager;
 import com.velocitypowered.proxy.event.VelocityEventManager;
+import net.elytrium.limboapi.LimboAPI;
+
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import net.elytrium.limboapi.LimboAPI;
 
 public class EventManagerHook extends VelocityEventManager {
 
   private static final Field eventManager;
+  private static final Field eventManagerInCommandManager;
 
   private final LimboAPI plugin;
   private final Set<GameProfile> proceededProfiles = new HashSet<>();
@@ -39,6 +42,8 @@ public class EventManagerHook extends VelocityEventManager {
     try {
       eventManager = VelocityServer.class.getDeclaredField("eventManager");
       eventManager.setAccessible(true);
+      eventManagerInCommandManager = VelocityCommandManager.class.getDeclaredField("eventManager");
+      eventManagerInCommandManager.setAccessible(true);
     } catch (NoSuchFieldException e) {
       throw new RuntimeException(e);
     }
@@ -50,7 +55,9 @@ public class EventManagerHook extends VelocityEventManager {
   }
 
   public static void init(LimboAPI plugin) throws IllegalAccessException {
-    eventManager.set(plugin.getServer(), new EventManagerHook(plugin.getServer().getPluginManager(), plugin));
+    EventManagerHook hook = new EventManagerHook(plugin.getServer().getPluginManager(), plugin);
+    eventManager.set(plugin.getServer(), hook);
+    eventManagerInCommandManager.set(plugin.getServer().getCommandManager(), hook);
   }
 
   @Override
