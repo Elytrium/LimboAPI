@@ -23,12 +23,11 @@ import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommandManager;
 import com.velocitypowered.proxy.event.VelocityEventManager;
-import net.elytrium.limboapi.LimboAPI;
-
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import net.elytrium.limboapi.LimboAPI;
 
 public class EventManagerHook extends VelocityEventManager {
 
