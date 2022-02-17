@@ -274,7 +274,7 @@ public class LimboProtocol {
       } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
         throw new RuntimeException(e);
       }
-    }).toArray());
+    }).toArray(StateRegistry.PacketMapping[]::new));
   }
 
   private static StateRegistry.PacketMapping map(int id, ProtocolVersion version, boolean encodeOnly)
