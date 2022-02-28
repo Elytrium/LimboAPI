@@ -120,19 +120,23 @@ public class LimboImpl implements Limbo {
   protected void refresh() {
     // TODO: Fix 1.16+ nether dimension
     JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
-    JoinGame joinGame = this.createJoinGamePacket();
+    JoinGame joinGame = this.createJoinGamePacket(false);
+    JoinGame joinGameModern = this.createJoinGamePacket(true);
     AvailableCommands commands = this.createAvailableCommandsPacket();
 
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
-        .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16)
+        .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_18)
+        .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2)
         .prepare(commands, ProtocolVersion.MINECRAFT_1_13);
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
     this.createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_16)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16));
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_18));
+    this.createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_18_2)
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2));
 
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
 
@@ -263,16 +267,16 @@ public class LimboImpl implements Limbo {
     return true;
   }
 
-  private DimensionData createDimensionData(Dimension dimension) {
+  private DimensionData createDimensionData(Dimension dimension, boolean modern) {
     return new DimensionData(dimension.getKey(), dimension.getModernId(), true,
         0.0F, false, false, false, true,
         false, false, false, false, 256,
-        "minecraft:infiniburn_nether",
+        modern ? "#minecraft:infiniburn_nether" : "minecraft:infiniburn_nether",
         0L, false, 1.0, dimension.getKey(), 0, 256
     );
   }
 
-  private JoinGame createJoinGamePacket() {
+  private JoinGame createJoinGamePacket(boolean modern) {
     Dimension dimension = this.world.getDimension();
 
     JoinGame joinGame = new JoinGame();
@@ -296,7 +300,7 @@ public class LimboImpl implements Limbo {
     joinGame.setIsHardcore(true);
 
     String key = dimension.getKey();
-    DimensionData dimensionData = this.createDimensionData(dimension);
+    DimensionData dimensionData = this.createDimensionData(dimension, modern);
 
     joinGame.setDimensionRegistry(new DimensionRegistry(ImmutableSet.of(dimensionData), ImmutableSet.of(key)));
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
@@ -313,7 +317,7 @@ public class LimboImpl implements Limbo {
   }
 
   private JoinGame createLegacyJoinGamePacket() {
-    JoinGame joinGame = this.createJoinGamePacket();
+    JoinGame joinGame = this.createJoinGamePacket(false);
     joinGame.setDimension(this.world.getDimension().getLegacyId());
 
     return joinGame;
