@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import org.slf4j.Logger;
@@ -40,12 +39,14 @@ import org.slf4j.Logger;
 public class PreparedPacketImpl implements PreparedPacket {
 
   private final Map<ProtocolVersion, List<ByteBuf>> packets = new ConcurrentHashMap<>();
-  private final ProtocolVersion minVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MIN_VERSION);
-  private final ProtocolVersion maxVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MAX_VERSION);
+  private final ProtocolVersion minVersion;
+  private final ProtocolVersion maxVersion;
 
   private final Logger logger;
 
-  public PreparedPacketImpl(LimboAPI plugin) {
+  public PreparedPacketImpl(ProtocolVersion minVersion, ProtocolVersion maxVersion, LimboAPI plugin) {
+    this.minVersion = minVersion;
+    this.maxVersion = maxVersion;
     this.logger = plugin.getLogger();
   }
 
@@ -191,3 +192,4 @@ public class PreparedPacketImpl implements PreparedPacket {
     }
   }
 }
+
