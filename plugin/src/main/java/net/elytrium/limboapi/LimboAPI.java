@@ -20,6 +20,7 @@ package net.elytrium.limboapi;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
@@ -91,6 +92,8 @@ public class LimboAPI implements LimboFactory {
   private final HashMap<Player, LoginTasksQueue> loginQueue;
   private final HashMap<Player, RegisteredServer> nextServer;
   private final HashMap<Player, UUID> initialID;
+  private ProtocolVersion minVersion;
+  private ProtocolVersion maxVersion;
 
   private LoginListener loginListener;
 
@@ -143,12 +146,25 @@ public class LimboAPI implements LimboFactory {
 
   public void reload() {
     Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"), this.logger);
+
     this.logger.info("Creating and preparing packets...");
+    this.reloadVersion();
     this.packets.createPackets();
     this.loginListener = new LoginListener(this, this.server);
     this.server.getEventManager().register(this, this.loginListener);
     this.server.getEventManager().register(this, new DisconnectListener(this));
     this.logger.info("Loaded!");
+  }
+
+  private void reloadVersion() {
+    this.maxVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MAX_VERSION);
+    this.minVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MIN_VERSION);
+
+    if (ProtocolVersion.MAXIMUM_VERSION.compareTo(this.maxVersion) > 0 || ProtocolVersion.MINIMUM_VERSION.compareTo(this.minVersion) < 0) {
+      this.logger.warn("Currently working only with "
+          + this.minVersion.getVersionIntroducedIn() + " - " + this.maxVersion.getMostRecentSupportedVersion()
+          + " versions, modify the plugins/limboapi/config.yml file if you want the plugin to work with other versions.");
+    }
   }
 
   @Override
@@ -183,7 +199,7 @@ public class LimboAPI implements LimboFactory {
 
   @Override
   public PreparedPacket createPreparedPacket() {
-    return new PreparedPacketImpl(this);
+    return new PreparedPacketImpl(this.minVersion, this.maxVersion, this);
   }
 
   @Override
@@ -295,3 +311,4 @@ public class LimboAPI implements LimboFactory {
     return instance;
   }
 }
+
