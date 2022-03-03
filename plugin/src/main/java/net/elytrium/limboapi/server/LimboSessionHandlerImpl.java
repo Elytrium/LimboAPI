@@ -177,7 +177,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   @Override
   public void disconnected() {
     this.callback.onDisconnect();
-    this.keepAliveTask.cancel();
+    if (this.keepAliveTask != null) {
+      this.keepAliveTask.cancel();
+    }
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
       this.plugin.getLogger().info(
           this.player.getUsername() + " (" + this.player.getRemoteAddress() + ") has disconnected from the " + this.limboName.get() + " Limbo"

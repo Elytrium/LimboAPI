@@ -194,8 +194,8 @@ public class LoginListener {
               this.plugin.addLoginQueue(player, queue);
               queue.next();
             }, connection.eventLoop());
-      } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
-        ex.printStackTrace();
+      } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        e.printStackTrace();
       }
     });
   }
