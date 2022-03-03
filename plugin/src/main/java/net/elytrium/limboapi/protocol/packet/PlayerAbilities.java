@@ -26,13 +26,13 @@ import io.netty.buffer.ByteBuf;
 public class PlayerAbilities implements MinecraftPacket {
 
   private final byte flags;
-  private final float speed;
-  private final float field;
+  private final float walkSpeed;
+  private final float flySpeed;
 
-  public PlayerAbilities(byte flags, float speed, float field) {
+  public PlayerAbilities(byte flags, float flySpeed, float walkSpeed) {
     this.flags = flags;
-    this.speed = speed;
-    this.field = field;
+    this.flySpeed = flySpeed;
+    this.walkSpeed = walkSpeed;
   }
 
   public PlayerAbilities() {
@@ -47,8 +47,8 @@ public class PlayerAbilities implements MinecraftPacket {
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     buf.writeByte(this.flags);
-    buf.writeFloat(this.speed);
-    buf.writeFloat(this.field);
+    buf.writeFloat(this.flySpeed);
+    buf.writeFloat(this.walkSpeed);
   }
 
   @Override
@@ -60,8 +60,8 @@ public class PlayerAbilities implements MinecraftPacket {
   public String toString() {
     return "PlayerAbilities{"
         + "flags=" + this.flags
-        + ", speed=" + this.speed
-        + ", field=" + this.field
+        + ", flySpeed=" + this.flySpeed
+        + ", walkSpeed=" + this.walkSpeed
         + "}";
   }
 }

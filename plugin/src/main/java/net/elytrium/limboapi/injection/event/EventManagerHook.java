@@ -92,8 +92,8 @@ public class EventManagerHook extends VelocityEventManager {
         this.proceededProfiles.add(profile);
 
         return CompletableFuture.completedFuture(event);
-      } catch (IllegalAccessException ex) {
-        ex.printStackTrace();
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
       }
     }
 

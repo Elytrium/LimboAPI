@@ -17,7 +17,6 @@
 
 package net.elytrium.limboapi.protocol.packet.world;
 
-import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
@@ -88,9 +87,9 @@ public class ChunkData implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, Direction direction, ProtocolVersion version) {
-    if (!this.chunk.isFullChunk()) {
+    if (!this.chunk.isFullChunk() && (version.equals(ProtocolVersion.MINECRAFT_1_17) || version.equals(ProtocolVersion.MINECRAFT_1_17_1))) {
       // 1.17 supports only full chunks.
-      Preconditions.checkState(version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0);
+      return;
     }
 
     buf.writeInt(this.chunk.getX());
@@ -129,8 +128,7 @@ public class ChunkData implements MinecraftPacket {
     }
 
     // 1.15 - 1.17 biomes.
-    if (this.chunk.isFullChunk() && version.compareTo(ProtocolVersion.MINECRAFT_1_15) >= 0
-        && version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) <= 0) {
+    if (this.chunk.isFullChunk() && version.compareTo(ProtocolVersion.MINECRAFT_1_15) >= 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) <= 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) >= 0) {
         ProtocolUtils.writeVarInt(buf, this.biomeData.getPost115Biomes().length);
         for (int b : this.biomeData.getPost115Biomes()) {
@@ -154,16 +152,16 @@ public class ChunkData implements MinecraftPacket {
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
           long[] mask = this.create117Mask();
           buf.writeBoolean(true); // Trust edges.
-          ProtocolUtils.writeVarInt(buf, mask.length); // Skylight mask.
+          ProtocolUtils.writeVarInt(buf, mask.length); // Sky light mask.
           for (long m : mask) {
             buf.writeLong(m);
           }
-          ProtocolUtils.writeVarInt(buf, mask.length); // BlockLight mask.
+          ProtocolUtils.writeVarInt(buf, mask.length); // Block light mask.
           for (long m : mask) {
             buf.writeLong(m);
           }
-          ProtocolUtils.writeVarInt(buf, 0); // EmptySkylight mask.
-          ProtocolUtils.writeVarInt(buf, 0); // EmptyBlockLight mask.
+          ProtocolUtils.writeVarInt(buf, 0); // Empty sky light mask.
+          ProtocolUtils.writeVarInt(buf, 0); // Empty block light mask.
           ProtocolUtils.writeVarInt(buf, this.chunk.getLight().length);
           for (LightSection section : this.chunk.getLight()) {
             ProtocolUtils.writeByteArray(buf, section.getSkyLight().getData());
@@ -238,7 +236,11 @@ public class ChunkData implements MinecraftPacket {
   }
 
   private long[] create117Mask() {
-    return BitSet.valueOf(new long[] {this.mask}).toLongArray();
+    return BitSet.valueOf(
+        new long[] {
+            this.mask
+        }
+    ).toLongArray();
   }
 
   private void write17(ByteBuf out, ByteBuf data) {
