@@ -81,8 +81,6 @@ import org.slf4j.Logger;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
-  private static LimboAPI instance;
-
   private final VelocityServer server;
   private final Logger logger;
   private final Metrics.Factory metricsFactory;
@@ -109,7 +107,6 @@ public class LimboAPI implements LimboFactory {
     this.loginQueue = new HashMap<>();
     this.nextServer = new HashMap<>();
     this.initialID = new HashMap<>();
-    instance = this;
 
     try {
       Class.forName("com.velocitypowered.proxy.connection.client.LoginInboundConnection");
@@ -126,7 +123,7 @@ public class LimboAPI implements LimboFactory {
     this.logger.info("Hooking into EventManager, PlayerList and StateRegistry...");
     try {
       EventManagerHook.init(this);
-      PlayerListItemHook.init();
+      PlayerListItemHook.init(this);
       LimboProtocol.init();
     } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
       e.printStackTrace();
@@ -157,7 +154,11 @@ public class LimboAPI implements LimboFactory {
   }
 
   private void reloadVersion() {
-    this.maxVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MAX_VERSION);
+    if (Settings.IMP.MAIN.PREPARE_MAX_VERSION.equals("LATEST")) {
+      this.maxVersion = ProtocolVersion.MAXIMUM_VERSION;
+    } else {
+      this.maxVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MAX_VERSION);
+    }
     this.minVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MIN_VERSION);
 
     if (ProtocolVersion.MAXIMUM_VERSION.compareTo(this.maxVersion) > 0 || ProtocolVersion.MINIMUM_VERSION.compareTo(this.minVersion) < 0) {
@@ -283,16 +284,16 @@ public class LimboAPI implements LimboFactory {
     this.nextServer.remove(player);
   }
 
-  public UUID getInitialID(Player player) {
-    return this.initialID.get(player);
-  }
-
   public void setInitialID(Player player, UUID nextServer) {
     this.initialID.put(player, nextServer);
   }
 
   public void removeInitialID(Player player) {
     this.initialID.remove(player);
+  }
+
+  public UUID getInitialID(Player player) {
+    return this.initialID.get(player);
   }
 
   public VelocityServer getServer() {
@@ -305,10 +306,6 @@ public class LimboAPI implements LimboFactory {
 
   public CachedPackets getPackets() {
     return this.packets;
-  }
-
-  public static LimboAPI getInstance() {
-    return instance;
   }
 }
 

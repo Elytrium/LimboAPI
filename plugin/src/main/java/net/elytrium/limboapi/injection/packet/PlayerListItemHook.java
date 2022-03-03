@@ -36,9 +36,16 @@ import net.elytrium.limboapi.LimboAPI;
 
 @SuppressWarnings("unchecked")
 public class PlayerListItemHook extends PlayerListItem {
+
   private static Field serverConnField;
 
-  public static void init() {
+  private final LimboAPI plugin;
+
+  private PlayerListItemHook(LimboAPI plugin) {
+    this.plugin = plugin;
+  }
+
+  public static void init(LimboAPI plugin) {
     try {
       Field versionsField = StateRegistry.PacketRegistry.class.getDeclaredField("versions");
       versionsField.setAccessible(true);
@@ -64,7 +71,7 @@ public class PlayerListItemHook extends PlayerListItem {
               int packetId = packetClassToId.getInt(PlayerListItem.class);
               packetClassToId.put(PlayerListItemHook.class, packetId);
               packetIdToSupplier.remove(packetId);
-              packetIdToSupplier.put(packetId, PlayerListItemHook::new);
+              packetIdToSupplier.put(packetId, () -> new PlayerListItemHook(plugin));
             } catch (IllegalAccessException e) {
               e.printStackTrace();
             }
@@ -79,10 +86,10 @@ public class PlayerListItemHook extends PlayerListItem {
     if (handler instanceof BackendPlaySessionHandler) {
       try {
         List<Item> items = this.getItems();
-        for (int i = 0; i < items.size(); i++) {
+        for (int i = 0; i < items.size(); ++i) {
           Item item = items.get(i);
           ConnectedPlayer player = ((VelocityServerConnection) serverConnField.get(handler)).getPlayer();
-          UUID initialID = LimboAPI.getInstance().getInitialID(player);
+          UUID initialID = this.plugin.getInitialID(player);
 
           if (player.getUniqueId().equals(item.getUuid())) {
             items.set(i, new Item(initialID)

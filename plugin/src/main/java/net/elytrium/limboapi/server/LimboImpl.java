@@ -80,14 +80,16 @@ public class LimboImpl implements Limbo {
   private final VirtualWorld world;
   private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
 
-  private String limboName;
   private final RootCommandNode<CommandSource> commandNode = new RootCommandNode<>();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final List<CommandRegistrar<?>> registrars = ImmutableList.of(
       new BrigadierCommandRegistrar(this.commandNode, this.lock.writeLock()),
       new SimpleCommandRegistrar(this.commandNode, this.lock.writeLock()),
-      new RawCommandRegistrar(this.commandNode, this.lock.writeLock()));
+      new RawCommandRegistrar(this.commandNode, this.lock.writeLock())
+  );
+
+  private String limboName;
 
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
@@ -245,21 +247,19 @@ public class LimboImpl implements Limbo {
 
   @Override
   public Limbo registerCommand(CommandMeta meta, Command command) {
-    for (final CommandRegistrar<?> registrar : this.registrars) {
+    for (CommandRegistrar<?> registrar : this.registrars) {
       if (this.tryRegister(registrar, command, meta)) {
         this.refresh();
         return this;
       }
     }
 
-    throw new IllegalArgumentException(
-        command + " does not implement a registrable Command subinterface");
+    throw new IllegalArgumentException(command + " does not implement a registrable Command sub interface.");
   }
 
-  // Ported from Velocity.
-  private <T extends Command> boolean tryRegister(final CommandRegistrar<T> registrar,
-                                                  final Command command, final CommandMeta meta) {
-    final Class<T> superInterface = registrar.registrableSuperInterface();
+  // From Velocity.
+  private <T extends Command> boolean tryRegister(CommandRegistrar<T> registrar, Command command, CommandMeta meta) {
+    Class<T> superInterface = registrar.registrableSuperInterface();
     if (!superInterface.isInstance(command)) {
       return false;
     }
@@ -328,7 +328,6 @@ public class LimboImpl implements Limbo {
     try {
       AvailableCommands packet = new AvailableCommands();
       rootNode.set(packet, this.commandNode);
-
       return packet;
     } catch (IllegalAccessException e) {
       e.printStackTrace();
