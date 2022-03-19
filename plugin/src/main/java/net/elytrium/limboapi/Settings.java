@@ -57,6 +57,13 @@ public class Settings extends Config {
     public String PREPARE_MIN_VERSION = "1_7_2";
     public String PREPARE_MAX_VERSION = "LATEST";
 
+    @Comment({
+        "ReceivingLevelScreen in Minecraft 1.18.2 closes only after receiving either a non-empty chunk or both compass",
+        "packet and a PosAndLook with the height bigger maxBuildHeight. This parameter stands for the delay between",
+        "maxBuildHeight PosAndLook and default PosAndLook"
+    })
+    public int RECEIVER_LEVEL_1_18_2_FIXER_DELAY = 2500;
+
     @Create
     public MESSAGES MESSAGES;
 

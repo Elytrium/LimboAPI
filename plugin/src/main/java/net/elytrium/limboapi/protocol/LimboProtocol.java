@@ -36,6 +36,7 @@ import java.util.function.Supplier;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.protocol.packet.ChangeGameState;
+import net.elytrium.limboapi.protocol.packet.DefaultSpawnPosition;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.Player;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
@@ -241,6 +242,19 @@ public class LimboProtocol {
             map(0x1E, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x1D, ProtocolVersion.MINECRAFT_1_16_2, true),
             map(0x1E, ProtocolVersion.MINECRAFT_1_17, true)
+        });
+    register(PacketDirection.CLIENTBOUND,
+        DefaultSpawnPosition.class, DefaultSpawnPosition::new,
+        new StateRegistry.PacketMapping[] {
+            map(0x05, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x43, ProtocolVersion.MINECRAFT_1_9, true),
+            map(0x45, ProtocolVersion.MINECRAFT_1_12, true),
+            map(0x46, ProtocolVersion.MINECRAFT_1_12_1, true),
+            map(0x49, ProtocolVersion.MINECRAFT_1_13, true),
+            map(0x4D, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x4E, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x42, ProtocolVersion.MINECRAFT_1_16, true),
+            map(0x4B, ProtocolVersion.MINECRAFT_1_17, true)
         });
   }
 

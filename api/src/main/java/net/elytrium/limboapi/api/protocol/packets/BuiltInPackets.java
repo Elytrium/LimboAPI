@@ -12,6 +12,7 @@ public enum BuiltInPackets {
 
   ChangeGameState("net.elytrium.limboapi.protocol.packet.ChangeGameState"),
   ChunkData("net.elytrium.limboapi.protocol.packet.world.ChunkData"),
+  DefaultSpawnPosition("net.elytrium.limboapi.protocol.packet.DefaultSpawnPosition"),
   MapData("net.elytrium.limboapi.protocol.packet.MapDataPacket"),
   Player("net.elytrium.limboapi.protocol.packet.Player"),
   PlayerAbilities("net.elytrium.limboapi.protocol.packet.PlayerAbilities"),
