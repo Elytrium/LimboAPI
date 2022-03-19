@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.elytrium.limboapi.LimboAPI;
@@ -66,6 +67,7 @@ import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
+import net.elytrium.limboapi.protocol.packet.DefaultSpawnPosition;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
@@ -80,20 +82,19 @@ public class LimboImpl implements Limbo {
   private final VirtualWorld world;
   private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
 
+  private String limboName;
   private final RootCommandNode<CommandSource> commandNode = new RootCommandNode<>();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final List<CommandRegistrar<?>> registrars = ImmutableList.of(
       new BrigadierCommandRegistrar(this.commandNode, this.lock.writeLock()),
       new SimpleCommandRegistrar(this.commandNode, this.lock.writeLock()),
-      new RawCommandRegistrar(this.commandNode, this.lock.writeLock())
-  );
-
-  private String limboName;
+      new RawCommandRegistrar(this.commandNode, this.lock.writeLock()));
 
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
   private PreparedPacket safeRejoinPackets;
+  private PreparedPacket postJoinPackets;
   private PreparedPacket chunks;
   private PreparedPacket spawnPosition;
 
@@ -124,13 +125,18 @@ public class LimboImpl implements Limbo {
     JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGame joinGame = this.createJoinGamePacket(false);
     JoinGame joinGameModern = this.createJoinGamePacket(true);
-    AvailableCommands commands = this.createAvailableCommandsPacket();
 
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_18)
         .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2)
-        .prepare(commands, ProtocolVersion.MINECRAFT_1_13);
+        // ReceivingLevelScreen in Minecraft 1.18.2 closes only after receiving either a non-empty chunk or both compass
+        // packet and a PosAndLook with the height bigger maxBuildHeight.
+        .prepare(
+            this.createPlayerPosAndLook(
+                this.world.getSpawnX(), 0, this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
+            ), ProtocolVersion.MINECRAFT_1_18_2
+        );
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
@@ -140,12 +146,18 @@ public class LimboImpl implements Limbo {
     this.createFastClientServerSwitch(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2));
 
+    AvailableCommands commands = this.createAvailableCommandsPacket();
+    DefaultSpawnPosition spawnPosition = this.createDefaultSpawnPositionPacket();
+    this.postJoinPackets = this.plugin.createPreparedPacket()
+        .prepare(commands, ProtocolVersion.MINECRAFT_1_13)
+        .prepare(spawnPosition);
+
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
 
     List<ChunkData> chunkPackets = this.createChunksPackets();
     this.chunks = this.plugin.createPreparedPacket().prepare(chunkPackets, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_16_4);
+
     this.spawnPosition = this.plugin.createPreparedPacket()
-        .prepare(this.createPlayerPosAndLook(0.0, 0.0, 0.0, 0.0f, 0.0f), ProtocolVersion.MINECRAFT_1_18_2)
         .prepare(
             this.createPlayerPosAndLook(
                 this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
@@ -205,6 +217,8 @@ public class LimboImpl implements Limbo {
       } else {
         connection.delayedWrite(this.joinPackets);
       }
+
+      connection.delayedWrite(this.postJoinPackets);
       connection.delayedWrite(this.getBrandMessage(handlerClass));
 
       this.plugin.setLimboJoined(player);
@@ -221,9 +235,21 @@ public class LimboImpl implements Limbo {
 
       connection.flush();
 
-      this.respawnPlayer(player);
-      sessionHandler.onSpawn(this, new LimboPlayerImpl(this.plugin, this, player));
+      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_18_2) >= 0) {
+        this.plugin.getServer()
+            .getScheduler()
+            .buildTask(this.plugin, () -> connection.eventLoop().execute(() -> this.proceed(player, sessionHandler)))
+            .delay(Settings.IMP.MAIN.RECEIVER_LEVEL_1_18_2_FIXER_DELAY, TimeUnit.MILLISECONDS)
+            .schedule();
+      } else {
+        this.proceed(player, sessionHandler);
+      }
     });
+  }
+
+  private void proceed(ConnectedPlayer player, LimboSessionHandlerImpl sessionHandler) {
+    this.respawnPlayer(player);
+    sessionHandler.onSpawn(this, new LimboPlayerImpl(this.plugin, this, player));
   }
 
   @Override
@@ -257,7 +283,8 @@ public class LimboImpl implements Limbo {
       }
     }
 
-    throw new IllegalArgumentException(command + " does not implement a registrable Command sub interface.");
+    throw new IllegalArgumentException(
+        command + " does not implement a registrable Command subinterface");
   }
 
   // From Velocity.
@@ -327,10 +354,15 @@ public class LimboImpl implements Limbo {
     return joinGame;
   }
 
+  private DefaultSpawnPosition createDefaultSpawnPositionPacket() {
+    return new DefaultSpawnPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0f);
+  }
+
   private AvailableCommands createAvailableCommandsPacket() {
     try {
       AvailableCommands packet = new AvailableCommands();
       rootNode.set(packet, this.commandNode);
+
       return packet;
     } catch (IllegalAccessException e) {
       e.printStackTrace();
@@ -449,3 +481,4 @@ public class LimboImpl implements Limbo {
     return new ChunkData(chunk.getFullChunkSnapshot(), true);
   }
 }
+

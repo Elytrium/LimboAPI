@@ -17,6 +17,7 @@
 
 package net.elytrium.limboapi.server;
 
+import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -60,6 +61,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private long keepAliveLastSend;
   private long ping;
   private int genericBytes = 0;
+  private boolean fixed;
 
   static {
     try {
@@ -78,9 +80,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.originalHandler = originalHandler;
     this.previousServer = previousServer;
     this.limboName = limboName;
+    this.fixed = player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_18_2) < 0;
   }
 
   public void onSpawn(LimboImpl server, LimboPlayer player) {
+    this.fixed = true;
     this.callback.onSpawn(server, player);
 
     this.keepAliveTask = this.plugin.getServer().getScheduler().buildTask(this.plugin, () -> {
@@ -94,17 +98,29 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   public boolean handle(Player packet) {
+    if (!this.fixed) {
+      return true;
+    }
+
     this.callback.onGround(packet.isOnGround());
     return true;
   }
 
   public boolean handle(PlayerPosition packet) {
+    if (!this.fixed) {
+      return true;
+    }
+
     this.callback.onGround(packet.isOnGround());
     this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
     return true;
   }
 
   public boolean handle(PlayerPositionAndLook packet) {
+    if (!this.fixed) {
+      return true;
+    }
+
     this.callback.onGround(packet.isOnGround());
     this.callback.onRotate(packet.getYaw(), packet.getPitch());
     this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
@@ -113,6 +129,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   public boolean handle(TeleportConfirm packet) {
+    if (!this.fixed) {
+      return true;
+    }
+
     this.callback.onTeleport(packet.getTeleportId());
     return true;
   }
@@ -214,3 +234,4 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     return this.ping;
   }
 }
+
