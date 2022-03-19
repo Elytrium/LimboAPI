@@ -143,7 +143,7 @@ public class LimboImpl implements Limbo {
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
 
     List<ChunkData> chunkPackets = this.createChunksPackets();
-    this.chunks = chunkPackets.size() == 0 ? null : this.plugin.createPreparedPacket().prepare(chunkPackets);
+    this.chunks = this.plugin.createPreparedPacket().prepare(chunkPackets, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_16_4);
     this.spawnPosition = this.plugin.createPreparedPacket()
         .prepare(this.createPlayerPosAndLook(0.0, 0.0, 0.0, 0.0f, 0.0f), ProtocolVersion.MINECRAFT_1_18_2)
         .prepare(
@@ -231,7 +231,7 @@ public class LimboImpl implements Limbo {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
     connection.write(this.spawnPosition);
-    if (this.chunks != null) {
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_17) < 0) {
       connection.write(this.chunks);
     }
   }
