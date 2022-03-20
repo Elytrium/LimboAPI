@@ -131,7 +131,7 @@ public class LimboImpl implements Limbo {
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_18)
         .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2)
         // ReceivingLevelScreen in Minecraft 1.18.2 closes only after receiving either a non-empty chunk or both compass
-        // packet and a PosAndLook with the height bigger maxBuildHeight.
+        // packet and a PosAndLook packet with the height bigger than maxBuildHeight.
         .prepare(
             this.createPlayerPosAndLook(
                 this.world.getSpawnX(), Integer.MAX_VALUE, this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
@@ -155,7 +155,7 @@ public class LimboImpl implements Limbo {
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
 
     List<ChunkData> chunkPackets = this.createChunksPackets();
-    this.chunks = this.plugin.createPreparedPacket().prepare(chunkPackets, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_16_4);
+    this.chunks = chunkPackets.size() == 0 ? null : this.plugin.createPreparedPacket().prepare(chunkPackets);
 
     this.spawnPosition = this.plugin.createPreparedPacket()
         .prepare(
@@ -164,6 +164,9 @@ public class LimboImpl implements Limbo {
             )
         ).prepare(
             this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()), ProtocolVersion.MINECRAFT_1_14
+        ).prepare(
+            this.createVoidChunksPackets((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ()),
+            ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_16_4
         );
   }
 
@@ -257,7 +260,7 @@ public class LimboImpl implements Limbo {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
     connection.write(this.spawnPosition);
-    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_17) < 0) {
+    if (this.chunks != null) {
       connection.write(this.chunks);
     }
   }
@@ -377,6 +380,10 @@ public class LimboImpl implements Limbo {
     }
 
     return packets;
+  }
+
+  private ChunkData createVoidChunksPackets(int x, int y, int z) {
+    return this.createChunkData(this.plugin.createVirtualChunk(x >> 4, z >> 4), y);
   }
 
   // Velocity backport.

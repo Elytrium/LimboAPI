@@ -54,7 +54,7 @@ public class SimpleWorld implements VirtualWorld {
     this.yaw = yaw;
     this.pitch = pitch;
 
-    this.getChunkOrNew((int) x, (int) z);
+    //this.getChunkOrNew((int) x, (int) z);
   }
 
   @Override
