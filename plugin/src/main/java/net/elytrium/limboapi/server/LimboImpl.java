@@ -134,7 +134,7 @@ public class LimboImpl implements Limbo {
         // packet and a PosAndLook with the height bigger maxBuildHeight.
         .prepare(
             this.createPlayerPosAndLook(
-                this.world.getSpawnX(), 0, this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
+                this.world.getSpawnX(), Integer.MAX_VALUE, this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
             ), ProtocolVersion.MINECRAFT_1_18_2
         );
 
