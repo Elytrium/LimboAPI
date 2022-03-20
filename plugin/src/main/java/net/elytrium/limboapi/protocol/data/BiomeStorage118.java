@@ -40,8 +40,10 @@ public class BiomeStorage118 {
 
   public BiomeStorage118(ProtocolVersion version) {
     this.version = version;
-    this.palette.add(Biome.PLAINS);
-    this.rawToBiome.put(Biome.PLAINS.getId(), Biome.PLAINS);
+    for (Biome biome : Biome.values()) {
+      this.palette.add(biome);
+      this.rawToBiome.put(biome.getId(), biome);
+    }
     this.storage = new BitStorage116(3, SimpleChunk.MAX_BIOMES_PER_SECTION);
   }
 
@@ -148,3 +150,4 @@ public class BiomeStorage118 {
     return y << 4 | z << 2 | x;
   }
 }
+
