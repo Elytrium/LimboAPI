@@ -18,6 +18,7 @@
 package net.elytrium.limboapi;
 
 import java.io.File;
+import java.util.List;
 import net.elytrium.limboapi.config.Config;
 import org.slf4j.Logger;
 
@@ -63,6 +64,16 @@ public class Settings extends Config {
         "maxBuildHeight PosAndLook and default PosAndLook"
     })
     public int RECEIVER_LEVEL_1_18_2_FIXER_DELAY = 2500;
+
+    @Comment({
+        "Helpful if you want some plugins proceed before LimboAPI. For example, it is needed to Floodgate to replace UUID."
+    })
+    public List<String> PRE_LIMBO_PROFILE_REQUEST_PLUGINS = List.of("floodgate", "geyser");
+
+    @Comment({
+        "Regenerates listeners that need to proceed before LimboAPI on each EventManager#register call."
+    })
+    public boolean AUTO_REGENERATE_LISTENERS = false;
 
     @Create
     public MESSAGES MESSAGES;
