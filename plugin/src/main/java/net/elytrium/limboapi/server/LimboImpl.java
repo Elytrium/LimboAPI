@@ -168,6 +168,7 @@ public class LimboImpl implements Limbo {
             this.createVoidChunksPackets((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ()),
             ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_16_4
         );
+
   }
 
   @Override
@@ -376,14 +377,14 @@ public class LimboImpl implements Limbo {
   private List<ChunkData> createChunksPackets() {
     List<ChunkData> packets = new ArrayList<>();
     for (VirtualChunk chunk : this.world.getChunks()) {
-      packets.add(this.createChunkData(chunk, (int) this.world.getSpawnY()));
+      packets.add(this.createChunkData(chunk, this.world.getDimension(), (int) this.world.getSpawnY()));
     }
 
     return packets;
   }
 
   private ChunkData createVoidChunksPackets(int x, int y, int z) {
-    return this.createChunkData(this.plugin.createVirtualChunk(x >> 4, z >> 4), y);
+    return this.createChunkData(this.plugin.createVirtualChunk(x >> 4, z >> 4), this.world.getDimension(), y);
   }
 
   // Velocity backport.
@@ -483,9 +484,9 @@ public class LimboImpl implements Limbo {
     return new UpdateViewPosition(x >> 4, z >> 4);
   }
 
-  private ChunkData createChunkData(VirtualChunk chunk, int skyLightY) {
+  private ChunkData createChunkData(VirtualChunk chunk, Dimension dimension, int skyLightY) {
     chunk.setSkyLight(chunk.getX() & 15, skyLightY, chunk.getZ() & 15, (byte) 1);
-    return new ChunkData(chunk.getFullChunkSnapshot(), true);
+    return new ChunkData(chunk.getFullChunkSnapshot(), true, dimension.getMaxSections());
   }
 }
 

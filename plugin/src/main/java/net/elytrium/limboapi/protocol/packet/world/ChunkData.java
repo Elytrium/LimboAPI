@@ -17,6 +17,7 @@
 
 package net.elytrium.limboapi.protocol.packet.world;
 
+import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
@@ -25,15 +26,15 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.List;
 import java.util.zip.Deflater;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
+import net.elytrium.limboapi.api.material.Block;
 import net.elytrium.limboapi.api.protocol.packets.data.BiomeData;
+import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.mcprotocollib.BitStorage116;
 import net.elytrium.limboapi.mcprotocollib.BitStorage19;
 import net.elytrium.limboapi.protocol.util.NetworkSection;
@@ -46,17 +47,24 @@ public class ChunkData implements MinecraftPacket {
   private static final Logger LOGGER = LoggerFactory.getLogger(ChunkData.class);
 
   private final ChunkSnapshot chunk;
-  private final List<NetworkSection> sections = new ArrayList<>(16);
+  private final NetworkSection[] sections;
   private final int mask;
+  private final int maxSections;
+  private final int nonNullSections;
   private final BiomeData biomeData;
   private final CompoundBinaryTag heightmap114;
   private final CompoundBinaryTag heightmap116;
 
-  public ChunkData(ChunkSnapshot chunkSnapshot, boolean skyLight) {
+  public ChunkData(ChunkSnapshot chunkSnapshot, boolean skyLight, int maxSections) {
+    this.maxSections = maxSections;
+    this.sections = new NetworkSection[maxSections];
+
     this.chunk = chunkSnapshot;
     int mask = 0;
+    int nonNullSections = 0;
     for (int i = 0; i < this.chunk.getSections().length; ++i) {
       if (this.chunk.getSections()[i] != null) {
+        ++nonNullSections;
         mask |= 1 << i;
         LightSection light = this.chunk.getLight()[i];
         NetworkSection section = new NetworkSection(
@@ -66,10 +74,11 @@ public class ChunkData implements MinecraftPacket {
             skyLight ? light.getSkyLight() : null,
             this.chunk.getBiomes()
         );
-        this.sections.add(section);
+        this.sections[i] = section;
       }
     }
 
+    this.nonNullSections = nonNullSections;
     this.mask = mask;
     this.heightmap114 = this.createHeightMap(true);
     this.heightmap116 = this.createHeightMap(false);
@@ -87,9 +96,9 @@ public class ChunkData implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, Direction direction, ProtocolVersion version) {
-    if (!this.chunk.isFullChunk() && (version.equals(ProtocolVersion.MINECRAFT_1_17) || version.equals(ProtocolVersion.MINECRAFT_1_17_1))) {
+    if (!this.chunk.isFullChunk()) {
       // 1.17 supports only full chunks.
-      return;
+      Preconditions.checkState(version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0);
     }
 
     buf.writeInt(this.chunk.getX());
@@ -152,16 +161,16 @@ public class ChunkData implements MinecraftPacket {
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
           long[] mask = this.create117Mask();
           buf.writeBoolean(true); // Trust edges.
-          ProtocolUtils.writeVarInt(buf, mask.length); // Sky light mask.
+          ProtocolUtils.writeVarInt(buf, mask.length); // Skylight mask.
           for (long m : mask) {
             buf.writeLong(m);
           }
-          ProtocolUtils.writeVarInt(buf, mask.length); // Block light mask.
+          ProtocolUtils.writeVarInt(buf, mask.length); // BlockLight mask.
           for (long m : mask) {
             buf.writeLong(m);
           }
-          ProtocolUtils.writeVarInt(buf, 0); // Empty sky light mask.
-          ProtocolUtils.writeVarInt(buf, 0); // Empty block light mask.
+          ProtocolUtils.writeVarInt(buf, 0); // EmptySkylight mask.
+          ProtocolUtils.writeVarInt(buf, 0); // EmptyBlockLight mask.
           ProtocolUtils.writeVarInt(buf, this.chunk.getLight().length);
           for (LightSection section : this.chunk.getLight()) {
             ProtocolUtils.writeByteArray(buf, section.getSkyLight().getData());
@@ -182,16 +191,31 @@ public class ChunkData implements MinecraftPacket {
   private ByteBuf createChunkData(ProtocolVersion version) {
     int dataLength = 0;
     for (NetworkSection networkSection : this.sections) {
-      dataLength += networkSection.getDataLength(version);
+      if (networkSection != null) {
+        dataLength += networkSection.getDataLength(version);
+      }
     }
     if (this.chunk.isFullChunk() && version.compareTo(ProtocolVersion.MINECRAFT_1_15) < 0) {
       dataLength += (version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0 ? 256 : 256 * 4);
+    }
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_18) >= 0) {
+      dataLength += (this.maxSections - this.nonNullSections) * 8;
     }
 
     ByteBuf data = Unpooled.buffer(dataLength);
     for (int pass = 0; pass < 4; ++pass) {
       for (NetworkSection section : this.sections) {
-        section.writeData(data, pass, version);
+        if (section != null) {
+          section.writeData(data, pass, version);
+        } else if (pass == 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_18) >= 0) {
+          data.writeShort(0); // Block count = 0
+          data.writeByte(0); // BlockStorage: 0 bit per entry = Single palette
+          ProtocolUtils.writeVarInt(data, Block.AIR.getId()); // Only air block in the palette
+          ProtocolUtils.writeVarInt(data, 0); // BlockStorage: 0 entries
+          data.writeByte(0); // BiomeStorage: 0 bit per entry = Single palette
+          ProtocolUtils.writeVarInt(data, Biome.PLAINS.getId()); // Only Plain biome in the palette
+          ProtocolUtils.writeVarInt(data, 0); // BiomeStorage: 0 entries
+        }
       }
     }
     if (this.chunk.isFullChunk() && version.compareTo(ProtocolVersion.MINECRAFT_1_15) < 0) {
@@ -270,3 +294,4 @@ public class ChunkData implements MinecraftPacket {
     return true;
   }
 }
+
