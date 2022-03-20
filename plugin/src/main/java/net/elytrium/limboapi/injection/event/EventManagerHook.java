@@ -116,19 +116,19 @@ public class EventManagerHook extends VelocityEventManager {
     eventManager.set(plugin.getServer(), instance);
     eventManagerInCommandManager.set(plugin.getServer().getCommandManager(), instance);
 
-    instance._postInit();
+    instance.reloadHandlers();
   }
 
   public static void postInit() {
     try {
-      instance._postInit();
+      instance.reloadHandlers();
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
   }
 
   @SuppressWarnings("rawtypes")
-  public void _postInit() throws IllegalAccessException {
+  public void reloadHandlers() throws IllegalAccessException {
     ListMultimap<Class<?>, ?> handlersMap = (ListMultimap<Class<?>, ?>) handlersMapField.get(this);
     List disabledHandlers = handlersMap.get(GameProfileRequestEvent.class);
     List preEvents = new ArrayList();
@@ -178,7 +178,7 @@ public class EventManagerHook extends VelocityEventManager {
 
     if (Settings.IMP.MAIN.AUTO_REGENERATE_LISTENERS) {
       try {
-        this._postInit();
+        this.reloadHandlers();
       } catch (IllegalAccessException e) {
         e.printStackTrace();
       }
