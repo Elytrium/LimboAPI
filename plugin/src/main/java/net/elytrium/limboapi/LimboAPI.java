@@ -18,6 +18,7 @@
 package net.elytrium.limboapi;
 
 import com.google.inject.Inject;
+import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
@@ -125,7 +127,7 @@ public class LimboAPI implements LimboFactory {
       EventManagerHook.init(this);
       PlayerListItemHook.init(this);
       LimboProtocol.init();
-    } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+    } catch (InvocationTargetException | InstantiationException | IllegalAccessException | ExecutionException e) {
       e.printStackTrace();
     }
   }
@@ -139,6 +141,11 @@ public class LimboAPI implements LimboFactory {
     if (Settings.IMP.MAIN.CHECK_FOR_UPDATES) {
       UpdatesChecker.checkForUpdates(this.logger);
     }
+  }
+
+  @Subscribe(order = PostOrder.LAST)
+  public void postProxyInitialization(ProxyInitializeEvent event) {
+    EventManagerHook.postInit();
   }
 
   public void reload() {

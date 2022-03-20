@@ -489,4 +489,3 @@ public class LimboImpl implements Limbo {
     return new ChunkData(chunk.getFullChunkSnapshot(), true, dimension.getMaxSections());
   }
 }
-
