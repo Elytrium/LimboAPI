@@ -1,17 +1,6 @@
-# User-specific stuff
+# IntelliJ user-specific stuff
 .idea/
-
 *.iml
-*.ipr
-*.iws
-
-# IntelliJ
-out/
-# mpeltonen/sbt-idea plugin
-.idea_modules/
-
-# JIRA plugin
-atlassian-ide-plugin.xml
 
 # Compiled class file
 *.class
@@ -19,14 +8,8 @@ atlassian-ide-plugin.xml
 # Log file
 *.log
 
-# BlueJ files
-*.ctxt
-
 # Package Files
 *.jar
-*.war
-*.nar
-*.ear
 *.zip
 *.tar.gz
 *.rar
@@ -103,12 +86,6 @@ $RECYCLE.BIN/
 # Gradle
 .gradle
 build/
-
-# Ignore Gradle GUI config
-gradle-app.setting
-
-# Cache of project
-.gradletasknamecache
 
 # Gradle Patch
 **/build/
