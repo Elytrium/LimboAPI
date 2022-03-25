@@ -53,7 +53,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.elytrium.limboapi.LimboAPI;
@@ -129,14 +128,7 @@ public class LimboImpl implements Limbo {
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_18)
-        .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2)
-        // ReceivingLevelScreen in Minecraft 1.18.2 closes only after receiving either a non-empty chunk or both compass
-        // packet and a PosAndLook packet with the height bigger than maxBuildHeight.
-        .prepare(
-            this.createPlayerPosAndLook(
-                this.world.getSpawnX(), Short.MAX_VALUE, this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
-            ), ProtocolVersion.MINECRAFT_1_18_2
-        );
+        .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2);
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
@@ -163,12 +155,9 @@ public class LimboImpl implements Limbo {
                 this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
             )
         ).prepare(
-            this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()), ProtocolVersion.MINECRAFT_1_14
-        ).prepare(
-            this.createVoidChunksPackets((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ()),
-            ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_16_4
+            this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()),
+            ProtocolVersion.MINECRAFT_1_14
         );
-
   }
 
   @Override
@@ -239,21 +228,9 @@ public class LimboImpl implements Limbo {
 
       connection.flush();
 
-      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_18_2) >= 0) {
-        this.plugin.getServer()
-            .getScheduler()
-            .buildTask(this.plugin, () -> connection.eventLoop().execute(() -> this.proceed(player, sessionHandler)))
-            .delay(Settings.IMP.MAIN.RECEIVER_LEVEL_1_18_2_FIXER_DELAY, TimeUnit.MILLISECONDS)
-            .schedule();
-      } else {
-        this.proceed(player, sessionHandler);
-      }
+      this.respawnPlayer(player);
+      sessionHandler.onSpawn(this, new LimboPlayerImpl(this.plugin, this, player));
     });
-  }
-
-  private void proceed(ConnectedPlayer player, LimboSessionHandlerImpl sessionHandler) {
-    this.respawnPlayer(player);
-    sessionHandler.onSpawn(this, new LimboPlayerImpl(this.plugin, this, player));
   }
 
   @Override
@@ -381,10 +358,6 @@ public class LimboImpl implements Limbo {
     }
 
     return packets;
-  }
-
-  private ChunkData createVoidChunksPackets(int x, int y, int z) {
-    return this.createChunkData(this.plugin.createVirtualChunk(x >> 4, z >> 4), this.world.getDimension(), y);
   }
 
   // Velocity backport.
