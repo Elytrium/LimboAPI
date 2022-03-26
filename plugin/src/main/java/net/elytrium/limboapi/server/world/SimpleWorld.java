@@ -54,7 +54,15 @@ public class SimpleWorld implements VirtualWorld {
     this.yaw = yaw;
     this.pitch = pitch;
 
-    this.getChunkOrNew((int) x, (int) z);
+    // Modern Sodium versions don't load chunks if their "neighbours" are unloaded.
+    // We are fixing this problem there by generating all the "neighbours".
+    int intX = (int) x >> 4;
+    int intZ = (int) z >> 4;
+    for (int chunkX = intX - 1; chunkX <= intX + 1; ++chunkX) {
+      for (int chunkZ = intZ - 1; chunkZ <= intZ + 1; ++chunkZ) {
+        this.getChunkOrNew(chunkX << 4, chunkZ << 4);
+      }
+    }
   }
 
   @Override
