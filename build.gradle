@@ -38,7 +38,7 @@ allprojects {
     }
 
     checkstyle {
-        setToolVersion("10.0")
+        setToolVersion("10.1")
         setConfigFile(file("${this.getRootDir()}/config/checkstyle/checkstyle.xml"))
         setConfigProperties("configDirectory": "${this.getRootDir()}/config/checkstyle")
 
