@@ -19,10 +19,12 @@ package net.elytrium.limboapi.server;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Runnables;
 import com.mojang.brigadier.tree.RootCommandNode;
 import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -63,6 +65,7 @@ import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
+import net.elytrium.limboapi.api.command.LimboCommandMeta;
 import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
@@ -271,26 +274,31 @@ public class LimboImpl implements Limbo {
   }
 
   @Override
-  public Limbo registerCommand(CommandMeta meta, Command command) {
+  @SuppressWarnings("UnstableApiUsage")
+  public Limbo registerCommand(LimboCommandMeta commandMeta) {
+    return this.registerCommand(commandMeta, (SimpleCommand) Runnables.doNothing());
+  }
+
+  @Override
+  public Limbo registerCommand(CommandMeta commandMeta, Command command) {
     for (CommandRegistrar<?> registrar : this.registrars) {
-      if (this.tryRegister(registrar, command, meta)) {
+      if (this.tryRegister(registrar, commandMeta, command)) {
         this.refresh();
         return this;
       }
     }
 
-    throw new IllegalArgumentException(
-        command + " does not implement a registrable Command subinterface");
+    throw new IllegalArgumentException(command + " does not implement a registrable Command sub-interface.");
   }
 
   // From Velocity.
-  private <T extends Command> boolean tryRegister(CommandRegistrar<T> registrar, Command command, CommandMeta meta) {
+  private <T extends Command> boolean tryRegister(CommandRegistrar<T> registrar, CommandMeta commandMeta, Command command) {
     Class<T> superInterface = registrar.registrableSuperInterface();
     if (!superInterface.isInstance(command)) {
       return false;
     }
 
-    registrar.register(meta, superInterface.cast(command));
+    registrar.register(commandMeta, superInterface.cast(command));
     return true;
   }
 
