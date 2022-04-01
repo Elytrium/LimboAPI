@@ -39,6 +39,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+import net.elytrium.java.commons.mc.serialization.Serializer;
+import net.elytrium.java.commons.mc.serialization.Serializers;
+import net.elytrium.java.commons.reflection.ReflectionException;
+import net.elytrium.java.commons.updates.UpdatesChecker;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limboapi.api.chunk.Dimension;
@@ -65,7 +69,6 @@ import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.elytrium.limboapi.server.world.SimpleWorld;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
-import net.elytrium.limboapi.utils.UpdatesChecker;
 import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
@@ -86,15 +89,16 @@ public class LimboAPI implements LimboFactory {
   private final VelocityServer server;
   private final Logger logger;
   private final Metrics.Factory metricsFactory;
-  private final Path dataDirectory;
+  private final File configFile;
   private final List<Player> players;
   private final CachedPackets packets;
   private final HashMap<Player, LoginTasksQueue> loginQueue;
   private final HashMap<Player, RegisteredServer> nextServer;
   private final HashMap<Player, UUID> initialID;
+
   private ProtocolVersion minVersion;
   private ProtocolVersion maxVersion;
-
+  private Serializer serializer;
   private LoginListener loginListener;
 
   @Inject
@@ -103,7 +107,7 @@ public class LimboAPI implements LimboFactory {
     this.server = (VelocityServer) server;
     this.logger = logger;
     this.metricsFactory = metricsFactory;
-    this.dataDirectory = dataDirectory;
+    this.configFile = new File(dataDirectory.toFile(), "config.yml");
     this.players = new ArrayList<>();
     this.packets = new CachedPackets(this);
     this.loginQueue = new HashMap<>();
@@ -128,7 +132,7 @@ public class LimboAPI implements LimboFactory {
       PlayerListItemHook.init(this);
       LimboProtocol.init();
     } catch (InvocationTargetException | InstantiationException | IllegalAccessException | ExecutionException e) {
-      e.printStackTrace();
+      throw new ReflectionException(e);
     }
   }
 
@@ -139,7 +143,12 @@ public class LimboAPI implements LimboFactory {
     this.reload();
 
     if (Settings.IMP.MAIN.CHECK_FOR_UPDATES) {
-      UpdatesChecker.checkForUpdates(this.logger);
+      if (UpdatesChecker.checkVersionByURL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION", Settings.IMP.VERSION)) {
+        this.logger.error("****************************************");
+        this.logger.warn("The new LimboAPI update was found, please update.");
+        this.logger.error("https://github.com/Elytrium/LimboAPI/releases/");
+        this.logger.error("****************************************");
+      }
     }
   }
 
@@ -149,7 +158,17 @@ public class LimboAPI implements LimboFactory {
   }
 
   public void reload() {
-    Settings.IMP.reload(new File(this.dataDirectory.toFile().getAbsoluteFile(), "config.yml"), this.logger);
+    if (Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX)) {
+      this.logger.warn("************* FIRST LAUNCH *************");
+      this.logger.warn("Thanks for installing LimboAPI!");
+      this.logger.warn("(c) 2021 Elytrium");
+      this.logger.warn("");
+      this.logger.warn("Check out our plugins here: https://ely.su/github <3");
+      this.logger.warn("Discord: https://ely.su/discord");
+      this.logger.warn("****************************************");
+    }
+
+    this.serializer = new Serializer(Serializers.valueOf(Settings.IMP.SERIALIZER));
 
     this.logger.info("Creating and preparing packets...");
     this.reloadVersion();
@@ -222,7 +241,7 @@ public class LimboAPI implements LimboFactory {
 
       throw new IllegalArgumentException("No constructor found with the correct number of arguments!");
     } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
-      throw new RuntimeException(e);
+      throw new ReflectionException(e);
     }
   }
 
@@ -257,6 +276,10 @@ public class LimboAPI implements LimboFactory {
 
   public LoginTasksQueue getLoginQueue(Player player) {
     return this.loginQueue.get(player);
+  }
+
+  public Serializer getSerializer() {
+    return this.serializer;
   }
 
   public LoginListener getLoginListener() {

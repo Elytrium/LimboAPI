@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.Limbo;
@@ -115,7 +116,7 @@ public class LimboImpl implements Limbo {
       rootNode = AvailableCommands.class.getDeclaredField("rootNode");
       rootNode.setAccessible(true);
     } catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
+      throw new ReflectionException(e);
     }
   }
 

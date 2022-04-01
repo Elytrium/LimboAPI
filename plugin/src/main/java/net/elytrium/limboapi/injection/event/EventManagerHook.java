@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 
@@ -97,7 +98,7 @@ public class EventManagerHook extends VelocityEventManager {
           .orElseThrow();
       fire.setAccessible(true);
     } catch (NoSuchFieldException | ClassNotFoundException e) {
-      throw new RuntimeException(e);
+      throw new ReflectionException(e);
     }
   }
 

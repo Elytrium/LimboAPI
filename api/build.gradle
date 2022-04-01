@@ -13,6 +13,8 @@ java {
 dependencies {
     compileOnly("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
 
+    api("net.elytrium:elytrium-java-commons:1.0.1")
+
     api("net.kyori:adventure-nbt:4.10.1")
 
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.6.0")
