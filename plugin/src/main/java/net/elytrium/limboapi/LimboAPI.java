@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Elytrium
+ * Copyright (C) 2021 - 2022 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -161,7 +161,7 @@ public class LimboAPI implements LimboFactory {
     if (Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX)) {
       this.logger.warn("************* FIRST LAUNCH *************");
       this.logger.warn("Thanks for installing LimboAPI!");
-      this.logger.warn("(c) 2021 Elytrium");
+      this.logger.warn("(C) 2021 - 2022 Elytrium");
       this.logger.warn("");
       this.logger.warn("Check out our plugins here: https://ely.su/github <3");
       this.logger.warn("Discord: https://ely.su/discord");
