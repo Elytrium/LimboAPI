@@ -24,10 +24,12 @@ import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.Item;
@@ -35,6 +37,7 @@ import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.api.protocol.map.MapPalette;
+import net.elytrium.limboapi.api.protocol.packets.data.AbilityFlags;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 import net.elytrium.limboapi.protocol.packet.ChangeGameState;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
@@ -54,6 +57,8 @@ public class LimboPlayerImpl implements LimboPlayer {
   private final ConnectedPlayer player;
   private final MinecraftConnection connection;
   private final ProtocolVersion version;
+
+  private GameMode gameMode = GameMode.ADVENTURE;
 
   public LimboPlayerImpl(LimboAPI plugin, LimboImpl server, ConnectedPlayer player) {
     this.plugin = plugin;
@@ -174,11 +179,21 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void setGameMode(GameMode gameMode) {
-    if (gameMode == GameMode.SPECTATOR && this.version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+    boolean is17 = this.version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0;
+    if (gameMode == GameMode.SPECTATOR && is17) {
       return; // Spectator game mode was added in 1.8.
     }
 
-    this.writePacketAndFlush(new ChangeGameState(3, gameMode.getId()));
+    this.gameMode = gameMode;
+    int id = this.gameMode.getId();
+
+    this.sendAbilities();
+    if (!is17) {
+      this.writePacket(new PlayerListItem(PlayerListItem.UPDATE_GAMEMODE, List.of(new PlayerListItem.Item(this.player.getUniqueId()).setGameMode(id))));
+    }
+    this.writePacket(new ChangeGameState(3, id));
+
+    this.flushPackets();
   }
 
   @Override
@@ -216,7 +231,7 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void disableFalling() {
-    this.writePacketAndFlush(new PlayerAbilities((byte) 6, 0F, 0F));
+    this.writePacketAndFlush(new PlayerAbilities((byte) (this.getAbilities() | AbilityFlags.FLYING | AbilityFlags.ALLOW_FLYING), 0F, 0F));
   }
 
   @Override
@@ -257,6 +272,36 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
+  public void sendAbilities() {
+    this.writePacketAndFlush(new PlayerAbilities(this.getAbilities(), 0.05F, 0.1F));
+  }
+
+  @Override
+  public void sendAbilities(byte abilities, float flySpeed, float walkSpeed) {
+    this.writePacketAndFlush(new PlayerAbilities(abilities, flySpeed, walkSpeed));
+  }
+
+  @Override
+  public byte getAbilities() {
+    switch (this.gameMode) {
+      case CREATIVE: {
+        return AbilityFlags.ALLOW_FLYING | AbilityFlags.CREATIVE_MODE | AbilityFlags.INVULNERABLE;
+      }
+      case SPECTATOR: {
+        return AbilityFlags.ALLOW_FLYING | AbilityFlags.INVULNERABLE | AbilityFlags.FLYING;
+      }
+      default: {
+        return 0;
+      }
+    }
+  }
+
+  @Override
+  public GameMode getGameMode() {
+    return this.gameMode;
+  }
+
+  @Override
   public Limbo getServer() {
     return this.server;
   }
@@ -271,8 +316,8 @@ public class LimboPlayerImpl implements LimboPlayer {
     LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
     if (handler != null) {
       return handler.getPing();
+    } else {
+      return 0;
     }
-
-    return 0;
   }
 }
