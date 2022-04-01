@@ -22,7 +22,6 @@ import com.velocitypowered.proxy.protocol.packet.Disconnect;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class CachedPackets {
 
@@ -43,7 +42,7 @@ public class CachedPackets {
   }
 
   private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {
-    return Disconnect.create(LegacyComponentSerializer.legacyAmpersand().deserialize(message), version);
+    return Disconnect.create(this.plugin.getSerializer().deserialize(message), version);
   }
 
   public PreparedPacket getTooBigPacket() {

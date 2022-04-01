@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.LimboSessionHandler;
@@ -70,7 +71,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       teardown = ConnectedPlayer.class.getDeclaredMethod("teardown");
       teardown.setAccessible(true);
     } catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
+      throw new ReflectionException(e);
     }
   }
 

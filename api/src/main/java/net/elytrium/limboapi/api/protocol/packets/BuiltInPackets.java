@@ -7,6 +7,8 @@
 
 package net.elytrium.limboapi.api.protocol.packets;
 
+import net.elytrium.java.commons.reflection.ReflectionException;
+
 @SuppressWarnings("unused")
 public enum BuiltInPackets {
 
@@ -29,7 +31,7 @@ public enum BuiltInPackets {
     try {
       this.packetClass = Class.forName(packetClass);
     } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
+      throw new ReflectionException(e);
     }
   }
 

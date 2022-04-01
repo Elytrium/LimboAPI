@@ -9,6 +9,7 @@ package net.elytrium.limboapi.api.protocol.packets.data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 
@@ -38,7 +39,7 @@ public class BiomeData {
         }
         int id = samples.entrySet().stream()
             .max(Map.Entry.comparingByValue())
-            .orElseThrow(RuntimeException::new)
+            .orElseThrow(() -> new NoSuchElementException("No value present."))
             .getKey();
         for (int xl = x; xl < x + 4; ++xl) {
           for (int zl = z; zl < z + 4; ++zl) {
