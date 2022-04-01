@@ -58,6 +58,7 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
+import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
 import net.kyori.adventure.text.Component;
@@ -116,7 +117,7 @@ public class LoginTasksQueue {
       connectToInitialServer = LoginSessionHandler.class.getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
       connectToInitialServer.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException e) {
-      throw new RuntimeException(e);
+      throw new ReflectionException(e);
     }
   }
 

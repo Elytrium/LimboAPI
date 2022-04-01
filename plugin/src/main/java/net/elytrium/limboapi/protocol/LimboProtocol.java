@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.protocol.packet.ChangeGameState;
@@ -104,7 +105,7 @@ public class LimboProtocol {
       ctor = StateRegistry.PacketMapping.class.getDeclaredConstructor(int.class, ProtocolVersion.class, ProtocolVersion.class, boolean.class);
       ctor.setAccessible(true);
     } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | NoSuchFieldException e) {
-      throw new RuntimeException(e);
+      throw new ReflectionException(e);
     }
   }
 
@@ -287,7 +288,7 @@ public class LimboProtocol {
       try {
         return map(packetMapping.getId(), packetMapping.getProtocolVersion(), packetMapping.getLastValidProtocolVersion(), packetMapping.isEncodeOnly());
       } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-        throw new RuntimeException(e);
+        throw new ReflectionException(e);
       }
     }).toArray(StateRegistry.PacketMapping[]::new));
   }

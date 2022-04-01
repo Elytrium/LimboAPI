@@ -64,6 +64,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
@@ -112,7 +113,7 @@ public class LoginListener {
       spawned = ClientPlaySessionHandler.class.getDeclaredField("spawned");
       spawned.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException e) {
-      throw new RuntimeException(e);
+      throw new ReflectionException(e);
     }
   }
 
