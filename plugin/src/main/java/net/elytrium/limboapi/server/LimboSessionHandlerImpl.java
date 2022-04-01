@@ -27,11 +27,13 @@ import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.Chat;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
+import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -60,8 +62,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private long keepAliveId;
   private long keepAliveLastSend;
   private long ping;
-  private int genericBytes = 0;
-  private boolean fixed;
+  private int genericBytes;
+  private boolean loaded;
 
   static {
     try {
@@ -80,11 +82,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.originalHandler = originalHandler;
     this.previousServer = previousServer;
     this.limboName = limboName;
-    this.fixed = player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_18_2) < 0;
+    this.loaded = player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_18_2) < 0;
   }
 
   public void onSpawn(LimboImpl server, LimboPlayer player) {
-    this.fixed = true;
+    this.loaded = true;
     this.callback.onSpawn(server, player);
 
     this.keepAliveTask = this.plugin.getServer().getScheduler().buildTask(this.plugin, () -> {
@@ -98,7 +100,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   public boolean handle(Player packet) {
-    if (!this.fixed) {
+    if (!this.loaded) {
       return true;
     }
 
@@ -107,7 +109,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   public boolean handle(PlayerPosition packet) {
-    if (!this.fixed) {
+    if (!this.loaded) {
       return true;
     }
 
@@ -117,7 +119,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   public boolean handle(PlayerPositionAndLook packet) {
-    if (!this.fixed) {
+    if (!this.loaded) {
       return true;
     }
 
@@ -129,7 +131,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   public boolean handle(TeleportConfirm packet) {
-    if (!this.fixed) {
+    if (!this.loaded) {
       return true;
     }
 
@@ -140,13 +142,21 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   // TODO: Проверять отправил ли клиент его в течении 5 секунд, и вообще проверять отправляет ли он пакеты
   @Override
   public boolean handle(KeepAlive packet) {
+    MinecraftConnection connection = this.player.getConnection();
     if (!(packet.getRandomId() == this.keepAliveId)) {
-      this.player.getConnection().closeWith(this.plugin.getPackets().getInvalidPing());
+      connection.closeWith(this.plugin.getPackets().getInvalidPing());
       this.plugin.getLogger().warn("{} sent an invalid keepalive.", this.player);
       return false;
     }
 
     this.ping = System.currentTimeMillis() - this.keepAliveLastSend;
+
+    connection.write(
+        new PlayerListItem(
+            PlayerListItem.UPDATE_LATENCY,
+            List.of(new PlayerListItem.Item(this.player.getUniqueId()).setLatency(this.ping > 9999 ? -1 : (int) this.ping))
+        )
+    );
     return true;
   }
 
