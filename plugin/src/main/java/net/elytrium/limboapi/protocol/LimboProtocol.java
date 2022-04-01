@@ -71,6 +71,7 @@ public class LimboProtocol {
       Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
       unsafeField.setAccessible(true);
       unsafe = (Unsafe) unsafeField.get(null);
+
       limboRegistry = (StateRegistry) unsafe.allocateInstance(StateRegistry.class);
 
       direction = StateRegistry.PacketRegistry.class.getDeclaredField("direction");
@@ -282,7 +283,7 @@ public class LimboProtocol {
   }
 
   public static void register(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings) {
-    register(direction, packetClass, packetSupplier, (StateRegistry.PacketMapping[]) Arrays.stream(packetMappings).map(packetMapping -> {
+    register(direction, packetClass, packetSupplier, Arrays.stream(packetMappings).map(packetMapping -> {
       try {
         return map(packetMapping.getId(), packetMapping.getProtocolVersion(), packetMapping.getLastValidProtocolVersion(), packetMapping.isEncodeOnly());
       } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
@@ -321,8 +322,8 @@ public class LimboProtocol {
         StateRegistry.PacketRegistry.ProtocolRegistry toRegistry =
             (StateRegistry.PacketRegistry.ProtocolRegistry) unsafe.allocateInstance(StateRegistry.PacketRegistry.ProtocolRegistry.class);
 
-        packetIdToSupplier.set(toRegistry, new OverlayIntObjectMap<>(fromPacketIdToSupplier, new IntObjectHashMap<>(16, 0.5f)));
-        packetClassToId.set(toRegistry, new OverlayObject2IntMap<>(fromPacketClassToId, new Object2IntOpenHashMap<>(16, 0.5f)));
+        packetIdToSupplier.set(toRegistry, new OverlayIntObjectMap<>(fromPacketIdToSupplier, new IntObjectHashMap<>(16, 0.5F)));
+        packetClassToId.set(toRegistry, new OverlayObject2IntMap<>(fromPacketClassToId, new Object2IntOpenHashMap<>(16, 0.5F)));
 
         version.set(toRegistry, fromVersion);
         toVersions.put(fromVersion, toRegistry);

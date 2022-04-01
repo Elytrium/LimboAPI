@@ -51,40 +51,8 @@ public class NetworkSection {
     this.biomes = biomes;
   }
 
-  public BlockStorage ensureCreated(ProtocolVersion version) {
-    BlockStorage storage = this.storages.get(version);
-    if (storage == null) {
-      synchronized (this.storages) {
-        VirtualBlock.Version blockVersion = VirtualBlock.Version.map(version);
-        BlockStorage blockStorage = this.create(version);
-        this.fillBlocks(blockStorage);
-        for (ProtocolVersion protocolVersion : blockVersion.getVersions()) {
-          this.storages.put(protocolVersion, blockStorage);
-        }
-        storage = blockStorage;
-      }
-    }
-    return storage;
-  }
-
-  public BiomeStorage118 ensureBiomeCreated(ProtocolVersion version) {
-    BiomeStorage118 storage = this.biomeStorages.get(version);
-    if (storage == null) {
-      synchronized (this.biomeStorages) {
-        storage = new BiomeStorage118(version);
-        int offset = this.index * SimpleChunk.MAX_BIOMES_PER_SECTION;
-        for (int biomeIndex = 0, biomeArrayIndex = offset; biomeIndex < SimpleChunk.MAX_BIOMES_PER_SECTION; ++biomeIndex, ++biomeArrayIndex) {
-          storage.set(biomeIndex, this.biomes[biomeArrayIndex]);
-        }
-        this.biomeStorages.put(version, storage);
-      }
-    }
-
-    return storage;
-  }
-
   public int getDataLength(ProtocolVersion version) {
-    BlockStorage blockStorage = this.ensureCreated(version);
+    BlockStorage blockStorage = this.ensureStorageCreated(version);
 
     int dataLength = blockStorage.getDataLength(version);
 
@@ -98,73 +66,115 @@ public class NetworkSection {
       dataLength += 2; // Block count short.
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
-      BiomeStorage118 biomeStorage = this.ensureBiomeCreated(version);
+      BiomeStorage118 biomeStorage = this.ensure118BiomeCreated(version);
       dataLength += biomeStorage.getDataLength();
     }
 
     return dataLength;
   }
 
-  public void writeData(ByteBuf data, int pass, ProtocolVersion version) {
+  public void writeData(ByteBuf buf, int pass, ProtocolVersion version) {
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_9) < 0) {
-      BlockStorage storage = this.ensureCreated(version);
+      BlockStorage storage = this.ensureStorageCreated(version);
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-        this.write17Data(data, pass, storage);
+        this.write17Data(buf, pass, storage);
       } else {
-        this.write18Data(data, pass, storage);
+        this.write18Data(buf, pass, storage);
       }
     } else if (pass == 0) {
-      BlockStorage storage = this.ensureCreated(version);
+      BlockStorage storage = this.ensureStorageCreated(version);
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) < 0) {
-        this.write19Data(data, storage, version);
+        this.write19Data(buf, storage, version);
       } else {
-        this.write114Data(data, storage, version);
+        this.write114Data(buf, storage, version);
 
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
-          BiomeStorage118 biomeStorage = this.ensureBiomeCreated(version);
-          this.write118Biomes(data, biomeStorage, version);
+          this.write118Biomes(buf, version);
         }
       }
     }
   }
 
-  private void write17Data(ByteBuf data, int pass, BlockStorage storage) {
+  private BlockStorage ensureStorageCreated(ProtocolVersion version) {
+    BlockStorage storage = this.storages.get(version);
+    if (storage == null) {
+      synchronized (this.storages) {
+        VirtualBlock.Version blockVersion = VirtualBlock.Version.map(version);
+        BlockStorage blockStorage = this.createStorage(version);
+        this.fillBlocks(blockStorage);
+        for (ProtocolVersion protocolVersion : blockVersion.getVersions()) {
+          this.storages.put(protocolVersion, blockStorage);
+        }
+
+        storage = blockStorage;
+      }
+    }
+
+    return storage;
+  }
+
+  private BlockStorage createStorage(ProtocolVersion version) {
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_9) < 0) {
+      return new BlockStorage17();
+    } else {
+      return new BlockStorage19(version);
+    }
+  }
+
+  private void write17Data(ByteBuf buf, int pass, BlockStorage storage) {
     if (pass == 0) {
-      storage.write(data, ProtocolVersion.MINECRAFT_1_7_2);
+      storage.write(buf, ProtocolVersion.MINECRAFT_1_7_2);
     } else if (pass == 1) {
-      storage.write(data, ProtocolVersion.MINECRAFT_1_7_2);
+      storage.write(buf, ProtocolVersion.MINECRAFT_1_7_2);
     } else if (pass == 2) {
-      data.writeBytes(this.blockLight.getData());
+      buf.writeBytes(this.blockLight.getData());
     } else if (pass == 3 && this.skyLight != null) {
-      data.writeBytes(this.skyLight.getData());
+      buf.writeBytes(this.skyLight.getData());
     }
   }
 
-  private void write18Data(ByteBuf data, int pass, BlockStorage storage) {
+  private void write18Data(ByteBuf buf, int pass, BlockStorage storage) {
     if (pass == 0) {
-      storage.write(data, ProtocolVersion.MINECRAFT_1_8);
+      storage.write(buf, ProtocolVersion.MINECRAFT_1_8);
     } else if (pass == 1) {
-      data.writeBytes(this.blockLight.getData());
+      buf.writeBytes(this.blockLight.getData());
     } else if (pass == 2 && this.skyLight != null) {
-      data.writeBytes(this.skyLight.getData());
+      buf.writeBytes(this.skyLight.getData());
     }
   }
 
-  private void write19Data(ByteBuf data, BlockStorage storage, ProtocolVersion version) {
-    storage.write(data, version);
-    data.writeBytes(this.blockLight.getData());
-    if (this.skyLight != null) {
-      data.writeBytes(this.skyLight.getData());
-    }
-  }
-
-  private void write114Data(ByteBuf data, BlockStorage storage, ProtocolVersion version) {
-    data.writeShort(this.blockCount);
-    storage.write(data, version);
-  }
-
-  private void write118Biomes(ByteBuf buf, BiomeStorage118 storage, ProtocolVersion version) {
+  private void write19Data(ByteBuf buf, BlockStorage storage, ProtocolVersion version) {
     storage.write(buf, version);
+    buf.writeBytes(this.blockLight.getData());
+    if (this.skyLight != null) {
+      buf.writeBytes(this.skyLight.getData());
+    }
+  }
+
+  private void write114Data(ByteBuf buf, BlockStorage storage, ProtocolVersion version) {
+    buf.writeShort(this.blockCount);
+    storage.write(buf, version);
+  }
+
+  private void write118Biomes(ByteBuf buf, ProtocolVersion version) {
+    BiomeStorage118 biomeStorage = this.ensure118BiomeCreated(version);
+    biomeStorage.write(buf, version);
+  }
+
+  private BiomeStorage118 ensure118BiomeCreated(ProtocolVersion version) {
+    BiomeStorage118 storage = this.biomeStorages.get(version);
+    if (storage == null) {
+      synchronized (this.biomeStorages) {
+        storage = new BiomeStorage118(version);
+        int offset = this.index * SimpleChunk.MAX_BIOMES_PER_SECTION;
+        for (int biomeIndex = 0, biomeArrayIndex = offset; biomeIndex < SimpleChunk.MAX_BIOMES_PER_SECTION; ++biomeIndex, ++biomeArrayIndex) {
+          storage.set(biomeIndex, this.biomes[biomeArrayIndex]);
+        }
+        this.biomeStorages.put(version, storage);
+      }
+    }
+
+    return storage;
   }
 
   private void fillBlocks(BlockStorage storage) {
@@ -183,14 +193,6 @@ public class NetworkSection {
     }
     if (this.blockCount == -1) {
       this.blockCount = blockCount;
-    }
-  }
-
-  private BlockStorage create(ProtocolVersion version) {
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_9) < 0) {
-      return new BlockStorage17();
-    } else {
-      return new BlockStorage19(version);
     }
   }
 }

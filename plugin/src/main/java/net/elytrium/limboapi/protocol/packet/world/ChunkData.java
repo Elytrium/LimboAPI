@@ -208,13 +208,13 @@ public class ChunkData implements MinecraftPacket {
         if (section != null) {
           section.writeData(data, pass, version);
         } else if (pass == 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_18) >= 0) {
-          data.writeShort(0); // Block count = 0
-          data.writeByte(0); // BlockStorage: 0 bit per entry = Single palette
-          ProtocolUtils.writeVarInt(data, Block.AIR.getId()); // Only air block in the palette
-          ProtocolUtils.writeVarInt(data, 0); // BlockStorage: 0 entries
-          data.writeByte(0); // BiomeStorage: 0 bit per entry = Single palette
-          ProtocolUtils.writeVarInt(data, Biome.PLAINS.getId()); // Only Plain biome in the palette
-          ProtocolUtils.writeVarInt(data, 0); // BiomeStorage: 0 entries
+          data.writeShort(0); // Block count = 0.
+          data.writeByte(0); // BlockStorage: 0 bit per entry = Single palette.
+          ProtocolUtils.writeVarInt(data, Block.AIR.getId()); // Only air block in the palette.
+          ProtocolUtils.writeVarInt(data, 0); // BlockStorage: 0 entries.
+          data.writeByte(0); // BiomeStorage: 0 bit per entry = Single palette.
+          ProtocolUtils.writeVarInt(data, Biome.PLAINS.getId()); // Only Plain biome in the palette.
+          ProtocolUtils.writeVarInt(data, 0); // BiomeStorage: 0 entries.
         }
       }
     }
