@@ -132,6 +132,7 @@ public class LoginTasksQueue {
     }
   }
 
+  @SuppressWarnings("deprecation")
   private void finish() {
     this.plugin.removeLoginQueue(this.player);
     MinecraftConnection connection = this.player.getConnection();
@@ -177,7 +178,7 @@ public class LoginTasksQueue {
             }, connection.eventLoop()), connection.eventLoop());
   }
 
-  // Ported from Velocity.
+  // From Velocity.
   private void initialize(MinecraftConnection connection) throws IllegalAccessException {
     association.set(connection, this.player);
 
