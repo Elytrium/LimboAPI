@@ -50,6 +50,7 @@ import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
+import io.netty.channel.ChannelPipeline;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -177,18 +178,18 @@ public class LoginTasksQueue {
   }
 
   // Ported from Velocity.
-  // TODO: Пофиксить ситуацию когда при подключении после лимбы внутренний сервер кикает и причину не пишет клиенту
   private void initialize(MinecraftConnection connection) throws IllegalAccessException {
     association.set(connection, this.player);
 
     state.set(connection, StateRegistry.PLAY);
-    connection.getChannel().pipeline().get(MinecraftEncoder.class).setState(StateRegistry.PLAY);
-    connection.getChannel().pipeline().get(MinecraftDecoder.class).setState(StateRegistry.PLAY);
+    ChannelPipeline pipeline = connection.getChannel().pipeline();
+    pipeline.get(MinecraftEncoder.class).setState(StateRegistry.PLAY);
+    pipeline.get(MinecraftDecoder.class).setState(StateRegistry.PLAY);
 
     this.server.getEventManager().fire(new LoginEvent(this.player))
         .thenAcceptAsync(event -> {
           if (connection.isClosed()) {
-            // The player was disconnected
+            // The player was disconnected.
             this.server.getEventManager().fireAndForget(new DisconnectEvent(this.player, DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE));
             return;
           }
@@ -207,7 +208,7 @@ public class LoginTasksQueue {
               this.server.getEventManager().fire(new PostLoginEvent(this.player))
                   .thenAccept((ignored) -> {
                     try {
-                      // go back i want to be ~~monke~~ original mcConnection
+                      // Go back I want to be ~~monke~~ original mcConnection.
                       loginConnectionField.set(this.handler, connection);
                       connectToInitialServer.invoke(this.handler, this.player);
                     } catch (IllegalAccessException | InvocationTargetException ex) {
@@ -219,8 +220,8 @@ public class LoginTasksQueue {
             }
           }
         }, connection.eventLoop())
-        .exceptionally((ex) -> {
-          this.plugin.getLogger().error("Exception while completing login initialisation phase for {}", this.player, ex);
+        .exceptionally(t -> {
+          this.plugin.getLogger().error("Exception while completing login initialisation phase for {}", this.player, t);
           return null;
         });
   }

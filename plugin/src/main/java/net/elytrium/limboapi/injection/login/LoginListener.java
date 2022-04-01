@@ -165,7 +165,7 @@ public class LoginListener {
           return;
         }
 
-        // Completing the Login process
+        // Complete the Login process.
         int threshold = this.server.getConfiguration().getCompressionThreshold();
         if (threshold >= 0 && connection.getProtocolVersion().compareTo(MINECRAFT_1_8) >= 0) {
           connection.write(new SetCompression(threshold));

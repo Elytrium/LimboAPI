@@ -66,7 +66,7 @@ public class PlayerPositionAndLook implements MinecraftPacket {
       this.onGround = buf.readBoolean();
     }
 
-    // Ignore other data. (flags, teleportID, dismount vehicle, etc)
+    // Ignore other data (flags, teleportID, dismount vehicle, etc).
     buf.clear();
   }
 
