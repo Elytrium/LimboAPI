@@ -57,8 +57,9 @@ public class EventManagerHook extends VelocityEventManager {
 
   private final LimboAPI plugin;
   private final Set<GameProfile> proceededProfiles = new HashSet<>();
+
   private Object handlerRegistrations;
-  private boolean hasHandlerRegistration = false;
+  private boolean hasHandlerRegistration;
 
   static {
     try {
@@ -81,17 +82,19 @@ public class EventManagerHook extends VelocityEventManager {
       eventTypeTracker.setAccessible(true);
 
       handlerRegistration = Class.forName("com.velocitypowered.proxy.event.VelocityEventManager$HandlerRegistration");
+
       pluginField = handlerRegistration.getDeclaredField("plugin");
       pluginField.setAccessible(true);
 
       eventManagerInCommandManager = VelocityCommandManager.class.getDeclaredField("eventManager");
       eventManagerInCommandManager.setAccessible(true);
 
+      // The desired 5-argument fire method is private, and its 5th argument is the array of the private class,
+      // so we can't pass it into the Class#getDeclaredMethod(Class...) method.
       fire = Arrays.stream(VelocityEventManager.class.getDeclaredMethods())
-          .filter(e -> e.getName().equals("fire") && e.getParameterCount() == 5)
+          .filter(method -> method.getName().equals("fire") && method.getParameterCount() == 5)
           .findFirst()
           .orElseThrow();
-
       fire.setAccessible(true);
     } catch (NoSuchFieldException | ClassNotFoundException e) {
       throw new RuntimeException(e);
@@ -129,11 +132,11 @@ public class EventManagerHook extends VelocityEventManager {
   public void reloadHandlers() throws IllegalAccessException {
     ListMultimap<Class<?>, ?> handlersMap = (ListMultimap<Class<?>, ?>) handlersMapField.get(this);
     List disabledHandlers = handlersMap.get(GameProfileRequestEvent.class);
-    List preEvents = new ArrayList();
-    List newHandlers = new ArrayList(disabledHandlers);
+    List preEvents = new ArrayList<>();
+    List newHandlers = new ArrayList<>(disabledHandlers);
 
     if (this.handlerRegistrations != null) {
-      for (int i = 0; i < Array.getLength(this.handlerRegistrations); i++) {
+      for (int i = 0; i < Array.getLength(this.handlerRegistrations); ++i) {
         preEvents.add(Array.get(this.handlerRegistrations, i));
       }
     }
@@ -151,7 +154,7 @@ public class EventManagerHook extends VelocityEventManager {
     handlersMap.replaceValues(GameProfileRequestEvent.class, newHandlers);
     this.handlerRegistrations = Array.newInstance(handlerRegistration, preEvents.size());
 
-    for (int i = 0; i < preEvents.size(); i++) {
+    for (int i = 0; i < preEvents.size(); ++i) {
       Array.set(this.handlerRegistrations, i, preEvents.get(i));
     }
 
@@ -177,7 +180,7 @@ public class EventManagerHook extends VelocityEventManager {
   }
 
   @Override
-  public void register(final Object plugin, final Object listener) {
+  public void register(Object plugin, Object listener) {
     super.register(plugin, listener);
 
     if (Settings.IMP.MAIN != null && Settings.IMP.MAIN.AUTO_REGENERATE_LISTENERS) {
@@ -209,8 +212,8 @@ public class EventManagerHook extends VelocityEventManager {
           this.proceededProfiles.add(profile);
 
           hookFuture.complete(modifiedEvent);
-        } catch (IllegalAccessException ex) {
-          ex.printStackTrace();
+        } catch (IllegalAccessException e) {
+          e.printStackTrace();
         }
       });
 

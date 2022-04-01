@@ -183,8 +183,7 @@ public class LimboImpl implements Limbo {
 
       if (!pipeline.names().contains("prepared-encoder")) {
         // With an abnormally large number of connections from the same nickname,
-        // requests don't have time to be processed,
-        // and an error occurs that "minecraft-encoder" doesn't exist.
+        // requests don't have time to be processed, and an error occurs that "minecraft-encoder" doesn't exist.
         if (!pipeline.names().contains(Connections.MINECRAFT_ENCODER)) {
           connection.close();
           return;
@@ -385,12 +384,12 @@ public class LimboImpl implements Limbo {
     return packets;
   }
 
-  // Velocity backport.
+  // From Velocity.
   private List<MinecraftPacket> createFastClientServerSwitch(JoinGame joinGame, ProtocolVersion version) {
     // In order to handle switching to another server, you will need to send two packets:
     //
-    // - The join game packet from the backend server, with a different dimension
-    // - A respawn with the correct dimension
+    // - The join game packet from the backend server, with a different dimension.
+    // - A respawn with the correct dimension.
     //
     // Most notably, by having the client accept the join game packet, we can work around the need
     // to perform entity ID rewrites, eliminating potential issues from rewriting packets and

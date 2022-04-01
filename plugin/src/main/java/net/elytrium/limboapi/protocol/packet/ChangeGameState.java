@@ -28,6 +28,7 @@ public class ChangeGameState implements MinecraftPacket {
   private final int reason;
   private final float value;
 
+  // TODO: Reasons enum or builder.
   public ChangeGameState(int reason, float value) {
     this.reason = reason;
     this.value = value;
