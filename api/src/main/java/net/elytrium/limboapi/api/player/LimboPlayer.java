@@ -60,6 +60,14 @@ public interface LimboPlayer {
 
   void disconnect(RegisteredServer server);
 
+  void sendAbilities();
+
+  void sendAbilities(byte abilities, float flySpeed, float walkSpeed);
+
+  byte getAbilities();
+
+  GameMode getGameMode();
+
   Limbo getServer();
 
   Player getProxyPlayer();

@@ -42,6 +42,7 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
+import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.Respawn;
 import io.netty.buffer.ByteBuf;
@@ -62,6 +63,7 @@ import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
+import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
 import net.elytrium.limboapi.material.Biome;
@@ -81,14 +83,16 @@ public class LimboImpl implements Limbo {
   private final VirtualWorld world;
   private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
 
-  private String limboName;
   private final RootCommandNode<CommandSource> commandNode = new RootCommandNode<>();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final List<CommandRegistrar<?>> registrars = ImmutableList.of(
       new BrigadierCommandRegistrar(this.commandNode, this.lock.writeLock()),
       new SimpleCommandRegistrar(this.commandNode, this.lock.writeLock()),
-      new RawCommandRegistrar(this.commandNode, this.lock.writeLock()));
+      new RawCommandRegistrar(this.commandNode, this.lock.writeLock())
+  );
+
+  private String limboName;
 
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
@@ -138,11 +142,9 @@ public class LimboImpl implements Limbo {
     this.createFastClientServerSwitch(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2));
 
-    AvailableCommands commands = this.createAvailableCommandsPacket();
-    DefaultSpawnPosition spawnPosition = this.createDefaultSpawnPositionPacket();
     this.postJoinPackets = this.plugin.createPreparedPacket()
-        .prepare(commands, ProtocolVersion.MINECRAFT_1_13)
-        .prepare(spawnPosition);
+        .prepare(this.createAvailableCommandsPacket(), ProtocolVersion.MINECRAFT_1_13)
+        .prepare(this.createDefaultSpawnPositionPacket());
 
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
 
@@ -211,6 +213,17 @@ public class LimboImpl implements Limbo {
         connection.delayedWrite(this.joinPackets);
       }
 
+      connection.delayedWrite(
+          new PlayerListItem(
+              PlayerListItem.ADD_PLAYER,
+              List.of(
+                  new PlayerListItem.Item(player.getUniqueId())
+                      .setName(player.getUsername())
+                      .setGameMode(GameMode.ADVENTURE.getId())
+                      .setProperties(player.getGameProfileProperties())
+              )
+          )
+      );
       connection.delayedWrite(this.postJoinPackets);
       connection.delayedWrite(this.getBrandMessage(handlerClass));
 
@@ -237,10 +250,12 @@ public class LimboImpl implements Limbo {
   public void respawnPlayer(Player player) {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
-    connection.write(this.spawnPosition);
+    connection.delayedWrite(this.spawnPosition);
     if (this.chunks != null) {
-      connection.write(this.chunks);
+      connection.delayedWrite(this.chunks);
     }
+
+    connection.flush();
   }
 
   @Override
@@ -280,7 +295,8 @@ public class LimboImpl implements Limbo {
   }
 
   private DimensionData createDimensionData(Dimension dimension, boolean modern) {
-    return new DimensionData(dimension.getKey(), dimension.getModernId(), true,
+    return new DimensionData(
+        dimension.getKey(), dimension.getModernId(), true,
         0.0F, false, false, false, true,
         false, false, false, false, 256,
         modern ? "#minecraft:infiniburn_nether" : "minecraft:infiniburn_nether",
@@ -293,8 +309,9 @@ public class LimboImpl implements Limbo {
 
     JoinGame joinGame = new JoinGame();
     joinGame.setEntityId(0);
-    joinGame.setGamemode((short) 2);
-    joinGame.setPreviousGamemode((short) 2);
+    short gamemode = (short) GameMode.ADVENTURE.getId();
+    joinGame.setGamemode(gamemode);
+    joinGame.setPreviousGamemode(gamemode);
     joinGame.setDimension(dimension.getModernId());
     joinGame.setDifficulty((short) 0);
     joinGame.setMaxPlayers(1);
@@ -336,7 +353,7 @@ public class LimboImpl implements Limbo {
   }
 
   private DefaultSpawnPosition createDefaultSpawnPositionPacket() {
-    return new DefaultSpawnPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0f);
+    return new DefaultSpawnPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F);
   }
 
   private AvailableCommands createAvailableCommandsPacket() {
@@ -430,8 +447,7 @@ public class LimboImpl implements Limbo {
     if (this.brandMessages.containsKey(handlerClass)) {
       return this.brandMessages.get(handlerClass);
     } else {
-      PreparedPacket preparedPacket = this.plugin.createPreparedPacket()
-          .prepare(this::createBrandMessage);
+      PreparedPacket preparedPacket = this.plugin.createPreparedPacket().prepare(this::createBrandMessage);
       this.brandMessages.put(handlerClass, preparedPacket);
       return preparedPacket;
     }

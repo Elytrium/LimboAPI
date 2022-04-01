@@ -40,7 +40,7 @@ public class PlayerAbilities implements MinecraftPacket {
   }
 
   @Override
-  public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
 
   }
 

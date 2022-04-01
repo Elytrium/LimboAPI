@@ -39,7 +39,8 @@ public enum GameMode {
    * @return The {@link GameMode}, or {@code null} if it does not exist.
    * @see #getId()
    */
-  public static @Nullable GameMode getById(int id) {
+  @Nullable
+  public static GameMode getById(int id) {
     return VALUES[id];
   }
 }
