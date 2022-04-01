@@ -10,6 +10,7 @@ package net.elytrium.limboapi.api;
 import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.proxy.Player;
+import net.elytrium.limboapi.api.command.LimboCommandMeta;
 
 public interface Limbo {
 
@@ -19,5 +20,7 @@ public interface Limbo {
 
   Limbo setName(String name);
 
-  Limbo registerCommand(CommandMeta meta, Command command);
+  Limbo registerCommand(LimboCommandMeta commandMeta);
+
+  Limbo registerCommand(CommandMeta commandMeta, Command command);
 }
