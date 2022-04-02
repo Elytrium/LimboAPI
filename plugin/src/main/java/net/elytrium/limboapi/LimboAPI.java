@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
@@ -69,6 +70,8 @@ import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.elytrium.limboapi.server.world.SimpleWorld;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.ComponentSerializer;
 import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
@@ -114,10 +117,8 @@ public class LimboAPI implements LimboFactory {
     this.nextServer = new HashMap<>();
     this.initialID = new HashMap<>();
 
-    try {
-      Class.forName("com.velocitypowered.proxy.connection.client.LoginInboundConnection");
-    } catch (ClassNotFoundException e) {
-      this.logger.error("Please update your Velocity binary to 3.1.x", e);
+    if (ProtocolVersion.MAXIMUM_VERSION.getProtocol() < 758) {
+      this.logger.error("Please update Velocity.");
       this.server.shutdown();
       return;
     }
@@ -143,7 +144,7 @@ public class LimboAPI implements LimboFactory {
     this.reload();
 
     if (Settings.IMP.MAIN.CHECK_FOR_UPDATES) {
-      if (UpdatesChecker.checkVersionByURL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION", Settings.IMP.VERSION)) {
+      if (!UpdatesChecker.checkVersionByURL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION", Settings.IMP.VERSION)) {
         this.logger.error("****************************************");
         this.logger.warn("The new LimboAPI update was found, please update.");
         this.logger.error("https://github.com/Elytrium/LimboAPI/releases/");
@@ -168,7 +169,13 @@ public class LimboAPI implements LimboFactory {
       this.logger.warn("****************************************");
     }
 
-    this.serializer = new Serializer(Serializers.valueOf(Settings.IMP.SERIALIZER));
+    ComponentSerializer<Component, Component, String> serializer = Serializers.valueOf(Settings.IMP.SERIALIZER).getSerializer();
+    if (serializer == null) {
+      this.logger.warn("The specified serializer could not be founded, using default. (LEGACY_AMPERSAND)");
+      this.serializer = new Serializer(Objects.requireNonNull(Serializers.LEGACY_AMPERSAND.getSerializer()));
+    } else {
+      this.serializer = new Serializer(serializer);
+    }
 
     this.logger.info("Creating and preparing packets...");
     this.reloadVersion();
