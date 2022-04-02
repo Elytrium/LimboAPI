@@ -34,8 +34,6 @@
 
 package net.elytrium.limboapi.injection.login;
 
-import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_8;
-
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
@@ -43,6 +41,8 @@ import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
 import com.velocitypowered.proxy.VelocityServer;
@@ -79,6 +79,7 @@ public class LoginListener {
 
   private static final Constructor<ConnectedPlayer> ctor;
   private static final Field loginConnectionField;
+  private static final Class<?> delegateClass;
   private static final Field delegate;
   private static final Field spawned;
 
@@ -106,6 +107,7 @@ public class LoginListener {
 
       delegate = LoginInboundConnection.class.getDeclaredField("delegate");
       delegate.setAccessible(true);
+      delegateClass = delegate.getDeclaringClass();
 
       loginConnectionField = LoginSessionHandler.class.getDeclaredField("mcConnection");
       loginConnectionField.setAccessible(true);
@@ -138,9 +140,16 @@ public class LoginListener {
   }
 
   public void hookLoginSession(GameProfileRequestEvent event) throws IllegalAccessException {
+    // In some cases, e.g. if the player logged out or was kicked right before the GameProfileRequestEvent hook,
+    // the connection will be broken (possibly by GC) and we can't get it from the delegate field.
+    InboundConnection inboundConnection = event.getConnection();
+    if (!delegateClass.isAssignableFrom(inboundConnection.getClass())) {
+      return;
+    }
+
     // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
     // method (which checks mcConnection.isActive()) and to override it. :)
-    InitialInboundConnection inbound = (InitialInboundConnection) delegate.get(event.getConnection());
+    InitialInboundConnection inbound = (InitialInboundConnection) delegate.get(inboundConnection);
     MinecraftConnection connection = inbound.getConnection();
     LoginSessionHandler handler = (LoginSessionHandler) connection.getSessionHandler();
     loginConnectionField.set(handler, closed);
@@ -153,7 +162,7 @@ public class LoginListener {
         // Initiate a regular connection and move over to it.
         ConnectedPlayer player = ctor.newInstance(
             this.server, event.getGameProfile(), connection,
-            event.getConnection().getVirtualHost().orElse(null),
+            inboundConnection.getVirtualHost().orElse(null),
             this.onlineMode.contains(event.getUsername())
         );
 
@@ -168,7 +177,7 @@ public class LoginListener {
 
         // Complete the Login process.
         int threshold = this.server.getConfiguration().getCompressionThreshold();
-        if (threshold >= 0 && connection.getProtocolVersion().compareTo(MINECRAFT_1_8) >= 0) {
+        if (threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
           connection.write(new SetCompression(threshold));
 
           if (connection.isClosed()) {
