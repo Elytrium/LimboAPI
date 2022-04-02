@@ -158,7 +158,7 @@ public class LimboAPI implements LimboFactory {
     EventManagerHook.postInit();
   }
 
-  @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_EXCEPTION", justification = "LEGACY_AMPERSAND can't be null in velocity.")
+  @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "LEGACY_AMPERSAND can't be null in velocity.")
   public void reload() {
     if (Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX)) {
       this.logger.warn("************* FIRST LAUNCH *************");
