@@ -18,6 +18,7 @@
 package net.elytrium.limboapi.injection.packet;
 
 import com.velocitypowered.api.network.ProtocolVersion;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import java.util.List;
@@ -33,7 +34,9 @@ public class PreparedPacketEncoder extends MessageToMessageEncoder<PreparedPacke
   @Override
   protected void encode(ChannelHandlerContext ctx, PreparedPacketImpl msg, List<Object> out) throws Exception {
     if (msg.hasPacketsFor(this.protocolVersion)) {
-      out.addAll(msg.getPackets(this.protocolVersion));
+      msg.getPackets(this.protocolVersion).stream()
+          .map(ByteBuf::retainedDuplicate)
+          .forEach(out::add);
     }
   }
 }
