@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -163,7 +162,7 @@ public class PreparedPacketImpl implements PreparedPacket {
   }
 
   public List<ByteBuf> getPackets(ProtocolVersion version) {
-    return this.packets.get(version).stream().map(ByteBuf::copy).collect(Collectors.toList());
+    return this.packets.get(version);
   }
 
   public boolean hasPacketsFor(ProtocolVersion version) {
