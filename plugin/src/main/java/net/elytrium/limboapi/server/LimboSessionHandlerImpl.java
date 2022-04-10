@@ -24,6 +24,7 @@ import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
+import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.Chat;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
@@ -31,6 +32,7 @@ import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -43,6 +45,7 @@ import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
+import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packet.Player;
 import net.elytrium.limboapi.protocol.packet.PlayerPosition;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
@@ -232,8 +235,13 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       connection.eventLoop().execute(() -> connection.setSessionHandler(this.originalHandler));
     }
     ChannelPipeline pipeline = connection.getChannel().pipeline();
-    if (pipeline.names().contains("prepared-encoder")) {
+    if (pipeline.names().contains(LimboProtocol.PREPARED_ENCODER)) {
       pipeline.remove(PreparedPacketEncoder.class);
+    }
+
+    if (pipeline.names().contains(LimboProtocol.READ_TIMEOUT)) {
+      pipeline.replace(LimboProtocol.READ_TIMEOUT, Connections.READ_TIMEOUT,
+          new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS));
     }
   }
 

@@ -50,12 +50,14 @@ import com.velocitypowered.proxy.protocol.packet.Respawn;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.elytrium.java.commons.reflection.ReflectionException;
@@ -97,6 +99,7 @@ public class LimboImpl implements Limbo {
   );
 
   private String limboName;
+  private Integer readTimeout;
 
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
@@ -182,7 +185,7 @@ public class LimboImpl implements Limbo {
         this.plugin.getLogger().info(player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + this.limboName + " Limbo");
       }
 
-      if (!pipeline.names().contains("prepared-encoder")) {
+      if (!pipeline.names().contains(LimboProtocol.PREPARED_ENCODER)) {
         // With an abnormally large number of connections from the same nickname,
         // requests don't have time to be processed, and an error occurs that "minecraft-encoder" doesn't exist.
         if (!pipeline.names().contains(Connections.MINECRAFT_ENCODER)) {
@@ -190,7 +193,11 @@ public class LimboImpl implements Limbo {
           return;
         }
 
-        pipeline.addAfter(Connections.MINECRAFT_ENCODER, "prepared-encoder", new PreparedPacketEncoder(connection.getProtocolVersion()));
+        if (this.readTimeout != null) {
+          pipeline.replace(Connections.READ_TIMEOUT, LimboProtocol.READ_TIMEOUT, new ReadTimeoutHandler(this.readTimeout, TimeUnit.MILLISECONDS));
+        }
+
+        pipeline.addAfter(Connections.MINECRAFT_ENCODER, LimboProtocol.PREPARED_ENCODER, new PreparedPacketEncoder(connection.getProtocolVersion()));
       }
 
       RegisteredServer previousServer = null;
@@ -269,6 +276,13 @@ public class LimboImpl implements Limbo {
           this.brandMessages.replace(handlerClass, packet, this.plugin.createPreparedPacket().prepare(this::createBrandMessage))
       );
     }
+
+    return this;
+  }
+
+  @Override
+  public Limbo setReadTimeout(int millis) {
+    this.readTimeout = millis;
 
     return this;
   }
