@@ -20,6 +20,8 @@ public interface Limbo {
 
   Limbo setName(String name);
 
+  Limbo setReadTimeout(int millis);
+
   Limbo registerCommand(LimboCommandMeta commandMeta);
 
   Limbo registerCommand(CommandMeta commandMeta, Command command);

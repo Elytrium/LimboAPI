@@ -55,6 +55,9 @@ import sun.misc.Unsafe;
 @SuppressWarnings("unchecked")
 public class LimboProtocol {
 
+  public static final String PREPARED_ENCODER = "prepared-encoder";
+  public static final String READ_TIMEOUT = "limboapi-read-timeout";
+
   private static final Unsafe unsafe;
   private static final StateRegistry limboRegistry;
   private static final Field direction;
