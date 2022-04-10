@@ -12,6 +12,7 @@ dependencies {
 
     // Needs for some velocity methods.
     compileOnly("io.netty:netty-codec:4.1.75.Final")
+    compileOnly("io.netty:netty-handler:4.1.75.Final")
     compileOnly("it.unimi.dsi:fastutil-core:8.5.8")
 
     implementation("org.bstats:bstats-velocity:3.0.0")
