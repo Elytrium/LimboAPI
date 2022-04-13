@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ 11, 16 ]
+        java: [ 11, 17 ]
       fail-fast: true
     steps:
       - name: Checkout
@@ -17,12 +17,6 @@ jobs:
         with:
           distribution: adopt
           java-version: ${{ matrix.java }}
-      - name: Cache Gradle
-        uses: actions/cache@v3.0.1
-        with:
-          path: ~/.gradle
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle-
       - name: Build LimboAPI
         run: ./gradlew build
       - name: Upload LimboAPI Plugin
@@ -30,3 +24,11 @@ jobs:
         with:
           name: LimboAPI Plugin Built On ${{ matrix.java }} JDK
           path: "plugin/build/libs/limboapi-plugin*.jar"
+      - name: Release the build
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/libs/limboapi-plugin*.jar"
+          body: ${{ join(github.event.commits, '\n') }}
+          prerelease: true
+          name: JDK ${{ matrix.java }} Dev-build
+          tag: dev-build-jdk-${{ matrix.java }}
