@@ -93,13 +93,15 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.loaded = true;
     this.callback.onSpawn(server, player);
 
+    int readTimeout = server.getReadTimeout() == null ? this.plugin.getServer().getConfiguration().getReadTimeout() : server.getReadTimeout();
+
     this.keepAliveTask = this.plugin.getServer().getScheduler().buildTask(this.plugin, () -> {
       KeepAlive keepAlive = new KeepAlive();
       keepAlive.setRandomId(this.keepAliveId = ThreadLocalRandom.current().nextInt());
       this.player.getConnection().write(keepAlive);
       this.keepAliveLastSend = System.currentTimeMillis();
     }).delay(250, TimeUnit.MILLISECONDS) // Fix 1.7.x race condition with switching protocol states.
-      .repeat(this.plugin.getServer().getConfiguration().getReadTimeout() / 2, TimeUnit.MILLISECONDS)
+      .repeat(readTimeout / 2, TimeUnit.MILLISECONDS)
       .schedule();
   }
 
