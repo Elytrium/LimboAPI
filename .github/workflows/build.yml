@@ -24,11 +24,17 @@ jobs:
         with:
           name: LimboAPI Plugin Built On ${{ matrix.java }} JDK
           path: "plugin/build/libs/limboapi-plugin*.jar"
+      - uses: dev-drprasad/delete-tag-and-release@v0.2.0
+        with:
+          delete_release: true
+          tag_name: dev-build-jdk-${{ matrix.java }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Release the build
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/libs/limboapi-plugin*.jar"
-          body: ${{ join(github.event.commits, '\n') }}
+          artifacts: "plugin/build/libs/limboapi-plugin*.jar"
+          body: ${{ join(github.event.commits.*.message, '\n') }}
           prerelease: true
           name: JDK ${{ matrix.java }} Dev-build
           tag: dev-build-jdk-${{ matrix.java }}
