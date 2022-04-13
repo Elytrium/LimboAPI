@@ -99,6 +99,7 @@ public class LimboImpl implements Limbo {
   );
 
   private String limboName;
+
   private Integer readTimeout;
 
   private PreparedPacket joinPackets;
@@ -498,5 +499,9 @@ public class LimboImpl implements Limbo {
   private ChunkData createChunkData(VirtualChunk chunk, Dimension dimension, int skyLightY) {
     chunk.setSkyLight(chunk.getX() & 15, skyLightY, chunk.getZ() & 15, (byte) 1);
     return new ChunkData(chunk.getFullChunkSnapshot(), true, dimension.getMaxSections());
+  }
+
+  public Integer getReadTimeout() {
+    return this.readTimeout;
   }
 }
