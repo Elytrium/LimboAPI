@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -212,17 +213,36 @@ public class LimboAPI implements LimboFactory {
 
   @Override
   public VirtualBlock createSimpleBlock(Block block) {
-    return SimpleBlock.fromLegacyId((short) block.getId()).setData(block.getData());
+    return SimpleBlock.fromLegacyId((short) block.getId());
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(short legacyId, byte data) {
-    return SimpleBlock.fromLegacyId(legacyId).setData(data);
+  public VirtualBlock createSimpleBlock(short legacyId) {
+    return this.createSimpleBlock(legacyId, false);
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, SimpleBlock.BlockInfo... blockInfos) {
-    return new SimpleBlock(solid, air, motionBlocking, blockInfos);
+  public VirtualBlock createSimpleBlock(String modernId, Map<String, String> properties) {
+    return SimpleBlock.fromModernId(modernId, properties);
+  }
+
+  @Override
+  public VirtualBlock createSimpleBlock(short id, boolean modern) {
+    if (modern) {
+      return SimpleBlock.solid(id);
+    } else {
+      return SimpleBlock.fromLegacyId(id);
+    }
+  }
+
+  @Override
+  public VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, short id) {
+    return new SimpleBlock(solid, air, motionBlocking, id);
+  }
+
+  @Override
+  public VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernId, Map<String, String> properties) {
+    return new SimpleBlock(solid, air, motionBlocking, modernId, properties);
   }
 
   @Override

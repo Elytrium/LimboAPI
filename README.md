@@ -74,6 +74,11 @@ Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
     }
 ```
 
+## Used Open Source projects
+
+- [ProtocolSupport](https://github.com/ProtocolSupport/ProtocolSupport) - for modern->legacy block mappings
+- [ViaVersion](https://github.com/ViaVersion/ViaVersion) - for modern string->integer block mappings
+
 ## Demo
 
 - [LimboAuth](https://github.com/Elytrium/LimboAuth) - The auth plugin, that uses LimboAPI as a dependency at the basic level.

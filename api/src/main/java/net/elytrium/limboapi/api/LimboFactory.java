@@ -8,6 +8,7 @@
 package net.elytrium.limboapi.api;
 
 import com.velocitypowered.api.proxy.Player;
+import java.util.Map;
 import java.util.function.Supplier;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
@@ -21,6 +22,7 @@ import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.BuiltInPackets;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 
+@SuppressWarnings("unused")
 public interface LimboFactory {
 
   /**
@@ -35,17 +37,48 @@ public interface LimboFactory {
    * Creates new virtual block from id and data.
    *
    * @param legacyId Legacy block id (1.12.2 and lower)
-   * @param data     Block data.
    * @return new virtual block.
    */
-  VirtualBlock createSimpleBlock(short legacyId, byte data);
+  VirtualBlock createSimpleBlock(short legacyId);
+
+  /**
+   * Creates new virtual block from id and data.
+   *
+   * @param modernId Modern block id
+   * @return new virtual block.
+   */
+  VirtualBlock createSimpleBlock(String modernId, Map<String, String> properties);
+
+  /**
+   * Creates new virtual block from id and data.
+   *
+   * @param legacyId Block id
+   * @param modern   Use the latest supported version ids or 1.12.2 and lower.
+   * @return new virtual block.
+   */
+  VirtualBlock createSimpleBlock(short legacyId, boolean modern);
 
   /**
    * Creates new virtual customizable block.
    *
-   * @return new virtual server.
+   * @param solid          Defines if the block is solid or not
+   * @param air            Defines if the block is the air
+   * @param motionBlocking Defines if the block blocks motions (1.14+)
+   * @param id             Block id
+   * @return new virtual block.
    */
-  VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, VirtualBlock.BlockInfo... blockInfos);
+  VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, short id);
+
+  /**
+   * Creates new virtual customizable block.
+   *
+   * @param solid          Defines if the block is solid or not
+   * @param air            Defines if the block is the air
+   * @param motionBlocking Defines if the block blocks motions (1.14+)
+   * @param modernId       Block id
+   * @return new virtual block.
+   */
+  VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernId, Map<String, String> properties);
 
   /**
    * Creates new virtual world.
