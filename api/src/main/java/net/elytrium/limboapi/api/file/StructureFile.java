@@ -70,7 +70,7 @@ public class StructureFile implements WorldFile {
 
       int state = blockMap.getInt("state");
       VirtualBlock block = palettedBlocks[state];
-      world.setBlock(x, y, z, block);
+      world.setBlock(offsetX + x, offsetY + y, offsetZ + z, block);
     }
   }
 
