@@ -11,7 +11,6 @@ import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-@SuppressWarnings("unused")
 public interface VirtualChunk {
 
   void setBlock(int x, int y, int z, @Nullable VirtualBlock block);

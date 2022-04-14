@@ -9,7 +9,6 @@ package net.elytrium.limboapi.api.protocol.packets;
 
 import net.elytrium.java.commons.reflection.ReflectionException;
 
-@SuppressWarnings("unused")
 public enum BuiltInPackets {
 
   ChangeGameState("net.elytrium.limboapi.protocol.packet.ChangeGameState"),

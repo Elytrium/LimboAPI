@@ -28,6 +28,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import java.util.BitSet;
 import java.util.zip.Deflater;
+import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
@@ -39,12 +40,8 @@ import net.elytrium.limboapi.mcprotocollib.BitStorage116;
 import net.elytrium.limboapi.mcprotocollib.BitStorage19;
 import net.elytrium.limboapi.protocol.util.NetworkSection;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ChunkData implements MinecraftPacket {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ChunkData.class);
 
   private final ChunkSnapshot chunk;
   private final NetworkSection[] sections;
@@ -229,7 +226,7 @@ public class ChunkData implements MinecraftPacket {
     }
 
     if (dataLength != data.readableBytes()) {
-      LOGGER.warn("Data length mismatch: " + dataLength + " != " + data.readableBytes() + ". Version: " + version);
+      LimboAPI.getLogger().warn("Data length mismatch: " + dataLength + " != " + data.readableBytes() + ". Version: " + version);
     }
 
     return data;

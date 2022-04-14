@@ -9,7 +9,6 @@ package net.elytrium.limboapi.api;
 
 import net.elytrium.limboapi.api.player.LimboPlayer;
 
-@SuppressWarnings("unused")
 public interface LimboSessionHandler {
 
   default void onSpawn(Limbo server, LimboPlayer player) {
