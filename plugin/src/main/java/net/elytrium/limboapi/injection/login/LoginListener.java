@@ -226,7 +226,7 @@ public class LoginListener {
         try {
           spawned.set(playHandler, this.plugin.isLimboJoined(player));
         } catch (IllegalAccessException ex) {
-          this.plugin.getLogger().error("Exception while hooking into ClientPlaySessionHandler of {}", player, ex);
+          LimboAPI.getLogger().error("Exception while hooking into ClientPlaySessionHandler of {}", player, ex);
         }
 
         connection.setSessionHandler(playHandler);

@@ -104,6 +104,7 @@ public class EventManagerHook extends VelocityEventManager {
 
   public EventManagerHook(PluginManager pluginManager, LimboAPI plugin) {
     super(pluginManager);
+
     this.plugin = plugin;
   }
 
@@ -146,7 +147,7 @@ public class EventManagerHook extends VelocityEventManager {
       PluginContainer pluginContainer = (PluginContainer) pluginField.get(handler);
       String id = pluginContainer.getDescription().getId();
       if (Settings.IMP.MAIN.PRE_LIMBO_PROFILE_REQUEST_PLUGINS.contains(id)) {
-        this.plugin.getLogger().info("Hooking all GameProfileRequestEvent events from {} ", id);
+        LimboAPI.getLogger().info("Hooking all GameProfileRequestEvent events from {} ", id);
         preEvents.add(handler);
         newHandlers.remove(handler);
       }

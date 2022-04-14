@@ -11,7 +11,6 @@ import java.util.List;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-@SuppressWarnings("unused")
 public interface VirtualWorld {
 
   @NonNull

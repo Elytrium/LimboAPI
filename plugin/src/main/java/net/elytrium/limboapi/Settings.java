@@ -42,7 +42,7 @@ public class Settings extends YamlConfig {
   @Create
   public MAIN MAIN;
 
-  @Comment("Don't use \\n, use {NL} for new line, and {PRFX} for prefix. Ampersand (&) color codes are supported too.")
+  @Comment("Don't use \\n, use {NL} for new line, and {PRFX} for prefix.")
   public static class MAIN {
 
     public boolean CHECK_FOR_UPDATES = true;
@@ -65,14 +65,10 @@ public class Settings extends YamlConfig {
     public String PREPARE_MIN_VERSION = "1_7_2";
     public String PREPARE_MAX_VERSION = "LATEST";
 
-    @Comment({
-        "Helpful if you want some plugins proceed before LimboAPI. For example, it is needed to Floodgate to replace UUID."
-    })
+    @Comment("Helpful if you want some plugins proceed before LimboAPI. For example, it is needed to Floodgate to replace UUID.")
     public List<String> PRE_LIMBO_PROFILE_REQUEST_PLUGINS = List.of("floodgate", "geyser");
 
-    @Comment({
-        "Regenerates listeners that need to proceed before LimboAPI on each EventManager#register call."
-    })
+    @Comment("Regenerates listeners that need to proceed before LimboAPI on each EventManager#register call.")
     public boolean AUTO_REGENERATE_LISTENERS = false;
 
     @Create

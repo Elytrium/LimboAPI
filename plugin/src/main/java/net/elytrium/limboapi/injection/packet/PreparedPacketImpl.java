@@ -33,7 +33,6 @@ import java.util.function.Function;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.LimboProtocol;
-import org.slf4j.Logger;
 
 public class PreparedPacketImpl implements PreparedPacket {
 
@@ -41,12 +40,9 @@ public class PreparedPacketImpl implements PreparedPacket {
   private final ProtocolVersion minVersion;
   private final ProtocolVersion maxVersion;
 
-  private final Logger logger;
-
-  public PreparedPacketImpl(ProtocolVersion minVersion, ProtocolVersion maxVersion, LimboAPI plugin) {
+  public PreparedPacketImpl(ProtocolVersion minVersion, ProtocolVersion maxVersion) {
     this.minVersion = minVersion;
     this.maxVersion = maxVersion;
-    this.logger = plugin.getLogger();
   }
 
   @Override
@@ -172,7 +168,7 @@ public class PreparedPacketImpl implements PreparedPacket {
   private <T> ByteBuf encodePacket(T packet, ProtocolVersion version) {
     int id = this.getPacketId(packet, version);
     if (id == Integer.MIN_VALUE) {
-      this.logger.error("Bad packet id {}:{}", id, packet.getClass().getSimpleName());
+      LimboAPI.getLogger().error("Bad packet id {}:{}", id, packet.getClass().getSimpleName());
     }
     ByteBuf byteBuf = Unpooled.buffer();
     ProtocolUtils.writeVarInt(byteBuf, id);

@@ -21,7 +21,6 @@ import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.BuiltInPackets;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 
-@SuppressWarnings("unused")
 public interface LimboFactory {
 
   /**
@@ -90,7 +89,7 @@ public interface LimboFactory {
    * Instantiates new MinecraftPacket object.
    *
    * @param data You can find data arguments at the constructors
-   *     <a href=" https://github.com/Elytrium/LimboAPI/blob/master/plugin/src/main/java/net/elytrium/limboapi/protocol/packet/">here</a>
+   *     <a href="https://github.com/Elytrium/LimboAPI/blob/master/plugin/src/main/java/net/elytrium/limboapi/protocol/packet/">here</a>
    * @return MinecraftPacket object.
    */
   Object instantiatePacket(BuiltInPackets packetType, Object... data);

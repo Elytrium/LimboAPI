@@ -17,7 +17,6 @@ import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 
-@SuppressWarnings("unused")
 public interface LimboPlayer {
 
   void writePacket(Object packetObj);

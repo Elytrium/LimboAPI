@@ -151,7 +151,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     MinecraftConnection connection = this.player.getConnection();
     if (!(packet.getRandomId() == this.keepAliveId)) {
       connection.closeWith(this.plugin.getPackets().getInvalidPing());
-      this.plugin.getLogger().warn("{} sent an invalid keepalive.", this.player);
+      LimboAPI.getLogger().warn("{} sent an invalid keepalive.", this.player);
       return false;
     }
 
@@ -207,7 +207,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   private void kickTooBigPacket(String type, int length) {
     this.player.getConnection().closeWith(this.plugin.getPackets().getTooBigPacket());
-    this.plugin.getLogger().warn("{} sent too big packet. (type: {}, length: {})", this.player, type, length);
+    LimboAPI.getLogger().warn("{} sent too big packet. (type: {}, length: {})", this.player, type, length);
   }
 
   @Override
@@ -217,7 +217,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       this.keepAliveTask.cancel();
     }
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-      this.plugin.getLogger().info(
+      LimboAPI.getLogger().info(
           this.player.getUsername() + " (" + this.player.getRemoteAddress() + ") has disconnected from the " + this.limboName.get() + " Limbo"
       );
     }
@@ -242,8 +242,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
 
     if (pipeline.names().contains(LimboProtocol.READ_TIMEOUT)) {
-      pipeline.replace(LimboProtocol.READ_TIMEOUT, Connections.READ_TIMEOUT,
-          new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS));
+      pipeline.replace(
+          LimboProtocol.READ_TIMEOUT,
+          Connections.READ_TIMEOUT,
+          new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS)
+      );
     }
   }
 
