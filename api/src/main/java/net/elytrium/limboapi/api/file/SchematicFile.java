@@ -22,7 +22,7 @@ public class SchematicFile implements WorldFile {
   private short length;
   private byte[] blocks;
   private byte[] addBlocks = new byte[0];
-  private byte[] blocksData;
+  //private byte[] blocksData;
 
   public SchematicFile(Path file) throws IOException {
     CompoundBinaryTag tag = BinaryTagIO.unlimitedReader().read(file, BinaryTagIO.Compression.GZIP);
@@ -58,7 +58,7 @@ public class SchematicFile implements WorldFile {
       for (int y = 0; y < this.height; ++y) {
         for (int z = 0; z < this.length; ++z) {
           int index = (y * this.length + z) * this.width + x;
-          world.setBlock(x + offsetX, y + offsetY, z + offsetZ, factory.createSimpleBlock(blockIds[index], this.blocksData[index]));
+          world.setBlock(x + offsetX, y + offsetY, z + offsetZ, factory.createSimpleBlock(blockIds[index]));
         }
       }
     }
@@ -69,7 +69,7 @@ public class SchematicFile implements WorldFile {
     this.height = tag.getShort("Height");
     this.length = tag.getShort("Length");
     this.blocks = tag.getByteArray("Blocks");
-    this.blocksData = tag.getByteArray("Data");
+    //this.blocksData = tag.getByteArray("Data");
 
     if (tag.keySet().contains("AddBlocks")) {
       this.addBlocks = tag.getByteArray("AddBlocks");
