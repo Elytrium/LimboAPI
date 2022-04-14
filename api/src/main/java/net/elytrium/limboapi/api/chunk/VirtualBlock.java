@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-@SuppressWarnings("unused")
 public interface VirtualBlock {
 
   VirtualBlock setData(byte data);

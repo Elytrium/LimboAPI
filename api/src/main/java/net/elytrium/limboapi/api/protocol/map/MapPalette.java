@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import net.elytrium.limboapi.api.utils.OverlayVanillaMap;
 
-@SuppressWarnings("unused")
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class MapPalette {
 

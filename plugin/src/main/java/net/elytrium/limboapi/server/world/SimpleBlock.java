@@ -29,15 +29,11 @@ import java.util.Map;
 import java.util.Objects;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
 public class SimpleBlock implements VirtualBlock {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ChunkData.class);
   public static final SimpleBlock AIR = air(BlockInfo.info(Version.LEGACY, 0));
 
   private static final Gson gson = new Gson();
@@ -54,7 +50,7 @@ public class SimpleBlock implements VirtualBlock {
 
     map.forEach((legacyBlockId, versionMap) -> {
       BlockInfo[] info = versionMap.entrySet().stream()
-          .map(e -> BlockInfo.info(Version.parse(e.getKey()), Integer.parseInt(e.getValue())))
+          .map(entry -> BlockInfo.info(Version.parse(entry.getKey()), Integer.parseInt(entry.getValue())))
           .toArray(BlockInfo[]::new);
 
       legacyIdsMap.put(Short.valueOf(legacyBlockId), solid(info));
@@ -159,7 +155,7 @@ public class SimpleBlock implements VirtualBlock {
     if (legacyIdsMap.containsKey(id)) {
       return legacyIdsMap.get(id);
     } else {
-      LOGGER.warn("Block #" + id + " is not supported, and was replaced with air.");
+      LimboAPI.getLogger().warn("Block #" + id + " is not supported, and was replaced with air.");
       return AIR;
     }
   }

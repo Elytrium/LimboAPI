@@ -42,7 +42,7 @@ public class CachedPackets {
   }
 
   private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {
-    return Disconnect.create(this.plugin.getSerializer().deserialize(message), version);
+    return Disconnect.create(LimboAPI.getSerializer().deserialize(message), version);
   }
 
   public PreparedPacket getTooBigPacket() {

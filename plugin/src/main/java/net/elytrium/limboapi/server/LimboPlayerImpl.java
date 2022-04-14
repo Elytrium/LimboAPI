@@ -267,8 +267,10 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   private void sendToRegisteredServer(RegisteredServer server) {
-    this.connection.eventLoop().execute(() -> this.connection.setState(StateRegistry.PLAY));
-    this.connection.eventLoop().execute(this.player.createConnectionRequest(server)::fireAndForget);
+    this.connection.eventLoop().execute(() -> {
+      this.connection.setState(StateRegistry.PLAY);
+      this.player.createConnectionRequest(server).fireAndForget();
+    });
   }
 
   @Override

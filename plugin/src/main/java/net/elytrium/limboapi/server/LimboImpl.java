@@ -183,7 +183,7 @@ public class LimboImpl implements Limbo {
       ChannelPipeline pipeline = connection.getChannel().pipeline();
 
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-        this.plugin.getLogger().info(player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + this.limboName + " Limbo");
+        LimboAPI.getLogger().info(player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + this.limboName + " Limbo");
       }
 
       if (!pipeline.names().contains(LimboProtocol.PREPARED_ENCODER)) {

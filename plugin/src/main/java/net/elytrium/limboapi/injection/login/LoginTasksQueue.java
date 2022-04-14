@@ -62,6 +62,7 @@ import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
 import net.kyori.adventure.text.Component;
+import org.slf4j.Logger;
 
 public class LoginTasksQueue {
 
@@ -137,6 +138,7 @@ public class LoginTasksQueue {
   private void finish() {
     this.plugin.removeLoginQueue(this.player);
     MinecraftConnection connection = this.player.getConnection();
+    Logger logger = LimboAPI.getLogger();
 
     this.server.getEventManager()
         .fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode()))
@@ -151,19 +153,20 @@ public class LoginTasksQueue {
                     .thenAcceptAsync(event -> {
                       if (!connection.isClosed()) {
                         // Wait for permissions to load, then set the players' permission function.
-                        final PermissionFunction function = event.createFunction(this.player);
+                        PermissionFunction function = event.createFunction(this.player);
                         if (function == null) {
-                          this.plugin.getLogger().error(
+                          logger.error(
                               "A plugin permission provider {} provided an invalid permission function"
                                   + " for player {}. This is a bug in the plugin, not in Velocity. Falling"
                                   + " back to the default permission function.",
                               event.getProvider().getClass().getName(),
-                              this.player.getUsername());
+                              this.player.getUsername()
+                          );
                         } else {
                           try {
                             setPermissionFunction.invoke(this.player, function);
                           } catch (IllegalAccessException | InvocationTargetException ex) {
-                            this.plugin.getLogger().error("Exception while completing injection to {}", this.player, ex);
+                            logger.error("Exception while completing injection to {}", this.player, ex);
                           }
                         }
                         try {
@@ -173,8 +176,8 @@ public class LoginTasksQueue {
                         }
                       }
                     });
-              } catch (IllegalAccessException ex) {
-                this.plugin.getLogger().error("Exception while completing injection to {}", this.player, ex);
+              } catch (IllegalAccessException e) {
+                logger.error("Exception while completing injection to {}", this.player, e);
               }
             }, connection.eventLoop()), connection.eventLoop());
   }
@@ -188,6 +191,7 @@ public class LoginTasksQueue {
     pipeline.get(MinecraftEncoder.class).setState(StateRegistry.PLAY);
     pipeline.get(MinecraftDecoder.class).setState(StateRegistry.PLAY);
 
+    Logger logger = LimboAPI.getLogger();
     this.server.getEventManager().fire(new LoginEvent(this.player))
         .thenAcceptAsync(event -> {
           if (connection.isClosed()) {
@@ -207,14 +211,15 @@ public class LoginTasksQueue {
 
             try {
               connection.setSessionHandler(initialCtor.newInstance(this.player));
-              this.server.getEventManager().fire(new PostLoginEvent(this.player))
+              this.server.getEventManager()
+                  .fire(new PostLoginEvent(this.player))
                   .thenAccept((ignored) -> {
                     try {
                       // Go back I want to be ~~monke~~ original mcConnection.
                       loginConnectionField.set(this.handler, connection);
                       connectToInitialServer.invoke(this.handler, this.player);
-                    } catch (IllegalAccessException | InvocationTargetException ex) {
-                      this.plugin.getLogger().error("Exception while connecting {} to initial server", this.player, ex);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                      logger.error("Exception while connecting {} to initial server", this.player, e);
                     }
                   });
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
@@ -223,7 +228,7 @@ public class LoginTasksQueue {
           }
         }, connection.eventLoop())
         .exceptionally(t -> {
-          this.plugin.getLogger().error("Exception while completing login initialisation phase for {}", this.player, t);
+          logger.error("Exception while completing login initialisation phase for {}", this.player, t);
           return null;
         });
   }

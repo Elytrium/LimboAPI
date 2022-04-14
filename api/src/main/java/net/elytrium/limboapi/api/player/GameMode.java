@@ -9,7 +9,6 @@ package net.elytrium.limboapi.api.player;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-@SuppressWarnings("unused")
 public enum GameMode {
 
   SURVIVAL,
