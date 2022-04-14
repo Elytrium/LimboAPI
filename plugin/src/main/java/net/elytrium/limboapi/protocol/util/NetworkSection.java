@@ -99,13 +99,9 @@ public class NetworkSection {
     BlockStorage storage = this.storages.get(version);
     if (storage == null) {
       synchronized (this.storages) {
-        VirtualBlock.Version blockVersion = VirtualBlock.Version.map(version);
         BlockStorage blockStorage = this.createStorage(version);
         this.fillBlocks(blockStorage);
-        for (ProtocolVersion protocolVersion : blockVersion.getVersions()) {
-          this.storages.put(protocolVersion, blockStorage);
-        }
-
+        this.storages.put(version, blockStorage);
         storage = blockStorage;
       }
     }

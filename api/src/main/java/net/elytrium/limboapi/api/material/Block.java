@@ -265,23 +265,12 @@ public enum Block {
   STRUCTURE_BLOCK(255);
 
   private final int id;
-  private final byte data;
 
   Block(int id) {
     this.id = id;
-    this.data = 0;
-  }
-
-  Block(int id, byte data) {
-    this.id = id;
-    this.data = data;
   }
 
   public int getId() {
     return this.id;
-  }
-
-  public byte getData() {
-    return this.data;
   }
 }
