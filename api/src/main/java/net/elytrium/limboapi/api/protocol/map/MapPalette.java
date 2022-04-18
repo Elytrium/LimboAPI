@@ -247,7 +247,7 @@ public class MapPalette {
   }
 
   public static Color[] getColors() {
-    return MapPalette.colors;
+    return colors;
   }
 
   public static class Color {
@@ -269,21 +269,6 @@ public class MapPalette {
       this.green = green;
       this.blue = blue;
       this.since = since;
-    }
-
-    @Override
-    public int hashCode() {
-      return (this.red << 16) | (this.green << 8) | (this.blue);
-    }
-
-    @Override
-    public boolean equals(Object otherColor) {
-      if (otherColor instanceof Color) {
-        Color checkColor = (Color) otherColor;
-        return checkColor.red == this.red && checkColor.blue == this.blue && checkColor.green == this.green;
-      } else {
-        return false;
-      }
     }
 
     public Color multiplyAndDownscale(int multiplier) {
@@ -333,6 +318,21 @@ public class MapPalette {
 
     public ProtocolVersion getSince() {
       return this.since;
+    }
+
+    @Override
+    public int hashCode() {
+      return (this.red << 16) | (this.green << 8) | (this.blue);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof Color) {
+        Color checkColor = (Color) obj;
+        return checkColor.red == this.red && checkColor.blue == this.blue && checkColor.green == this.green;
+      } else {
+        return false;
+      }
     }
   }
 }
