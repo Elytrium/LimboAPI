@@ -114,7 +114,7 @@ public class LimboAPI implements LimboFactory {
 
     this.server = (VelocityServer) server;
     this.metricsFactory = metricsFactory;
-    this.configFile = new File(dataDirectory.toFile(), "config.yml");
+    this.configFile = dataDirectory.resolve("config.yml").toFile();
     this.players = new ArrayList<>();
     this.packets = new CachedPackets(this);
     this.loginQueue = new HashMap<>();
