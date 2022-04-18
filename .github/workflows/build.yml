@@ -31,7 +31,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Release the build
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.10.0
         with:
           artifacts: "plugin/build/libs/limboapi-plugin*.jar"
           body: ${{ join(github.event.commits.*.message, '\n') }}

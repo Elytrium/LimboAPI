@@ -123,17 +123,17 @@ public class LimboPlayerImpl implements LimboPlayer {
       );
     }
 
-    if (image.getWidth() != MapData.MAP_DIM_SIZE && image.getHeight() != MapData.MAP_DIM_SIZE) {
+    if (image.getWidth() != MapData.MAP_DIM_SIZE || image.getHeight() != MapData.MAP_DIM_SIZE) {
       if (resize) {
         BufferedImage resizedImage = new BufferedImage(MapData.MAP_DIM_SIZE, MapData.MAP_DIM_SIZE, image.getType());
 
-        Graphics2D graphics2D = resizedImage.createGraphics();
-        graphics2D.drawImage(image.getScaledInstance(MapData.MAP_DIM_SIZE, MapData.MAP_DIM_SIZE, Image.SCALE_SMOOTH), 0, 0, null);
-        graphics2D.dispose();
+        Graphics2D graphics = resizedImage.createGraphics();
+        graphics.drawImage(image.getScaledInstance(MapData.MAP_DIM_SIZE, MapData.MAP_DIM_SIZE, Image.SCALE_SMOOTH), 0, 0, null);
+        graphics.dispose();
 
         image = resizedImage;
       } else {
-        throw new IllegalArgumentException(
+        throw new IllegalStateException(
             "You either need to provide an image of "
                 + MapData.MAP_DIM_SIZE + "x" + MapData.MAP_DIM_SIZE
             + " pixels or set the resize parameter to true so that API will automatically resize your image."
