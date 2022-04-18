@@ -53,7 +53,7 @@ publishing {
 
     publications {
         maven(MavenPublication) {
-            from(components.java)
+            from(getComponents().java)
 
             artifact(javadocJar)
             artifact(sourcesJar)
