@@ -63,9 +63,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final Supplier<String> limboName;
 
   private ScheduledTask keepAliveTask;
-  private long keepAliveId;
-  private long keepAliveLastSend;
-  private long ping;
+  private long keepAliveKey;
+  private long keepAliveSentTime;
+  private boolean keepAlivePending;
+  private int ping;
   private int genericBytes;
   private boolean loaded;
 
@@ -93,77 +94,85 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.loaded = true;
     this.callback.onSpawn(server, player);
 
-    int readTimeout = server.getReadTimeout() == null ? this.plugin.getServer().getConfiguration().getReadTimeout() : server.getReadTimeout();
-
+    Integer serverReadTimeout = server.getReadTimeout();
     this.keepAliveTask = this.plugin.getServer().getScheduler().buildTask(this.plugin, () -> {
-      KeepAlive keepAlive = new KeepAlive();
-      keepAlive.setRandomId(this.keepAliveId = ThreadLocalRandom.current().nextInt());
-      this.player.getConnection().write(keepAlive);
-      this.keepAliveLastSend = System.currentTimeMillis();
+      MinecraftConnection connection = this.player.getConnection();
+      if (this.keepAlivePending) {
+        connection.closeWith(this.plugin.getPackets().getTimeOut());
+        LimboAPI.getLogger().warn("{} was kicked due to keepalive timeout.", this.player);
+      } else {
+        this.keepAliveKey = ThreadLocalRandom.current().nextInt();
+        KeepAlive keepAlive = new KeepAlive();
+        keepAlive.setRandomId(this.keepAliveKey);
+        connection.write(keepAlive);
+        this.keepAliveSentTime = System.currentTimeMillis();
+        this.keepAlivePending = true;
+      }
     }).delay(250, TimeUnit.MILLISECONDS) // Fix 1.7.x race condition with switching protocol states.
-      .repeat(readTimeout / 2, TimeUnit.MILLISECONDS)
+      .repeat((serverReadTimeout == null ? this.plugin.getServer().getConfiguration().getReadTimeout() : serverReadTimeout) / 2, TimeUnit.MILLISECONDS)
       .schedule();
   }
 
   public boolean handle(Player packet) {
-    if (!this.loaded) {
-      return true;
+    if (this.loaded) {
+      this.callback.onGround(packet.isOnGround());
     }
 
-    this.callback.onGround(packet.isOnGround());
     return true;
   }
 
   public boolean handle(PlayerPosition packet) {
-    if (!this.loaded) {
-      return true;
+    if (this.loaded) {
+      this.callback.onGround(packet.isOnGround());
+      this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
     }
 
-    this.callback.onGround(packet.isOnGround());
-    this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
     return true;
   }
 
   public boolean handle(PlayerPositionAndLook packet) {
-    if (!this.loaded) {
-      return true;
+    if (this.loaded) {
+      this.callback.onGround(packet.isOnGround());
+      this.callback.onRotate(packet.getYaw(), packet.getPitch());
+      this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
+      this.callback.onMove(packet.getX(), packet.getY(), packet.getZ(), packet.getYaw(), packet.getPitch());
     }
 
-    this.callback.onGround(packet.isOnGround());
-    this.callback.onRotate(packet.getYaw(), packet.getPitch());
-    this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
-    this.callback.onMove(packet.getX(), packet.getY(), packet.getZ(), packet.getYaw(), packet.getPitch());
     return true;
   }
 
   public boolean handle(TeleportConfirm packet) {
-    if (!this.loaded) {
-      return true;
+    if (this.loaded) {
+      this.callback.onTeleport(packet.getTeleportId());
     }
 
-    this.callback.onTeleport(packet.getTeleportId());
     return true;
   }
 
-  // TODO: Проверять отправил ли клиент его в течении 5 секунд, и вообще проверять отправляет ли он пакеты
   @Override
   public boolean handle(KeepAlive packet) {
     MinecraftConnection connection = this.player.getConnection();
-    if (!(packet.getRandomId() == this.keepAliveId)) {
+    if (this.keepAlivePending) {
+      if (packet.getRandomId() != this.keepAliveKey) {
+        connection.closeWith(this.plugin.getPackets().getInvalidPing());
+        LimboAPI.getLogger().warn("{} sent an invalid keepalive.", this.player);
+        return false;
+      } else {
+        this.keepAlivePending = false;
+        this.ping = (this.ping * 3 + (int) (System.currentTimeMillis() - this.keepAliveSentTime)) / 4;
+        connection.write(
+            new PlayerListItem(
+                PlayerListItem.UPDATE_LATENCY,
+                List.of(new PlayerListItem.Item(this.player.getUniqueId()).setLatency(this.ping))
+            )
+        );
+        return true;
+      }
+    } else {
       connection.closeWith(this.plugin.getPackets().getInvalidPing());
-      LimboAPI.getLogger().warn("{} sent an invalid keepalive.", this.player);
+      LimboAPI.getLogger().warn("{} sent an unexpected keepalive.", this.player);
       return false;
     }
-
-    this.ping = System.currentTimeMillis() - this.keepAliveLastSend;
-
-    connection.write(
-        new PlayerListItem(
-            PlayerListItem.UPDATE_LATENCY,
-            List.of(new PlayerListItem.Item(this.player.getUniqueId()).setLatency(this.ping > 9999 ? -1 : (int) this.ping))
-        )
-    );
-    return true;
   }
 
   @Override
@@ -254,7 +263,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     return this.previousServer;
   }
 
-  public long getPing() {
+  public int getPing() {
     return this.ping;
   }
 }

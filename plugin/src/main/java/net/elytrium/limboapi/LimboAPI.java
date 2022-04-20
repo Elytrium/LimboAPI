@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -108,9 +109,8 @@ public class LimboAPI implements LimboFactory {
   private LoginListener loginListener;
 
   @Inject
-  @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
   public LimboAPI(Logger logger, ProxyServer server, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
-    LimboAPI.logger = logger;
+    setLogger(logger);
 
     this.server = (VelocityServer) server;
     this.metricsFactory = metricsFactory;
@@ -176,7 +176,7 @@ public class LimboAPI implements LimboFactory {
       logger.warn("****************************************");
     }
 
-    ComponentSerializer<Component, Component, String> serializer = Serializers.valueOf(Settings.IMP.SERIALIZER).getSerializer();
+    ComponentSerializer<Component, Component, String> serializer = Serializers.valueOf(Settings.IMP.SERIALIZER.toUpperCase(Locale.ROOT)).getSerializer();
     if (serializer == null) {
       logger.warn("The specified serializer could not be founded, using default. (LEGACY_AMPERSAND)");
       setSerializer(new Serializer(Objects.requireNonNull(Serializers.LEGACY_AMPERSAND.getSerializer())));
@@ -364,6 +364,10 @@ public class LimboAPI implements LimboFactory {
 
   public LoginListener getLoginListener() {
     return this.loginListener;
+  }
+
+  private static void setLogger(Logger logger) {
+    LimboAPI.logger = logger;
   }
 
   public static Logger getLogger() {
