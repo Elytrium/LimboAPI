@@ -76,6 +76,7 @@ import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
 import org.bstats.velocity.Metrics;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.slf4j.Logger;
 
 @Plugin(
@@ -92,8 +93,10 @@ import org.slf4j.Logger;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
-  private static Logger logger;
-  private static Serializer serializer;
+  @MonotonicNonNull
+  private static Logger LOGGER;
+  @MonotonicNonNull
+  private static Serializer SERIALIZER;
 
   private final VelocityServer server;
   private final Metrics.Factory metricsFactory;
@@ -122,16 +125,16 @@ public class LimboAPI implements LimboFactory {
     this.initialID = new HashMap<>();
 
     if (ProtocolVersion.MAXIMUM_VERSION.getProtocol() < 758) {
-      LimboAPI.logger.error("Please update Velocity. (https://papermc.io/downloads#Velocity)");
+      LOGGER.error("Please update Velocity. (https://papermc.io/downloads#Velocity)");
       this.server.shutdown();
       return;
     }
 
-    LimboAPI.logger.info("Initializing Simple Virtual Block system...");
+    LOGGER.info("Initializing Simple Virtual Block system...");
     SimpleBlock.init();
-    LimboAPI.logger.info("Initializing Simple Virtual Item system...");
+    LOGGER.info("Initializing Simple Virtual Item system...");
     SimpleItem.init();
-    LimboAPI.logger.info("Hooking into EventManager, PlayerList and StateRegistry...");
+    LOGGER.info("Hooking into EventManager, PlayerList and StateRegistry...");
     try {
       EventManagerHook.init(this);
       PlayerListItemHook.init(this);
@@ -145,16 +148,16 @@ public class LimboAPI implements LimboFactory {
   public void onProxyInitialization(ProxyInitializeEvent event) {
     this.metricsFactory.make(this, 12530);
 
-    Settings.IMP.setLogger(logger);
+    Settings.IMP.setLogger(LOGGER);
 
     this.reload();
 
     if (Settings.IMP.MAIN.CHECK_FOR_UPDATES) {
       if (!UpdatesChecker.checkVersionByURL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION", Settings.IMP.VERSION)) {
-        logger.error("****************************************");
-        logger.warn("The new LimboAPI update was found, please update.");
-        logger.error("https://github.com/Elytrium/LimboAPI/releases/");
-        logger.error("****************************************");
+        LOGGER.error("****************************************");
+        LOGGER.warn("The new LimboAPI update was found, please update.");
+        LOGGER.error("https://github.com/Elytrium/LimboAPI/releases/");
+        LOGGER.error("****************************************");
       }
     }
   }
@@ -167,30 +170,30 @@ public class LimboAPI implements LimboFactory {
   @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "LEGACY_AMPERSAND can't be null in velocity.")
   public void reload() {
     if (Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX) == YamlConfig.LoadResult.CONFIG_NOT_EXISTS) {
-      logger.warn("************* FIRST LAUNCH *************");
-      logger.warn("Thanks for installing LimboAPI!");
-      logger.warn("(C) 2021 - 2022 Elytrium");
-      logger.warn("");
-      logger.warn("Check out our plugins here: https://ely.su/github <3");
-      logger.warn("Discord: https://ely.su/discord");
-      logger.warn("****************************************");
+      LOGGER.warn("************* FIRST LAUNCH *************");
+      LOGGER.warn("Thanks for installing LimboAPI!");
+      LOGGER.warn("(C) 2021 - 2022 Elytrium");
+      LOGGER.warn("");
+      LOGGER.warn("Check out our plugins here: https://ely.su/github <3");
+      LOGGER.warn("Discord: https://ely.su/discord");
+      LOGGER.warn("****************************************");
     }
 
     ComponentSerializer<Component, Component, String> serializer = Serializers.valueOf(Settings.IMP.SERIALIZER.toUpperCase(Locale.ROOT)).getSerializer();
     if (serializer == null) {
-      logger.warn("The specified serializer could not be founded, using default. (LEGACY_AMPERSAND)");
+      LOGGER.warn("The specified serializer could not be founded, using default. (LEGACY_AMPERSAND)");
       setSerializer(new Serializer(Objects.requireNonNull(Serializers.LEGACY_AMPERSAND.getSerializer())));
     } else {
       setSerializer(new Serializer(serializer));
     }
 
-    logger.info("Creating and preparing packets...");
+    LOGGER.info("Creating and preparing packets...");
     this.reloadVersion();
     this.packets.createPackets();
     this.loginListener = new LoginListener(this, this.server);
     this.server.getEventManager().register(this, this.loginListener);
     this.server.getEventManager().register(this, new DisconnectListener(this));
-    logger.info("Loaded!");
+    LOGGER.info("Loaded!");
   }
 
   private void reloadVersion() {
@@ -203,7 +206,7 @@ public class LimboAPI implements LimboFactory {
     this.minVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MIN_VERSION);
 
     if (ProtocolVersion.MAXIMUM_VERSION.compareTo(this.maxVersion) > 0 || ProtocolVersion.MINIMUM_VERSION.compareTo(this.minVersion) < 0) {
-      logger.warn(
+      LOGGER.warn(
           "Currently working only with "
           + this.minVersion.getVersionIntroducedIn() + " - " + this.maxVersion.getMostRecentSupportedVersion()
           + " versions, modify the plugins/limboapi/config.yml file if you want the plugin to work with other versions."
@@ -367,19 +370,19 @@ public class LimboAPI implements LimboFactory {
   }
 
   private static void setLogger(Logger logger) {
-    LimboAPI.logger = logger;
+    LOGGER = logger;
   }
 
   public static Logger getLogger() {
-    return logger;
+    return LOGGER;
   }
 
   private static void setSerializer(Serializer serializer) {
-    LimboAPI.serializer = serializer;
+    SERIALIZER = serializer;
   }
 
   public static Serializer getSerializer() {
-    return serializer;
+    return SERIALIZER;
   }
 }
 
