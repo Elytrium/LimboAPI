@@ -242,12 +242,11 @@ public class LimboPlayerImpl implements LimboPlayer {
 
       if (this.plugin.hasLoginQueue(this.player)) {
         this.plugin.getLoginQueue(this.player).next();
-        return;
-      }
-
-      RegisteredServer server = handler.getPreviousServer();
-      if (server != null) {
-        this.sendToRegisteredServer(server);
+      } else {
+        RegisteredServer server = handler.getPreviousServer();
+        if (server != null) {
+          this.sendToRegisteredServer(server);
+        }
       }
     }
   }
@@ -314,12 +313,12 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
-  public long getPing() {
+  public int getPing() {
     LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
     if (handler != null) {
       return handler.getPing();
     } else {
-      return 0;
+      return -1;
     }
   }
 }

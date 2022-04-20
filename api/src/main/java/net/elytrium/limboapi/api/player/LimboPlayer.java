@@ -71,5 +71,5 @@ public interface LimboPlayer {
 
   Player getProxyPlayer();
 
-  long getPing();
+  int getPing();
 }
