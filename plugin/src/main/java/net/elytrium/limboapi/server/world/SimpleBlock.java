@@ -20,6 +20,8 @@ package net.elytrium.limboapi.server.world;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import com.velocitypowered.api.network.ProtocolVersion;
+import io.netty.util.collection.ShortObjectHashMap;
+import io.netty.util.collection.ShortObjectMap;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -39,8 +41,10 @@ public class SimpleBlock implements VirtualBlock {
   public static final SimpleBlock AIR = air((short) 0);
 
   private static final Gson gson = new Gson();
-  private static final HashMap<Short, SimpleBlock> legacyIdsMap = new HashMap<>();
-  private static final EnumMap<ProtocolVersion, HashMap<Short, Short>> modernIdsMap = new EnumMap<>(ProtocolVersion.class);
+  private static final ShortObjectHashMap<SimpleBlock> legacyIdsMap = new ShortObjectHashMap<>();
+  private static final ShortObjectHashMap<Short> legacyIdsFlattenMap = new ShortObjectHashMap<>();
+  private static final EnumMap<ProtocolVersion, ShortObjectMap<Short>> modernIdsMap = new EnumMap<>(ProtocolVersion.class);
+  private static final EnumMap<ProtocolVersion, ShortObjectMap<Short>> modernIdsFlattenMap = new EnumMap<>(ProtocolVersion.class);
   private static final HashMap<String, HashMap<Set<String>, Short>> modernStringMap = new HashMap<>();
 
   @SuppressWarnings("unchecked")
@@ -74,24 +78,35 @@ public class SimpleBlock implements VirtualBlock {
         ), LinkedTreeMap.class
     );
 
-    map.forEach((legacyBlockId, modernId) -> {
-      legacyIdsMap.put(Short.valueOf(legacyBlockId), solid(Short.parseShort(modernId)));
-    });
+    map.forEach((legacyBlockId, modernId) -> legacyIdsMap.put(Short.valueOf(legacyBlockId), solid(Short.parseShort(modernId))));
 
     legacyIdsMap.put((short) 0, AIR);
 
-    LinkedTreeMap<String, LinkedTreeMap<String, Double>> modernMap = gson.fromJson(
+    loadModernMap("/mapping/legacyblockdata.json", modernIdsMap);
+    loadModernMap("/mapping/flatteningblockdata.json", modernIdsFlattenMap);
+
+    LinkedTreeMap<String, String> tempLegacyFlattenMap = gson.fromJson(new InputStreamReader(
+        Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/preflatteningblockdataid.json")),
+        StandardCharsets.UTF_8
+    ), LinkedTreeMap.class);
+
+    tempLegacyFlattenMap.forEach((k, v) -> legacyIdsFlattenMap.put(Short.valueOf(k), Short.valueOf(v)));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void loadModernMap(String resource, EnumMap<ProtocolVersion, ShortObjectMap<Short>> map) {
+    LinkedTreeMap<String, LinkedTreeMap<String, String>> modernMap = gson.fromJson(
         new InputStreamReader(
-            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/legacyblockdata.json")),
+            Objects.requireNonNull(LimboAPI.class.getResourceAsStream(resource)),
             StandardCharsets.UTF_8
         ), LinkedTreeMap.class
     );
 
     modernMap.forEach((version, idMap) -> {
       ProtocolVersion protocolVersion = ProtocolVersion.valueOf(version);
-      HashMap<Short, Short> versionIdMap = new HashMap<>();
-      idMap.forEach((oldId, newId) -> versionIdMap.put(Short.valueOf(oldId), newId.shortValue()));
-      modernIdsMap.put(protocolVersion, versionIdMap);
+      ShortObjectMap<Short> versionIdMap = new ShortObjectHashMap<>();
+      idMap.forEach((oldId, newId) -> versionIdMap.put(Short.valueOf(oldId), Short.valueOf(newId)));
+      map.put(protocolVersion, versionIdMap);
     });
   }
 
@@ -129,10 +144,21 @@ public class SimpleBlock implements VirtualBlock {
   @Override
   public short getId(ProtocolVersion version) {
     Short id = modernIdsMap.get(version).get(this.id);
-    if (id == null) {
-      return this.id;
+    return this.getFlattenId(version, Objects.requireNonNullElse(id, this.id));
+  }
+
+  private short getFlattenId(ProtocolVersion version, Short id) {
+    Short flattenId;
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_12_2) <= 0) {
+      flattenId = legacyIdsFlattenMap.get(this.id);
     } else {
+      flattenId = modernIdsFlattenMap.get(version).get(this.id);
+    }
+
+    if (flattenId == null) {
       return id;
+    } else {
+      return flattenId;
     }
   }
 
