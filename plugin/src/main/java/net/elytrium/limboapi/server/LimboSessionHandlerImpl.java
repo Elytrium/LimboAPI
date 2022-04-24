@@ -23,7 +23,6 @@ import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.Chat;
@@ -44,6 +43,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packet.Player;
@@ -242,7 +242,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       return;
     }
 
-    if (!(this.originalHandler instanceof LoginSessionHandler) && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
+    if (!(LoginListener.LOGIN_CLASS.isInstance(this.originalHandler)) && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
       connection.eventLoop().execute(() -> connection.setSessionHandler(this.originalHandler));
     }
     ChannelPipeline pipeline = connection.getChannel().pipeline();

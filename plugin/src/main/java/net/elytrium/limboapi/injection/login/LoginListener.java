@@ -53,7 +53,6 @@ import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialInboundConnection;
 import com.velocitypowered.proxy.connection.client.LoginInboundConnection;
-import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
 import com.velocitypowered.proxy.protocol.packet.SetCompression;
@@ -74,6 +73,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class LoginListener {
+
+  public static final Class<?> LOGIN_CLASS;
 
   private static final ClosedMinecraftConnection closed;
 
@@ -109,7 +110,20 @@ public class LoginListener {
       delegate.setAccessible(true);
       delegateClass = delegate.getDeclaringClass();
 
-      loginConnectionField = LoginSessionHandler.class.getDeclaredField("mcConnection");
+      Class<?> loginClass;
+      try {
+        loginClass = Class.forName("com.velocitypowered.proxy.connection.client.AuthSessionHandler");
+      } catch (ClassNotFoundException e) {
+        try {
+          loginClass = Class.forName("com.velocitypowered.proxy.connection.client.LoginSessionHandler");
+        } catch (ClassNotFoundException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+
+      LOGIN_CLASS = loginClass;
+
+      loginConnectionField = loginClass.getDeclaredField("mcConnection");
       loginConnectionField.setAccessible(true);
 
       spawned = ClientPlaySessionHandler.class.getDeclaredField("spawned");
@@ -151,7 +165,7 @@ public class LoginListener {
     // method (which checks mcConnection.isActive()) and to override it. :)
     InitialInboundConnection inbound = (InitialInboundConnection) delegate.get(inboundConnection);
     MinecraftConnection connection = inbound.getConnection();
-    LoginSessionHandler handler = (LoginSessionHandler) connection.getSessionHandler();
+    Object handler = connection.getSessionHandler();
     loginConnectionField.set(handler, closed);
     if (connection.isClosed()) {
       return;
