@@ -46,7 +46,6 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
-import com.velocitypowered.proxy.connection.client.LoginSessionHandler;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
@@ -76,13 +75,13 @@ public class LoginTasksQueue {
   private static final Method connectToInitialServer;
 
   private final LimboAPI plugin;
-  private final LoginSessionHandler handler;
+  private final Object handler;
   private final VelocityServer server;
   private final ConnectedPlayer player;
   private final InboundConnection inbound;
   private final Queue<Runnable> queue;
 
-  public LoginTasksQueue(LimboAPI plugin, LoginSessionHandler handler, VelocityServer server, ConnectedPlayer player,
+  public LoginTasksQueue(LimboAPI plugin, Object handler, VelocityServer server, ConnectedPlayer player,
       InboundConnection inbound, Queue<Runnable> queue) {
     this.plugin = plugin;
     this.handler = handler;
@@ -97,7 +96,7 @@ public class LoginTasksQueue {
       initialCtor = InitialConnectSessionHandler.class.getDeclaredConstructor(ConnectedPlayer.class);
       initialCtor.setAccessible(true);
 
-      loginConnectionField = LoginSessionHandler.class.getDeclaredField("mcConnection");
+      loginConnectionField = LoginListener.LOGIN_CLASS.getDeclaredField("mcConnection");
       loginConnectionField.setAccessible(true);
 
       defaultPermissions = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
@@ -115,7 +114,7 @@ public class LoginTasksQueue {
       setPermissionFunction = ConnectedPlayer.class.getDeclaredMethod("setPermissionFunction", PermissionFunction.class);
       setPermissionFunction.setAccessible(true);
 
-      connectToInitialServer = LoginSessionHandler.class.getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
+      connectToInitialServer = LoginListener.LOGIN_CLASS.getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
       connectToInitialServer.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException e) {
       throw new ReflectionException(e);
@@ -215,7 +214,6 @@ public class LoginTasksQueue {
                   .fire(new PostLoginEvent(this.player))
                   .thenAccept((ignored) -> {
                     try {
-                      // Go back I want to be ~~monke~~ original mcConnection.
                       loginConnectionField.set(this.handler, connection);
                       connectToInitialServer.invoke(this.handler, this.player);
                     } catch (IllegalAccessException | InvocationTargetException e) {
