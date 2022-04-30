@@ -19,7 +19,6 @@ package net.elytrium.limboapi.server;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Runnables;
 import com.mojang.brigadier.tree.RootCommandNode;
 import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandMeta;
@@ -289,9 +288,10 @@ public class LimboImpl implements Limbo {
   }
 
   @Override
-  @SuppressWarnings("UnstableApiUsage")
   public Limbo registerCommand(LimboCommandMeta commandMeta) {
-    return this.registerCommand(commandMeta, (SimpleCommand) Runnables.doNothing());
+    return this.registerCommand(commandMeta, (SimpleCommand) invocation -> {
+      // Do nothing.
+    });
   }
 
   @Override
