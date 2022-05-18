@@ -49,7 +49,7 @@ public class Settings extends YamlConfig {
 
     public int MAX_CHAT_MESSAGE_LENGTH = 256;
     public int MAX_UNKNOWN_PACKET_LENGTH = 2048;
-    public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 3072;
+    public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 4096;
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
 
     @Comment("Logging for connect and disconnect messages.")
