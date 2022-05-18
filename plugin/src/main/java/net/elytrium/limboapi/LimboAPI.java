@@ -146,11 +146,11 @@ public class LimboAPI implements LimboFactory {
 
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent event) {
-    this.metricsFactory.make(this, 12530);
-
     Settings.IMP.setLogger(LOGGER);
 
     this.reload();
+
+    this.metricsFactory.make(this, 12530);
 
     if (Settings.IMP.MAIN.CHECK_FOR_UPDATES) {
       if (!UpdatesChecker.checkVersionByURL("https://raw.githubusercontent.com/Elytrium/LimboAPI/master/VERSION", Settings.IMP.VERSION)) {
