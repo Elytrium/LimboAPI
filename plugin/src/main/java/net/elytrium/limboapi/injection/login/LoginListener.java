@@ -117,7 +117,7 @@ public class LoginListener {
         try {
           loginClass = Class.forName("com.velocitypowered.proxy.connection.client.LoginSessionHandler");
         } catch (ClassNotFoundException ex) {
-          throw new RuntimeException(ex);
+          throw new ReflectionException(ex);
         }
       }
 
