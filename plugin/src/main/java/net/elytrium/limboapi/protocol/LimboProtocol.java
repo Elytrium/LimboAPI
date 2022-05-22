@@ -359,7 +359,7 @@ public class LimboProtocol {
     try {
       map = (Object2IntMap<Class<? extends MinecraftPacket>>) packetClassToId.get(registry);
     } catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
+      throw new ReflectionException(e);
     }
 
     return map.getInt(packet);
