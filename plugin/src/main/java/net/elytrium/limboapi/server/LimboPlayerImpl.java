@@ -44,6 +44,7 @@ import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.SetSlot;
+import net.elytrium.limboapi.protocol.packet.TimeUpdate;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
@@ -320,5 +321,10 @@ public class LimboPlayerImpl implements LimboPlayer {
     } else {
       return -1;
     }
+  }
+
+  @Override
+  public void setWorldTime(long ticks) {
+    this.writePacketAndFlush(new TimeUpdate(ticks, ticks));
   }
 }

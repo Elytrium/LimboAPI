@@ -41,11 +41,13 @@ import net.elytrium.limboapi.protocol.packet.DefaultSpawnPosition;
 import net.elytrium.limboapi.protocol.packet.MapDataPacket;
 import net.elytrium.limboapi.protocol.packet.Player;
 import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
+import net.elytrium.limboapi.protocol.packet.PlayerLook;
 import net.elytrium.limboapi.protocol.packet.PlayerPosition;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.SetExperience;
 import net.elytrium.limboapi.protocol.packet.SetSlot;
 import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
+import net.elytrium.limboapi.protocol.packet.TimeUpdate;
 import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 import net.elytrium.limboapi.utils.OverlayIntObjectMap;
@@ -128,7 +130,8 @@ public class LimboProtocol {
             map(0x11, ProtocolVersion.MINECRAFT_1_13, false),
             map(0x12, ProtocolVersion.MINECRAFT_1_14, false),
             map(0x13, ProtocolVersion.MINECRAFT_1_16, false),
-            map(0x12, ProtocolVersion.MINECRAFT_1_17, false)
+            map(0x12, ProtocolVersion.MINECRAFT_1_17, false),
+            map(0x14, ProtocolVersion.MINECRAFT_1_19, false)
         });
     register(PacketDirection.SERVERBOUND,
         PlayerPosition.class, PlayerPosition::new,
@@ -140,7 +143,21 @@ public class LimboProtocol {
             map(0x10, ProtocolVersion.MINECRAFT_1_13, false),
             map(0x11, ProtocolVersion.MINECRAFT_1_14, false),
             map(0x12, ProtocolVersion.MINECRAFT_1_16, false),
-            map(0x11, ProtocolVersion.MINECRAFT_1_17, false)
+            map(0x11, ProtocolVersion.MINECRAFT_1_17, false),
+            map(0x13, ProtocolVersion.MINECRAFT_1_19, false)
+        });
+    register(PacketDirection.SERVERBOUND,
+        PlayerLook.class, PlayerLook::new,
+        new StateRegistry.PacketMapping[] {
+            map(0x05, ProtocolVersion.MINECRAFT_1_7_2, false),
+            map(0x0E, ProtocolVersion.MINECRAFT_1_9, false),
+            map(0x10, ProtocolVersion.MINECRAFT_1_12, false),
+            map(0x0F, ProtocolVersion.MINECRAFT_1_12_1, false),
+            map(0x12, ProtocolVersion.MINECRAFT_1_13, false),
+            map(0x13, ProtocolVersion.MINECRAFT_1_14, false),
+            map(0x14, ProtocolVersion.MINECRAFT_1_16, false),
+            map(0x13, ProtocolVersion.MINECRAFT_1_17, false),
+            map(0x15, ProtocolVersion.MINECRAFT_1_19, false)
         });
     register(PacketDirection.SERVERBOUND,
         Player.class, Player::new,
@@ -152,7 +169,8 @@ public class LimboProtocol {
             map(0x0F, ProtocolVersion.MINECRAFT_1_13, false),
             map(0x14, ProtocolVersion.MINECRAFT_1_14, false),
             map(0x15, ProtocolVersion.MINECRAFT_1_16, false),
-            map(0x14, ProtocolVersion.MINECRAFT_1_17, false)
+            map(0x14, ProtocolVersion.MINECRAFT_1_17, false),
+            map(0x16, ProtocolVersion.MINECRAFT_1_19, false)
         });
 
     register(PacketDirection.CLIENTBOUND,
@@ -166,7 +184,8 @@ public class LimboProtocol {
             map(0x36, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x35, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x34, ProtocolVersion.MINECRAFT_1_16_2, true),
-            map(0x38, ProtocolVersion.MINECRAFT_1_17, true)
+            map(0x38, ProtocolVersion.MINECRAFT_1_17, true),
+            map(0x36, ProtocolVersion.MINECRAFT_1_19, true)
         });
     register(PacketDirection.CLIENTBOUND,
         ChunkData.class, ChunkData::new,
@@ -178,7 +197,8 @@ public class LimboProtocol {
             map(0x22, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x21, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x20, ProtocolVersion.MINECRAFT_1_16_2, true),
-            map(0x22, ProtocolVersion.MINECRAFT_1_17, true)
+            map(0x22, ProtocolVersion.MINECRAFT_1_17, true),
+            map(0x1F, ProtocolVersion.MINECRAFT_1_19, true),
         });
     register(PacketDirection.CLIENTBOUND,
         SetSlot.class, SetSlot::new,
@@ -190,7 +210,8 @@ public class LimboProtocol {
             map(0x17, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x16, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x15, ProtocolVersion.MINECRAFT_1_16_2, true),
-            map(0x16, ProtocolVersion.MINECRAFT_1_17, true)
+            map(0x16, ProtocolVersion.MINECRAFT_1_17, true),
+            map(0x13, ProtocolVersion.MINECRAFT_1_19, true)
         });
     register(PacketDirection.CLIENTBOUND,
         MapDataPacket.class, MapDataPacket::new,
@@ -201,7 +222,8 @@ public class LimboProtocol {
             map(0x27, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x26, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x25, ProtocolVersion.MINECRAFT_1_16_2, true),
-            map(0x27, ProtocolVersion.MINECRAFT_1_17, true)
+            map(0x27, ProtocolVersion.MINECRAFT_1_17, true),
+            map(0x24, ProtocolVersion.MINECRAFT_1_19, true)
         });
     register(PacketDirection.CLIENTBOUND,
         PlayerAbilities.class, PlayerAbilities::new,
@@ -214,7 +236,8 @@ public class LimboProtocol {
             map(0x32, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x31, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x30, ProtocolVersion.MINECRAFT_1_16_2, true),
-            map(0x32, ProtocolVersion.MINECRAFT_1_17, true)
+            map(0x32, ProtocolVersion.MINECRAFT_1_17, true),
+            map(0x2F, ProtocolVersion.MINECRAFT_1_19, true)
         });
     register(PacketDirection.CLIENTBOUND,
         SetExperience.class, SetExperience::new,
@@ -234,7 +257,8 @@ public class LimboProtocol {
             map(0x40, ProtocolVersion.MINECRAFT_1_14, true),
             map(0x41, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x40, ProtocolVersion.MINECRAFT_1_16, true),
-            map(0x49, ProtocolVersion.MINECRAFT_1_17, true)
+            map(0x49, ProtocolVersion.MINECRAFT_1_17, true),
+            map(0x48, ProtocolVersion.MINECRAFT_1_19, true)
         });
     register(PacketDirection.CLIENTBOUND,
         ChangeGameState.class, ChangeGameState::new,
@@ -246,7 +270,8 @@ public class LimboProtocol {
             map(0x1F, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x1E, ProtocolVersion.MINECRAFT_1_16, true),
             map(0x1D, ProtocolVersion.MINECRAFT_1_16_2, true),
-            map(0x1E, ProtocolVersion.MINECRAFT_1_17, true)
+            map(0x1E, ProtocolVersion.MINECRAFT_1_17, true),
+            map(0x1B, ProtocolVersion.MINECRAFT_1_19, true),
         });
     register(PacketDirection.CLIENTBOUND,
         DefaultSpawnPosition.class, DefaultSpawnPosition::new,
@@ -259,7 +284,22 @@ public class LimboProtocol {
             map(0x4D, ProtocolVersion.MINECRAFT_1_14, true),
             map(0x4E, ProtocolVersion.MINECRAFT_1_15, true),
             map(0x42, ProtocolVersion.MINECRAFT_1_16, true),
-            map(0x4B, ProtocolVersion.MINECRAFT_1_17, true)
+            map(0x4B, ProtocolVersion.MINECRAFT_1_17, true),
+            map(0x4A, ProtocolVersion.MINECRAFT_1_19, true)
+        });
+    register(PacketDirection.CLIENTBOUND,
+        TimeUpdate.class, TimeUpdate::new,
+        new StateRegistry.PacketMapping[] {
+            map(0x03, ProtocolVersion.MINECRAFT_1_7_2, true),
+            map(0x44, ProtocolVersion.MINECRAFT_1_9, true),
+            map(0x46, ProtocolVersion.MINECRAFT_1_12, true),
+            map(0x47, ProtocolVersion.MINECRAFT_1_12_1, true),
+            map(0x4A, ProtocolVersion.MINECRAFT_1_13, true),
+            map(0x4E, ProtocolVersion.MINECRAFT_1_14, true),
+            map(0x4F, ProtocolVersion.MINECRAFT_1_15, true),
+            map(0x4E, ProtocolVersion.MINECRAFT_1_16, true),
+            map(0x58, ProtocolVersion.MINECRAFT_1_17, true),
+            map(0x59, ProtocolVersion.MINECRAFT_1_18, true)
         });
   }
 

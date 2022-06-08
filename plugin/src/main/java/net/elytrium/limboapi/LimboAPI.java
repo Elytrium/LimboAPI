@@ -124,7 +124,7 @@ public class LimboAPI implements LimboFactory {
     this.nextServer = new HashMap<>();
     this.initialID = new HashMap<>();
 
-    if (ProtocolVersion.MAXIMUM_VERSION.getProtocol() < 758) {
+    if (ProtocolVersion.MAXIMUM_VERSION.getProtocol() < 759) {
       LOGGER.error("Please update Velocity (https://papermc.io/downloads#Velocity). LimboAPI support: https://ely.su/discord");
       this.server.shutdown();
       return;

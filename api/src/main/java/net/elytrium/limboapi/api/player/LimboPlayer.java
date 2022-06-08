@@ -72,4 +72,6 @@ public interface LimboPlayer {
   Player getProxyPlayer();
 
   int getPing();
+
+  void setWorldTime(long ticks);
 }

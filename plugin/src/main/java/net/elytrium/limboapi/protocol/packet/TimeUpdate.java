@@ -22,44 +22,36 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-public class TeleportConfirm implements MinecraftPacket {
+public class TimeUpdate implements MinecraftPacket {
 
-  private int teleportId;
+  private long worldAge;
+
+  private long timeOfDay;
+
+  public TimeUpdate() {
+
+  }
+
+  public TimeUpdate(long worldAge, long timeOfDay) {
+    this.worldAge = worldAge;
+    this.timeOfDay = timeOfDay;
+  }
 
   @Override
-  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    this.teleportId = ProtocolUtils.readVarInt(buf);
+  public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+
   }
 
   @Override
   public void encode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+    byteBuf.writeLong(this.worldAge);
+    byteBuf.writeLong(this.timeOfDay);
   }
 
   @Override
-  public boolean handle(MinecraftSessionHandler handler) {
-    if (handler instanceof LimboSessionHandlerImpl) {
-      return ((LimboSessionHandlerImpl) handler).handle(this);
-    }
-
-    return true;
+  public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
+    return false;
   }
 
-  public int getTeleportId() {
-    return this.teleportId;
-  }
-
-  @Override
-  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 5;
-  }
-
-  @Override
-  public String toString() {
-    return "TeleportConfirm{"
-        + "teleportId=" + this.teleportId
-        + "}";
-  }
 }

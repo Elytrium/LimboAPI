@@ -42,7 +42,7 @@ import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
-import com.velocitypowered.api.proxy.InboundConnection;
+import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
 import com.velocitypowered.proxy.VelocityServer;
@@ -102,7 +102,8 @@ public class LoginListener {
           GameProfile.class,
           MinecraftConnection.class,
           InetSocketAddress.class,
-          boolean.class
+          boolean.class,
+          IdentifiedKey.class
       );
       ctor.setAccessible(true);
 
@@ -156,7 +157,7 @@ public class LoginListener {
   public void hookLoginSession(GameProfileRequestEvent event) throws IllegalAccessException {
     // In some cases, e.g. if the player logged out or was kicked right before the GameProfileRequestEvent hook,
     // the connection will be broken (possibly by GC) and we can't get it from the delegate field.
-    InboundConnection inboundConnection = event.getConnection();
+    LoginInboundConnection inboundConnection = (LoginInboundConnection) event.getConnection();
     if (!delegateClass.isAssignableFrom(inboundConnection.getClass())) {
       return;
     }
@@ -177,7 +178,7 @@ public class LoginListener {
         ConnectedPlayer player = ctor.newInstance(
             this.server, event.getGameProfile(), connection,
             inboundConnection.getVirtualHost().orElse(null),
-            this.onlineMode.contains(event.getUsername())
+            this.onlineMode.contains(event.getUsername()), inboundConnection.getIdentifiedKey()
         );
 
         if (!this.server.canRegisterConnection(player)) {

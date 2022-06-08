@@ -21,29 +21,35 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-public class PlayerPosition implements MinecraftPacket {
+public class PlayerLook implements MinecraftPacket {
 
-  private double posX;
-  private double posY;
-  private double posZ;
+  private float yaw;
+  private float pitch;
   private boolean onGround;
 
+  public PlayerLook(double posX, double posY, double posZ, float yaw, float pitch, int teleportId, boolean onGround, boolean dismountVehicle) {
+    this.yaw = yaw;
+    this.pitch = pitch;
+    this.onGround = onGround;
+  }
+
+  public PlayerLook() {
+
+  }
+
   @Override
-  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    this.posX = buf.readDouble();
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      buf.skipBytes(8);
-    }
-    this.posY = buf.readDouble();
-    this.posZ = buf.readDouble();
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+    this.yaw = buf.readFloat();
+    this.pitch = buf.readFloat();
     this.onGround = buf.readBoolean();
   }
 
   @Override
-  public void encode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
 
   }
 
@@ -56,16 +62,12 @@ public class PlayerPosition implements MinecraftPacket {
     return true;
   }
 
-  public double getX() {
-    return this.posX;
+  public float getYaw() {
+    return this.yaw;
   }
 
-  public double getY() {
-    return this.posY;
-  }
-
-  public double getZ() {
-    return this.posZ;
+  public float getPitch() {
+    return this.pitch;
   }
 
   public boolean isOnGround() {
@@ -74,20 +76,19 @@ public class PlayerPosition implements MinecraftPacket {
 
   @Override
   public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 33;
+    return 9;
   }
 
   @Override
   public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 25;
+    return 9;
   }
 
   @Override
   public String toString() {
-    return "PlayerPosition{"
-        + "x=" + this.posX
-        + ", y=" + this.posY
-        + ", z=" + this.posZ
+    return "PlayerLook{"
+        + ", yaw=" + this.yaw
+        + ", pitch=" + this.pitch
         + ", onGround=" + this.onGround
         + "}";
   }

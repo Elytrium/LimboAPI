@@ -56,6 +56,16 @@ public class Player implements MinecraftPacket {
   }
 
   @Override
+  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 1;
+  }
+
+  @Override
+  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 1;
+  }
+
+  @Override
   public String toString() {
     return "Player{"
         + "onGround=" + this.onGround

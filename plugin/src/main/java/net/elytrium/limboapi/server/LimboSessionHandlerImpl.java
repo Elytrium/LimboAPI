@@ -25,10 +25,12 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
-import com.velocitypowered.proxy.protocol.packet.Chat;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
 import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
+import com.velocitypowered.proxy.protocol.packet.chat.LegacyChat;
+import com.velocitypowered.proxy.protocol.packet.chat.PlayerChat;
+import com.velocitypowered.proxy.protocol.packet.chat.PlayerCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -47,6 +49,7 @@ import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packet.Player;
+import net.elytrium.limboapi.protocol.packet.PlayerLook;
 import net.elytrium.limboapi.protocol.packet.PlayerPosition;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
 import net.elytrium.limboapi.protocol.packet.TeleportConfirm;
@@ -130,6 +133,15 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     return true;
   }
 
+  public boolean handle(PlayerLook packet) {
+    if (this.loaded) {
+      this.callback.onGround(packet.isOnGround());
+      this.callback.onRotate(packet.getYaw(), packet.getPitch());
+    }
+
+    return true;
+  }
+
   public boolean handle(PlayerPositionAndLook packet) {
     if (this.loaded) {
       this.callback.onGround(packet.isOnGround());
@@ -176,8 +188,21 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(Chat packet) {
-    String message = packet.getMessage();
+  public boolean handle(LegacyChat packet) {
+    return this.handleChat(packet.getMessage());
+  }
+
+  @Override
+  public boolean handle(PlayerChat packet) {
+    return this.handleChat(packet.getMessage());
+  }
+
+  @Override
+  public boolean handle(PlayerCommand packet) {
+    return this.handleChat("/" + packet.getCommand());
+  }
+
+  private boolean handleChat(String message) {
     int messageLength = message.length();
     if (messageLength > Settings.IMP.MAIN.MAX_CHAT_MESSAGE_LENGTH) {
       this.kickTooBigPacket("chat", messageLength);
