@@ -75,6 +75,7 @@ import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packet.DefaultSpawnPosition;
 import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
+import net.elytrium.limboapi.protocol.packet.TimeUpdate;
 import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
 import net.elytrium.limboapi.protocol.packet.world.ChunkData;
 
@@ -100,6 +101,8 @@ public class LimboImpl implements Limbo {
   private String limboName;
 
   private Integer readTimeout;
+
+  private Long worldTicks;
 
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
@@ -151,7 +154,8 @@ public class LimboImpl implements Limbo {
 
     this.postJoinPackets = this.plugin.createPreparedPacket()
         .prepare(this.createAvailableCommandsPacket(), ProtocolVersion.MINECRAFT_1_13)
-        .prepare(this.createDefaultSpawnPositionPacket());
+        .prepare(this.createDefaultSpawnPositionPacket())
+        .prepare(this.createWorldTicksPacket());
 
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
 
@@ -288,6 +292,14 @@ public class LimboImpl implements Limbo {
   }
 
   @Override
+  public Limbo setWorldTime(long ticks) {
+    this.worldTicks = ticks;
+
+    this.refresh();
+    return this;
+  }
+
+  @Override
   public Limbo registerCommand(LimboCommandMeta commandMeta) {
     return this.registerCommand(commandMeta, (SimpleCommand) invocation -> {
       // Do nothing.
@@ -323,7 +335,8 @@ public class LimboImpl implements Limbo {
         0.0F, false, false, false, true,
         false, false, false, false, 256,
         modern ? "#minecraft:infiniburn_nether" : "minecraft:infiniburn_nether",
-        0L, false, 1.0, dimension.getKey(), 0, 256
+        null, false, 1.0, dimension.getKey(), 0, 256,
+        0, 0
     );
   }
 
@@ -379,6 +392,10 @@ public class LimboImpl implements Limbo {
     return new DefaultSpawnPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F);
   }
 
+  private TimeUpdate createWorldTicksPacket() {
+    return this.worldTicks == null ? null : new TimeUpdate(this.worldTicks, this.worldTicks);
+  }
+
   private AvailableCommands createAvailableCommandsPacket() {
     try {
       AvailableCommands packet = new AvailableCommands();
@@ -411,24 +428,16 @@ public class LimboImpl implements Limbo {
     // to perform entity ID rewrites, eliminating potential issues from rewriting packets and
     // improving compatibility with mods.
     List<MinecraftPacket> packets = new ArrayList<>();
-    int sentOldDim = joinGame.getDimension();
+    Respawn respawn = Respawn.fromJoinGame(joinGame);
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) < 0) {
       // Before Minecraft 1.16, we could not switch to the same dimension without sending an
       // additional respawn. On older versions of Minecraft this forces the client to perform
       // garbage collection which adds additional latency.
-      joinGame.setDimension(sentOldDim == 0 ? -1 : 0);
+      joinGame.setDimension(joinGame.getDimension() == 0 ? -1 : 0);
     }
 
     packets.add(joinGame);
-
-    packets.add(
-        new Respawn(
-            sentOldDim, joinGame.getPartialHashedSeed(),
-            joinGame.getDifficulty(), joinGame.getGamemode(), joinGame.getLevelType(),
-            false, joinGame.getDimensionInfo(), joinGame.getPreviousGamemode(),
-            joinGame.getCurrentDimensionData()
-        )
-    );
+    packets.add(respawn);
 
     return packets;
   }
@@ -443,25 +452,13 @@ public class LimboImpl implements Limbo {
     packets.add(joinGame);
 
     // Send a respawn packet in a different dimension.
-    int tempDim = joinGame.getDimension() == 0 ? -1 : 0;
-    packets.add(
-        new Respawn(
-            tempDim, joinGame.getPartialHashedSeed(), joinGame.getDifficulty(),
-            joinGame.getGamemode(), joinGame.getLevelType(),
-            false, joinGame.getDimensionInfo(), joinGame.getPreviousGamemode(),
-            joinGame.getCurrentDimensionData()
-        )
-    );
+    Respawn fakeSwitchPacket = Respawn.fromJoinGame(joinGame);
+    fakeSwitchPacket.setDimension(joinGame.getDimension() == 0 ? -1 : 0);
+    packets.add(fakeSwitchPacket);
 
     // Now send a respawn packet in the correct dimension.
-    packets.add(
-        new Respawn(
-            joinGame.getDimension(), joinGame.getPartialHashedSeed(),
-            joinGame.getDifficulty(), joinGame.getGamemode(), joinGame.getLevelType(),
-            false, joinGame.getDimensionInfo(), joinGame.getPreviousGamemode(),
-            joinGame.getCurrentDimensionData()
-        )
-    );
+    Respawn correctSwitchPacket = Respawn.fromJoinGame(joinGame);
+    packets.add(correctSwitchPacket);
 
     return packets;
   }

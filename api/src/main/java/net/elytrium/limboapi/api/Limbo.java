@@ -22,6 +22,8 @@ public interface Limbo {
 
   Limbo setReadTimeout(int millis);
 
+  Limbo setWorldTime(long ticks);
+
   Limbo registerCommand(LimboCommandMeta commandMeta);
 
   Limbo registerCommand(CommandMeta commandMeta, Command command);

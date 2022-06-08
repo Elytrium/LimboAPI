@@ -73,6 +73,16 @@ public class PlayerPosition implements MinecraftPacket {
   }
 
   @Override
+  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 33;
+  }
+
+  @Override
+  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 25;
+  }
+
+  @Override
   public String toString() {
     return "PlayerPosition{"
         + "x=" + this.posX

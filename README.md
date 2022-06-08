@@ -91,4 +91,3 @@ Your donations are really appreciated. Donations wallets/links/cards:
 - MasterCard Debit Card (Tinkoff Bank): ``5536 9140 0599 1975``
 - Qiwi Wallet: ``PFORG`` or [this link](https://my.qiwi.com/form/Petr-YSpyiLt9c6)
 - YooMoney Wallet: ``4100 1721 8467 044`` or [this link](https://yoomoney.ru/quickpay/shop-widget?writer=seller&targets=Donation&targets-hint=&default-sum=&button-text=11&payment-type-choice=on&mobile-payment-type-choice=on&hint=&successURL=&quickpay=shop&account=410017218467044)
-- PayPal: ``ogurec332@mail.ru``

@@ -52,6 +52,11 @@ public class TeleportConfirm implements MinecraftPacket {
   }
 
   @Override
+  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 5;
+  }
+
+  @Override
   public String toString() {
     return "TeleportConfirm{"
         + "teleportId=" + this.teleportId

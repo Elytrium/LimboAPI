@@ -61,13 +61,7 @@ public class PlayerPositionAndLook implements MinecraftPacket {
     this.posZ = buf.readDouble();
     this.yaw = buf.readFloat();
     this.pitch = buf.readFloat();
-
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      this.onGround = buf.readBoolean();
-    }
-
-    // Ignore other data (flags, teleportID, dismount vehicle, etc).
-    buf.clear();
+    this.onGround = buf.readBoolean();
   }
 
   @Override
@@ -124,6 +118,17 @@ public class PlayerPositionAndLook implements MinecraftPacket {
 
   public boolean isOnGround() {
     return this.onGround;
+  }
+
+
+  @Override
+  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 40;
+  }
+
+  @Override
+  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 33;
   }
 
   @Override
