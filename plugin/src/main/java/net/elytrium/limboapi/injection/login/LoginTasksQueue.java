@@ -142,7 +142,7 @@ public class LoginTasksQueue {
                           e.printStackTrace();
                         }
                       }
-                    });
+                    }, connection.eventLoop());
               } catch (IllegalAccessException e) {
                 logger.error("Exception while completing injection to {}", this.player, e);
               }
