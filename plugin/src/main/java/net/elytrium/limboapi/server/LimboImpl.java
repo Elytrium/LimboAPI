@@ -100,6 +100,7 @@ public class LimboImpl implements Limbo {
   private String limboName;
   private Integer readTimeout;
   private Long worldTicks;
+  private short gameMode = (short) GameMode.ADVENTURE.getId();
 
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
@@ -280,6 +281,13 @@ public class LimboImpl implements Limbo {
   }
 
   @Override
+  public Limbo setGameMode(GameMode gameMode) {
+    this.gameMode = (short) gameMode.getId();
+    this.refresh();
+    return this;
+  }
+
+  @Override
   public Limbo registerCommand(LimboCommandMeta commandMeta) {
     return this.registerCommand(commandMeta, (SimpleCommand) invocation -> {
       // Do nothing.
@@ -325,9 +333,8 @@ public class LimboImpl implements Limbo {
 
     JoinGame joinGame = new JoinGame();
     joinGame.setEntityId(0);
-    short gamemode = (short) GameMode.ADVENTURE.getId();
-    joinGame.setGamemode(gamemode);
-    joinGame.setPreviousGamemode(gamemode);
+    joinGame.setGamemode(this.gameMode);
+    joinGame.setPreviousGamemode(this.gameMode);
     joinGame.setDimension(dimension.getModernId());
     joinGame.setDifficulty((short) 0);
     joinGame.setMaxPlayers(1);

@@ -11,6 +11,7 @@ import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.proxy.Player;
 import net.elytrium.limboapi.api.command.LimboCommandMeta;
+import net.elytrium.limboapi.api.player.GameMode;
 
 public interface Limbo {
 
@@ -23,6 +24,8 @@ public interface Limbo {
   Limbo setReadTimeout(int millis);
 
   Limbo setWorldTime(long ticks);
+
+  Limbo setGameMode(GameMode gameMode);
 
   Limbo registerCommand(LimboCommandMeta commandMeta);
 
