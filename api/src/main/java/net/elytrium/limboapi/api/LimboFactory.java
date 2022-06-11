@@ -131,7 +131,7 @@ public interface LimboFactory {
    * Instantiates new MinecraftPacket object.
    *
    * @param data You can find data arguments at the constructors
-   *     <a href="https://github.com/Elytrium/LimboAPI/blob/master/api/src/main/java/net/elytrium/limboapi/protocol/packets/">here</a>.
+   *     <a href="https://github.com/Elytrium/LimboAPI/blob/master/plugin/src/main/java/net/elytrium/limboapi/protocol/packets/s2c/">here</a>.
    *
    * @return MinecraftPacket object.
    *
