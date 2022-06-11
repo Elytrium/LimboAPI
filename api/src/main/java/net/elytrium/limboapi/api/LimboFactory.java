@@ -20,15 +20,16 @@ import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.BuiltInPackets;
+import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 
-@SuppressWarnings("unused")
 public interface LimboFactory {
 
   /**
    * Creates new virtual block from Block enum.
    *
    * @param block Block from Block enum.
+   *
    * @return new virtual block.
    */
   VirtualBlock createSimpleBlock(Block block);
@@ -37,6 +38,7 @@ public interface LimboFactory {
    * Creates new virtual block from id and data.
    *
    * @param legacyId Legacy block id (1.12.2 and lower)
+   *
    * @return new virtual block.
    */
   VirtualBlock createSimpleBlock(short legacyId);
@@ -45,6 +47,7 @@ public interface LimboFactory {
    * Creates new virtual block from id and data.
    *
    * @param modernId Modern block id
+   *
    * @return new virtual block.
    */
   VirtualBlock createSimpleBlock(String modernId, Map<String, String> properties);
@@ -54,6 +57,7 @@ public interface LimboFactory {
    *
    * @param legacyId Block id
    * @param modern   Use the latest supported version ids or 1.12.2 and lower.
+   *
    * @return new virtual block.
    */
   VirtualBlock createSimpleBlock(short legacyId, boolean modern);
@@ -65,6 +69,7 @@ public interface LimboFactory {
    * @param air            Defines if the block is the air
    * @param motionBlocking Defines if the block blocks motions (1.14+)
    * @param id             Block id
+   *
    * @return new virtual block.
    */
   VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, short id);
@@ -76,6 +81,7 @@ public interface LimboFactory {
    * @param air            Defines if the block is the air
    * @param motionBlocking Defines if the block blocks motions (1.14+)
    * @param modernId       Block id
+   *
    * @return new virtual block.
    */
   VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernId, Map<String, String> properties);
@@ -89,6 +95,7 @@ public interface LimboFactory {
    * @param z         Spawn location. (Z)
    * @param yaw       Spawn rotation. (Yaw)
    * @param pitch     Spawn rotation. (Pitch)
+   *
    * @return new virtual world.
    */
   VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch);
@@ -99,6 +106,7 @@ public interface LimboFactory {
    *
    * @param x Chunk location. (X)
    * @param z Chunk location. (Z)
+   *
    * @return new virtual chunk.
    */
   VirtualChunk createVirtualChunk(int x, int z);
@@ -107,6 +115,7 @@ public interface LimboFactory {
    * Creates new virtual server.
    *
    * @param world Virtual world.
+   *
    * @return new virtual server.
    */
   Limbo createLimbo(VirtualWorld world);
@@ -122,9 +131,13 @@ public interface LimboFactory {
    * Instantiates new MinecraftPacket object.
    *
    * @param data You can find data arguments at the constructors
-   *     <a href="https://github.com/Elytrium/LimboAPI/blob/master/plugin/src/main/java/net/elytrium/limboapi/protocol/packet/">here</a>
+   *     <a href="https://github.com/Elytrium/LimboAPI/blob/master/api/src/main/java/net/elytrium/limboapi/protocol/packets/">here</a>.
+   *
    * @return MinecraftPacket object.
+   *
+   * @deprecated See {@link LimboFactory#getPacketFactory}.
    */
+  @Deprecated(forRemoval = true)
   Object instantiatePacket(BuiltInPackets packetType, Object... data);
 
   /**
@@ -148,7 +161,13 @@ public interface LimboFactory {
    * Creates new virtual item from Item enum.
    *
    * @param item Item from item enum.
+   *
    * @return new virtual item.
    */
   VirtualItem getItem(Item item);
+
+  /**
+   * A factory to instantiate Minecraft packet objects.
+   */
+  PacketFactory getPacketFactory();
 }

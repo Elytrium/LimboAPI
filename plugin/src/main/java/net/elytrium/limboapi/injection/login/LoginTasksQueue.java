@@ -44,12 +44,12 @@ import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
+import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
-import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoop;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -65,14 +65,12 @@ import org.slf4j.Logger;
 
 public class LoginTasksQueue {
 
-  private static final Constructor<InitialConnectSessionHandler> initialCtor;
-  private static final Field loginConnectionField;
-  private static final Field defaultPermissions;
-  private static final Field association;
-  private static final Field state;
-  private static final Field profile;
-  private static final Method setPermissionFunction;
-  private static final Method connectToInitialServer;
+  private static final Field PROFILE_FIELD;
+  private static final Field DEFAULT_PERMISSIONS_FIELD;
+  private static final Method SET_PERMISSION_FUNCTION_METHOD;
+  private static final Constructor<InitialConnectSessionHandler> INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR;
+  private static final Field MC_CONNECTION_FIELD;
+  private static final Method CONNECT_TO_INITIAL_SERVER_METHOD;
 
   private final LimboAPI plugin;
   private final Object handler;
@@ -91,64 +89,34 @@ public class LoginTasksQueue {
     this.queue = queue;
   }
 
-  static {
-    try {
-      initialCtor = InitialConnectSessionHandler.class.getDeclaredConstructor(ConnectedPlayer.class);
-      initialCtor.setAccessible(true);
-
-      loginConnectionField = LoginListener.LOGIN_CLASS.getDeclaredField("mcConnection");
-      loginConnectionField.setAccessible(true);
-
-      defaultPermissions = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
-      defaultPermissions.setAccessible(true);
-
-      association = MinecraftConnection.class.getDeclaredField("association");
-      association.setAccessible(true);
-
-      state = MinecraftConnection.class.getDeclaredField("state");
-      state.setAccessible(true);
-
-      profile = ConnectedPlayer.class.getDeclaredField("profile");
-      profile.setAccessible(true);
-
-      setPermissionFunction = ConnectedPlayer.class.getDeclaredMethod("setPermissionFunction", PermissionFunction.class);
-      setPermissionFunction.setAccessible(true);
-
-      connectToInitialServer = LoginListener.LOGIN_CLASS.getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
-      connectToInitialServer.setAccessible(true);
-    } catch (NoSuchFieldException | NoSuchMethodException e) {
-      throw new ReflectionException(e);
-    }
-  }
-
   public void next() {
-    if (this.player.getConnection().isClosed()) {
-      return;
-    }
-
-    if (this.queue.size() == 0) {
-      this.player.getConnection().eventLoop().execute(this::finish);
-    } else {
-      this.player.getConnection().eventLoop().execute(Objects.requireNonNull(this.queue.poll()));
+    MinecraftConnection connection = this.player.getConnection();
+    if (connection.getChannel().isActive()) {
+      EventLoop eventLoop = connection.eventLoop();
+      if (this.queue.size() == 0) {
+        eventLoop.execute(this::finish);
+      } else {
+        eventLoop.execute(Objects.requireNonNull(this.queue.poll()));
+      }
     }
   }
 
   @SuppressWarnings("deprecation")
   private void finish() {
     this.plugin.removeLoginQueue(this.player);
+
+    VelocityEventManager eventManager = this.server.getEventManager();
     MinecraftConnection connection = this.player.getConnection();
     Logger logger = LimboAPI.getLogger();
-
-    this.server.getEventManager()
-        .fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode()))
-        .thenAcceptAsync(gameProfile -> this.server.getEventManager()
-            .fire(new SafeGameProfileRequestEvent(gameProfile.getGameProfile(), gameProfile.isOnlineMode()))
+    eventManager.fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode())).thenAcceptAsync(
+        gameProfile -> eventManager.fire(new SafeGameProfileRequestEvent(gameProfile.getGameProfile(), gameProfile.isOnlineMode()))
             .thenAcceptAsync(safeGameProfile -> {
               try {
-                profile.set(this.player, safeGameProfile.getGameProfile());
+                PROFILE_FIELD.set(this.player, safeGameProfile.getGameProfile());
+
                 // From Velocity.
-                this.server.getEventManager()
-                    .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) defaultPermissions.get(null)))
+                eventManager
+                    .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) DEFAULT_PERMISSIONS_FIELD.get(null)))
                     .thenAcceptAsync(event -> {
                       if (!connection.isClosed()) {
                         // Wait for permissions to load, then set the players' permission function.
@@ -163,7 +131,7 @@ public class LoginTasksQueue {
                           );
                         } else {
                           try {
-                            setPermissionFunction.invoke(this.player, function);
+                            SET_PERMISSION_FUNCTION_METHOD.invoke(this.player, function);
                           } catch (IllegalAccessException | InvocationTargetException ex) {
                             logger.error("Exception while completing injection to {}", this.player, ex);
                           }
@@ -178,56 +146,72 @@ public class LoginTasksQueue {
               } catch (IllegalAccessException e) {
                 logger.error("Exception while completing injection to {}", this.player, e);
               }
-            }, connection.eventLoop()), connection.eventLoop());
+            }, connection.eventLoop()),
+        connection.eventLoop()
+    );
   }
 
   // From Velocity.
   private void initialize(MinecraftConnection connection) throws IllegalAccessException {
-    association.set(connection, this.player);
-
-    state.set(connection, StateRegistry.PLAY);
-    ChannelPipeline pipeline = connection.getChannel().pipeline();
-    pipeline.get(MinecraftEncoder.class).setState(StateRegistry.PLAY);
-    pipeline.get(MinecraftDecoder.class).setState(StateRegistry.PLAY);
+    connection.setAssociation(this.player);
+    connection.setState(StateRegistry.PLAY);
 
     Logger logger = LimboAPI.getLogger();
-    this.server.getEventManager().fire(new LoginEvent(this.player))
-        .thenAcceptAsync(event -> {
-          if (connection.isClosed()) {
-            // The player was disconnected.
-            this.server.getEventManager().fireAndForget(new DisconnectEvent(this.player, DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE));
-            return;
-          }
-
-          Optional<Component> reason = event.getResult().getReasonComponent();
-          if (reason.isPresent()) {
-            this.player.disconnect0(reason.get(), true);
-          } else {
-            if (!this.server.registerConnection(this.player)) {
-              this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), true);
-              return;
-            }
-
+    this.server.getEventManager().fire(new LoginEvent(this.player)).thenAcceptAsync(event -> {
+      if (connection.isClosed()) {
+        // The player was disconnected.
+        this.server.getEventManager().fireAndForget(new DisconnectEvent(this.player, DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE));
+      } else {
+        Optional<Component> reason = event.getResult().getReasonComponent();
+        if (reason.isPresent()) {
+          this.player.disconnect0(reason.get(), true);
+        } else {
+          if (this.server.registerConnection(this.player)) {
             try {
-              connection.setSessionHandler(initialCtor.newInstance(this.player));
-              this.server.getEventManager()
-                  .fire(new PostLoginEvent(this.player))
-                  .thenAccept((ignored) -> {
-                    try {
-                      loginConnectionField.set(this.handler, connection);
-                      connectToInitialServer.invoke(this.handler, this.player);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                      logger.error("Exception while connecting {} to initial server", this.player, e);
-                    }
-                  });
+              connection.setSessionHandler(INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.newInstance(this.player));
+              this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
+                try {
+                  MC_CONNECTION_FIELD.set(this.handler, connection);
+                  CONNECT_TO_INITIAL_SERVER_METHOD.invoke(this.handler, this.player);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                  logger.error("Exception while connecting {} to initial server", this.player, e);
+                }
+              });
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
               e.printStackTrace();
             }
+          } else {
+            this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), true);
           }
-        }, connection.eventLoop())
-        .exceptionally(t -> {
-          logger.error("Exception while completing login initialisation phase for {}", this.player, t);
-          return null;
-        });
+        }
+      }
+    }, connection.eventLoop()).exceptionally(t -> {
+      logger.error("Exception while completing login initialisation phase for {}", this.player, t);
+      return null;
+    });
+  }
+
+  static {
+    try {
+      PROFILE_FIELD = ConnectedPlayer.class.getDeclaredField("profile");
+      PROFILE_FIELD.setAccessible(true);
+
+      DEFAULT_PERMISSIONS_FIELD = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
+      DEFAULT_PERMISSIONS_FIELD.setAccessible(true);
+
+      SET_PERMISSION_FUNCTION_METHOD = ConnectedPlayer.class.getDeclaredMethod("setPermissionFunction", PermissionFunction.class);
+      SET_PERMISSION_FUNCTION_METHOD.setAccessible(true);
+
+      INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR = InitialConnectSessionHandler.class.getDeclaredConstructor(ConnectedPlayer.class);
+      INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.setAccessible(true);
+
+      MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
+      MC_CONNECTION_FIELD.setAccessible(true);
+
+      CONNECT_TO_INITIAL_SERVER_METHOD = AuthSessionHandler.class.getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
+      CONNECT_TO_INITIAL_SERVER_METHOD.setAccessible(true);
+    } catch (NoSuchFieldException | NoSuchMethodException e) {
+      throw new ReflectionException(e);
+    }
   }
 }

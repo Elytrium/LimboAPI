@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.c2s;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -25,31 +25,14 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-public class PlayerPositionAndLook implements MinecraftPacket {
+public class MovePacket implements MinecraftPacket {
 
   private double posX;
   private double posY;
   private double posZ;
   private float yaw;
   private float pitch;
-  private int teleportId;
   private boolean onGround;
-  private boolean dismountVehicle;
-
-  public PlayerPositionAndLook(double posX, double posY, double posZ, float yaw, float pitch, int teleportId, boolean onGround, boolean dismountVehicle) {
-    this.posX = posX;
-    this.posY = posY;
-    this.posZ = posZ;
-    this.yaw = yaw;
-    this.pitch = pitch;
-    this.teleportId = teleportId;
-    this.onGround = onGround;
-    this.dismountVehicle = dismountVehicle;
-  }
-
-  public PlayerPositionAndLook() {
-
-  }
 
   @Override
   public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
@@ -66,34 +49,38 @@ public class PlayerPositionAndLook implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
-    buf.writeDouble(this.posX);
-    buf.writeDouble(this.posY);
-    buf.writeDouble(this.posZ);
-    buf.writeFloat(this.yaw);
-    buf.writeFloat(this.pitch);
-
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      buf.writeBoolean(this.onGround);
-    } else {
-      buf.writeByte(0x00); // Flags.
-
-      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_9) >= 0) {
-        ProtocolUtils.writeVarInt(buf, this.teleportId);
-      }
-
-      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
-        buf.writeBoolean(this.dismountVehicle);
-      }
-    }
+    throw new IllegalStateException();
   }
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     if (handler instanceof LimboSessionHandlerImpl) {
       return ((LimboSessionHandlerImpl) handler).handle(this);
+    } else {
+      return true;
     }
+  }
 
-    return true;
+  @Override
+  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0 ? 41 : 33;
+  }
+
+  @Override
+  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 33;
+  }
+
+  @Override
+  public String toString() {
+    return "PlayerPositionAndLook{"
+        + "posX=" + this.posX
+        + ", posY=" + this.posY
+        + ", posZ=" + this.posZ
+        + ", yaw=" + this.yaw
+        + ", pitch=" + this.pitch
+        + ", onGround=" + this.onGround
+        + "}";
   }
 
   public double getX() {
@@ -118,30 +105,5 @@ public class PlayerPositionAndLook implements MinecraftPacket {
 
   public boolean isOnGround() {
     return this.onGround;
-  }
-
-
-  @Override
-  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 40;
-  }
-
-  @Override
-  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 33;
-  }
-
-  @Override
-  public String toString() {
-    return "PlayerPositionAndLook{"
-        + "x=" + this.posX
-        + ", y=" + this.posY
-        + ", z=" + this.posZ
-        + ", yaw=" + this.yaw
-        + ", pitch=" + this.pitch
-        + ", teleportId=" + this.teleportId
-        + ", onGround=" + this.onGround
-        + ", dismountVehicle=" + this.dismountVehicle
-        + "}";
   }
 }

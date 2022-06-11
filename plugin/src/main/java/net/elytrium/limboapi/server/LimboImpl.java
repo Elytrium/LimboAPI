@@ -73,25 +73,24 @@ import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
-import net.elytrium.limboapi.protocol.packet.DefaultSpawnPosition;
-import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
-import net.elytrium.limboapi.protocol.packet.TimeUpdate;
-import net.elytrium.limboapi.protocol.packet.UpdateViewPosition;
-import net.elytrium.limboapi.protocol.packet.world.ChunkData;
+import net.elytrium.limboapi.protocol.packets.s2c.ChunkDataPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
+import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
 
 public class LimboImpl implements Limbo {
 
-  private static final Field partialHashedSeed;
-  private static final Field currentDimensionData;
-  private static final Field rootNode;
+  private static final Field PARTIAL_HASHED_SEED_FIELD;
+  private static final Field CURRENT_DIMENSION_DATA_FIELD;
+  private static final Field ROOT_NODE_FIELD;
 
+  private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
   private final LimboAPI plugin;
   private final VirtualWorld world;
-  private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
 
   private final RootCommandNode<CommandSource> commandNode = new RootCommandNode<>();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
   private final List<CommandRegistrar<?>> registrars = ImmutableList.of(
       new BrigadierCommandRegistrar(this.commandNode, this.lock.writeLock()),
       new SimpleCommandRegistrar(this.commandNode, this.lock.writeLock()),
@@ -99,9 +98,7 @@ public class LimboImpl implements Limbo {
   );
 
   private String limboName;
-
   private Integer readTimeout;
-
   private Long worldTicks;
 
   private PreparedPacket joinPackets;
@@ -110,21 +107,6 @@ public class LimboImpl implements Limbo {
   private PreparedPacket postJoinPackets;
   private PreparedPacket chunks;
   private PreparedPacket spawnPosition;
-
-  static {
-    try {
-      partialHashedSeed = JoinGame.class.getDeclaredField("partialHashedSeed");
-      partialHashedSeed.setAccessible(true);
-
-      currentDimensionData = JoinGame.class.getDeclaredField("currentDimensionData");
-      currentDimensionData.setAccessible(true);
-
-      rootNode = AvailableCommands.class.getDeclaredField("rootNode");
-      rootNode.setAccessible(true);
-    } catch (NoSuchFieldException e) {
-      throw new ReflectionException(e);
-    }
-  }
 
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
     this.plugin = plugin;
@@ -159,7 +141,7 @@ public class LimboImpl implements Limbo {
 
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
 
-    List<ChunkData> chunkPackets = this.createChunksPackets();
+    List<ChunkDataPacket> chunkPackets = this.createChunksPackets();
     this.chunks = chunkPackets.size() == 0 ? null : this.plugin.createPreparedPacket().prepare(chunkPackets);
 
     this.spawnPosition = this.plugin.createPreparedPacket()
@@ -205,8 +187,8 @@ public class LimboImpl implements Limbo {
       }
 
       RegisteredServer previousServer = null;
-      if (connection.getState() != LimboProtocol.getLimboRegistry()) {
-        connection.setState(LimboProtocol.getLimboRegistry());
+      if (connection.getState() != LimboProtocol.getLimboStateRegistry()) {
+        connection.setState(LimboProtocol.getLimboStateRegistry());
         VelocityServerConnection server = player.getConnectedServer();
 
         if (server != null) {
@@ -287,14 +269,12 @@ public class LimboImpl implements Limbo {
   @Override
   public Limbo setReadTimeout(int millis) {
     this.readTimeout = millis;
-
     return this;
   }
 
   @Override
   public Limbo setWorldTime(long ticks) {
     this.worldTicks = ticks;
-
     this.refresh();
     return this;
   }
@@ -321,12 +301,12 @@ public class LimboImpl implements Limbo {
   // From Velocity.
   private <T extends Command> boolean tryRegister(CommandRegistrar<T> registrar, CommandMeta commandMeta, Command command) {
     Class<T> superInterface = registrar.registrableSuperInterface();
-    if (!superInterface.isInstance(command)) {
+    if (superInterface.isInstance(command)) {
+      registrar.register(commandMeta, superInterface.cast(command));
+      return true;
+    } else {
       return false;
     }
-
-    registrar.register(commandMeta, superInterface.cast(command));
-    return true;
   }
 
   private DimensionData createDimensionData(Dimension dimension, boolean modern) {
@@ -353,7 +333,7 @@ public class LimboImpl implements Limbo {
     joinGame.setMaxPlayers(1);
 
     try {
-      partialHashedSeed.set(joinGame, System.currentTimeMillis());
+      PARTIAL_HASHED_SEED_FIELD.set(joinGame, System.currentTimeMillis());
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
@@ -371,7 +351,7 @@ public class LimboImpl implements Limbo {
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
 
     try {
-      currentDimensionData.set(joinGame, dimensionData);
+      CURRENT_DIMENSION_DATA_FIELD.set(joinGame, dimensionData);
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
@@ -384,23 +364,21 @@ public class LimboImpl implements Limbo {
   private JoinGame createLegacyJoinGamePacket() {
     JoinGame joinGame = this.createJoinGamePacket(false);
     joinGame.setDimension(this.world.getDimension().getLegacyId());
-
     return joinGame;
   }
 
-  private DefaultSpawnPosition createDefaultSpawnPositionPacket() {
-    return new DefaultSpawnPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F);
+  private DefaultSpawnPositionPacket createDefaultSpawnPositionPacket() {
+    return new DefaultSpawnPositionPacket((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F);
   }
 
-  private TimeUpdate createWorldTicksPacket() {
-    return this.worldTicks == null ? null : new TimeUpdate(this.worldTicks, this.worldTicks);
+  private TimeUpdatePacket createWorldTicksPacket() {
+    return this.worldTicks == null ? null : new TimeUpdatePacket(this.worldTicks, this.worldTicks);
   }
 
   private AvailableCommands createAvailableCommandsPacket() {
     try {
       AvailableCommands packet = new AvailableCommands();
-      rootNode.set(packet, this.commandNode);
-
+      ROOT_NODE_FIELD.set(packet, this.commandNode);
       return packet;
     } catch (IllegalAccessException e) {
       e.printStackTrace();
@@ -408,8 +386,8 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private List<ChunkData> createChunksPackets() {
-    List<ChunkData> packets = new ArrayList<>();
+  private List<ChunkDataPacket> createChunksPackets() {
+    List<ChunkDataPacket> packets = new ArrayList<>();
     for (VirtualChunk chunk : this.world.getChunks()) {
       packets.add(this.createChunkData(chunk, this.world.getDimension(), (int) this.world.getSpawnY()));
     }
@@ -428,7 +406,9 @@ public class LimboImpl implements Limbo {
     // to perform entity ID rewrites, eliminating potential issues from rewriting packets and
     // improving compatibility with mods.
     List<MinecraftPacket> packets = new ArrayList<>();
+
     Respawn respawn = Respawn.fromJoinGame(joinGame);
+
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) < 0) {
       // Before Minecraft 1.16, we could not switch to the same dimension without sending an
       // additional respawn. On older versions of Minecraft this forces the client to perform
@@ -474,7 +454,7 @@ public class LimboImpl implements Limbo {
   }
 
   private PluginMessage createBrandMessage(ProtocolVersion version) {
-    String brand = "LimboAPI -> (" + this.limboName + ")";
+    String brand = "LimboAPI -> " + this.limboName;
     ByteBuf bufWithBrandString = Unpooled.buffer();
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       bufWithBrandString.writeCharSequence(brand, StandardCharsets.UTF_8);
@@ -485,20 +465,35 @@ public class LimboImpl implements Limbo {
     return new PluginMessage("MC|Brand", bufWithBrandString);
   }
 
-  private PlayerPositionAndLook createPlayerPosAndLook(double x, double y, double z, float yaw, float pitch) {
-    return new PlayerPositionAndLook(x, y, z, yaw, pitch, 44, false, true);
+  private PositionRotationPacket createPlayerPosAndLook(double x, double y, double z, float yaw, float pitch) {
+    return new PositionRotationPacket(x, y, z, yaw, pitch, false, 44, true);
   }
 
-  private UpdateViewPosition createUpdateViewPosition(int x, int z) {
-    return new UpdateViewPosition(x >> 4, z >> 4);
+  private UpdateViewPositionPacket createUpdateViewPosition(int x, int z) {
+    return new UpdateViewPositionPacket(x >> 4, z >> 4);
   }
 
-  private ChunkData createChunkData(VirtualChunk chunk, Dimension dimension, int skyLightY) {
+  private ChunkDataPacket createChunkData(VirtualChunk chunk, Dimension dimension, int skyLightY) {
     chunk.setSkyLight(chunk.getX() & 15, skyLightY, chunk.getZ() & 15, (byte) 1);
-    return new ChunkData(chunk.getFullChunkSnapshot(), true, dimension.getMaxSections());
+    return new ChunkDataPacket(chunk.getFullChunkSnapshot(), true, dimension.getMaxSections());
   }
 
   public Integer getReadTimeout() {
     return this.readTimeout;
+  }
+
+  static {
+    try {
+      PARTIAL_HASHED_SEED_FIELD = JoinGame.class.getDeclaredField("partialHashedSeed");
+      PARTIAL_HASHED_SEED_FIELD.setAccessible(true);
+
+      CURRENT_DIMENSION_DATA_FIELD = JoinGame.class.getDeclaredField("currentDimensionData");
+      CURRENT_DIMENSION_DATA_FIELD.setAccessible(true);
+
+      ROOT_NODE_FIELD = AvailableCommands.class.getDeclaredField("rootNode");
+      ROOT_NODE_FIELD.setAccessible(true);
+    } catch (NoSuchFieldException e) {
+      throw new ReflectionException(e);
+    }
   }
 }

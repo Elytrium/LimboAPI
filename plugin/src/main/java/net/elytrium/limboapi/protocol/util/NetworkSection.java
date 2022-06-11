@@ -30,7 +30,6 @@ import net.elytrium.limboapi.protocol.data.BiomeStorage118;
 import net.elytrium.limboapi.protocol.data.BlockStorage17;
 import net.elytrium.limboapi.protocol.data.BlockStorage19;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class NetworkSection {
 
@@ -41,9 +40,10 @@ public class NetworkSection {
   private final BlockSection section;
   private final VirtualBiome[] biomes;
   private final int index;
+
   private int blockCount = -1;
 
-  public NetworkSection(int index, BlockSection section, @NonNull NibbleArray3d blockLight, NibbleArray3d skyLight, VirtualBiome[] biomes) {
+  public NetworkSection(int index, BlockSection section, NibbleArray3d blockLight, NibbleArray3d skyLight, VirtualBiome[] biomes) {
     this.index = index;
     this.section = section;
     this.blockLight = blockLight;
@@ -187,6 +187,7 @@ public class NetworkSection {
         }
       }
     }
+
     if (this.blockCount == -1) {
       this.blockCount = blockCount;
     }

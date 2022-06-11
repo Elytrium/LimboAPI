@@ -20,7 +20,6 @@ import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
 
-@SuppressWarnings("unused")
 public class StructureFile implements WorldFile {
 
   // private int width;

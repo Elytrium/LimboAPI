@@ -9,20 +9,19 @@ package net.elytrium.limboapi.api.protocol.packets;
 
 import net.elytrium.java.commons.reflection.ReflectionException;
 
+@Deprecated(forRemoval = true)
 public enum BuiltInPackets {
 
-  ChangeGameState("net.elytrium.limboapi.protocol.packet.ChangeGameState"),
-  ChunkData("net.elytrium.limboapi.protocol.packet.world.ChunkData"),
-  DefaultSpawnPosition("net.elytrium.limboapi.protocol.packet.DefaultSpawnPosition"),
-  MapData("net.elytrium.limboapi.protocol.packet.MapDataPacket"),
-  Player("net.elytrium.limboapi.protocol.packet.Player"),
-  PlayerAbilities("net.elytrium.limboapi.protocol.packet.PlayerAbilities"),
-  PlayerPosition("net.elytrium.limboapi.protocol.packet.PlayerPosition"),
-  PlayerPositionAndLook("net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook"),
-  SetExperience("net.elytrium.limboapi.protocol.packet.SetExperience"),
-  SetSlot("net.elytrium.limboapi.protocol.packet.SetSlot"),
-  TeleportConfirm("net.elytrium.limboapi.protocol.packet.TeleportConfirm"),
-  UpdateViewPosition("net.elytrium.limboapi.protocol.packet.UpdateViewPosition");
+  ChangeGameState("net.elytrium.limboapi.protocol.packets.s2c.ChangeGameStatePacket"),
+  ChunkData("net.elytrium.limboapi.protocol.packets.s2c.ChunkDataPacket"),
+  DefaultSpawnPosition("net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket"),
+  MapData("net.elytrium.limboapi.protocol.packets.s2c.MapDataPacket"),
+  PlayerAbilities("net.elytrium.limboapi.protocol.packets.s2c.PlayerAbilitiesPacket"),
+  PlayerPositionAndLook("net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket"),
+  SetExperience("net.elytrium.limboapi.protocol.packets.s2c.SetExperiencePacket"),
+  SetSlot("net.elytrium.limboapi.protocol.packets.s2c.SetSlotPacket"),
+  TimeUpdate("net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket"),
+  UpdateViewPosition("net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket");
 
   private final Class<?> packetClass;
 

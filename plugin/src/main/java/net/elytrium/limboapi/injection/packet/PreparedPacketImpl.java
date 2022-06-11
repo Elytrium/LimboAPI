@@ -17,6 +17,7 @@
 
 package net.elytrium.limboapi.injection.packet;
 
+import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
@@ -30,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 
@@ -144,7 +144,9 @@ public class PreparedPacketImpl implements PreparedPacket {
       return this;
     }
     for (ProtocolVersion protocolVersion : EnumSet.range(from, to)) {
-      ByteBuf buf = this.encodePacket(packet.apply(protocolVersion), protocolVersion);
+      T minecraftPacket = packet.apply(protocolVersion);
+      Preconditions.checkArgument(minecraftPacket instanceof MinecraftPacket);
+      ByteBuf buf = this.encodePacket((MinecraftPacket) minecraftPacket, protocolVersion);
       if (this.packets.containsKey(protocolVersion)) {
         this.packets.get(protocolVersion).add(buf);
       } else {
@@ -165,26 +167,10 @@ public class PreparedPacketImpl implements PreparedPacket {
     return this.packets.containsKey(version);
   }
 
-  private <T> ByteBuf encodePacket(T packet, ProtocolVersion version) {
-    int id = this.getPacketId(packet, version);
-    if (id == Integer.MIN_VALUE) {
-      LimboAPI.getLogger().error("Bad packet id {}:{}", id, packet.getClass().getSimpleName());
-    }
+  private ByteBuf encodePacket(MinecraftPacket packet, ProtocolVersion version) {
     ByteBuf byteBuf = Unpooled.buffer();
-    ProtocolUtils.writeVarInt(byteBuf, id);
-    ((MinecraftPacket) packet).encode(byteBuf, Direction.CLIENTBOUND, version);
+    ProtocolUtils.writeVarInt(byteBuf, Direction.CLIENTBOUND.getProtocolRegistry(LimboProtocol.getLimboStateRegistry(), version).getPacketId(packet));
+    packet.encode(byteBuf, Direction.CLIENTBOUND, version);
     return byteBuf.capacity(byteBuf.readableBytes());
   }
-
-  @SuppressWarnings("unchecked")
-  private <T> int getPacketId(T packet, ProtocolVersion version) {
-    try {
-      return LimboProtocol.getPacketId(LimboProtocol.getLimboRegistry().clientbound, ((MinecraftPacket) packet).getClass(), version);
-    } catch (Exception e) {
-      return LimboProtocol.getPacketId(
-          LimboProtocol.getLimboRegistry().clientbound, (Class<? extends MinecraftPacket>) packet.getClass().getSuperclass(), version
-      );
-    }
-  }
 }
-

@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
@@ -44,123 +43,27 @@ import net.elytrium.limboapi.Settings;
 @SuppressWarnings("unchecked")
 public class EventManagerHook extends VelocityEventManager {
 
-  private static final Class<?> handlerRegistration;
-  private static final Field handlersCache;
-  private static final Field untargetedMethodHandlers;
-  private static final Field handlerAdapters;
-  private static final Field eventTypeTracker;
-  private static final Field eventManager;
-  private static final Field handlersMapField;
-  private static final Field pluginField;
-  private static final Field eventManagerInCommandManager;
-  private static final Method fire;
-  private static EventManagerHook instance;
+  private static final Field HANDLERS_BY_TYPE_FIELD;
+  private static final Field HANDLERS_CACHE_FIELD;
+  private static final Field HANDLER_ADAPTERS_FIELD;
+  private static final Field EVENT_TYPE_TRACKER_FIELD;
+  private static final Field VELOCITY_SERVER_EVENT_MANAGER_FIELD;
+  private static final Class<?> HANDLER_REGISTRATION_CLASS;
+  private static final Field UNTARGETED_METHOD_HANDLERS_FIELD;
+  private static final Field PLUGIN_FIELD;
+  private static final Field VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD;
+  private static final Method FIRE_METHOD;
 
-  private final LimboAPI plugin;
   private final Set<GameProfile> proceededProfiles = new HashSet<>();
+  private final LimboAPI plugin;
 
   private Object handlerRegistrations;
   private boolean hasHandlerRegistration;
 
-  static {
-    try {
-      eventManager = VelocityServer.class.getDeclaredField("eventManager");
-      eventManager.setAccessible(true);
-
-      handlersMapField = VelocityEventManager.class.getDeclaredField("handlersByType");
-      handlersMapField.setAccessible(true);
-
-      handlersCache = VelocityEventManager.class.getDeclaredField("handlersCache");
-      handlersCache.setAccessible(true);
-
-      untargetedMethodHandlers = VelocityEventManager.class.getDeclaredField("untargetedMethodHandlers");
-      untargetedMethodHandlers.setAccessible(true);
-
-      handlerAdapters = VelocityEventManager.class.getDeclaredField("handlerAdapters");
-      handlerAdapters.setAccessible(true);
-
-      eventTypeTracker = VelocityEventManager.class.getDeclaredField("eventTypeTracker");
-      eventTypeTracker.setAccessible(true);
-
-      handlerRegistration = Class.forName("com.velocitypowered.proxy.event.VelocityEventManager$HandlerRegistration");
-
-      pluginField = handlerRegistration.getDeclaredField("plugin");
-      pluginField.setAccessible(true);
-
-      eventManagerInCommandManager = VelocityCommandManager.class.getDeclaredField("eventManager");
-      eventManagerInCommandManager.setAccessible(true);
-
-      // The desired 5-argument fire method is private, and its 5th argument is the array of the private class,
-      // so we can't pass it into the Class#getDeclaredMethod(Class...) method.
-      fire = Arrays.stream(VelocityEventManager.class.getDeclaredMethods())
-          .filter(method -> method.getName().equals("fire") && method.getParameterCount() == 5)
-          .findFirst()
-          .orElseThrow();
-      fire.setAccessible(true);
-    } catch (NoSuchFieldException | ClassNotFoundException e) {
-      throw new ReflectionException(e);
-    }
-  }
-
-  public EventManagerHook(PluginManager pluginManager, LimboAPI plugin) {
+  private EventManagerHook(PluginManager pluginManager, LimboAPI plugin) {
     super(pluginManager);
 
     this.plugin = plugin;
-  }
-
-  public static void init(LimboAPI plugin) throws IllegalAccessException, ExecutionException {
-    instance = new EventManagerHook(plugin.getServer().getPluginManager(), plugin);
-
-    EventManager oldEventManager = plugin.getServer().getEventManager();
-    handlersMapField.set(instance, handlersMapField.get(oldEventManager));
-    handlersCache.set(instance, handlersCache.get(oldEventManager));
-    untargetedMethodHandlers.set(instance, untargetedMethodHandlers.get(oldEventManager));
-    handlerAdapters.set(instance, handlerAdapters.get(oldEventManager));
-    eventTypeTracker.set(instance, eventTypeTracker.get(oldEventManager));
-
-    eventManager.set(plugin.getServer(), instance);
-    eventManagerInCommandManager.set(plugin.getServer().getCommandManager(), instance);
-  }
-
-  public static void postInit() {
-    try {
-      instance.reloadHandlers();
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-    }
-  }
-
-  @SuppressWarnings("rawtypes")
-  public void reloadHandlers() throws IllegalAccessException {
-    ListMultimap<Class<?>, ?> handlersMap = (ListMultimap<Class<?>, ?>) handlersMapField.get(this);
-    List disabledHandlers = handlersMap.get(GameProfileRequestEvent.class);
-    List preEvents = new ArrayList<>();
-    List newHandlers = new ArrayList<>(disabledHandlers);
-
-    if (this.handlerRegistrations != null) {
-      for (int i = 0; i < Array.getLength(this.handlerRegistrations); ++i) {
-        preEvents.add(Array.get(this.handlerRegistrations, i));
-      }
-    }
-
-    for (Object handler : disabledHandlers) {
-      PluginContainer pluginContainer = (PluginContainer) pluginField.get(handler);
-      String id = pluginContainer.getDescription().getId();
-      if (Settings.IMP.MAIN.PRE_LIMBO_PROFILE_REQUEST_PLUGINS.contains(id)) {
-        LimboAPI.getLogger().info("Hooking all GameProfileRequestEvent events from {} ", id);
-        preEvents.add(handler);
-        newHandlers.remove(handler);
-      }
-    }
-
-    handlersMap.replaceValues(GameProfileRequestEvent.class, newHandlers);
-    this.handlerRegistrations = Array.newInstance(handlerRegistration, preEvents.size());
-
-    for (int i = 0; i < preEvents.size(); ++i) {
-      Array.set(this.handlerRegistrations, i, preEvents.get(i));
-    }
-
-    this.hasHandlerRegistration = preEvents.size() != 0;
   }
 
   @Override
@@ -176,9 +79,49 @@ public class EventManagerHook extends VelocityEventManager {
     CompletableFuture<E> toReply = this.proxyHook(event);
     if (toReply == null) {
       return super.fire(event);
+    } else {
+      return toReply;
     }
+  }
 
-    return toReply;
+  private <E> CompletableFuture<E> proxyHook(E event) {
+    if (event instanceof GameProfileRequestEvent) {
+      GameProfile originalProfile = ((GameProfileRequestEvent) event).getGameProfile();
+      if (this.proceededProfiles.contains(originalProfile)) {
+        this.proceededProfiles.remove(originalProfile);
+        return null;
+      } else {
+        CompletableFuture<E> fireFuture = new CompletableFuture<>();
+        CompletableFuture<E> hookFuture = new CompletableFuture<>();
+        fireFuture.thenAccept(modifiedEvent -> {
+          try {
+            GameProfileRequestEvent requestEvent = (GameProfileRequestEvent) modifiedEvent;
+            GameProfile profile = requestEvent.getGameProfile();
+
+            this.plugin.getLoginListener().hookLoginSession(requestEvent);
+            this.proceededProfiles.add(profile);
+
+            hookFuture.complete(modifiedEvent);
+          } catch (IllegalAccessException e) {
+            e.printStackTrace();
+          }
+        });
+
+        try {
+          if (this.hasHandlerRegistration) {
+            FIRE_METHOD.invoke(this, fireFuture, event, 0, false, this.handlerRegistrations);
+          } else {
+            fireFuture.complete(event);
+          }
+        } catch (IllegalAccessException | InvocationTargetException e) {
+          fireFuture.complete(event);
+        }
+
+        return hookFuture;
+      }
+    } else {
+      return null;
+    }
   }
 
   @Override
@@ -194,44 +137,89 @@ public class EventManagerHook extends VelocityEventManager {
     }
   }
 
-  private <E> CompletableFuture<E> proxyHook(E event) {
-    if (event instanceof GameProfileRequestEvent) {
-      GameProfile originalProfile = ((GameProfileRequestEvent) event).getGameProfile();
-      if (this.proceededProfiles.contains(originalProfile)) {
-        this.proceededProfiles.remove(originalProfile);
-        return null;
+  @SuppressWarnings("rawtypes")
+  public void reloadHandlers() throws IllegalAccessException {
+    ListMultimap<Class<?>, ?> handlersMap = (ListMultimap<Class<?>, ?>) HANDLERS_BY_TYPE_FIELD.get(this);
+    List disabledHandlers = handlersMap.get(GameProfileRequestEvent.class);
+    List preEvents = new ArrayList<>();
+    List newHandlers = new ArrayList<>(disabledHandlers);
+
+    if (this.handlerRegistrations != null) {
+      for (int i = 0; i < Array.getLength(this.handlerRegistrations); ++i) {
+        preEvents.add(Array.get(this.handlerRegistrations, i));
       }
-
-      CompletableFuture<E> fireFuture = new CompletableFuture<>();
-      CompletableFuture<E> hookFuture = new CompletableFuture<>();
-
-      fireFuture.thenAccept((modifiedEvent) -> {
-        try {
-          GameProfileRequestEvent requestEvent = (GameProfileRequestEvent) modifiedEvent;
-          GameProfile profile = requestEvent.getGameProfile();
-
-          this.plugin.getLoginListener().hookLoginSession(requestEvent);
-          this.proceededProfiles.add(profile);
-
-          hookFuture.complete(modifiedEvent);
-        } catch (IllegalAccessException e) {
-          e.printStackTrace();
-        }
-      });
-
-      try {
-        if (this.hasHandlerRegistration) {
-          fire.invoke(this, fireFuture, event, 0, false, this.handlerRegistrations);
-        } else {
-          fireFuture.complete(event);
-        }
-      } catch (IllegalAccessException | InvocationTargetException e) {
-        fireFuture.complete(event);
-      }
-
-      return hookFuture;
     }
 
-    return null;
+    for (Object handler : disabledHandlers) {
+      PluginContainer pluginContainer = (PluginContainer) PLUGIN_FIELD.get(handler);
+      String id = pluginContainer.getDescription().getId();
+      if (Settings.IMP.MAIN.PRE_LIMBO_PROFILE_REQUEST_PLUGINS.contains(id)) {
+        LimboAPI.getLogger().info("Hooking all GameProfileRequestEvent events from {} ", id);
+        preEvents.add(handler);
+        newHandlers.remove(handler);
+      }
+    }
+
+    handlersMap.replaceValues(GameProfileRequestEvent.class, newHandlers);
+    this.handlerRegistrations = Array.newInstance(HANDLER_REGISTRATION_CLASS, preEvents.size());
+
+    for (int i = 0; i < preEvents.size(); ++i) {
+      Array.set(this.handlerRegistrations, i, preEvents.get(i));
+    }
+
+    this.hasHandlerRegistration = preEvents.size() != 0;
+  }
+
+  static {
+    try {
+      HANDLERS_BY_TYPE_FIELD = VelocityEventManager.class.getDeclaredField("handlersByType");
+      HANDLERS_BY_TYPE_FIELD.setAccessible(true);
+
+      HANDLERS_CACHE_FIELD = VelocityEventManager.class.getDeclaredField("handlersCache");
+      HANDLERS_CACHE_FIELD.setAccessible(true);
+
+      HANDLER_ADAPTERS_FIELD = VelocityEventManager.class.getDeclaredField("handlerAdapters");
+      HANDLER_ADAPTERS_FIELD.setAccessible(true);
+
+      VELOCITY_SERVER_EVENT_MANAGER_FIELD = VelocityServer.class.getDeclaredField("eventManager");
+      VELOCITY_SERVER_EVENT_MANAGER_FIELD.setAccessible(true);
+
+      UNTARGETED_METHOD_HANDLERS_FIELD = VelocityEventManager.class.getDeclaredField("untargetedMethodHandlers");
+      UNTARGETED_METHOD_HANDLERS_FIELD.setAccessible(true);
+
+      EVENT_TYPE_TRACKER_FIELD = VelocityEventManager.class.getDeclaredField("eventTypeTracker");
+      EVENT_TYPE_TRACKER_FIELD.setAccessible(true);
+
+      HANDLER_REGISTRATION_CLASS = Class.forName("com.velocitypowered.proxy.event.VelocityEventManager$HandlerRegistration");
+      PLUGIN_FIELD = HANDLER_REGISTRATION_CLASS.getDeclaredField("plugin");
+      PLUGIN_FIELD.setAccessible(true);
+
+      VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD = VelocityCommandManager.class.getDeclaredField("eventManager");
+      VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD.setAccessible(true);
+
+      // The desired 5-argument fire method is private, and its 5th argument is the array of the private class,
+      // so we can't pass it into the Class#getDeclaredMethod(Class...) method.
+      FIRE_METHOD = Arrays.stream(VelocityEventManager.class.getDeclaredMethods())
+          .filter(method -> method.getName().equals("fire") && method.getParameterCount() == 5)
+          .findFirst()
+          .orElseThrow();
+      FIRE_METHOD.setAccessible(true);
+    } catch (NoSuchFieldException | ClassNotFoundException e) {
+      throw new ReflectionException(e);
+    }
+  }
+
+  public static void init(LimboAPI plugin) throws ReflectiveOperationException {
+    VelocityServer server = plugin.getServer();
+    EventManager newEventManager = new EventManagerHook(server.getPluginManager(), plugin);
+    EventManager oldEventManager = server.getEventManager();
+    HANDLERS_BY_TYPE_FIELD.set(newEventManager, HANDLERS_BY_TYPE_FIELD.get(oldEventManager));
+    HANDLERS_CACHE_FIELD.set(newEventManager, HANDLERS_CACHE_FIELD.get(oldEventManager));
+    UNTARGETED_METHOD_HANDLERS_FIELD.set(newEventManager, UNTARGETED_METHOD_HANDLERS_FIELD.get(oldEventManager));
+    HANDLER_ADAPTERS_FIELD.set(newEventManager, HANDLER_ADAPTERS_FIELD.get(oldEventManager));
+    EVENT_TYPE_TRACKER_FIELD.set(newEventManager, EVENT_TYPE_TRACKER_FIELD.get(oldEventManager));
+
+    VELOCITY_SERVER_EVENT_MANAGER_FIELD.set(server, newEventManager);
+    VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD.set(server.getCommandManager(), newEventManager);
   }
 }

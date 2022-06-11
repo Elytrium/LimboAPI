@@ -15,49 +15,56 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.c2s;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
+import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-public class UpdateViewPosition implements MinecraftPacket {
+public class MoveOnGroundOnlyPacket implements MinecraftPacket {
 
-  private final int posX;
-  private final int posZ;
-
-  public UpdateViewPosition(int posX, int posZ) {
-    this.posX = posX;
-    this.posZ = posZ;
-  }
-
-  public UpdateViewPosition() {
-    throw new IllegalStateException();
-  }
+  private boolean onGround;
 
   @Override
-  public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    this.onGround = buf.readBoolean();
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    ProtocolUtils.writeVarInt(buf, this.posX);
-    ProtocolUtils.writeVarInt(buf, this.posZ);
+    throw new IllegalStateException();
   }
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    return true;
+    if (handler instanceof LimboSessionHandlerImpl) {
+      return ((LimboSessionHandlerImpl) handler).handle(this);
+    } else {
+      return true;
+    }
+  }
+
+  @Override
+  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 1;
+  }
+
+  @Override
+  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 1;
   }
 
   @Override
   public String toString() {
-    return "UpdateViewPosition{"
-        + "x=" + this.posX
-        + ", z=" + this.posZ
+    return "Player{"
+        + "onGround=" + this.onGround
         + "}";
+  }
+
+  public boolean isOnGround() {
+    return this.onGround;
   }
 }

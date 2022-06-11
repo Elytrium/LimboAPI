@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet.world;
+package net.elytrium.limboapi.protocol.packets.s2c;
 
 import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -25,7 +25,6 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.util.ReferenceCountUtil;
 import java.util.BitSet;
 import java.util.zip.Deflater;
 import net.elytrium.limboapi.LimboAPI;
@@ -41,7 +40,7 @@ import net.elytrium.limboapi.mcprotocollib.BitStorage19;
 import net.elytrium.limboapi.protocol.util.NetworkSection;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
-public class ChunkData implements MinecraftPacket {
+public class ChunkDataPacket implements MinecraftPacket {
 
   private final ChunkSnapshot chunk;
   private final NetworkSection[] sections;
@@ -52,7 +51,7 @@ public class ChunkData implements MinecraftPacket {
   private final CompoundBinaryTag heightmap114;
   private final CompoundBinaryTag heightmap116;
 
-  public ChunkData(ChunkSnapshot chunkSnapshot, boolean skyLight, int maxSections) {
+  public ChunkDataPacket(ChunkSnapshot chunkSnapshot, boolean skyLight, int maxSections) {
     this.maxSections = maxSections;
     this.sections = new NetworkSection[maxSections];
 
@@ -82,13 +81,13 @@ public class ChunkData implements MinecraftPacket {
     this.biomeData = new BiomeData(this.chunk);
   }
 
-  public ChunkData() {
+  public ChunkDataPacket() {
     throw new IllegalStateException();
   }
 
   @Override
   public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
-
+    throw new IllegalStateException();
   }
 
   @Override
@@ -181,7 +180,7 @@ public class ChunkData implements MinecraftPacket {
         this.write17(buf, data);
       }
     } finally {
-      ReferenceCountUtil.release(data);
+      data.release();
     }
   }
 
@@ -264,6 +263,7 @@ public class ChunkData implements MinecraftPacket {
     ).toLongArray();
   }
 
+  // TODO: Use velocity compressor.
   private void write17(ByteBuf out, ByteBuf data) {
     out.writeShort(0); // Extended bitmask.
     byte[] uncompressed = new byte[data.readableBytes()];
@@ -291,4 +291,3 @@ public class ChunkData implements MinecraftPacket {
     return true;
   }
 }
-

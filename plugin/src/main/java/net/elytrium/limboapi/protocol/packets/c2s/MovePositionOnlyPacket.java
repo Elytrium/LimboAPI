@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.c2s;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -24,7 +24,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-public class PlayerPosition implements MinecraftPacket {
+public class MovePositionOnlyPacket implements MinecraftPacket {
 
   private double posX;
   private double posY;
@@ -43,17 +43,37 @@ public class PlayerPosition implements MinecraftPacket {
   }
 
   @Override
-  public void encode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    throw new IllegalStateException();
   }
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     if (handler instanceof LimboSessionHandlerImpl) {
       return ((LimboSessionHandlerImpl) handler).handle(this);
+    } else {
+      return true;
     }
+  }
 
-    return true;
+  @Override
+  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0 ? 33 : 25;
+  }
+
+  @Override
+  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 25;
+  }
+
+  @Override
+  public String toString() {
+    return "PlayerPosition{"
+        + "posX=" + this.posX
+        + ", posY=" + this.posY
+        + ", posZ=" + this.posZ
+        + ", onGround=" + this.onGround
+        + "}";
   }
 
   public double getX() {
@@ -70,25 +90,5 @@ public class PlayerPosition implements MinecraftPacket {
 
   public boolean isOnGround() {
     return this.onGround;
-  }
-
-  @Override
-  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 33;
-  }
-
-  @Override
-  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 25;
-  }
-
-  @Override
-  public String toString() {
-    return "PlayerPosition{"
-        + "x=" + this.posX
-        + ", y=" + this.posY
-        + ", z=" + this.posZ
-        + ", onGround=" + this.onGround
-        + "}";
   }
 }

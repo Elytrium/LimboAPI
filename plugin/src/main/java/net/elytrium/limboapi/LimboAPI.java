@@ -28,6 +28,8 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.event.VelocityEventManager;
+import com.velocitypowered.proxy.protocol.StateRegistry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -40,7 +42,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import net.elytrium.java.commons.config.YamlConfig;
 import net.elytrium.java.commons.mc.serialization.Serializer;
@@ -59,6 +60,7 @@ import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.BuiltInPackets;
+import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
@@ -67,6 +69,7 @@ import net.elytrium.limboapi.injection.login.LoginTasksQueue;
 import net.elytrium.limboapi.injection.packet.PlayerListItemHook;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.elytrium.limboapi.protocol.LimboProtocol;
+import net.elytrium.limboapi.protocol.packets.PacketFactoryImpl;
 import net.elytrium.limboapi.server.CachedPackets;
 import net.elytrium.limboapi.server.LimboImpl;
 import net.elytrium.limboapi.server.world.SimpleBlock;
@@ -93,6 +96,8 @@ import org.slf4j.Logger;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
+  private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_MAP = new HashMap<>();
+
   @MonotonicNonNull
   private static Logger LOGGER;
   @MonotonicNonNull
@@ -103,6 +108,7 @@ public class LimboAPI implements LimboFactory {
   private final File configFile;
   private final List<Player> players;
   private final CachedPackets packets;
+  private final PacketFactory packetFactory;
   private final HashMap<Player, LoginTasksQueue> loginQueue;
   private final HashMap<Player, RegisteredServer> nextServer;
   private final HashMap<Player, UUID> initialID;
@@ -119,6 +125,7 @@ public class LimboAPI implements LimboFactory {
     this.metricsFactory = metricsFactory;
     this.configFile = dataDirectory.resolve("config.yml").toFile();
     this.players = new ArrayList<>();
+    this.packetFactory = new PacketFactoryImpl();
     this.packets = new CachedPackets(this);
     this.loginQueue = new HashMap<>();
     this.nextServer = new HashMap<>();
@@ -127,20 +134,19 @@ public class LimboAPI implements LimboFactory {
     if (ProtocolVersion.MAXIMUM_VERSION.getProtocol() < 759) {
       LOGGER.error("Please update Velocity (https://papermc.io/downloads#Velocity). LimboAPI support: https://ely.su/discord");
       this.server.shutdown();
-      return;
-    }
-
-    LOGGER.info("Initializing Simple Virtual Block system...");
-    SimpleBlock.init();
-    LOGGER.info("Initializing Simple Virtual Item system...");
-    SimpleItem.init();
-    LOGGER.info("Hooking into EventManager, PlayerList and StateRegistry...");
-    try {
-      EventManagerHook.init(this);
-      PlayerListItemHook.init(this);
-      LimboProtocol.init();
-    } catch (InvocationTargetException | InstantiationException | IllegalAccessException | ExecutionException e) {
-      throw new ReflectionException(e);
+    } else {
+      LOGGER.info("Initializing Simple Virtual Block system...");
+      SimpleBlock.init();
+      LOGGER.info("Initializing Simple Virtual Item system...");
+      SimpleItem.init();
+      LOGGER.info("Hooking into EventManager, PlayerList and StateRegistry...");
+      try {
+        EventManagerHook.init(this);
+        PlayerListItemHook.init(this, StateRegistry.PLAY.clientbound);
+        LimboProtocol.init();
+      } catch (ReflectiveOperationException e) {
+        throw new ReflectionException(e);
+      }
     }
   }
 
@@ -163,8 +169,8 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Subscribe(order = PostOrder.LAST)
-  public void postProxyInitialization(ProxyInitializeEvent event) {
-    EventManagerHook.postInit();
+  public void postProxyInitialization(ProxyInitializeEvent event) throws IllegalAccessException {
+    ((EventManagerHook) this.server.getEventManager()).reloadHandlers();
   }
 
   @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "LEGACY_AMPERSAND can't be null in velocity.")
@@ -191,8 +197,10 @@ public class LimboAPI implements LimboFactory {
     this.reloadVersion();
     this.packets.createPackets();
     this.loginListener = new LoginListener(this, this.server);
-    this.server.getEventManager().register(this, this.loginListener);
-    this.server.getEventManager().register(this, new DisconnectListener(this));
+    VelocityEventManager eventManager = this.server.getEventManager();
+    eventManager.register(this, this.loginListener);
+    eventManager.register(this, new DisconnectListener(this));
+
     LOGGER.info("Loaded!");
   }
 
@@ -270,17 +278,40 @@ public class LimboAPI implements LimboFactory {
 
   @Override
   public Object instantiatePacket(BuiltInPackets packetType, Object... data) {
-    // TODO: Support for constructors with same arguments count.
     try {
       for (Constructor<?> constructor : packetType.getPacketClass().getDeclaredConstructors()) {
-        if (constructor.getParameterCount() == data.length) {
+        if (this.compareData(constructor.getParameterTypes(), data)) {
           return constructor.newInstance(data);
         }
       }
 
-      throw new IllegalArgumentException("No constructor found with the correct number of arguments!");
+      throw new IllegalArgumentException("No constructor found with the correct arguments!");
     } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
       throw new ReflectionException(e);
+    }
+  }
+
+  @Deprecated(forRemoval = true)
+  private boolean compareData(Class<?>[] parameterTypes, Object[] data) {
+    if (parameterTypes.length != data.length) {
+      return false;
+    } else {
+      for (int i = 0; i < parameterTypes.length; ++i) {
+        if (data[i] != null && !this.primitiveToWrapper(parameterTypes[i]).isAssignableFrom(this.primitiveToWrapper(data[i].getClass()))) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  }
+
+  // From apache commons.
+  private Class<?> primitiveToWrapper(Class<?> cls) {
+    if (cls.isPrimitive()) {
+      return PRIMITIVE_WRAPPER_MAP.get(cls);
+    } else {
+      return cls;
     }
   }
 
@@ -299,6 +330,11 @@ public class LimboAPI implements LimboFactory {
   @Override
   public VirtualItem getItem(Item item) {
     return SimpleItem.fromItem(item);
+  }
+
+  @Override
+  public PacketFactory getPacketFactory() {
+    return this.packetFactory;
   }
 
   public VelocityServer getServer() {
@@ -367,6 +403,18 @@ public class LimboAPI implements LimboFactory {
 
   public LoginListener getLoginListener() {
     return this.loginListener;
+  }
+
+  static {
+    PRIMITIVE_WRAPPER_MAP.put(Boolean.TYPE, Boolean.class);
+    PRIMITIVE_WRAPPER_MAP.put(Byte.TYPE, Byte.class);
+    PRIMITIVE_WRAPPER_MAP.put(Character.TYPE, Character.class);
+    PRIMITIVE_WRAPPER_MAP.put(Short.TYPE, Short.class);
+    PRIMITIVE_WRAPPER_MAP.put(Integer.TYPE, Integer.class);
+    PRIMITIVE_WRAPPER_MAP.put(Long.TYPE, Long.class);
+    PRIMITIVE_WRAPPER_MAP.put(Double.TYPE, Double.class);
+    PRIMITIVE_WRAPPER_MAP.put(Float.TYPE, Float.class);
+    PRIMITIVE_WRAPPER_MAP.put(Void.TYPE, Void.TYPE);
   }
 
   private static void setLogger(Logger logger) {

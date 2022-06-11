@@ -15,51 +15,71 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.c2s;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-public class TeleportConfirm implements MinecraftPacket {
+public class MoveRotationOnlyPacket implements MinecraftPacket {
 
-  private int teleportId;
+  private float yaw;
+  private float pitch;
+  private boolean onGround;
 
   @Override
-  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    this.teleportId = ProtocolUtils.readVarInt(buf);
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+    this.yaw = buf.readFloat();
+    this.pitch = buf.readFloat();
+    this.onGround = buf.readBoolean();
   }
 
   @Override
-  public void encode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
+    throw new IllegalStateException();
   }
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     if (handler instanceof LimboSessionHandlerImpl) {
       return ((LimboSessionHandlerImpl) handler).handle(this);
+    } else {
+      return true;
     }
-
-    return true;
-  }
-
-  public int getTeleportId() {
-    return this.teleportId;
   }
 
   @Override
   public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 5;
+    return 9;
+  }
+
+  @Override
+  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 9;
   }
 
   @Override
   public String toString() {
-    return "TeleportConfirm{"
-        + "teleportId=" + this.teleportId
+    return "PlayerLook{"
+        + ", yaw=" + this.yaw
+        + ", pitch=" + this.pitch
+        + ", onGround=" + this.onGround
         + "}";
+  }
+
+  public float getYaw() {
+    return this.yaw;
+  }
+
+  public float getPitch() {
+    return this.pitch;
+  }
+
+  public boolean isOnGround() {
+    return this.onGround;
   }
 }
