@@ -78,12 +78,18 @@ import net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
+import net.kyori.adventure.nbt.IntBinaryTag;
+import net.kyori.adventure.nbt.ListBinaryTag;
+import net.kyori.adventure.nbt.StringBinaryTag;
 
 public class LimboImpl implements Limbo {
 
   private static final Field PARTIAL_HASHED_SEED_FIELD;
   private static final Field CURRENT_DIMENSION_DATA_FIELD;
   private static final Field ROOT_NODE_FIELD;
+
+  private static final CompoundBinaryTag CHAT_TYPE_119;
 
   private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
   private final LimboAPI plugin;
@@ -364,6 +370,7 @@ public class LimboImpl implements Limbo {
     }
 
     joinGame.setBiomeRegistry(Biome.getRegistry());
+    joinGame.setChatTypeRegistry(CHAT_TYPE_119);
 
     return joinGame;
   }
@@ -499,6 +506,52 @@ public class LimboImpl implements Limbo {
 
       ROOT_NODE_FIELD = AvailableCommands.class.getDeclaredField("rootNode");
       ROOT_NODE_FIELD.setAccessible(true);
+
+      CHAT_TYPE_119 = CompoundBinaryTag.builder()
+          .put("type", StringBinaryTag.of("minecraft:chat_type"))
+          .put("value",
+              ListBinaryTag.builder()
+                  .add(CompoundBinaryTag.builder()
+                      .put("name", StringBinaryTag.of("minecraft:chat"))
+                      .put("id", IntBinaryTag.of(0))
+                      .put("element", CompoundBinaryTag.builder()
+                          .put("chat", CompoundBinaryTag.builder().put("decoration",
+                              CompoundBinaryTag.builder()
+                                  .put("translation_key", StringBinaryTag.of("chat.type.text"))
+                                  .put("style", CompoundBinaryTag.empty())
+                                  .put("parameters", ListBinaryTag.builder()
+                                      .add(StringBinaryTag.of("sender"))
+                                      .add(StringBinaryTag.of("content"))
+                                      .build())
+                                  .build())
+                              .build())
+                          .put("narration",
+                              CompoundBinaryTag.builder()
+                                  .put("priority", StringBinaryTag.of("chat.type.text.narrate"))
+                                  .put("translation_key", StringBinaryTag.of("chat.type.text"))
+                                  .put("style", CompoundBinaryTag.empty())
+                                  .put("parameters", ListBinaryTag.builder()
+                                      .add(StringBinaryTag.of("sender"))
+                                      .add(StringBinaryTag.of("content"))
+                                      .build())
+                                  .build())
+                          .build())
+                      .build())
+                  .add(CompoundBinaryTag.builder()
+                      .put("name", StringBinaryTag.of("minecraft:system"))
+                      .put("id", IntBinaryTag.of(1))
+                      .put("element", CompoundBinaryTag.builder()
+                          .put("chat", CompoundBinaryTag.empty())
+                          .put("narration", CompoundBinaryTag.builder().put("priority", StringBinaryTag.of("system")).build())
+                          .build())
+                      .build())
+                  .add(CompoundBinaryTag.builder()
+                      .put("name", StringBinaryTag.of("minecraft:game_info"))
+                      .put("id", IntBinaryTag.of(2))
+                      .put("element", CompoundBinaryTag.builder().put("overlay", CompoundBinaryTag.empty()).build())
+                      .build())
+                  .build())
+          .build();
     } catch (NoSuchFieldException e) {
       throw new ReflectionException(e);
     }
