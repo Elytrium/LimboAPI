@@ -27,18 +27,23 @@ import net.kyori.adventure.nbt.ListBinaryTag;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-@SuppressWarnings("unused")
 public enum Biome implements VirtualBiome {
 
-  PLAINS("minecraft:plains", 1,
-      new Element("rain", 0.125F, 0.8F, 0.05F, 0.4F, "plains",
+  PLAINS(
+      "minecraft:plains",
+      1,
+      new Element(
+          "rain", 0.125F, 0.8F, 0.05F, 0.4F, "plains",
           Effects.builder(7907327, 329011, 12638463, 415920)
               .moodSound(MoodSound.of(6000, 2.0, 8, "minecraft:ambient.cave"))
               .build()
       )
   ),
-  SWAMP("minecraft:swamp", 6,
-      new Element("rain", -0.2F, 0.8F, 0.1F, 0.9F, "swamp",
+  SWAMP(
+      "minecraft:swamp",
+      6,
+      new Element(
+          "rain", -0.2F, 0.8F, 0.1F, 0.9F, "swamp",
           Effects.builder(7907327, 329011, 12638463, 415920)
               .grassColorModifier("swamp")
               .foliageColor(6975545)
@@ -46,8 +51,11 @@ public enum Biome implements VirtualBiome {
               .build()
       )
   ),
-  SWAMP_HILLS("minecraft:swamp_hills", 134,
-      new Element("rain", -0.1F, 0.8F, 0.3F, 0.9F, "swamp",
+  SWAMP_HILLS(
+      "minecraft:swamp_hills",
+      134,
+      new Element(
+          "rain", -0.1F, 0.8F, 0.3F, 0.9F, "swamp",
           Effects.builder(7907327, 329011, 12638463, 415920)
               .grassColorModifier("swamp")
               .foliageColor(6975545)
@@ -154,6 +162,19 @@ public enum Biome implements VirtualBiome {
     public Effects getEffects() {
       return this.effects;
     }
+
+    @Override
+    public String toString() {
+      return "Biome.Element{"
+          + "precipitation=" + this.precipitation
+          + ", depth=" + this.depth
+          + ", temperature=" + this.temperature
+          + ", scale=" + this.scale
+          + ", downfall=" + this.downfall
+          + ", category=" + this.category
+          + ", effects=" + this.effects
+          + "}";
+    }
   }
 
   public static class Effects {
@@ -198,10 +219,11 @@ public enum Biome implements VirtualBiome {
 
     public CompoundBinaryTag encode() {
       Builder result = CompoundBinaryTag.builder();
-      result.putInt("sky_color", this.skyColor)
-          .putInt("water_fog_color", this.waterColor)
-          .putInt("fog_color", this.fogColor)
-          .putInt("water_color", this.waterColor);
+
+      result.putInt("sky_color", this.skyColor);
+      result.putInt("water_fog_color", this.waterColor);
+      result.putInt("fog_color", this.fogColor);
+      result.putInt("water_color", this.waterColor);
 
       if (this.foliageColor != null) {
         result.putInt("foliage_color", this.foliageColor);
@@ -296,17 +318,17 @@ public enum Biome implements VirtualBiome {
     @Override
     public String toString() {
       return "Biome.Effects{"
-          + "skyColor=" + this.getSkyColor()
-          + ", waterFogColor=" + this.getWaterFogColor()
-          + ", fogColor=" + this.getFogColor()
-          + ", waterColor=" + this.getWaterColor()
-          + ", foliageColor=" + this.getFoliageColor()
-          + ", grassColorModifier=" + this.getGrassColorModifier()
-          + ", music=" + this.getMusic()
-          + ", ambientSound=" + this.getAmbientSound()
-          + ", additionsSound=" + this.getAdditionsSound()
-          + ", moodSound=" + this.getMoodSound()
-          + ", particle=" + this.getParticle()
+          + "skyColor=" + this.skyColor
+          + ", waterFogColor=" + this.waterFogColor
+          + ", fogColor=" + this.fogColor
+          + ", waterColor=" + this.waterColor
+          + ", foliageColor=" + this.foliageColor
+          + ", grassColorModifier=" + this.grassColorModifier
+          + ", music=" + this.music
+          + ", ambientSound=" + this.ambientSound
+          + ", additionsSound=" + this.additionsSound
+          + ", moodSound=" + this.moodSound
+          + ", particle=" + this.particle
           + "}";
     }
 
@@ -358,10 +380,10 @@ public enum Biome implements VirtualBiome {
       @Override
       public String toString() {
         return "Biome.Effects.MoodSound{"
-            + "tickDelay=" + this.getTickDelay()
-            + ", offset=" + this.getOffset()
-            + ", blockSearchExtent=" + this.getBlockSearchExtent()
-            + ", sound=" + this.getSound()
+            + "tickDelay=" + this.tickDelay
+            + ", offset=" + this.offset
+            + ", blockSearchExtent=" + this.blockSearchExtent
+            + ", sound=" + this.sound
             + "}";
       }
     }
@@ -414,10 +436,10 @@ public enum Biome implements VirtualBiome {
       @Override
       public String toString() {
         return "Biome.Effects.Music{"
-            + "replaceCurrentMusic=" + this.isReplaceCurrentMusic()
-            + ", sound=" + this.getSound()
-            + ", maxDelay=" + this.getMaxDelay()
-            + ", minDelay=" + this.getMinDelay()
+            + "replaceCurrentMusic=" + this.replaceCurrentMusic
+            + ", sound=" + this.sound
+            + ", maxDelay=" + this.maxDelay
+            + ", minDelay=" + this.minDelay
             + "}";
       }
     }
@@ -456,8 +478,8 @@ public enum Biome implements VirtualBiome {
       @Override
       public String toString() {
         return "Biome.Effects.AdditionsSound{"
-            + "sound=" + this.getSound()
-            + ", tickChance=" + this.getTickChance()
+            + "sound=" + this.sound
+            + ", tickChance=" + this.tickChance
             + "}";
       }
     }
@@ -496,8 +518,8 @@ public enum Biome implements VirtualBiome {
       @Override
       public String toString() {
         return "Biome.Effects.Particle{"
-            + "probability=" + this.getProbability()
-            + ", options=" + this.getOptions()
+            + "probability=" + this.probability
+            + ", options=" + this.options
             + "}";
       }
 
@@ -524,7 +546,7 @@ public enum Biome implements VirtualBiome {
         @Override
         public String toString() {
           return "Biome.Effects.Particle.ParticleOptions{"
-              + "type=" + this.getType()
+              + "type=" + this.type
               + "}";
         }
       }

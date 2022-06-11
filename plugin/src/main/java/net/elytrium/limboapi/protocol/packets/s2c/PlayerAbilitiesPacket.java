@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.s2c;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -23,37 +23,32 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 
-public class SetExperience implements MinecraftPacket {
+public class PlayerAbilitiesPacket implements MinecraftPacket {
 
-  private final float expBar;
-  private final int level;
-  private final int totalExp;
+  private final byte flags;
+  private final float walkSpeed;
+  private final float flySpeed;
 
-  public SetExperience(float expBar, int level, int totalExp) {
-    this.expBar = expBar;
-    this.level = level;
-    this.totalExp = totalExp;
+  public PlayerAbilitiesPacket(byte flags, float flySpeed, float walkSpeed) {
+    this.flags = flags;
+    this.flySpeed = flySpeed;
+    this.walkSpeed = walkSpeed;
   }
 
-  public SetExperience() {
+  public PlayerAbilitiesPacket() {
     throw new IllegalStateException();
   }
 
   @Override
-  public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    throw new IllegalStateException();
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    buf.writeFloat(this.expBar);
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-      ProtocolUtils.writeVarInt(buf, this.level);
-      ProtocolUtils.writeVarInt(buf, this.totalExp);
-    } else {
-      buf.writeShort(this.level);
-      buf.writeShort(this.totalExp);
-    }
+    buf.writeByte(this.flags);
+    buf.writeFloat(this.flySpeed);
+    buf.writeFloat(this.walkSpeed);
   }
 
   @Override
@@ -63,10 +58,10 @@ public class SetExperience implements MinecraftPacket {
 
   @Override
   public String toString() {
-    return "SetExperience{"
-        + "expBar=" + this.expBar
-        + ", level=" + this.level
-        + ", totalExp=" + this.totalExp
+    return "PlayerAbilities{"
+        + "flags=" + this.flags
+        + ", flySpeed=" + this.flySpeed
+        + ", walkSpeed=" + this.walkSpeed
         + "}";
   }
 }

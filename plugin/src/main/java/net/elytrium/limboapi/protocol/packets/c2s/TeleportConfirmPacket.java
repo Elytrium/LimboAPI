@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.c2s;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -24,40 +24,32 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
-public class Player implements MinecraftPacket {
+public class TeleportConfirmPacket implements MinecraftPacket {
 
-  private boolean onGround;
-
-  public Player() {
-
-  }
+  private int teleportId;
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    this.onGround = buf.readBoolean();
+    this.teleportId = ProtocolUtils.readVarInt(buf);
   }
 
   @Override
-  public void encode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    throw new IllegalStateException();
   }
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     if (handler instanceof LimboSessionHandlerImpl) {
       return ((LimboSessionHandlerImpl) handler).handle(this);
+    } else {
+      return true;
     }
-
-    return true;
-  }
-
-  public boolean isOnGround() {
-    return this.onGround;
   }
 
   @Override
   public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 1;
+    return 5;
   }
 
   @Override
@@ -67,8 +59,12 @@ public class Player implements MinecraftPacket {
 
   @Override
   public String toString() {
-    return "Player{"
-        + "onGround=" + this.onGround
+    return "TeleportConfirm{"
+        + "teleportId=" + this.teleportId
         + "}";
+  }
+
+  public int getTeleportId() {
+    return this.teleportId;
   }
 }

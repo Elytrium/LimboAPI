@@ -49,6 +49,7 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialInboundConnection;
@@ -74,64 +75,20 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 public class LoginListener {
 
-  public static final Class<?> LOGIN_CLASS;
+  private static final ClosedMinecraftConnection CLOSED_MINECRAFT_CONNECTION;
 
-  private static final ClosedMinecraftConnection closed;
+  private static final Field DELEGATE_FIELD;
+  private static final Field MC_CONNECTION_FIELD;
+  private static final Constructor<ConnectedPlayer> CONNECTED_PLAYER_CONSTRUCTOR;
+  private static final Field SPAWNED_FIELD;
 
-  private static final Constructor<ConnectedPlayer> ctor;
-  private static final Field loginConnectionField;
-  private static final Class<?> delegateClass;
-  private static final Field delegate;
-  private static final Field spawned;
-
+  private final List<String> onlineMode = new ArrayList<>();
   private final LimboAPI plugin;
   private final VelocityServer server;
-  private final List<String> onlineMode = new ArrayList<>();
 
   public LoginListener(LimboAPI plugin, VelocityServer server) {
     this.plugin = plugin;
     this.server = server;
-  }
-
-  static {
-    closed = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), null);
-
-    try {
-      ctor = ConnectedPlayer.class.getDeclaredConstructor(
-          VelocityServer.class,
-          GameProfile.class,
-          MinecraftConnection.class,
-          InetSocketAddress.class,
-          boolean.class,
-          IdentifiedKey.class
-      );
-      ctor.setAccessible(true);
-
-      delegate = LoginInboundConnection.class.getDeclaredField("delegate");
-      delegate.setAccessible(true);
-      delegateClass = delegate.getDeclaringClass();
-
-      Class<?> loginClass;
-      try {
-        loginClass = Class.forName("com.velocitypowered.proxy.connection.client.AuthSessionHandler");
-      } catch (ClassNotFoundException e) {
-        try {
-          loginClass = Class.forName("com.velocitypowered.proxy.connection.client.LoginSessionHandler");
-        } catch (ClassNotFoundException ex) {
-          throw new ReflectionException(ex);
-        }
-      }
-
-      LOGIN_CLASS = loginClass;
-
-      loginConnectionField = loginClass.getDeclaredField("mcConnection");
-      loginConnectionField.setAccessible(true);
-
-      spawned = ClientPlaySessionHandler.class.getDeclaredField("spawned");
-      spawned.setAccessible(true);
-    } catch (NoSuchFieldException | NoSuchMethodException e) {
-      throw new ReflectionException(e);
-    }
   }
 
   @Subscribe(order = PostOrder.LAST)
@@ -154,80 +111,74 @@ public class LoginListener {
     this.onlineMode.remove(event.getPlayer().getUsername());
   }
 
+  @SuppressWarnings("ConstantConditions")
   public void hookLoginSession(GameProfileRequestEvent event) throws IllegalAccessException {
+    LoginInboundConnection inboundConnection = (LoginInboundConnection) event.getConnection();
     // In some cases, e.g. if the player logged out or was kicked right before the GameProfileRequestEvent hook,
     // the connection will be broken (possibly by GC) and we can't get it from the delegate field.
-    LoginInboundConnection inboundConnection = (LoginInboundConnection) event.getConnection();
-    if (!delegateClass.isAssignableFrom(inboundConnection.getClass())) {
-      return;
-    }
+    if (LoginInboundConnection.class.isAssignableFrom(inboundConnection.getClass())) {
+      // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
+      // method (which checks mcConnection.isActive()) and to override it. :)
+      InitialInboundConnection inbound = (InitialInboundConnection) DELEGATE_FIELD.get(inboundConnection);
+      MinecraftConnection connection = inbound.getConnection();
+      Object handler = connection.getSessionHandler();
+      MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
 
-    // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
-    // method (which checks mcConnection.isActive()) and to override it. :)
-    InitialInboundConnection inbound = (InitialInboundConnection) delegate.get(inboundConnection);
-    MinecraftConnection connection = inbound.getConnection();
-    Object handler = connection.getSessionHandler();
-    loginConnectionField.set(handler, closed);
-    if (connection.isClosed()) {
-      return;
-    }
+      // From Velocity.
+      if (!connection.isClosed()) {
+        connection.eventLoop().execute(() -> {
+          try {
+            // Initiate a regular connection and move over to it.
+            ConnectedPlayer player = CONNECTED_PLAYER_CONSTRUCTOR.newInstance(
+                this.server,
+                event.getGameProfile(),
+                connection,
+                inboundConnection.getVirtualHost().orElse(null),
+                this.onlineMode.contains(event.getUsername()),
+                inboundConnection.getIdentifiedKey()
+            );
+            if (this.server.canRegisterConnection(player)) {
+              if (!connection.isClosed()) {
+                // Complete the Login process.
+                int threshold = this.server.getConfiguration().getCompressionThreshold();
+                if (threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+                  connection.write(new SetCompression(threshold));
+                  connection.setCompressionThreshold(threshold);
+                }
 
-    connection.eventLoop().execute(() -> {
-      try {
-        // Initiate a regular connection and move over to it.
-        ConnectedPlayer player = ctor.newInstance(
-            this.server, event.getGameProfile(), connection,
-            inboundConnection.getVirtualHost().orElse(null),
-            this.onlineMode.contains(event.getUsername()), inboundConnection.getIdentifiedKey()
-        );
+                VelocityConfiguration configuration = this.server.getConfiguration();
+                UUID playerUniqueId = player.getUniqueId();
+                if (configuration.getPlayerInfoForwardingMode() == PlayerInfoForwarding.NONE) {
+                  playerUniqueId = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
+                }
 
-        if (!this.server.canRegisterConnection(player)) {
-          player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
-          return;
-        }
+                ServerLoginSuccess success = new ServerLoginSuccess();
+                success.setUsername(player.getUsername());
+                success.setUuid(playerUniqueId);
+                connection.write(success);
 
-        if (connection.isClosed()) {
-          return;
-        }
+                this.plugin.setInitialID(player, playerUniqueId);
 
-        // Complete the Login process.
-        int threshold = this.server.getConfiguration().getCompressionThreshold();
-        if (threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-          connection.write(new SetCompression(threshold));
+                connection.setState(StateRegistry.PLAY);
 
-          if (connection.isClosed()) {
-            return;
+                this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
+                  LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getCallbacks());
+                  this.plugin.addLoginQueue(player, queue);
+                  queue.next();
+                }, connection.eventLoop()).exceptionally(t -> {
+                  LimboAPI.getLogger().error("Exception while registering LimboAPI login handlers for {}.", player, t);
+                  return null;
+                });
+              }
+            } else {
+              player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
+            }
+          } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
           }
-
-          connection.setCompressionThreshold(threshold);
-        }
-
-        VelocityConfiguration configuration = this.server.getConfiguration();
-        UUID playerUniqueId = player.getUniqueId();
-        if (configuration.getPlayerInfoForwardingMode() == PlayerInfoForwarding.NONE) {
-          playerUniqueId = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
-        }
-
-        ServerLoginSuccess success = new ServerLoginSuccess();
-        success.setUsername(player.getUsername());
-        success.setUuid(playerUniqueId);
-        connection.write(success);
-
-        this.plugin.setInitialID(player, playerUniqueId);
-
-        connection.setState(StateRegistry.PLAY);
-        this.server.getEventManager()
-            .fire(new LoginLimboRegisterEvent(player))
-            .thenAcceptAsync(limboEvent -> {
-              LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboEvent.getCallbacks());
-
-              this.plugin.addLoginQueue(player, queue);
-              queue.next();
-            }, connection.eventLoop());
-      } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-        e.printStackTrace();
+        });
       }
-    });
+    }
   }
 
   @Subscribe
@@ -239,13 +190,40 @@ public class LoginListener {
       if (!(connection.getSessionHandler() instanceof ClientPlaySessionHandler)) {
         ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
         try {
-          spawned.set(playHandler, this.plugin.isLimboJoined(player));
-        } catch (IllegalAccessException ex) {
-          LimboAPI.getLogger().error("Exception while hooking into ClientPlaySessionHandler of {}", player, ex);
+          SPAWNED_FIELD.set(playHandler, this.plugin.isLimboJoined(player));
+        } catch (IllegalAccessException e) {
+          LimboAPI.getLogger().error("Exception while hooking into ClientPlaySessionHandler of {}.", player, e);
         }
 
         connection.setSessionHandler(playHandler);
       }
     });
+  }
+
+  static {
+    CLOSED_MINECRAFT_CONNECTION = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), null);
+
+    try {
+      CONNECTED_PLAYER_CONSTRUCTOR = ConnectedPlayer.class.getDeclaredConstructor(
+          VelocityServer.class,
+          GameProfile.class,
+          MinecraftConnection.class,
+          InetSocketAddress.class,
+          boolean.class,
+          IdentifiedKey.class
+      );
+      CONNECTED_PLAYER_CONSTRUCTOR.setAccessible(true);
+
+      DELEGATE_FIELD = LoginInboundConnection.class.getDeclaredField("delegate");
+      DELEGATE_FIELD.setAccessible(true);
+
+      MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
+      MC_CONNECTION_FIELD.setAccessible(true);
+
+      SPAWNED_FIELD = ClientPlaySessionHandler.class.getDeclaredField("spawned");
+      SPAWNED_FIELD.setAccessible(true);
+    } catch (NoSuchFieldException | NoSuchMethodException e) {
+      throw new ReflectionException(e);
+    }
   }
 }

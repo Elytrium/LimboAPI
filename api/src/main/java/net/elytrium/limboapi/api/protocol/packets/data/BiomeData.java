@@ -9,7 +9,6 @@ package net.elytrium.limboapi.api.protocol.packets.data;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 
@@ -27,7 +26,7 @@ public class BiomeData {
       this.post115Biomes[i] = biomes[i].getId();
     }
 
-    // Down sample 4x4x4 3d biomes to 2d XZ.
+    // Down sample 4x4x4 3D biomes to 2D XZ.
     Map<Integer, Integer> samples = new HashMap<>(64);
     for (int x = 0; x < 16; x += 4) {
       for (int z = 0; z < 16; z += 4) {
@@ -39,7 +38,7 @@ public class BiomeData {
         }
         int id = samples.entrySet().stream()
             .max(Map.Entry.comparingByValue())
-            .orElseThrow(() -> new NoSuchElementException("No value present."))
+            .orElseThrow()
             .getKey();
         for (int xl = x; xl < x + 4; ++xl) {
           for (int zl = z; zl < z + 4; ++zl) {

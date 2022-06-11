@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.s2c;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -23,32 +23,37 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 
-public class PlayerAbilities implements MinecraftPacket {
+public class SetExperiencePacket implements MinecraftPacket {
 
-  private final byte flags;
-  private final float walkSpeed;
-  private final float flySpeed;
+  private final float expBar;
+  private final int level;
+  private final int totalExp;
 
-  public PlayerAbilities(byte flags, float flySpeed, float walkSpeed) {
-    this.flags = flags;
-    this.flySpeed = flySpeed;
-    this.walkSpeed = walkSpeed;
+  public SetExperiencePacket(float expBar, int level, int totalExp) {
+    this.expBar = expBar;
+    this.level = level;
+    this.totalExp = totalExp;
   }
 
-  public PlayerAbilities() {
+  public SetExperiencePacket() {
     throw new IllegalStateException();
   }
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+    throw new IllegalStateException();
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    buf.writeByte(this.flags);
-    buf.writeFloat(this.flySpeed);
-    buf.writeFloat(this.walkSpeed);
+    buf.writeFloat(this.expBar);
+    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      buf.writeShort(this.level);
+      buf.writeShort(this.totalExp);
+    } else {
+      ProtocolUtils.writeVarInt(buf, this.level);
+      ProtocolUtils.writeVarInt(buf, this.totalExp);
+    }
   }
 
   @Override
@@ -58,10 +63,10 @@ public class PlayerAbilities implements MinecraftPacket {
 
   @Override
   public String toString() {
-    return "PlayerAbilities{"
-        + "flags=" + this.flags
-        + ", flySpeed=" + this.flySpeed
-        + ", walkSpeed=" + this.walkSpeed
+    return "SetExperience{"
+        + "expBar=" + this.expBar
+        + ", level=" + this.level
+        + ", totalExp=" + this.totalExp
         + "}";
   }
 }

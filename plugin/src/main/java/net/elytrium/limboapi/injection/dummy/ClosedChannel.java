@@ -34,10 +34,10 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class ClosedChannel implements Channel {
 
-  private final EventLoop dummy;
+  private final EventLoop eventLoop;
 
-  public ClosedChannel(EventLoop dummy) {
-    this.dummy = dummy;
+  public ClosedChannel(EventLoop eventLoop) {
+    this.eventLoop = eventLoop;
   }
 
   @Override
@@ -47,7 +47,7 @@ public class ClosedChannel implements Channel {
 
   @Override
   public EventLoop eventLoop() {
-    return this.dummy;
+    return this.eventLoop;
   }
 
   @Override

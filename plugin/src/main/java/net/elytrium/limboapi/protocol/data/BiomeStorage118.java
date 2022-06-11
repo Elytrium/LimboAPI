@@ -34,16 +34,19 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public class BiomeStorage118 {
 
   private final ProtocolVersion version;
+
   private List<VirtualBiome> palette = new ArrayList<>();
   private Map<Integer, VirtualBiome> rawToBiome = new HashMap<>();
   private CompactStorage storage;
 
   public BiomeStorage118(ProtocolVersion version) {
     this.version = version;
+
     for (Biome biome : Biome.values()) {
       this.palette.add(biome);
       this.rawToBiome.put(biome.getId(), biome);
     }
+
     this.storage = new BitStorage116(3, SimpleChunk.MAX_BIOMES_PER_SECTION);
   }
 
@@ -71,7 +74,6 @@ public class BiomeStorage118 {
 
   private VirtualBiome get(int index) {
     int id = this.storage.get(index);
-
     if (this.storage.getBitsPerEntry() > 8) {
       return this.rawToBiome.get(id);
     } else {
@@ -112,27 +114,31 @@ public class BiomeStorage118 {
       int raw = biome.getId();
       this.rawToBiome.put(raw, biome);
       return raw;
-    }
-    int id = this.palette.indexOf(biome);
-    if (id == -1) {
-      if (this.palette.size() >= (1 << this.storage.getBitsPerEntry())) {
-        this.resize(this.storage.getBitsPerEntry() + 1);
-        return this.getIndex(biome);
+    } else {
+      int id = this.palette.indexOf(biome);
+      if (id == -1) {
+        if (this.palette.size() >= (1 << this.storage.getBitsPerEntry())) {
+          this.resize(this.storage.getBitsPerEntry() + 1);
+          return this.getIndex(biome);
+        }
+
+        this.palette.add(biome);
+        id = this.palette.size() - 1;
       }
-      this.palette.add(biome);
-      id = this.palette.size() - 1;
+
+      return id;
     }
-    return id;
   }
 
   private void resize(int newSize) {
-    newSize = StorageUtils19.fixBitsPerEntry(this.version, newSize);
+    newSize = StorageUtils.fixBitsPerEntry(this.version, newSize);
     CompactStorage newStorage = new BitStorage116(newSize, SimpleChunk.MAX_BIOMES_PER_SECTION);
 
     for (int i = 0; i < SimpleChunk.MAX_BIOMES_PER_SECTION; ++i) {
       int newId = newSize > 8 ? this.palette.get(this.storage.get(i)).getId() : this.storage.get(i);
       newStorage.set(i, newId);
     }
+
     this.storage = newStorage;
   }
 
@@ -143,11 +149,10 @@ public class BiomeStorage118 {
         + ", palette=" + this.palette
         + ", rawToBiome=" + this.rawToBiome
         + ", storage=" + this.storage
-        + '}';
+        + "}";
   }
 
   private static int index(int x, int y, int z) {
     return y << 4 | z << 2 | x;
   }
 }
-

@@ -36,14 +36,17 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public class BlockStorage19 implements BlockStorage {
 
   private final ProtocolVersion version;
+
   private List<VirtualBlock> palette = new ArrayList<>();
   private Map<Short, VirtualBlock> rawToBlock = new HashMap<>();
   private CompactStorage storage;
 
   public BlockStorage19(ProtocolVersion version) {
     this.version = version;
+
     this.palette.add(SimpleBlock.AIR);
     this.rawToBlock.put(SimpleBlock.AIR.getId(version), SimpleBlock.AIR);
+
     this.storage = this.createStorage(4);
   }
 
@@ -78,23 +81,24 @@ public class BlockStorage19 implements BlockStorage {
 
   @Override
   public void write(Object byteBufObject, ProtocolVersion version) {
-    if (!(byteBufObject instanceof ByteBuf)) {
+    if (byteBufObject instanceof ByteBuf) {
+      ByteBuf buf = (ByteBuf) byteBufObject;
+      buf.writeByte(this.storage.getBitsPerEntry());
+      if (this.storage.getBitsPerEntry() > 8) {
+        if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
+          ProtocolUtils.writeVarInt(buf, 0);
+        }
+      } else {
+        ProtocolUtils.writeVarInt(buf, this.palette.size());
+        for (VirtualBlock state : this.palette) {
+          ProtocolUtils.writeVarInt(buf, state.getId(this.version));
+        }
+      }
+
+      this.storage.write(buf, version);
+    } else {
       throw new IllegalArgumentException("Not ByteBuf");
     }
-    ByteBuf buf = (ByteBuf) byteBufObject;
-    buf.writeByte(this.storage.getBitsPerEntry());
-    if (this.storage.getBitsPerEntry() > 8) {
-      if (this.version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
-        ProtocolUtils.writeVarInt(buf, 0);
-      }
-    } else {
-      ProtocolUtils.writeVarInt(buf, this.palette.size());
-      for (VirtualBlock state : this.palette) {
-        ProtocolUtils.writeVarInt(buf, state.getId(this.version));
-      }
-    }
-
-    this.storage.write(buf, version);
   }
 
   @Override
@@ -124,27 +128,31 @@ public class BlockStorage19 implements BlockStorage {
       short raw = block.getId(this.version);
       this.rawToBlock.put(raw, block);
       return raw;
-    }
-    int id = this.palette.indexOf(block);
-    if (id == -1) {
-      if (this.palette.size() >= (1 << this.storage.getBitsPerEntry())) {
-        this.resize(this.storage.getBitsPerEntry() + 1);
-        return this.getIndex(block);
+    } else {
+      int id = this.palette.indexOf(block);
+      if (id == -1) {
+        if (this.palette.size() >= (1 << this.storage.getBitsPerEntry())) {
+          this.resize(this.storage.getBitsPerEntry() + 1);
+          return this.getIndex(block);
+        }
+
+        this.palette.add(block);
+        id = this.palette.size() - 1;
       }
-      this.palette.add(block);
-      id = this.palette.size() - 1;
+
+      return id;
     }
-    return id;
   }
 
   private void resize(int newSize) {
-    newSize = StorageUtils19.fixBitsPerEntry(this.version, newSize);
+    newSize = StorageUtils.fixBitsPerEntry(this.version, newSize);
     CompactStorage newStorage = this.createStorage(newSize);
 
     for (int i = 0; i < SimpleChunk.MAX_BLOCKS_PER_SECTION; ++i) {
       int newId = newSize > 8 ? this.palette.get(this.storage.get(i)).getId(this.version) : this.storage.get(i);
       newStorage.set(i, newId);
     }
+
     this.storage = newStorage;
   }
 
@@ -161,7 +169,7 @@ public class BlockStorage19 implements BlockStorage {
         + ", palette=" + this.palette
         + ", rawToBlock=" + this.rawToBlock
         + ", storage=" + this.storage
-        + '}';
+        + "}";
   }
 
   private static int index(int x, int y, int z) {

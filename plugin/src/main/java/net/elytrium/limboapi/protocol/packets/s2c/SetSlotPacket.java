@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.s2c;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -24,18 +24,20 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class SetSlot implements MinecraftPacket {
+public class SetSlotPacket implements MinecraftPacket {
 
-  private final int windowId;
+  private final int windowID;
   private final int slot;
   private final VirtualItem item;
   private final int count;
   private final int data;
+  @Nullable
   private final CompoundBinaryTag nbt;
 
-  public SetSlot(int windowId, int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt) {
-    this.windowId = windowId;
+  public SetSlotPacket(int windowID, int slot, VirtualItem item, int count, int data, @Nullable CompoundBinaryTag nbt) {
+    this.windowID = windowID;
     this.slot = slot;
     this.item = item;
     this.count = count;
@@ -43,21 +45,21 @@ public class SetSlot implements MinecraftPacket {
     this.nbt = nbt;
   }
 
-  public SetSlot() {
+  public SetSlotPacket() {
     throw new IllegalStateException();
   }
 
   @Override
-  public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    throw new IllegalStateException();
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    buf.writeByte(this.windowId);
+    buf.writeByte(this.windowID);
 
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17_1) >= 0) {
-      ProtocolUtils.writeVarInt(buf, 0);
+      ProtocolUtils.writeVarInt(buf, 0); // State ID.
     }
 
     buf.writeShort(this.slot);
@@ -96,16 +98,15 @@ public class SetSlot implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return true;
   }
 
   @Override
   public String toString() {
     return "SetSlot{"
-        + "windowId=" + this.windowId
+        + "windowID=" + this.windowID
         + ", slot=" + this.slot
-        + ", item=" + this.item
         + ", count=" + this.count
         + ", data=" + this.data
         + ", nbt=" + this.nbt

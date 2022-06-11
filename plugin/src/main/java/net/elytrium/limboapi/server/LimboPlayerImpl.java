@@ -36,15 +36,15 @@ import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.player.LimboPlayer;
-import net.elytrium.limboapi.api.protocol.map.MapPalette;
 import net.elytrium.limboapi.api.protocol.packets.data.AbilityFlags;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
-import net.elytrium.limboapi.protocol.packet.ChangeGameState;
-import net.elytrium.limboapi.protocol.packet.MapDataPacket;
-import net.elytrium.limboapi.protocol.packet.PlayerAbilities;
-import net.elytrium.limboapi.protocol.packet.PlayerPositionAndLook;
-import net.elytrium.limboapi.protocol.packet.SetSlot;
-import net.elytrium.limboapi.protocol.packet.TimeUpdate;
+import net.elytrium.limboapi.api.protocol.packets.data.MapPalette;
+import net.elytrium.limboapi.protocol.packets.s2c.ChangeGameStatePacket;
+import net.elytrium.limboapi.protocol.packets.s2c.MapDataPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.PlayerAbilitiesPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.SetSlotPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
@@ -165,17 +165,17 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void setInventory(VirtualItem item, int count) {
-    this.writePacketAndFlush(new SetSlot(0, 36, item, count, 0, null));
+    this.writePacketAndFlush(new SetSlotPacket(0, 36, item, count, 0, null));
   }
 
   @Override
   public void setInventory(VirtualItem item, int slot, int count) {
-    this.writePacketAndFlush(new SetSlot(0, slot, item, count, 0, null));
+    this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, 0, null));
   }
 
   @Override
   public void setInventory(int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt) {
-    this.writePacketAndFlush(new SetSlot(0, slot, item, count, data, nbt));
+    this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, data, nbt));
   }
 
   @Override
@@ -192,14 +192,14 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (!is17) {
       this.writePacket(new PlayerListItem(PlayerListItem.UPDATE_GAMEMODE, List.of(new PlayerListItem.Item(this.player.getUniqueId()).setGameMode(id))));
     }
-    this.writePacket(new ChangeGameState(3, id));
+    this.writePacket(new ChangeGameStatePacket(3, id));
 
     this.flushPackets();
   }
 
   @Override
   public void teleport(double x, double y, double z, float yaw, float pitch) {
-    this.writePacketAndFlush(new PlayerPositionAndLook(x, y, z, yaw, pitch, 44, false, true));
+    this.writePacketAndFlush(new PositionRotationPacket(x, y, z, yaw, pitch, false, 44, true));
   }
 
   /**
@@ -232,7 +232,7 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void disableFalling() {
-    this.writePacketAndFlush(new PlayerAbilities((byte) (this.getAbilities() | AbilityFlags.FLYING | AbilityFlags.ALLOW_FLYING), 0F, 0F));
+    this.writePacketAndFlush(new PlayerAbilitiesPacket((byte) (this.getAbilities() | AbilityFlags.FLYING | AbilityFlags.ALLOW_FLYING), 0F, 0F));
   }
 
   @Override
@@ -275,12 +275,12 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void sendAbilities() {
-    this.writePacketAndFlush(new PlayerAbilities(this.getAbilities(), 0.05F, 0.1F));
+    this.writePacketAndFlush(new PlayerAbilitiesPacket(this.getAbilities(), 0.05F, 0.1F));
   }
 
   @Override
   public void sendAbilities(byte abilities, float flySpeed, float walkSpeed) {
-    this.writePacketAndFlush(new PlayerAbilities(abilities, flySpeed, walkSpeed));
+    this.writePacketAndFlush(new PlayerAbilitiesPacket(abilities, flySpeed, walkSpeed));
   }
 
   @Override
@@ -325,6 +325,6 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void setWorldTime(long ticks) {
-    this.writePacketAndFlush(new TimeUpdate(ticks, ticks));
+    this.writePacketAndFlush(new TimeUpdatePacket(ticks, ticks));
   }
 }

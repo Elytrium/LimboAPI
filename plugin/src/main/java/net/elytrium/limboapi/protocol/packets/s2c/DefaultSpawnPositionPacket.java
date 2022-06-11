@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.s2c;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -23,27 +23,27 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 
-public class DefaultSpawnPosition implements MinecraftPacket {
+public class DefaultSpawnPositionPacket implements MinecraftPacket {
 
   private final int posX;
   private final int posY;
   private final int posZ;
   private final float angle;
 
-  public DefaultSpawnPosition(int posX, int posY, int posZ, float angle) {
+  public DefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle) {
     this.posX = posX;
     this.posY = posY;
     this.posZ = posZ;
     this.angle = angle;
   }
 
-  public DefaultSpawnPosition() {
+  public DefaultSpawnPositionPacket() {
     throw new IllegalStateException();
   }
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+    throw new IllegalStateException();
   }
 
   @Override
@@ -76,9 +76,9 @@ public class DefaultSpawnPosition implements MinecraftPacket {
   @Override
   public String toString() {
     return "DefaultSpawnPosition{"
-        + "x=" + this.posX
-        + ", y=" + this.posY
-        + ", z=" + this.posZ
+        + "posX=" + this.posX
+        + ", posY=" + this.posY
+        + ", posZ=" + this.posZ
         + ", angle=" + this.angle
         + "}";
   }

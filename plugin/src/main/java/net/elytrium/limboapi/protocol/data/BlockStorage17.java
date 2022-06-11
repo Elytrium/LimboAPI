@@ -54,26 +54,27 @@ public class BlockStorage17 implements BlockStorage {
 
   @Override
   public void write(Object byteBufObject, ProtocolVersion version) {
-    if (!(byteBufObject instanceof ByteBuf)) {
+    if (byteBufObject instanceof ByteBuf) {
+      ByteBuf buf = (ByteBuf) byteBufObject;
+      if (this.pass == 0) {
+        if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+          this.writeBlocks17(buf);
+        } else {
+          this.writeBlocks18(buf);
+        }
+
+        ++this.pass;
+      } else if (this.pass == 1) {
+        NibbleArray3d metadata = new NibbleArray3d(16 * 16 * 16);
+        for (int i = 0; i < this.blocks.length; ++i) {
+          metadata.set(i, 0);
+        }
+
+        buf.writeBytes(metadata.getData());
+        this.pass = 0;
+      }
+    } else {
       throw new IllegalArgumentException("Not ByteBuf");
-    }
-    ByteBuf buf = (ByteBuf) byteBufObject;
-    if (this.pass == 0) {
-      if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-        this.writeBlocks17(buf);
-      } else {
-        this.writeBlocks18(buf);
-      }
-
-      ++this.pass;
-    } else if (this.pass == 1) {
-      NibbleArray3d metadata = new NibbleArray3d(16 * 16 * 16);
-      for (int i = 0; i < this.blocks.length; ++i) {
-        metadata.set(i, 0);
-      }
-
-      buf.writeBytes(metadata.getData());
-      this.pass = 0;
     }
   }
 

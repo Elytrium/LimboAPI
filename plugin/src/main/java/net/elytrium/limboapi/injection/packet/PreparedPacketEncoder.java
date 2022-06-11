@@ -34,7 +34,8 @@ public class PreparedPacketEncoder extends MessageToMessageEncoder<PreparedPacke
   @Override
   protected void encode(ChannelHandlerContext ctx, PreparedPacketImpl msg, List<Object> out) throws Exception {
     if (msg.hasPacketsFor(this.protocolVersion)) {
-      msg.getPackets(this.protocolVersion).stream()
+      msg.getPackets(this.protocolVersion)
+          .stream()
           .map(ByteBuf::retainedDuplicate)
           .forEach(out::add);
     }

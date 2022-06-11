@@ -14,15 +14,19 @@ public class PacketMapping {
 
   private final int id;
   private final ProtocolVersion protocolVersion;
-  private final boolean encodeOnly;
   @Nullable
   private final ProtocolVersion lastValidProtocolVersion;
+  private final boolean encodeOnly;
 
-  public PacketMapping(int id, ProtocolVersion protocolVersion, @Nullable ProtocolVersion lastValidProtocolVersion, boolean packetDecoding) {
+  public PacketMapping(int id, ProtocolVersion protocolVersion, boolean encodeOnly) {
+    this(id, protocolVersion, null, encodeOnly);
+  }
+
+  public PacketMapping(int id, ProtocolVersion protocolVersion, @Nullable ProtocolVersion lastValidProtocolVersion, boolean encodeOnly) {
     this.id = id;
     this.protocolVersion = protocolVersion;
     this.lastValidProtocolVersion = lastValidProtocolVersion;
-    this.encodeOnly = packetDecoding;
+    this.encodeOnly = encodeOnly;
   }
 
   public int getId() {
@@ -33,12 +37,12 @@ public class PacketMapping {
     return this.protocolVersion;
   }
 
-  public boolean isEncodeOnly() {
-    return this.encodeOnly;
-  }
-
   @Nullable
   public ProtocolVersion getLastValidProtocolVersion() {
     return this.lastValidProtocolVersion;
+  }
+
+  public boolean isEncodeOnly() {
+    return this.encodeOnly;
   }
 }

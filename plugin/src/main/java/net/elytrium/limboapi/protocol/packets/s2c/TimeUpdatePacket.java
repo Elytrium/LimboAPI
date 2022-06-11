@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.s2c;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -23,30 +23,29 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 
-public class ChangeGameState implements MinecraftPacket {
+public class TimeUpdatePacket implements MinecraftPacket {
 
-  private final int reason;
-  private final float value;
+  private final long worldAge;
+  private final long timeOfDay;
 
-  // TODO: Reasons enum or builder.
-  public ChangeGameState(int reason, float value) {
-    this.reason = reason;
-    this.value = value;
+  public TimeUpdatePacket(long worldAge, long timeOfDay) {
+    this.worldAge = worldAge;
+    this.timeOfDay = timeOfDay;
   }
 
-  public ChangeGameState() {
+  public TimeUpdatePacket() {
     throw new IllegalStateException();
   }
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+    throw new IllegalStateException();
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    buf.writeByte(this.reason);
-    buf.writeFloat(this.value);
+    buf.writeLong(this.worldAge);
+    buf.writeLong(this.timeOfDay);
   }
 
   @Override
@@ -56,9 +55,9 @@ public class ChangeGameState implements MinecraftPacket {
 
   @Override
   public String toString() {
-    return "ChangeGameState{"
-        + "reason=" + this.reason
-        + ", value=" + this.value
+    return "TimeUpdatePacket{"
+        + "worldAge=" + this.worldAge
+        + ", timeOfDay=" + this.timeOfDay
         + "}";
   }
 }

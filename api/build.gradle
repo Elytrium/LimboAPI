@@ -1,93 +1,88 @@
-//file:noinspection GroovyAssignabilityCheck
-
 plugins {
-    id("java-library")
-    id("maven-publish")
-}
-
-java {
-    setSourceCompatibility(JavaVersion.VERSION_1_8)
-    setTargetCompatibility(JavaVersion.VERSION_1_8)
+  id("java-library")
+  id("maven-publish")
 }
 
 dependencies {
-    compileOnly("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
+  compileOnly("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
 
-    api("net.elytrium:elytrium-java-commons:1.0.5")
+  api("net.elytrium:elytrium-java-commons:1.0.5")
 
-    api("net.kyori:adventure-nbt:4.10.1")
+  api("net.kyori:adventure-nbt:4.11.0")
 
-    compileOnly("com.github.spotbugs:spotbugs-annotations:4.6.0")
+  compileOnly("com.github.spotbugs:spotbugs-annotations:4.7.0")
 }
 
 license {
-    matching(includes: ["**/mcprotocollib/**"]) {
-        setHeader(getRootProject().file("HEADER_MCPROTOCOLLIB.txt"))
-    }
+  matching(includes: ["**/mcprotocollib/**"]) {
+    setHeader(getRootProject().file("HEADER_MCPROTOCOLLIB.txt"))
+  }
 
-    setHeader(file("HEADER.txt"))
+  setHeader(file("HEADER.txt"))
 }
 
 task javadocJar(type: Jar) {
-    getArchiveClassifier().set("javadoc")
-    from(javadoc)
-}
-
-task sourcesJar(type: Jar) {
-    getArchiveClassifier().set("sources")
-    from(sourceSets.main.getAllSource())
-}
-
-publishing {
-    repositories {
-        maven {
-            credentials {
-                setUsername(System.getenv("PUBLISH_USERNAME"))
-                setPassword(System.getenv("PUBLISH_PASSWORD"))
-            }
-
-            setName("elytrium-repo")
-            setUrl("https://maven.elytrium.net/repo/")
-        }
-    }
-
-    publications {
-        maven(MavenPublication) {
-            from(getComponents().java)
-
-            artifact(javadocJar)
-            artifact(sourcesJar)
-        }
-    }
+  getArchiveClassifier().set("javadoc")
+  from(javadoc)
 }
 
 javadoc {
-    getOptions().setEncoding("UTF-8")
-    getOptions().setCharSet("UTF-8")
-    // Mark sources as Java 8 source compatible.
-    getOptions().setSource("8")
-    getOptions().links("https://docs.oracle.com/en/java/javase/11/docs/api/", "https://jd.adventure.kyori.net/nbt/4.10.1/")
+  MinimalJavadocOptions options = getOptions()
+  options.setEncoding("UTF-8")
+  options.setCharSet("UTF-8")
+  // Mark sources as Java 11 source compatible.
+  options.setSource("11")
+  options.links("https://docs.oracle.com/en/java/javase/11/docs/api/", "https://jd.adventure.kyori.net/nbt/4.11.0/")
 
-    // Disable the crazy super-strict DocLint tool in Java 8.
-    getOptions().addStringOption("Xdoclint:none", "-quiet")
+  options.addStringOption("Xdoclint:none", "-quiet")
 
-    // Remove "undefined" from search paths when generating javadoc for a non-modular project. (JDK-8215291)
-    if (JavaVersion.current() >= JavaVersion.VERSION_1_9 && JavaVersion.current() < JavaVersion.VERSION_12) {
-        getOptions().addBooleanOption("-no-module-directories", true)
+  // Remove "undefined" from search paths when generating javadoc for a non-modular project. (JDK-8215291)
+  if (JavaVersion.VERSION_11) {
+    options.addBooleanOption("-no-module-directories", true)
+  }
+}
+
+task sourcesJar(type: Jar) {
+  getArchiveClassifier().set("sources")
+  from(sourceSets.main.getAllSource())
+}
+
+publishing {
+  repositories {
+    maven {
+      credentials {
+        setUsername(System.getenv("PUBLISH_USERNAME"))
+        setPassword(System.getenv("PUBLISH_PASSWORD"))
+      }
+
+      setName("elytrium-repo")
+      setUrl("https://maven.elytrium.net/repo/")
     }
+  }
+
+  publications {
+    maven(MavenPublication) {
+      from(components.java)
+
+      artifact(javadocJar)
+      artifact(sourcesJar)
+    }
+  }
 }
 
 artifacts {
-    archives(javadocJar)
-    archives(sourcesJar)
+  archives(javadocJar)
+  archives(sourcesJar)
 }
 
-sourceSets.main.getJava().srcDir(getTasks().register("generateTemplates", Copy) { task ->
-    task.getInputs().properties("version": getVersion())
-
-    task.from(file("src/main/templates"))
-        .into(getLayout().getBuildDirectory().dir("generated/sources/templates"))
-        .expand("version": getVersion())
-}.map {
-    it.getOutputs()
-})
+sourceSets.main.getJava().srcDir(
+    getTasks().register("generateTemplates", Copy) {
+      task -> {
+        task.getInputs().properties("version": getVersion())
+        task.from(file("src/main/templates")).into(getLayout().getBuildDirectory().dir("generated/sources/templates"))
+        task.expand("version": getVersion())
+      }
+    }.map {
+      it.getOutputs()
+    }
+)

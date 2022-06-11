@@ -19,7 +19,7 @@ package net.elytrium.limboapi.protocol.data;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 
-public class StorageUtils19 {
+public class StorageUtils {
 
   public static int fixBitsPerEntry(ProtocolVersion version, int newSize) {
     if (newSize < 4) {

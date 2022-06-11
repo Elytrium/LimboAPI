@@ -32,53 +32,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
+import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.protocol.LimboProtocol;
 
 @SuppressWarnings("unchecked")
 public class PlayerListItemHook extends PlayerListItem {
 
-  private static Field serverConnField;
+  private static final Field SERVER_CONN_FIELD;
 
   private final LimboAPI plugin;
 
   private PlayerListItemHook(LimboAPI plugin) {
     this.plugin = plugin;
-  }
-
-  public static void init(LimboAPI plugin) {
-    try {
-      Field versionsField = StateRegistry.PacketRegistry.class.getDeclaredField("versions");
-      versionsField.setAccessible(true);
-
-      Field packetIdToSupplierField = StateRegistry.PacketRegistry.ProtocolRegistry.class.getDeclaredField("packetIdToSupplier");
-      packetIdToSupplierField.setAccessible(true);
-
-      Field packetClassToIdField = StateRegistry.PacketRegistry.ProtocolRegistry.class.getDeclaredField("packetClassToId");
-      packetClassToIdField.setAccessible(true);
-
-      serverConnField = BackendPlaySessionHandler.class.getDeclaredField("serverConn");
-      serverConnField.setAccessible(true);
-
-      ((Map<ProtocolVersion, StateRegistry.PacketRegistry.ProtocolRegistry>)
-          versionsField.get(StateRegistry.PLAY.clientbound)).forEach((version, registry) -> {
-            try {
-              IntObjectMap<Supplier<? extends MinecraftPacket>> packetIdToSupplier
-                  = (IntObjectMap<Supplier<? extends MinecraftPacket>>) packetIdToSupplierField.get(registry);
-
-              Object2IntMap<Class<? extends MinecraftPacket>> packetClassToId
-                  = (Object2IntMap<Class<? extends MinecraftPacket>>) packetClassToIdField.get(registry);
-
-              int packetId = packetClassToId.getInt(PlayerListItem.class);
-              packetClassToId.put(PlayerListItemHook.class, packetId);
-              packetIdToSupplier.remove(packetId);
-              packetIdToSupplier.put(packetId, () -> new PlayerListItemHook(plugin));
-            } catch (IllegalAccessException e) {
-              e.printStackTrace();
-            }
-          });
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      e.printStackTrace();
-    }
   }
 
   @Override
@@ -88,7 +54,7 @@ public class PlayerListItemHook extends PlayerListItem {
         List<Item> items = this.getItems();
         for (int i = 0; i < items.size(); ++i) {
           Item item = items.get(i);
-          ConnectedPlayer player = ((VelocityServerConnection) serverConnField.get(handler)).getPlayer();
+          ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.get(handler)).getPlayer();
           UUID initialID = this.plugin.getInitialID(player);
 
           if (player.getUniqueId().equals(item.getUuid())) {
@@ -106,5 +72,31 @@ public class PlayerListItemHook extends PlayerListItem {
     }
 
     return super.handle(handler);
+  }
+
+  static {
+    try {
+      SERVER_CONN_FIELD = BackendPlaySessionHandler.class.getDeclaredField("serverConn");
+      SERVER_CONN_FIELD.setAccessible(true);
+    } catch (NoSuchFieldException e) {
+      throw new ReflectionException(e);
+    }
+  }
+
+  public static void init(LimboAPI plugin, StateRegistry.PacketRegistry registry) throws ReflectiveOperationException {
+    var playProtocolRegistryVersions = (Map<ProtocolVersion, StateRegistry.PacketRegistry.ProtocolRegistry>) LimboProtocol.VERSIONS_FIELD.get(registry);
+    playProtocolRegistryVersions.forEach((protocolVersion, protocolRegistry) -> {
+      try {
+        // See LimboProtocol#overlayRegistry about var.
+        var packetIdToSupplier = (IntObjectMap<Supplier<? extends MinecraftPacket>>) LimboProtocol.PACKET_ID_TO_SUPPLIER_FIELD.get(protocolRegistry);
+        var packetClassToId = (Object2IntMap<Class<? extends MinecraftPacket>>) LimboProtocol.PACKET_CLASS_TO_ID_FIELD.get(protocolRegistry);
+
+        int id = packetClassToId.getInt(PlayerListItem.class);
+        packetClassToId.put(PlayerListItemHook.class, id);
+        packetIdToSupplier.put(id, () -> new PlayerListItemHook(plugin));
+      } catch (ReflectiveOperationException e) {
+        throw new ReflectionException(e);
+      }
+    });
   }
 }

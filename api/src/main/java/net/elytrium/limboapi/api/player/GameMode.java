@@ -25,6 +25,7 @@ public enum GameMode {
    * Get the ID of this {@link GameMode}.
    *
    * @return The ID.
+   *
    * @see #getById(int)
    */
   public int getId() {
@@ -35,7 +36,9 @@ public enum GameMode {
    * Get a {@link GameMode} by its' ID.
    *
    * @param id The ID.
+   *
    * @return The {@link GameMode}, or {@code null} if it does not exist.
+   *
    * @see #getId()
    */
   @Nullable

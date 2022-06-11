@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.protocol.packet;
+package net.elytrium.limboapi.protocol.packets.s2c;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -28,12 +28,12 @@ public class MapDataPacket implements MinecraftPacket {
 
   private final int mapId;
   private final byte scale;
-  private final MapData data;
+  private final MapData mapData;
 
-  public MapDataPacket(int mapId, byte scale, MapData data) {
+  public MapDataPacket(int mapId, byte scale, MapData mapData) {
     this.mapId = mapId;
     this.scale = scale;
-    this.data = data;
+    this.mapData = mapData;
   }
 
   public MapDataPacket() {
@@ -41,14 +41,22 @@ public class MapDataPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(ByteBuf byteBuf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    throw new IllegalStateException();
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     ProtocolUtils.writeVarInt(buf, this.mapId);
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+    byte[] data = this.mapData.getData();
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      buf.writeShort(data.length + 3);
+      buf.writeByte(0);
+      buf.writeByte(this.mapData.getX());
+      buf.writeByte(this.mapData.getY());
+
+      buf.writeBytes(data);
+    } else {
       buf.writeByte(this.scale);
 
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_9) >= 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0) {
@@ -65,22 +73,17 @@ public class MapDataPacket implements MinecraftPacket {
         ProtocolUtils.writeVarInt(buf, 0);
       }
 
-      buf.writeByte(this.data.getColumns());
-      buf.writeByte(this.data.getRows());
-      buf.writeByte(this.data.getX());
-      buf.writeByte(this.data.getY());
-      ProtocolUtils.writeByteArray(buf, this.data.getData());
-    } else {
-      buf.writeShort(this.data.getData().length + 3);
-      buf.writeByte(0);
-      buf.writeByte(this.data.getX());
-      buf.writeByte(this.data.getY());
-      buf.writeBytes(this.data.getData());
+      buf.writeByte(this.mapData.getColumns());
+      buf.writeByte(this.mapData.getRows());
+      buf.writeByte(this.mapData.getX());
+      buf.writeByte(this.mapData.getY());
+
+      ProtocolUtils.writeByteArray(buf, data);
     }
   }
 
   @Override
-  public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return true;
   }
 
@@ -89,7 +92,7 @@ public class MapDataPacket implements MinecraftPacket {
     return "MapDataPacket{"
         + "mapId=" + this.mapId
         + ", scale=" + this.scale
-        + ", data=" + this.data
+        + ", mapData=" + this.mapData
         + "}";
   }
 }
