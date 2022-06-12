@@ -17,11 +17,11 @@ dependencies {
 
   implementation("org.bstats:bstats-velocity:3.0.0")
 
-  compileOnly("com.github.spotbugs:spotbugs-annotations:4.6.0")
+  compileOnly("com.github.spotbugs:spotbugs-annotations:4.7.0")
 }
 
 shadowJar {
-  getArchiveClassifier().set("")
+  getArchiveClassifier().set(this.getVersion().contains("-") ? getCurrentShortRevision() : "")
 
   exclude("META-INF/versions/**")
   exclude("net/kyori/**")
@@ -40,4 +40,13 @@ license {
   setHeader(getRootProject().file("HEADER.txt"))
 }
 
+task finalize {
+  doLast {
+    if (this.getVersion().contains("-")) {
+      file("build/libs/${this.getName()}-${this.getVersion()}.jar").delete()
+    }
+  }
+}
+
 assemble.dependsOn(shadowJar)
+build.finalizedBy(finalize)

@@ -78,9 +78,10 @@ artifacts {
 sourceSets.main.getJava().srcDir(
     getTasks().register("generateTemplates", Copy) {
       task -> {
-        task.getInputs().properties("version": getVersion())
+        String version = getVersion().contains("-") ? "${getVersion()} (git-${getCurrentShortRevision()})" : getVersion()
+        task.getInputs().properties("version": version)
         task.from(file("src/main/templates")).into(getLayout().getBuildDirectory().dir("generated/sources/templates"))
-        task.expand("version": getVersion())
+        task.expand("version": version)
       }
     }.map {
       it.getOutputs()

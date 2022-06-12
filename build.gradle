@@ -57,3 +57,18 @@ allprojects {
     }
   }
 }
+
+String getCurrentShortRevision() {
+  OutputStream outputStream = new ByteArrayOutputStream()
+  exec {
+    if (System.getProperty("os.name").startsWith("Windows")) {
+      commandLine("cmd", "/c", "git rev-parse HEAD")
+    } else {
+      commandLine("bash", "-c", "git rev-parse HEAD")
+    }
+
+    setStandardOutput(outputStream)
+  }
+
+  return outputStream.toString().trim().substring(0, 8)
+}

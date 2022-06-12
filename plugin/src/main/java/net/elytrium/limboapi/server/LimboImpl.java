@@ -468,7 +468,7 @@ public class LimboImpl implements Limbo {
   }
 
   private PluginMessage createBrandMessage(ProtocolVersion version) {
-    String brand = "LimboAPI -> " + this.limboName;
+    String brand = "LimboAPI (" + Settings.IMP.VERSION + ") -> " + this.limboName;
     ByteBuf bufWithBrandString = Unpooled.buffer();
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       bufWithBrandString.writeCharSequence(brand, StandardCharsets.UTF_8);
@@ -509,49 +509,73 @@ public class LimboImpl implements Limbo {
 
       CHAT_TYPE_119 = CompoundBinaryTag.builder()
           .put("type", StringBinaryTag.of("minecraft:chat_type"))
-          .put("value",
+          .put(
+              "value",
               ListBinaryTag.builder()
-                  .add(CompoundBinaryTag.builder()
-                      .put("name", StringBinaryTag.of("minecraft:chat"))
-                      .put("id", IntBinaryTag.of(0))
-                      .put("element", CompoundBinaryTag.builder()
-                          .put("chat", CompoundBinaryTag.builder().put("decoration",
+                  .add(
+                      CompoundBinaryTag.builder()
+                          .put("name", StringBinaryTag.of("minecraft:chat"))
+                          .put("id", IntBinaryTag.of(0))
+                          .put(
+                              "element",
                               CompoundBinaryTag.builder()
-                                  .put("translation_key", StringBinaryTag.of("chat.type.text"))
-                                  .put("style", CompoundBinaryTag.empty())
-                                  .put("parameters", ListBinaryTag.builder()
-                                      .add(StringBinaryTag.of("sender"))
-                                      .add(StringBinaryTag.of("content"))
-                                      .build())
-                                  .build())
-                              .build())
-                          .put("narration",
+                                  .put(
+                                      "chat",
+                                      CompoundBinaryTag.builder()
+                                          .put(
+                                              "decoration",
+                                              CompoundBinaryTag.builder()
+                                                  .put("translation_key", StringBinaryTag.of("chat.type.text"))
+                                                  .put("style", CompoundBinaryTag.empty())
+                                                  .put(
+                                                      "parameters",
+                                                      ListBinaryTag.builder()
+                                                          .add(StringBinaryTag.of("sender"))
+                                                          .add(StringBinaryTag.of("content"))
+                                                          .build()
+                                                  ).build()
+                                          ).build()
+                                  )
+                                  .put(
+                                      "narration",
+                                      CompoundBinaryTag.builder()
+                                          .put("priority", StringBinaryTag.of("chat.type.text.narrate"))
+                                          .put("translation_key", StringBinaryTag.of("chat.type.text"))
+                                          .put("style", CompoundBinaryTag.empty())
+                                          .put(
+                                              "parameters",
+                                              ListBinaryTag.builder()
+                                                  .add(StringBinaryTag.of("sender"))
+                                                  .add(StringBinaryTag.of("content"))
+                                                  .build()
+                                          ).build()
+                                  ).build()
+                          ).build()
+                  )
+                  .add(
+                      CompoundBinaryTag.builder()
+                          .put("name", StringBinaryTag.of("minecraft:system"))
+                          .put("id", IntBinaryTag.of(1))
+                          .put(
+                              "element",
                               CompoundBinaryTag.builder()
-                                  .put("priority", StringBinaryTag.of("chat.type.text.narrate"))
-                                  .put("translation_key", StringBinaryTag.of("chat.type.text"))
-                                  .put("style", CompoundBinaryTag.empty())
-                                  .put("parameters", ListBinaryTag.builder()
-                                      .add(StringBinaryTag.of("sender"))
-                                      .add(StringBinaryTag.of("content"))
-                                      .build())
-                                  .build())
-                          .build())
-                      .build())
-                  .add(CompoundBinaryTag.builder()
-                      .put("name", StringBinaryTag.of("minecraft:system"))
-                      .put("id", IntBinaryTag.of(1))
-                      .put("element", CompoundBinaryTag.builder()
-                          .put("chat", CompoundBinaryTag.empty())
-                          .put("narration", CompoundBinaryTag.builder().put("priority", StringBinaryTag.of("system")).build())
-                          .build())
-                      .build())
-                  .add(CompoundBinaryTag.builder()
-                      .put("name", StringBinaryTag.of("minecraft:game_info"))
-                      .put("id", IntBinaryTag.of(2))
-                      .put("element", CompoundBinaryTag.builder().put("overlay", CompoundBinaryTag.empty()).build())
-                      .build())
-                  .build())
-          .build();
+                                  .put("chat", CompoundBinaryTag.empty())
+                                  .put(
+                                      "narration",
+                                      CompoundBinaryTag.builder()
+                                          .put("priority", StringBinaryTag.of("system"))
+                                          .build()
+                                  ).build()
+                          ).build()
+                  )
+                  .add(
+                      CompoundBinaryTag.builder()
+                          .put("name", StringBinaryTag.of("minecraft:game_info"))
+                          .put("id", IntBinaryTag.of(2))
+                          .put("element", CompoundBinaryTag.builder().put("overlay", CompoundBinaryTag.empty()).build())
+                          .build()
+                  ).build()
+          ).build();
     } catch (NoSuchFieldException e) {
       throw new ReflectionException(e);
     }

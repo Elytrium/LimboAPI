@@ -67,6 +67,19 @@ public class EventManagerHook extends VelocityEventManager {
   }
 
   @Override
+  public void register(Object plugin, Object listener) {
+    super.register(plugin, listener);
+
+    if (Settings.IMP.MAIN != null && Settings.IMP.MAIN.AUTO_REGENERATE_LISTENERS) {
+      try {
+        this.reloadHandlers();
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  @Override
   public void fireAndForget(Object event) {
     Object toReply = this.proxyHook(event);
     if (toReply == null) {
@@ -121,19 +134,6 @@ public class EventManagerHook extends VelocityEventManager {
       }
     } else {
       return null;
-    }
-  }
-
-  @Override
-  public void register(Object plugin, Object listener) {
-    super.register(plugin, listener);
-
-    if (Settings.IMP.MAIN != null && Settings.IMP.MAIN.AUTO_REGENERATE_LISTENERS) {
-      try {
-        this.reloadHandlers();
-      } catch (IllegalAccessException e) {
-        e.printStackTrace();
-      }
     }
   }
 

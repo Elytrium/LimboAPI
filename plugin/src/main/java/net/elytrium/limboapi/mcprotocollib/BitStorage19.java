@@ -24,6 +24,7 @@
 
 package net.elytrium.limboapi.mcprotocollib;
 
+import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
@@ -94,9 +95,7 @@ public class BitStorage19 implements CompactStorage {
 
   @Override
   public void write(Object byteBufObject, ProtocolVersion version) {
-    if (!(byteBufObject instanceof ByteBuf)) {
-      throw new IllegalArgumentException("Not ByteBuf");
-    }
+    Preconditions.checkArgument(byteBufObject instanceof ByteBuf);
     ByteBuf buf = (ByteBuf) byteBufObject;
     ProtocolUtils.writeVarInt(buf, this.data.length);
     for (long l : this.data) {
