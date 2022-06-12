@@ -48,10 +48,11 @@ public class SimpleBlock implements VirtualBlock {
 
   @SuppressWarnings("unchecked")
   public static void init() {
-    ((LinkedTreeMap<String, String>) GSON.fromJson(
+    LinkedTreeMap<String, String> blockStates = GSON.fromJson(
         new InputStreamReader(Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/blockstates.json")), StandardCharsets.UTF_8),
         LinkedTreeMap.class
-    )).forEach((key, value) -> {
+    );
+    blockStates.forEach((key, value) -> {
       String[] stringIdArgs = key.split("\\[");
       if (!MODERN_STRING_MAP.containsKey(stringIdArgs[0])) {
         MODERN_STRING_MAP.put(stringIdArgs[0], new HashMap<>());
@@ -65,10 +66,11 @@ public class SimpleBlock implements VirtualBlock {
       }
     });
 
-    ((LinkedTreeMap<String, String>) GSON.fromJson(
+    LinkedTreeMap<String, String> blocks = GSON.fromJson(
         new InputStreamReader(Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/blocks.json")), StandardCharsets.UTF_8),
         LinkedTreeMap.class
-    )).forEach((legacyBlockId, modernId) -> LEGACY_IDS_MAP.put(Short.valueOf(legacyBlockId), solid(Short.parseShort(modernId))));
+    );
+    blocks.forEach((legacyBlockId, modernId) -> LEGACY_IDS_MAP.put(Short.valueOf(legacyBlockId), solid(Short.parseShort(modernId))));
 
     LEGACY_IDS_MAP.put((short) 0, AIR);
 

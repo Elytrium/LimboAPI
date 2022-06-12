@@ -23,16 +23,17 @@ import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3d;
 
 public class SimpleLightSection implements LightSection {
 
-  public static final NibbleArray3d NO_LIGHT = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION);
-  public static final NibbleArray3d ALL_LIGHT = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION, 15);
-  public static final LightSection DEFAULT = new SimpleLightSection();
+  private static final NibbleArray3d NO_LIGHT = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION);
+  private static final NibbleArray3d ALL_LIGHT = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION, 15);
 
-  private NibbleArray3d blockLight = NO_LIGHT;
-  private NibbleArray3d skyLight = ALL_LIGHT;
-  private long lastUpdate = System.nanoTime();
+  static final LightSection DEFAULT = new SimpleLightSection();
+
+  private NibbleArray3d blockLight;
+  private NibbleArray3d skyLight;
+  private long lastUpdate;
 
   public SimpleLightSection() {
-
+    this(NO_LIGHT, ALL_LIGHT, System.nanoTime());
   }
 
   private SimpleLightSection(NibbleArray3d blockLight, NibbleArray3d skyLight, long lastUpdate) {

@@ -84,10 +84,10 @@ public class PlayerListItemHook extends PlayerListItem {
   }
 
   public static void init(LimboAPI plugin, StateRegistry.PacketRegistry registry) throws ReflectiveOperationException {
+    // See LimboProtocol#overlayRegistry about var.
     var playProtocolRegistryVersions = (Map<ProtocolVersion, StateRegistry.PacketRegistry.ProtocolRegistry>) LimboProtocol.VERSIONS_FIELD.get(registry);
     playProtocolRegistryVersions.forEach((protocolVersion, protocolRegistry) -> {
       try {
-        // See LimboProtocol#overlayRegistry about var.
         var packetIdToSupplier = (IntObjectMap<Supplier<? extends MinecraftPacket>>) LimboProtocol.PACKET_ID_TO_SUPPLIER_FIELD.get(protocolRegistry);
         var packetClassToId = (Object2IntMap<Class<? extends MinecraftPacket>>) LimboProtocol.PACKET_CLASS_TO_ID_FIELD.get(protocolRegistry);
 

@@ -51,7 +51,7 @@ public class SimpleItem implements VirtualItem {
 
   @SuppressWarnings("unchecked")
   public static void init() {
-    LinkedTreeMap<String, LinkedTreeMap<String, String>> map = GSON.fromJson(
+    LinkedTreeMap<String, LinkedTreeMap<String, String>> items = GSON.fromJson(
         new InputStreamReader(
             Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/items.json")), StandardCharsets.UTF_8
         ),
@@ -59,7 +59,7 @@ public class SimpleItem implements VirtualItem {
     );
     for (Item item : Item.values()) {
       SimpleItem simpleItem = new SimpleItem();
-      map.get(String.valueOf(item.getId())).forEach((key, value) -> simpleItem.versionIds.put(Version.parse(key), Short.parseShort(value)));
+      items.get(String.valueOf(item.getId())).forEach((key, value) -> simpleItem.versionIds.put(Version.parse(key), Short.parseShort(value)));
       LEGACY_ID_MAP.put(item, simpleItem);
     }
   }
