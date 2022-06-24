@@ -13,10 +13,6 @@ import java.awt.image.BufferedImage;
 @Deprecated(forRemoval = true)
 public class MapPalette {
 
-  public static void precache() {
-    net.elytrium.limboapi.api.protocol.packets.data.MapPalette.precache();
-  }
-
   public static int[] imageToBytes(BufferedImage image) {
     return net.elytrium.limboapi.api.protocol.packets.data.MapPalette.imageToBytes(image);
   }
@@ -27,9 +23,5 @@ public class MapPalette {
 
   public static byte tryFastMatchColor(int rgb, ProtocolVersion version) {
     return net.elytrium.limboapi.api.protocol.packets.data.MapPalette.tryFastMatchColor(rgb, version);
-  }
-
-  public static net.elytrium.limboapi.api.protocol.packets.data.MapPalette.Color[] getColors() {
-    return net.elytrium.limboapi.api.protocol.packets.data.MapPalette.getColors();
   }
 }
