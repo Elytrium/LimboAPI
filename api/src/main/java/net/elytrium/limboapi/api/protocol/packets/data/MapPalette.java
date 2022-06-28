@@ -28,6 +28,8 @@ public class MapPalette {
    */
   @Deprecated
   public static final byte WHITE = 34;
+  
+  public static final byte TRANSPARENT = 0;
 
   static {
     for (MapVersion version : MapVersion.values()) {
@@ -115,7 +117,7 @@ public class MapPalette {
    */
   public static byte tryFastMatchColor(int rgb, ProtocolVersion version) {
     if (getAlpha(rgb) < 128) {
-      rgb = 0xFFFFFF;
+      return TRANSPARENT;
     }
 
     assert MAIN_BUFFER != null;
