@@ -51,6 +51,8 @@ public class Settings extends YamlConfig {
     public int MAX_UNKNOWN_PACKET_LENGTH = 2048;
     public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 4096;
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
+    @Comment("Allows to fly through blocks in gamemode 3. Disabling this setting improves performance")
+    public boolean FIX_SPECTATOR_FLY_THROUGH_BLOCKS = true;
 
     @Comment("Logging for connect and disconnect messages.")
     public boolean LOGGING_ENABLED = true;

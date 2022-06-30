@@ -20,14 +20,17 @@ package net.elytrium.limboapi.server;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
+import com.velocitypowered.natives.compression.VelocityCompressor;
+import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
+import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
-import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.chat.LegacyChat;
 import com.velocitypowered.proxy.protocol.packet.chat.PlayerChat;
@@ -37,7 +40,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -46,7 +48,6 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
-import net.elytrium.limboapi.injection.packet.PreparedPacketEncoder;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveOnGroundOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MovePacket;
@@ -105,7 +106,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.keepAliveKey = ThreadLocalRandom.current().nextInt();
         KeepAlive keepAlive = new KeepAlive();
         keepAlive.setRandomId(this.keepAliveKey);
-        connection.write(keepAlive);
+        connection.write(this.plugin.encodeSingle(keepAlive, connection.getProtocolVersion()));
         this.keepAlivePending = true;
         this.keepAliveSentTime = System.currentTimeMillis();
       }
@@ -171,9 +172,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       } else {
         this.keepAlivePending = false;
         this.ping = (this.ping * 3 + (int) (System.currentTimeMillis() - this.keepAliveSentTime)) / 4;
-        connection.write(
-            new PlayerListItem(PlayerListItem.UPDATE_LATENCY, List.of(new PlayerListItem.Item(this.player.getUniqueId()).setLatency(this.ping)))
-        );
         return true;
       }
     } else {
@@ -271,14 +269,25 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();
-    if (pipeline.names().contains(LimboProtocol.PREPARED_ENCODER)) {
-      pipeline.remove(PreparedPacketEncoder.class);
-    }
+    this.plugin.deject3rdParty(pipeline);
 
     if (pipeline.names().contains(LimboProtocol.READ_TIMEOUT)) {
       pipeline.replace(LimboProtocol.READ_TIMEOUT, Connections.READ_TIMEOUT,
           new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS)
       );
+    }
+
+    if (!pipeline.names().contains(Connections.FRAME_ENCODER) && !pipeline.names().contains(Connections.COMPRESSION_ENCODER)) {
+      int compressionThreshold = this.plugin.getServer().getConfiguration().getCompressionThreshold();
+      if (compressionThreshold == -1) {
+        pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE);
+      } else {
+        int level = this.plugin.getServer().getConfiguration().getCompressionLevel();
+        VelocityCompressor compressor = Natives.compress.get().create(level);
+
+        MinecraftCompressorAndLengthEncoder encoder = new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor);
+        pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER, encoder);
+      }
     }
   }
 

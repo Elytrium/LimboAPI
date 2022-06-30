@@ -17,160 +17,79 @@
 
 package net.elytrium.limboapi.injection.packet;
 
-import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
-import com.velocitypowered.proxy.protocol.MinecraftPacket;
-import com.velocitypowered.proxy.protocol.ProtocolUtils;
-import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import net.elytrium.limboapi.api.protocol.PreparedPacket;
-import net.elytrium.limboapi.protocol.LimboProtocol;
+import net.elytrium.fastprepare.PreparedPacket;
+import net.elytrium.fastprepare.PreparedPacketFactory;
 
-public class PreparedPacketImpl implements PreparedPacket {
-
-  private final Map<ProtocolVersion, List<ByteBuf>> packets = new ConcurrentHashMap<>();
-  private final ProtocolVersion minVersion;
-  private final ProtocolVersion maxVersion;
-
-  public PreparedPacketImpl(ProtocolVersion minVersion, ProtocolVersion maxVersion) {
-    this.minVersion = minVersion;
-    this.maxVersion = maxVersion;
+public class PreparedPacketImpl extends PreparedPacket implements net.elytrium.limboapi.api.protocol.PreparedPacket {
+  public PreparedPacketImpl(ProtocolVersion minVersion, ProtocolVersion maxVersion, PreparedPacketFactory factory) {
+    super(minVersion, maxVersion, factory);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(T packet) {
-    if (packet == null) {
-      return this;
-    }
-
-    return this.prepare((version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
+    return (PreparedPacketImpl) super.prepare(packet);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(T[] packets) {
-    return this.prepare(Arrays.asList(packets));
+    return (PreparedPacketImpl) super.prepare(packets);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(List<T> packets) {
-    if (packets == null) {
-      return this;
-    }
-
-    for (T packet : packets) {
-      this.prepare((version) -> packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
-    }
-
-    return this;
+    return (PreparedPacketImpl) super.prepare(packets);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(T packet, ProtocolVersion from) {
-    if (packet == null) {
-      return this;
-    }
-
-    return this.prepare((version) -> packet, from, ProtocolVersion.MAXIMUM_VERSION);
+    return (PreparedPacketImpl) super.prepare(packet, from);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(T packet, ProtocolVersion from, ProtocolVersion to) {
-    if (packet == null) {
-      return this;
-    }
-
-    return this.prepare((version) -> packet, from, to);
+    return (PreparedPacketImpl) super.prepare(packet, from, to);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(T[] packets, ProtocolVersion from) {
-    return this.prepare(Arrays.asList(packets), from);
+    return (PreparedPacketImpl) super.prepare(packets, from);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(T[] packets, ProtocolVersion from, ProtocolVersion to) {
-    return this.prepare(Arrays.asList(packets), from, to);
+    return (PreparedPacketImpl) super.prepare(packets, from, to);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(List<T> packets, ProtocolVersion from) {
-    if (packets == null) {
-      return this;
-    }
-
-    for (T packet : packets) {
-      this.prepare(packet, from);
-    }
-
-    return this;
+    return (PreparedPacketImpl) super.prepare(packets, from);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(List<T> packets, ProtocolVersion from, ProtocolVersion to) {
-    if (packets == null) {
-      return this;
-    }
-
-    for (T packet : packets) {
-      this.prepare(packet, from, to);
-    }
-
-    return this;
+    return (PreparedPacketImpl) super.prepare(packets, from, to);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet) {
-    return this.prepare(packet, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MAXIMUM_VERSION);
+    return (PreparedPacketImpl) super.prepare(packet);
   }
 
   @Override
   public <T> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from) {
-    return this.prepare(packet, from, ProtocolVersion.MAXIMUM_VERSION);
+    return (PreparedPacketImpl) super.prepare(packet, from);
   }
 
   @Override
-  public <T> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet, ProtocolVersion originalFrom, ProtocolVersion originalTo) {
-    ProtocolVersion from = originalFrom.compareTo(this.minVersion) > 0 ? originalFrom : this.minVersion;
-    ProtocolVersion to = originalTo.compareTo(this.maxVersion) < 0 ? originalTo : this.maxVersion;
-    if (from.compareTo(to) > 0) {
-      return this;
-    }
-    for (ProtocolVersion protocolVersion : EnumSet.range(from, to)) {
-      T minecraftPacket = packet.apply(protocolVersion);
-      Preconditions.checkArgument(minecraftPacket instanceof MinecraftPacket);
-      ByteBuf buf = this.encodePacket((MinecraftPacket) minecraftPacket, protocolVersion);
-      if (this.packets.containsKey(protocolVersion)) {
-        this.packets.get(protocolVersion).add(buf);
-      } else {
-        List<ByteBuf> list = new ArrayList<>();
-        list.add(buf);
-        this.packets.put(protocolVersion, list);
-      }
-    }
-
-    return this;
+  public <T> PreparedPacketImpl prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to) {
+    return (PreparedPacketImpl) super.prepare(packet, from, to);
   }
 
-  public List<ByteBuf> getPackets(ProtocolVersion version) {
-    return this.packets.get(version);
-  }
-
-  public boolean hasPacketsFor(ProtocolVersion version) {
-    return this.packets.containsKey(version);
-  }
-
-  private ByteBuf encodePacket(MinecraftPacket packet, ProtocolVersion version) {
-    ByteBuf byteBuf = Unpooled.buffer();
-    ProtocolUtils.writeVarInt(byteBuf, Direction.CLIENTBOUND.getProtocolRegistry(LimboProtocol.getLimboStateRegistry(), version).getPacketId(packet));
-    packet.encode(byteBuf, Direction.CLIENTBOUND, version);
-    return byteBuf.capacity(byteBuf.readableBytes());
+  @Override
+  public PreparedPacketImpl build() {
+    return (PreparedPacketImpl) super.build();
   }
 }

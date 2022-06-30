@@ -7,6 +7,7 @@
 
 package net.elytrium.limboapi.api;
 
+import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -126,6 +127,16 @@ public interface LimboFactory {
    * @return new prepared packet.
    */
   PreparedPacket createPreparedPacket();
+
+  /**
+   * Creates new prepared packet builder.
+   *
+   * @param minVersion Minimum version to prepare
+   * @param maxVersion Maximum version to prepare
+   *
+   * @return new prepared packet.
+   */
+  PreparedPacket createPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion);
 
   /**
    * Instantiates new MinecraftPacket object.
