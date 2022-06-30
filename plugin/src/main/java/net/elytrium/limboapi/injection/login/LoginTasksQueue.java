@@ -42,13 +42,19 @@ import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.proxy.InboundConnection;
+import com.velocitypowered.natives.compression.VelocityCompressor;
+import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
 import com.velocitypowered.proxy.event.VelocityEventManager;
+import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
+import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -155,6 +161,22 @@ public class LoginTasksQueue {
   private void initialize(MinecraftConnection connection) throws IllegalAccessException {
     connection.setAssociation(this.player);
     connection.setState(StateRegistry.PLAY);
+
+    ChannelPipeline pipeline = connection.getChannel().pipeline();
+    this.plugin.deject3rdParty(pipeline);
+
+    if (!pipeline.names().contains(Connections.FRAME_ENCODER) && !pipeline.names().contains(Connections.COMPRESSION_ENCODER)) {
+      int compressionThreshold = this.plugin.getServer().getConfiguration().getCompressionThreshold();
+      if (compressionThreshold == -1) {
+        pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE);
+      } else {
+        int level = this.plugin.getServer().getConfiguration().getCompressionLevel();
+        VelocityCompressor compressor = Natives.compress.get().create(level);
+
+        MinecraftCompressorAndLengthEncoder encoder = new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor);
+        pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER, encoder);
+      }
+    }
 
     Logger logger = LimboAPI.getLogger();
     this.server.getEventManager().fire(new LoginEvent(this.player)).thenAcceptAsync(event -> {

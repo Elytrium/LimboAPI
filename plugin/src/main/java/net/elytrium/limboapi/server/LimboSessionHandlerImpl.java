@@ -20,16 +20,12 @@ package net.elytrium.limboapi.server;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
-import com.velocitypowered.natives.compression.VelocityCompressor;
-import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
-import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
-import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.chat.LegacyChat;
@@ -269,25 +265,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();
-    this.plugin.deject3rdParty(pipeline);
 
     if (pipeline.names().contains(LimboProtocol.READ_TIMEOUT)) {
       pipeline.replace(LimboProtocol.READ_TIMEOUT, Connections.READ_TIMEOUT,
           new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS)
       );
-    }
-
-    if (!pipeline.names().contains(Connections.FRAME_ENCODER) && !pipeline.names().contains(Connections.COMPRESSION_ENCODER)) {
-      int compressionThreshold = this.plugin.getServer().getConfiguration().getCompressionThreshold();
-      if (compressionThreshold == -1) {
-        pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE);
-      } else {
-        int level = this.plugin.getServer().getConfiguration().getCompressionLevel();
-        VelocityCompressor compressor = Natives.compress.get().create(level);
-
-        MinecraftCompressorAndLengthEncoder encoder = new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor);
-        pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER, encoder);
-      }
     }
   }
 
