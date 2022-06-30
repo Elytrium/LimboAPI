@@ -37,11 +37,11 @@ public class CachedPackets {
 
   public void createPackets() {
     this.tooBigPacket = this.plugin.createPreparedPacket()
-        .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TOO_BIG_PACKET, version));
+        .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TOO_BIG_PACKET, version)).build();
     this.invalidPing = this.plugin.createPreparedPacket()
-        .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.INVALID_PING, version));
+        .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.INVALID_PING, version)).build();
     this.timeOut = this.plugin.createPreparedPacket()
-        .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TIME_OUT, version));
+        .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TIME_OUT, version)).build();
   }
 
   private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {

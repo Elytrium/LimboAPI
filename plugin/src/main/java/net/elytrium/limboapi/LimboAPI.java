@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
@@ -28,9 +29,13 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.event.VelocityEventManager;
+import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelPipeline;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -43,6 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
+import net.elytrium.fastprepare.PreparedPacketFactory;
 import net.elytrium.java.commons.config.YamlConfig;
 import net.elytrium.java.commons.mc.serialization.Serializer;
 import net.elytrium.java.commons.mc.serialization.Serializers;
@@ -113,9 +119,11 @@ public class LimboAPI implements LimboFactory {
   private final HashMap<Player, RegisteredServer> nextServer;
   private final HashMap<Player, UUID> initialID;
 
+  private PreparedPacketFactory preparedPacketFactory;
   private ProtocolVersion minVersion;
   private ProtocolVersion maxVersion;
   private LoginListener loginListener;
+  private boolean compressionEnabled;
 
   @Inject
   public LimboAPI(Logger logger, ProxyServer server, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
@@ -154,6 +162,7 @@ public class LimboAPI implements LimboFactory {
   public void onProxyInitialization(ProxyInitializeEvent event) {
     Settings.IMP.setLogger(LOGGER);
 
+    this.reloadPreparedPacketFactory();
     this.reload();
 
     this.metricsFactory.make(this, 12530);
@@ -166,6 +175,11 @@ public class LimboAPI implements LimboFactory {
         LOGGER.error("****************************************");
       }
     }
+  }
+
+  @Subscribe
+  public void onReload(ProxyReloadEvent event) {
+    this.reloadPreparedPacketFactory();
   }
 
   @Subscribe(order = PostOrder.LAST)
@@ -222,6 +236,15 @@ public class LimboAPI implements LimboFactory {
     }
   }
 
+  private void reloadPreparedPacketFactory() {
+    int level = this.server.getConfiguration().getCompressionLevel();
+    int threshold = this.server.getConfiguration().getCompressionThreshold();
+    this.compressionEnabled = threshold != -1;
+
+    this.preparedPacketFactory =
+        new PreparedPacketFactory(PreparedPacketImpl::new, LimboProtocol.getLimboStateRegistry(), this.compressionEnabled, level, threshold);
+  }
+
   @Override
   public VirtualBlock createSimpleBlock(Block block) {
     return SimpleBlock.fromLegacyId((short) block.getId());
@@ -273,7 +296,24 @@ public class LimboAPI implements LimboFactory {
 
   @Override
   public PreparedPacket createPreparedPacket() {
-    return new PreparedPacketImpl(this.minVersion, this.maxVersion);
+    return (PreparedPacket) this.preparedPacketFactory.createPreparedPacket(this.minVersion, this.maxVersion);
+  }
+
+  @Override
+  public PreparedPacket createPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion) {
+    return (PreparedPacket) this.preparedPacketFactory.createPreparedPacket(minVersion, maxVersion);
+  }
+
+  public ByteBuf encodeSingle(MinecraftPacket packet, ProtocolVersion version) {
+    return this.preparedPacketFactory.encodeSingle(packet, version);
+  }
+
+  public void inject3rdParty(Player player, MinecraftConnection connection, ChannelPipeline pipeline) {
+    this.preparedPacketFactory.inject(player, connection, pipeline);
+  }
+
+  public void deject3rdParty(ChannelPipeline pipeline) {
+    this.preparedPacketFactory.deject(pipeline);
   }
 
   @Override
@@ -403,6 +443,10 @@ public class LimboAPI implements LimboFactory {
 
   public LoginListener getLoginListener() {
     return this.loginListener;
+  }
+
+  public boolean isCompressionEnabled() {
+    return this.compressionEnabled;
   }
 
   static {

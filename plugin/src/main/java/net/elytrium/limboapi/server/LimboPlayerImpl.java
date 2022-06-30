@@ -22,6 +22,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
@@ -72,12 +73,20 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void writePacket(Object packetObj) {
-    this.connection.delayedWrite(packetObj);
+    if (packetObj instanceof MinecraftPacket) {
+      this.connection.delayedWrite(this.plugin.encodeSingle((MinecraftPacket) packetObj, this.connection.getProtocolVersion()));
+    } else {
+      this.connection.delayedWrite(packetObj);
+    }
   }
 
   @Override
   public void writePacketAndFlush(Object packetObj) {
-    this.connection.write(packetObj);
+    if (packetObj instanceof MinecraftPacket) {
+      this.connection.write(this.plugin.encodeSingle((MinecraftPacket) packetObj, this.connection.getProtocolVersion()));
+    } else {
+      this.connection.write(packetObj);
+    }
   }
 
   @Override
@@ -137,7 +146,7 @@ public class LimboPlayerImpl implements LimboPlayer {
         throw new IllegalStateException(
             "You either need to provide an image of "
                 + MapData.MAP_DIM_SIZE + "x" + MapData.MAP_DIM_SIZE
-            + " pixels or set the resize parameter to true so that API will automatically resize your image."
+                + " pixels or set the resize parameter to true so that API will automatically resize your image."
         );
       }
     }
