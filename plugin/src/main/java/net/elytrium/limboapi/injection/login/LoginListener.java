@@ -45,6 +45,8 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
+import com.velocitypowered.natives.compression.VelocityCompressor;
+import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
@@ -54,9 +56,12 @@ import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialInboundConnection;
 import com.velocitypowered.proxy.connection.client.LoginInboundConnection;
+import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import com.velocitypowered.proxy.protocol.netty.MinecraftCompressDecoder;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
 import com.velocitypowered.proxy.protocol.packet.SetCompression;
+import io.netty.channel.ChannelPipeline;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -141,10 +146,17 @@ public class LoginListener {
               if (!connection.isClosed()) {
                 // Complete the Login process.
                 int threshold = this.server.getConfiguration().getCompressionThreshold();
+                ChannelPipeline pipeline = connection.getChannel().pipeline();
                 if (threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
                   connection.write(new SetCompression(threshold));
-                  connection.setCompressionThreshold(threshold);
+                  int level = this.plugin.getServer().getConfiguration().getCompressionLevel();
+                  VelocityCompressor compressor = Natives.compress.get().create(level);
+                  MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(threshold, compressor);
+                  pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.COMPRESSION_DECODER, decoder);
                 }
+                pipeline.remove(Connections.FRAME_ENCODER);
+
+                this.plugin.inject3rdParty(player, connection, pipeline);
 
                 VelocityConfiguration configuration = this.server.getConfiguration();
                 UUID playerUniqueId = player.getUniqueId();
@@ -154,8 +166,9 @@ public class LoginListener {
 
                 ServerLoginSuccess success = new ServerLoginSuccess();
                 success.setUsername(player.getUsername());
+                success.setProperties(player.getGameProfileProperties());
                 success.setUuid(playerUniqueId);
-                connection.write(success);
+                connection.write(this.plugin.encodeSingleLogin(success, connection.getProtocolVersion()));
 
                 this.plugin.setInitialID(player, playerUniqueId);
 

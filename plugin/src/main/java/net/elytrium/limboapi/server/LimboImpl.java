@@ -202,14 +202,6 @@ public class LimboImpl implements Limbo {
         if (this.readTimeout != null) {
           pipeline.replace(Connections.READ_TIMEOUT, LimboProtocol.READ_TIMEOUT, new ReadTimeoutHandler(this.readTimeout, TimeUnit.MILLISECONDS));
         }
-
-        this.plugin.inject3rdParty(player, connection, pipeline);
-
-        if (this.plugin.isCompressionEnabled()) {
-          pipeline.remove(Connections.COMPRESSION_ENCODER);
-        } else {
-          pipeline.remove(Connections.FRAME_ENCODER);
-        }
       }
 
       RegisteredServer previousServer = null;
