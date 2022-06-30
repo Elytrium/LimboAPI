@@ -120,6 +120,7 @@ public class LimboAPI implements LimboFactory {
   private final HashMap<Player, UUID> initialID;
 
   private PreparedPacketFactory preparedPacketFactory;
+  private PreparedPacketFactory loginPreparedPacketFactory;
   private ProtocolVersion minVersion;
   private ProtocolVersion maxVersion;
   private LoginListener loginListener;
@@ -166,6 +167,8 @@ public class LimboAPI implements LimboFactory {
     int threshold = this.server.getConfiguration().getCompressionThreshold();
     this.preparedPacketFactory =
         new PreparedPacketFactory(PreparedPacketImpl::new, LimboProtocol.getLimboStateRegistry(), this.compressionEnabled, level, threshold);
+    this.loginPreparedPacketFactory =
+        new PreparedPacketFactory(PreparedPacketImpl::new, StateRegistry.LOGIN, this.compressionEnabled, level, threshold);
     this.reloadPreparedPacketFactory();
     this.reload();
 
@@ -243,6 +246,7 @@ public class LimboAPI implements LimboFactory {
     this.compressionEnabled = threshold != -1;
 
     this.preparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold);
+    this.loginPreparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold);
   }
 
   @Override
@@ -306,6 +310,10 @@ public class LimboAPI implements LimboFactory {
 
   public ByteBuf encodeSingle(MinecraftPacket packet, ProtocolVersion version) {
     return this.preparedPacketFactory.encodeSingle(packet, version);
+  }
+
+  public ByteBuf encodeSingleLogin(MinecraftPacket packet, ProtocolVersion version) {
+    return this.loginPreparedPacketFactory.encodeSingle(packet, version);
   }
 
   public void inject3rdParty(Player player, MinecraftConnection connection, ChannelPipeline pipeline) {
