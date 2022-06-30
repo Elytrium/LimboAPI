@@ -27,6 +27,8 @@ public interface Limbo {
 
   Limbo setGameMode(GameMode gameMode);
 
+  Limbo setShouldRespawn(boolean shouldRespawn);
+
   Limbo registerCommand(LimboCommandMeta commandMeta);
 
   Limbo registerCommand(CommandMeta commandMeta, Command command);

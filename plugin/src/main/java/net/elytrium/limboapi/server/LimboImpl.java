@@ -110,9 +110,10 @@ public class LimboImpl implements Limbo {
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
   private PreparedPacket safeRejoinPackets;
-  private PreparedPacket postJoinPackets;
   private PreparedPacket chunks;
   private PreparedPacket spawnPosition;
+  private boolean shouldRespawn = true;
+  private boolean built = true;
 
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
     this.plugin = plugin;
@@ -122,6 +123,7 @@ public class LimboImpl implements Limbo {
   }
 
   protected void refresh() {
+    this.built = true;
     // TODO: Fix 1.16+ nether dimension
     JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGame joinGame = this.createJoinGamePacket(false);
@@ -130,8 +132,7 @@ public class LimboImpl implements Limbo {
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_18)
-        .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2)
-        .build();
+        .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2);
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
@@ -142,13 +143,11 @@ public class LimboImpl implements Limbo {
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2));
     this.fastRejoinPackets.build();
 
-    this.postJoinPackets = this.plugin.createPreparedPacket()
-        .prepare(this.createAvailableCommandsPacket(), ProtocolVersion.MINECRAFT_1_13)
-        .prepare(this.createDefaultSpawnPositionPacket())
-        .prepare(this.createWorldTicksPacket())
-        .build();
-
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame)).build();
+
+    this.addPostJoin(this.joinPackets);
+    this.addPostJoin(this.fastRejoinPackets);
+    this.addPostJoin(this.safeRejoinPackets);
 
     List<ChunkDataPacket> chunkPackets = this.createChunksPackets();
     this.chunks = chunkPackets.size() == 0 ? null : this.plugin.createPreparedPacket().prepare(chunkPackets).build();
@@ -164,8 +163,20 @@ public class LimboImpl implements Limbo {
         ).build();
   }
 
+  private PreparedPacket addPostJoin(PreparedPacket packet) {
+    return packet.prepare(this.createAvailableCommandsPacket(), ProtocolVersion.MINECRAFT_1_13)
+        .prepare(this.createDefaultSpawnPositionPacket())
+        .prepare(this.createWorldTicksPacket())
+        .prepare(this::createBrandMessage)
+        .build();
+  }
+
   @Override
   public void spawnPlayer(Player apiPlayer, LimboSessionHandler handler) {
+    if (!this.built) {
+      this.refresh();
+    }
+
     ConnectedPlayer player = (ConnectedPlayer) apiPlayer;
     MinecraftConnection connection = player.getConnection();
     Class<? extends LimboSessionHandler> handlerClass = handler.getClass();
@@ -240,7 +251,6 @@ public class LimboImpl implements Limbo {
         );
       }
 
-      connection.delayedWrite(this.postJoinPackets);
       connection.delayedWrite(this.getBrandMessage(handlerClass));
 
       this.plugin.setLimboJoined(player);
@@ -257,7 +267,10 @@ public class LimboImpl implements Limbo {
 
       connection.flush();
 
-      this.respawnPlayer(player);
+      if (this.shouldRespawn) {
+        this.respawnPlayer(player);
+      }
+
       sessionHandler.onSpawn(this, new LimboPlayerImpl(this.plugin, this, player));
     });
   }
@@ -277,12 +290,8 @@ public class LimboImpl implements Limbo {
   @Override
   public Limbo setName(String name) {
     this.limboName = name;
-    if (!this.brandMessages.isEmpty()) {
-      this.brandMessages.forEach((handlerClass, packet) ->
-          this.brandMessages.replace(handlerClass, packet, this.plugin.createPreparedPacket().prepare(this::createBrandMessage).build())
-      );
-    }
 
+    this.built = false;
     return this;
   }
 
@@ -295,14 +304,23 @@ public class LimboImpl implements Limbo {
   @Override
   public Limbo setWorldTime(long ticks) {
     this.worldTicks = ticks;
-    this.refresh();
+
+    this.built = false;
     return this;
   }
 
   @Override
   public Limbo setGameMode(GameMode gameMode) {
     this.gameMode = (short) gameMode.getId();
-    this.refresh();
+
+    this.built = false;
+    return this;
+  }
+
+  @Override
+  public Limbo setShouldRespawn(boolean shouldRespawn) {
+    this.shouldRespawn = shouldRespawn;
+
     return this;
   }
 
@@ -317,7 +335,7 @@ public class LimboImpl implements Limbo {
   public Limbo registerCommand(CommandMeta commandMeta, Command command) {
     for (CommandRegistrar<?> registrar : this.registrars) {
       if (this.tryRegister(registrar, commandMeta, command)) {
-        this.refresh();
+        this.built = false;
         return this;
       }
     }
