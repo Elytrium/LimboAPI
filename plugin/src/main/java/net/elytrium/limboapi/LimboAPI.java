@@ -21,7 +21,6 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
-import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
@@ -82,6 +81,7 @@ import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.elytrium.limboapi.server.world.SimpleWorld;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
+import net.elytrium.limboapi.utils.ReloadListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
 import org.bstats.velocity.Metrics;
@@ -162,6 +162,10 @@ public class LimboAPI implements LimboFactory {
   public void onProxyInitialization(ProxyInitializeEvent event) {
     Settings.IMP.setLogger(LOGGER);
 
+    int level = this.server.getConfiguration().getCompressionLevel();
+    int threshold = this.server.getConfiguration().getCompressionThreshold();
+    this.preparedPacketFactory =
+        new PreparedPacketFactory(PreparedPacketImpl::new, LimboProtocol.getLimboStateRegistry(), this.compressionEnabled, level, threshold);
     this.reloadPreparedPacketFactory();
     this.reload();
 
@@ -175,11 +179,6 @@ public class LimboAPI implements LimboFactory {
         LOGGER.error("****************************************");
       }
     }
-  }
-
-  @Subscribe
-  public void onReload(ProxyReloadEvent event) {
-    this.reloadPreparedPacketFactory();
   }
 
   @Subscribe(order = PostOrder.LAST)
@@ -212,8 +211,10 @@ public class LimboAPI implements LimboFactory {
     this.packets.createPackets();
     this.loginListener = new LoginListener(this, this.server);
     VelocityEventManager eventManager = this.server.getEventManager();
+    eventManager.unregisterListeners(this);
     eventManager.register(this, this.loginListener);
     eventManager.register(this, new DisconnectListener(this));
+    eventManager.register(this, new ReloadListener(this));
 
     LOGGER.info("Loaded!");
   }
@@ -236,13 +237,12 @@ public class LimboAPI implements LimboFactory {
     }
   }
 
-  private void reloadPreparedPacketFactory() {
+  public void reloadPreparedPacketFactory() {
     int level = this.server.getConfiguration().getCompressionLevel();
     int threshold = this.server.getConfiguration().getCompressionThreshold();
     this.compressionEnabled = threshold != -1;
 
-    this.preparedPacketFactory =
-        new PreparedPacketFactory(PreparedPacketImpl::new, LimboProtocol.getLimboStateRegistry(), this.compressionEnabled, level, threshold);
+    this.preparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold);
   }
 
   @Override
