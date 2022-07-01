@@ -1,6 +1,6 @@
 <img src="https://elytrium.net/src/img/elytrium.webp" alt="Elytrium" align="right">
 
-# LimboAPI (ex. ElytraProxy Virtual Server)
+# LimboAPI
 
 [![Join our Discord](https://img.shields.io/discord/775778822334709780.svg?logo=discord&label=Discord)](https://ely.su/discord)
 [![Proxy Stats](https://img.shields.io/bstats/servers/12530?logo=minecraft&label=Servers)](https://bstats.org/plugin/velocity/LimboAPI/12530)
