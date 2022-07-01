@@ -208,7 +208,7 @@ public class LimboImpl implements Limbo {
         }
 
         if (!pipeline.names().contains(PreparedPacketFactory.PREPARED_ENCODER)) {
-          if (this.plugin.isCompressionEnabled()) {
+          if (this.plugin.isCompressionEnabled() && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
             pipeline.remove(MinecraftCompressorAndLengthEncoder.class);
             pipeline.remove(MinecraftCompressDecoder.class);
             this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold());
