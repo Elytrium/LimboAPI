@@ -255,6 +255,7 @@ public class LimboPlayerImpl implements LimboPlayer {
       } else {
         RegisteredServer server = handler.getPreviousServer();
         if (server != null) {
+          this.deject();
           this.sendToRegisteredServer(server);
         }
       }
@@ -270,9 +271,15 @@ public class LimboPlayerImpl implements LimboPlayer {
       if (this.plugin.hasLoginQueue(this.player)) {
         this.plugin.setNextServer(this.player, server);
       } else {
+        this.deject();
         this.sendToRegisteredServer(server);
       }
     }
+  }
+
+  private void deject() {
+    this.plugin.fixCompressor(this.connection.getChannel().pipeline());
+    this.plugin.deject3rdParty(this.connection.getChannel().pipeline());
   }
 
   private void sendToRegisteredServer(RegisteredServer server) {

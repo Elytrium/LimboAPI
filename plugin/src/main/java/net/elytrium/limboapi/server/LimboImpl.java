@@ -41,6 +41,9 @@ import com.velocitypowered.proxy.connection.registry.DimensionRegistry;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.netty.MinecraftCompressDecoder;
+import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
+import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
 import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
@@ -59,6 +62,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import net.elytrium.fastprepare.PreparedPacketFactory;
 import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
@@ -201,6 +205,18 @@ public class LimboImpl implements Limbo {
 
         if (this.readTimeout != null) {
           pipeline.replace(Connections.READ_TIMEOUT, LimboProtocol.READ_TIMEOUT, new ReadTimeoutHandler(this.readTimeout, TimeUnit.MILLISECONDS));
+        }
+
+        if (!pipeline.names().contains(PreparedPacketFactory.PREPARED_ENCODER)) {
+          if (this.plugin.isCompressionEnabled()) {
+            pipeline.remove(MinecraftCompressorAndLengthEncoder.class);
+            pipeline.remove(MinecraftCompressDecoder.class);
+            this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold());
+          } else {
+            pipeline.remove(MinecraftVarintLengthEncoder.class);
+          }
+
+          this.plugin.inject3rdParty(player, connection, pipeline);
         }
       }
 

@@ -45,8 +45,6 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
-import com.velocitypowered.natives.compression.VelocityCompressor;
-import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
@@ -58,7 +56,6 @@ import com.velocitypowered.proxy.connection.client.InitialInboundConnection;
 import com.velocitypowered.proxy.connection.client.LoginInboundConnection;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.netty.MinecraftCompressDecoder;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
 import com.velocitypowered.proxy.protocol.packet.SetCompression;
 import io.netty.channel.ChannelPipeline;
@@ -149,10 +146,7 @@ public class LoginListener {
                 ChannelPipeline pipeline = connection.getChannel().pipeline();
                 if (threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
                   connection.write(new SetCompression(threshold));
-                  int level = this.plugin.getServer().getConfiguration().getCompressionLevel();
-                  VelocityCompressor compressor = Natives.compress.get().create(level);
-                  MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(threshold, compressor);
-                  pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.COMPRESSION_DECODER, decoder);
+                  this.plugin.fixDecompressor(pipeline, threshold);
                 }
                 pipeline.remove(Connections.FRAME_ENCODER);
 
