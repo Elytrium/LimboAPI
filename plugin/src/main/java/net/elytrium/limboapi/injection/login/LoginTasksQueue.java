@@ -162,7 +162,7 @@ public class LoginTasksQueue {
     this.plugin.deject3rdParty(pipeline);
 
     if (!pipeline.names().contains(Connections.FRAME_ENCODER) && !pipeline.names().contains(Connections.COMPRESSION_ENCODER)) {
-      this.plugin.fixCompressor(pipeline);
+      this.plugin.fixCompressor(pipeline, connection.getProtocolVersion());
     }
 
     Logger logger = LimboAPI.getLogger();

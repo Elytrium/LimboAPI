@@ -337,9 +337,9 @@ public class LimboAPI implements LimboFactory {
     pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.COMPRESSION_DECODER, decoder);
   }
 
-  public void fixCompressor(ChannelPipeline pipeline) {
+  public void fixCompressor(ChannelPipeline pipeline, ProtocolVersion version) {
     int compressionThreshold = this.server.getConfiguration().getCompressionThreshold();
-    if (compressionThreshold == -1) {
+    if (compressionThreshold == -1 || version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE);
     } else {
       int level = this.server.getConfiguration().getCompressionLevel();
