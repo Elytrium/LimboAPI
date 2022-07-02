@@ -30,18 +30,25 @@ public class CachedPackets {
   private PreparedPacket tooBigPacket;
   private PreparedPacket invalidPing;
   private PreparedPacket timeOut;
+  private boolean cached;
 
   public CachedPackets(LimboAPI plugin) {
     this.plugin = plugin;
   }
 
   public void createPackets() {
+    if (this.cached) {
+      this.dispose();
+    }
+
     this.tooBigPacket = this.plugin.createPreparedPacket()
         .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TOO_BIG_PACKET, version)).build();
     this.invalidPing = this.plugin.createPreparedPacket()
         .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.INVALID_PING, version)).build();
     this.timeOut = this.plugin.createPreparedPacket()
         .prepare(version -> this.createDisconnectPacket(Settings.IMP.MAIN.MESSAGES.TIME_OUT, version)).build();
+
+    this.cached = true;
   }
 
   private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {
@@ -58,5 +65,11 @@ public class CachedPackets {
 
   public PreparedPacket getTimeOut() {
     return this.timeOut;
+  }
+
+  public void dispose() {
+    this.tooBigPacket.release();
+    this.invalidPing.release();
+    this.timeOut.release();
   }
 }
