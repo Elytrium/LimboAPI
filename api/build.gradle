@@ -11,7 +11,6 @@ dependencies {
   api("net.kyori:adventure-nbt:4.11.0")
 
   compileOnly("com.github.spotbugs:spotbugs-annotations:4.7.0")
-  compileOnly("net.elytrium:fastprepare:1.0.0")
 }
 
 license {
