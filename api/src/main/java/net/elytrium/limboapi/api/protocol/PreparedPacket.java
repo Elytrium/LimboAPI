@@ -38,4 +38,6 @@ public interface PreparedPacket {
   <T> PreparedPacket prepare(Function<ProtocolVersion, T> packet, ProtocolVersion from, ProtocolVersion to);
 
   PreparedPacket build();
+
+  void release();
 }

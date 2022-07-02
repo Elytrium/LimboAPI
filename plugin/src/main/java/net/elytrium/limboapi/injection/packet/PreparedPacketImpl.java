@@ -92,4 +92,9 @@ public class PreparedPacketImpl extends PreparedPacket implements net.elytrium.l
   public PreparedPacketImpl build() {
     return (PreparedPacketImpl) super.build();
   }
+
+  @Override
+  public void release() {
+    super.release();
+  }
 }

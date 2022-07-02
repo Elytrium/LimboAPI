@@ -6,7 +6,7 @@ plugins {
 dependencies {
   implementation(project(":limboapi-api"))
 
-  implementation("net.elytrium:fastprepare:1.0.0")
+  implementation("net.elytrium:fastprepare:1.0.1")
   compileOnly("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
   annotationProcessor("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
   compileOnly("com.velocitypowered:velocity-proxy:3.1.2-SNAPSHOT") // From Elytrium Repo.
@@ -29,6 +29,7 @@ shadowJar {
   exclude("net/kyori/**")
 
   relocate("org.bstats", "net.elytrium.limboapi.thirdparty.org.bstats")
+  relocate("net.elytrium.fastprepare", "net.elytrium.limboapi.thirdparty.fastprepare")
 }
 
 license {
