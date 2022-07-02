@@ -32,4 +32,6 @@ public interface Limbo {
   Limbo registerCommand(LimboCommandMeta commandMeta);
 
   Limbo registerCommand(CommandMeta commandMeta, Command command);
+
+  void dispose();
 }

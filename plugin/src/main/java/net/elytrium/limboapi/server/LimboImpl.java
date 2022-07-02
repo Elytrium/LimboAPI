@@ -351,6 +351,15 @@ public class LimboImpl implements Limbo {
     throw new IllegalArgumentException(command + " does not implement a registrable Command sub-interface.");
   }
 
+  @Override
+  public void dispose() {
+    this.joinPackets.release();
+    this.fastRejoinPackets.release();
+    this.safeRejoinPackets.release();
+    this.chunks.release();
+    this.spawnPosition.release();
+  }
+
   // From Velocity.
   private <T extends Command> boolean tryRegister(CommandRegistrar<T> registrar, CommandMeta commandMeta, Command command) {
     Class<T> superInterface = registrar.registrableSuperInterface();
