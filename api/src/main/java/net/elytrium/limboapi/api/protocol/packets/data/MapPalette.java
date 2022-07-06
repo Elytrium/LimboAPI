@@ -166,6 +166,10 @@ public class MapPalette {
       this.versions = versions;
     }
 
+    public EnumSet<ProtocolVersion> getVersions() {
+      return this.versions;
+    }
+
     public static MapVersion fromProtocolVersion(ProtocolVersion version) {
       return versionsMap.get(version);
     }
