@@ -482,6 +482,14 @@ public class LimboAPI implements LimboFactory {
     return this.compressionEnabled;
   }
 
+  public ProtocolVersion getPrepareMinVersion() {
+    return this.minVersion;
+  }
+
+  public ProtocolVersion getPrepareMaxVersion() {
+    return this.maxVersion;
+  }
+
   static {
     PRIMITIVE_WRAPPER_MAP.put(Boolean.TYPE, Boolean.class);
     PRIMITIVE_WRAPPER_MAP.put(Byte.TYPE, Byte.class);
