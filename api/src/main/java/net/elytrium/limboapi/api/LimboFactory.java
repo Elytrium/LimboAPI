@@ -181,4 +181,8 @@ public interface LimboFactory {
    * A factory to instantiate Minecraft packet objects.
    */
   PacketFactory getPacketFactory();
+
+  ProtocolVersion getPrepareMinVersion();
+
+  ProtocolVersion getPrepareMaxVersion();
 }

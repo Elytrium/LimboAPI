@@ -83,11 +83,12 @@ public class MapPalette {
    * @return A byte[] containing the pixels of the image.
    */
   public static int[] imageToBytes(int[] image, ProtocolVersion version) {
+    int[] newImage = new int[image.length];
     for (int i = 0; i < image.length; ++i) {
-      image[i] = tryFastMatchColor(image[i], version);
+      newImage[i] = tryFastMatchColor(image[i], version);
     }
 
-    return image;
+    return newImage;
   }
 
   /**
@@ -100,11 +101,12 @@ public class MapPalette {
    */
   public static int[] convertImage(int[] image, MapVersion version) {
     byte[] remapBuffer = REMAP_BUFFERS.get(version);
+    int[] newImage = new int[image.length];
     for (int i = 0; i < image.length; ++i) {
-      image[i] = remapByte(remapBuffer, image[i]);
+      newImage[i] = remapByte(remapBuffer, image[i]);
     }
 
-    return image;
+    return newImage;
   }
 
   /**
