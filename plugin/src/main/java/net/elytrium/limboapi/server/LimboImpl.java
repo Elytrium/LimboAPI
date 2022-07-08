@@ -60,6 +60,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.elytrium.fastprepare.PreparedPacketFactory;
@@ -98,6 +99,7 @@ public class LimboImpl implements Limbo {
   private final LimboAPI plugin;
   private final VirtualWorld world;
 
+  private final LongAdder currentOnline = new LongAdder();
   private final RootCommandNode<CommandSource> commandNode = new RootCommandNode<>();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   private final List<CommandRegistrar<?>> registrars = ImmutableList.of(
@@ -118,6 +120,7 @@ public class LimboImpl implements Limbo {
   private PreparedPacket spawnPosition;
   private boolean shouldRespawn = true;
   private boolean built = true;
+  private boolean disposeScheduled = false;
 
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
     this.plugin = plugin;
@@ -167,8 +170,8 @@ public class LimboImpl implements Limbo {
         ).build();
   }
 
-  private PreparedPacket addPostJoin(PreparedPacket packet) {
-    return packet.prepare(this.createAvailableCommandsPacket(), ProtocolVersion.MINECRAFT_1_13)
+  private void addPostJoin(PreparedPacket packet) {
+    packet.prepare(this.createAvailableCommandsPacket(), ProtocolVersion.MINECRAFT_1_13)
         .prepare(this.createDefaultSpawnPositionPacket())
         .prepare(this.createWorldTicksPacket())
         .prepare(this::createBrandMessage)
@@ -211,7 +214,7 @@ public class LimboImpl implements Limbo {
           if (this.plugin.isCompressionEnabled() && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
             pipeline.remove(MinecraftCompressorAndLengthEncoder.class);
             pipeline.remove(MinecraftCompressDecoder.class);
-            this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold());
+            this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
           } else {
             pipeline.remove(MinecraftVarintLengthEncoder.class);
           }
@@ -265,6 +268,7 @@ public class LimboImpl implements Limbo {
 
       LimboSessionHandlerImpl sessionHandler = new LimboSessionHandlerImpl(
           this.plugin,
+          this,
           player,
           handler,
           connection.getSessionHandler(),
@@ -279,7 +283,8 @@ public class LimboImpl implements Limbo {
         this.respawnPlayer(player);
       }
 
-      sessionHandler.onSpawn(this, new LimboPlayerImpl(this.plugin, this, player));
+      this.currentOnline.increment();
+      sessionHandler.onSpawn(new LimboPlayerImpl(this.plugin, this, player));
     });
   }
 
@@ -293,6 +298,19 @@ public class LimboImpl implements Limbo {
     }
 
     connection.flush();
+  }
+
+  @Override
+  public long getCurrentOnline() {
+    return this.currentOnline.sum();
+  }
+
+  public void onDisconnect() {
+    this.currentOnline.decrement();
+
+    if (this.disposeScheduled && this.currentOnline.sum() == 0) {
+      this.localDispose();
+    }
   }
 
   @Override
@@ -353,6 +371,14 @@ public class LimboImpl implements Limbo {
 
   @Override
   public void dispose() {
+    if (this.getCurrentOnline() == 0) {
+      this.localDispose();
+    } else {
+      this.disposeScheduled = true;
+    }
+  }
+
+  private void localDispose() {
     this.joinPackets.release();
     this.fastRejoinPackets.release();
     this.safeRejoinPackets.release();

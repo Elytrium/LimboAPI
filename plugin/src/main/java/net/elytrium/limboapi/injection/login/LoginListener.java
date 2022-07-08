@@ -146,7 +146,7 @@ public class LoginListener {
                 ChannelPipeline pipeline = connection.getChannel().pipeline();
                 if (threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
                   connection.write(new SetCompression(threshold));
-                  this.plugin.fixDecompressor(pipeline, threshold);
+                  this.plugin.fixDecompressor(pipeline, threshold, true);
                 }
                 pipeline.remove(Connections.FRAME_ENCODER);
 
