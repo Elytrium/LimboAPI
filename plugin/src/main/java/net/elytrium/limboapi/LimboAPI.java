@@ -79,6 +79,7 @@ import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
 import net.elytrium.limboapi.injection.packet.MinecraftDiscardCompressDecoder;
+import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.injection.packet.PlayerListItemHook;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -341,10 +342,10 @@ public class LimboAPI implements LimboFactory {
     } else {
       int level = this.server.getConfiguration().getCompressionLevel();
       VelocityCompressor compressor = Natives.compress.get().create(level);
-      decoder = new MinecraftCompressDecoder(threshold, compressor);
+      decoder = new MinecraftLimitedCompressDecoder(threshold, compressor);
     }
 
-    pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.COMPRESSION_DECODER, decoder);
+    pipeline.addBefore(Connections.MINECRAFT_DECODER, LimboProtocol.DECOMPRESSOR, decoder);
   }
 
   public void fixCompressor(ChannelPipeline pipeline, ProtocolVersion version) {
@@ -356,6 +357,11 @@ public class LimboAPI implements LimboFactory {
       VelocityCompressor compressor = Natives.compress.get().create(level);
       MinecraftCompressorAndLengthEncoder encoder = new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor);
       pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER, encoder);
+
+      if (pipeline.names().contains(LimboProtocol.DECOMPRESSOR)) {
+        MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(compressionThreshold, compressor);
+        pipeline.replace(LimboProtocol.DECOMPRESSOR, Connections.COMPRESSION_DECODER, decoder);
+      }
     }
   }
 
