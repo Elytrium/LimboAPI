@@ -53,6 +53,12 @@ public class Settings extends YamlConfig {
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
     @Comment("Allows to fly through blocks in gamemode 3. Disabling this setting improves performance during attacks")
     public boolean FIX_SPECTATOR_FLY_THROUGH_BLOCKS = true;
+    @Comment({
+        "Discards all packets longer than compression-threshold. Helps to mitigate some attacks.",
+        "Needs compression-threshold to be 300 or higher to support 1.19 chat-signing, so it is disabled by default"
+    })
+    public boolean DISCARD_COMPRESSION_ON_LOGIN = false;
+    public boolean DISCARD_COMPRESSION_AFTER_LOGIN = false;
 
     @Comment("Logging for connect and disconnect messages.")
     public boolean LOGGING_ENABLED = true;

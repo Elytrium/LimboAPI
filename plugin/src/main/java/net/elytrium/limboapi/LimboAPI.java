@@ -40,6 +40,7 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEnco
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -77,6 +78,7 @@ import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
+import net.elytrium.limboapi.injection.packet.MinecraftDiscardCompressDecoder;
 import net.elytrium.limboapi.injection.packet.PlayerListItemHook;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -240,8 +242,8 @@ public class LimboAPI implements LimboFactory {
     if (ProtocolVersion.MAXIMUM_VERSION.compareTo(this.maxVersion) > 0 || ProtocolVersion.MINIMUM_VERSION.compareTo(this.minVersion) < 0) {
       LOGGER.warn(
           "Currently working only with "
-          + this.minVersion.getVersionIntroducedIn() + " - " + this.maxVersion.getMostRecentSupportedVersion()
-          + " versions, modify the plugins/limboapi/config.yml file if you want the plugin to work with other versions."
+              + this.minVersion.getVersionIntroducedIn() + " - " + this.maxVersion.getMostRecentSupportedVersion()
+              + " versions, modify the plugins/limboapi/config.yml file if you want the plugin to work with other versions."
       );
     }
   }
@@ -330,10 +332,18 @@ public class LimboAPI implements LimboFactory {
     this.preparedPacketFactory.deject(pipeline);
   }
 
-  public void fixDecompressor(ChannelPipeline pipeline, int threshold) {
-    int level = this.server.getConfiguration().getCompressionLevel();
-    VelocityCompressor compressor = Natives.compress.get().create(level);
-    MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(threshold, compressor);
+  public void fixDecompressor(ChannelPipeline pipeline, int threshold, boolean onLogin) {
+    ChannelHandler decoder;
+    if (onLogin && Settings.IMP.MAIN.DISCARD_COMPRESSION_ON_LOGIN) {
+      decoder = new MinecraftDiscardCompressDecoder();
+    } else if (!onLogin && Settings.IMP.MAIN.DISCARD_COMPRESSION_AFTER_LOGIN) {
+      decoder = new MinecraftDiscardCompressDecoder();
+    } else {
+      int level = this.server.getConfiguration().getCompressionLevel();
+      VelocityCompressor compressor = Natives.compress.get().create(level);
+      decoder = new MinecraftCompressDecoder(threshold, compressor);
+    }
+
     pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.COMPRESSION_DECODER, decoder);
   }
 

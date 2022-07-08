@@ -56,6 +56,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private static final Method TEARDOWN_METHOD;
 
   private final LimboAPI plugin;
+  private final LimboImpl limbo;
   private final ConnectedPlayer player;
   private final LimboSessionHandler callback;
   private final MinecraftSessionHandler originalHandler;
@@ -71,9 +72,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private boolean loaded;
   //private boolean disconnected;
 
-  public LimboSessionHandlerImpl(LimboAPI plugin, ConnectedPlayer player, LimboSessionHandler callback, MinecraftSessionHandler originalHandler,
-      RegisteredServer previousServer, Supplier<String> limboName) {
+  public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player, LimboSessionHandler callback,
+                                 MinecraftSessionHandler originalHandler, RegisteredServer previousServer, Supplier<String> limboName) {
     this.plugin = plugin;
+    this.limbo = limbo;
     this.player = player;
     this.callback = callback;
     this.originalHandler = originalHandler;
@@ -82,11 +84,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.loaded = player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_18_2) < 0;
   }
 
-  public void onSpawn(LimboImpl server, LimboPlayer player) {
+  public void onSpawn(LimboPlayer player) {
     this.loaded = true;
-    this.callback.onSpawn(server, player);
+    this.callback.onSpawn(this.limbo, player);
 
-    Integer serverReadTimeout = server.getReadTimeout();
+    Integer serverReadTimeout = this.limbo.getReadTimeout();
     // TODO: VelocityScheduler#buildTask(Object, Consumer)
     this.keepAliveTask = this.plugin.getServer().getScheduler().buildTask(this.plugin, () -> {
       MinecraftConnection connection = this.player.getConnection();
@@ -241,6 +243,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       this.keepAliveTask.cancel();
     }
 
+    this.limbo.onDisconnect();
     this.callback.onDisconnect();
 
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {

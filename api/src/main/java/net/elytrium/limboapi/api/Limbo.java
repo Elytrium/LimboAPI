@@ -19,6 +19,8 @@ public interface Limbo {
 
   void respawnPlayer(Player player);
 
+  long getCurrentOnline();
+
   Limbo setName(String name);
 
   Limbo setReadTimeout(int millis);
