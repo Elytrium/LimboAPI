@@ -36,7 +36,7 @@ license {
   matching(includes: ["**/mcprotocollib/**"]) {
     setHeader(getRootProject().file("HEADER_MCPROTOCOLLIB.txt"))
   }
-  matching(includes: ["**/LoginListener.java", "**/LoginTasksQueue.java"]) {
+  matching(includes: ["**/LoginListener.java", "**/LoginTasksQueue.java", "**/MinecraftLimitedCompressDecoder.java"]) {
     setHeader(getRootProject().file("HEADER_MIXED.txt"))
   }
 
