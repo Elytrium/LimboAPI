@@ -19,7 +19,6 @@ package net.elytrium.limboapi.server;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
@@ -36,6 +35,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -63,7 +63,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final RegisteredServer previousServer;
   private final Supplier<String> limboName;
 
-  private ScheduledTask keepAliveTask;
+  private ScheduledFuture<?> keepAliveTask;
   private long keepAliveKey;
   private boolean keepAlivePending;
   private long keepAliveSentTime;
@@ -89,14 +89,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.callback.onSpawn(this.limbo, player);
 
     Integer serverReadTimeout = this.limbo.getReadTimeout();
-    // TODO: VelocityScheduler#buildTask(Object, Consumer)
-    this.keepAliveTask = this.plugin.getServer().getScheduler().buildTask(this.plugin, () -> {
+    this.keepAliveTask = this.plugin.getScheduler().scheduleAtFixedRate(() -> {
       MinecraftConnection connection = this.player.getConnection();
-      /*
-      if (connection.isClosed() || this.disconnected) {
-        scheduledTask.cancel();
-      } else {
-      */
       if (this.keepAlivePending) {
         connection.closeWith(this.plugin.getPackets().getTimeOut());
         if (Settings.IMP.MAIN.LOGGING_ENABLED) {
@@ -110,10 +104,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.keepAlivePending = true;
         this.keepAliveSentTime = System.currentTimeMillis();
       }
-      //}
-    }).delay(250, TimeUnit.MILLISECONDS) // Fix 1.7.x race condition with switching protocol states.
-      .repeat((serverReadTimeout == null ? this.plugin.getServer().getConfiguration().getReadTimeout() : serverReadTimeout) / 2, TimeUnit.MILLISECONDS)
-      .schedule();
+    }, 250, (serverReadTimeout == null ? this.plugin.getServer().getConfiguration().getReadTimeout() : serverReadTimeout) / 2, TimeUnit.MILLISECONDS);
   }
 
   public boolean handle(MovePacket packet) {
@@ -250,7 +241,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   public void disconnected() {
     //this.disconnected = true;
     if (this.keepAliveTask != null) {
-      this.keepAliveTask.cancel();
+      this.keepAliveTask.cancel(true);
     }
 
     this.limbo.onDisconnect();
