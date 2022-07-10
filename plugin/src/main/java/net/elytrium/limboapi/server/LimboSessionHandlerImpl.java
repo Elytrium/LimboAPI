@@ -99,7 +99,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       */
       if (this.keepAlivePending) {
         connection.closeWith(this.plugin.getPackets().getTimeOut());
-        LimboAPI.getLogger().warn("{} was kicked due to keepalive timeout.", this.player);
+        if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+          LimboAPI.getLogger().warn("{} was kicked due to keepalive timeout.", this.player);
+        }
       } else {
         this.keepAliveKey = ThreadLocalRandom.current().nextInt();
         KeepAlive keepAlive = new KeepAlive();
@@ -165,7 +167,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     if (this.keepAlivePending) {
       if (packet.getRandomId() != this.keepAliveKey) {
         connection.closeWith(this.plugin.getPackets().getInvalidPing());
-        LimboAPI.getLogger().warn("{} sent an invalid keepalive.", this.player);
+        if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+          LimboAPI.getLogger().warn("{} sent an invalid keepalive.", this.player);
+        }
         return false;
       } else {
         this.keepAlivePending = false;
@@ -174,7 +178,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       }
     } else {
       connection.closeWith(this.plugin.getPackets().getInvalidPing());
-      LimboAPI.getLogger().warn("{} sent an unexpected keepalive.", this.player);
+
+      if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+        LimboAPI.getLogger().warn("{} sent an unexpected keepalive.", this.player);
+      }
       return false;
     }
   }
@@ -233,7 +240,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   private void kickTooBigPacket(String type, int length) {
     this.player.getConnection().closeWith(this.plugin.getPackets().getTooBigPacket());
-    LimboAPI.getLogger().warn("{} sent too big packet. (type: {}, length: {})", this.player, type, length);
+
+    if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+      LimboAPI.getLogger().warn("{} sent too big packet. (type: {}, length: {})", this.player, type, length);
+    }
   }
 
   @Override
