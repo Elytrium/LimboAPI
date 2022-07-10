@@ -51,6 +51,11 @@ public class Settings extends YamlConfig {
     public int MAX_UNKNOWN_PACKET_LENGTH = 2048;
     public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 4096;
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
+    @Comment({
+        "Default max packet length (in bytes) that will be proceeded, other packets will be dropped.",
+        "Can be increased with Limbo#setMaxSuppressPacketLength"
+    })
+    public int MAX_PACKET_LENGTH_TO_SUPPRESS_IT = 512;
     @Comment("Allows to fly through blocks in gamemode 3. Disabling this setting improves performance during attacks")
     public boolean FIX_SPECTATOR_FLY_THROUGH_BLOCKS = true;
     @Comment({
