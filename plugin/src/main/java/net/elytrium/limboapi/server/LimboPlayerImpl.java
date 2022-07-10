@@ -31,6 +31,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.Item;
@@ -342,5 +343,10 @@ public class LimboPlayerImpl implements LimboPlayer {
   @Override
   public void setWorldTime(long ticks) {
     this.writePacketAndFlush(new TimeUpdatePacket(ticks, ticks));
+  }
+
+  @Override
+  public ScheduledExecutorService getScheduledExecutor() {
+    return this.connection.eventLoop();
   }
 }
