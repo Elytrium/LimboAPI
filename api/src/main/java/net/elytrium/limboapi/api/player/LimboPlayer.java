@@ -11,6 +11,7 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.ScheduledExecutorService;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -74,4 +75,6 @@ public interface LimboPlayer {
   int getPing();
 
   void setWorldTime(long ticks);
+
+  ScheduledExecutorService getScheduledExecutor();
 }

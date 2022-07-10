@@ -89,7 +89,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.callback.onSpawn(this.limbo, player);
 
     Integer serverReadTimeout = this.limbo.getReadTimeout();
-    this.keepAliveTask = this.plugin.getScheduler().scheduleAtFixedRate(() -> {
+    this.keepAliveTask = player.getScheduledExecutor().scheduleAtFixedRate(() -> {
       MinecraftConnection connection = this.player.getConnection();
       if (this.keepAlivePending) {
         connection.closeWith(this.plugin.getPackets().getTimeOut());

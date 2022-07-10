@@ -53,8 +53,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 import net.elytrium.fastprepare.PreparedPacketFactory;
 import net.elytrium.java.commons.config.YamlConfig;
@@ -129,7 +127,6 @@ public class LimboAPI implements LimboFactory {
   private final HashMap<Player, LoginTasksQueue> loginQueue;
   private final HashMap<Player, RegisteredServer> nextServer;
   private final HashMap<Player, UUID> initialID;
-  private final ThreadLocal<ScheduledExecutorService> scheduler;
 
   private PreparedPacketFactory preparedPacketFactory;
   private PreparedPacketFactory loginPreparedPacketFactory;
@@ -151,8 +148,6 @@ public class LimboAPI implements LimboFactory {
     this.loginQueue = new HashMap<>();
     this.nextServer = new HashMap<>();
     this.initialID = new HashMap<>();
-
-    this.scheduler = ThreadLocal.withInitial(() -> Executors.newSingleThreadScheduledExecutor(task -> new Thread(task, "limboapi-scheduler")));
 
     if (ProtocolVersion.MAXIMUM_VERSION.getProtocol() < 759) {
       LOGGER.error("Please update Velocity (https://papermc.io/downloads#Velocity). LimboAPI support: https://ely.su/discord");
@@ -509,10 +504,6 @@ public class LimboAPI implements LimboFactory {
 
   public ProtocolVersion getPrepareMaxVersion() {
     return this.maxVersion;
-  }
-
-  public ScheduledExecutorService getScheduler() {
-    return this.scheduler.get();
   }
 
   static {
