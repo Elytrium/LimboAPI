@@ -75,6 +75,7 @@ import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.command.LimboCommandMeta;
 import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
+import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.s2c.ChunkDataPacket;
@@ -112,6 +113,7 @@ public class LimboImpl implements Limbo {
   private Integer readTimeout;
   private Long worldTicks;
   private short gameMode = (short) GameMode.ADVENTURE.getId();
+  private Integer maxSuppressPacketLength;
 
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
@@ -220,6 +222,14 @@ public class LimboImpl implements Limbo {
           }
 
           this.plugin.inject3rdParty(player, connection, pipeline);
+        }
+      }
+
+      if (this.maxSuppressPacketLength != null) {
+        MinecraftLimitedCompressDecoder decoder = pipeline.get(MinecraftLimitedCompressDecoder.class);
+
+        if (decoder != null) {
+          decoder.setUncompressedCap(this.maxSuppressPacketLength);
         }
       }
 
@@ -346,6 +356,13 @@ public class LimboImpl implements Limbo {
   @Override
   public Limbo setShouldRespawn(boolean shouldRespawn) {
     this.shouldRespawn = shouldRespawn;
+
+    return this;
+  }
+
+  @Override
+  public Limbo setMaxSuppressPacketLength(int maxSuppressPacketLength) {
+    this.maxSuppressPacketLength = maxSuppressPacketLength;
 
     return this;
   }

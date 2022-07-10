@@ -31,6 +31,8 @@ public interface Limbo {
 
   Limbo setShouldRespawn(boolean shouldRespawn);
 
+  Limbo setMaxSuppressPacketLength(int maxSuppressPacketLength);
+
   Limbo registerCommand(LimboCommandMeta commandMeta);
 
   Limbo registerCommand(CommandMeta commandMeta, Command command);

@@ -47,7 +47,8 @@ public class MinecraftLimitedCompressDecoder extends MinecraftCompressDecoder {
 
   private final int threshold;
   private final VelocityCompressor compressor;
-  private final int uncompressedCap = Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH;
+  private final int uncompressedKickCap = Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH;
+  private int uncompressedCap = Settings.IMP.MAIN.MAX_PACKET_LENGTH_TO_SUPPRESS_IT;
 
   public MinecraftLimitedCompressDecoder(int threshold, VelocityCompressor compressor) {
     super(threshold, compressor);
@@ -60,6 +61,11 @@ public class MinecraftLimitedCompressDecoder extends MinecraftCompressDecoder {
     int claimedUncompressedSize = ProtocolUtils.readVarInt(in);
     if (claimedUncompressedSize == 0) {
       out.add(in.retain());
+      return;
+    }
+
+    if (claimedUncompressedSize > this.uncompressedKickCap) {
+      ctx.close();
       return;
     }
 
@@ -79,5 +85,9 @@ public class MinecraftLimitedCompressDecoder extends MinecraftCompressDecoder {
     } finally {
       compatibleIn.release();
     }
+  }
+
+  public void setUncompressedCap(int uncompressedCap) {
+    this.uncompressedCap = uncompressedCap;
   }
 }
