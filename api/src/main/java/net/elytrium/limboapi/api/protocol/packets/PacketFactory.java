@@ -7,6 +7,7 @@
 
 package net.elytrium.limboapi.api.protocol.packets;
 
+import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.packets.data.AbilityFlags;
@@ -19,6 +20,8 @@ public interface PacketFactory {
   Object createChangeGameStatePacket(int reason, float value);
 
   Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, boolean skyLight, int maxSections);
+
+  Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, Dimension dimension);
 
   Object createDefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle);
 

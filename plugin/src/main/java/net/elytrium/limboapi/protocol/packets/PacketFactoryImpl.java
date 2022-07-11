@@ -17,6 +17,7 @@
 
 package net.elytrium.limboapi.protocol.packets;
 
+import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
@@ -44,6 +45,11 @@ public class PacketFactoryImpl implements PacketFactory {
   @Override
   public Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, boolean skyLight, int maxSections) {
     return new ChunkDataPacket(chunkSnapshot, skyLight, maxSections);
+  }
+
+  @Override
+  public Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, Dimension dimension) {
+    return new ChunkDataPacket(chunkSnapshot, dimension.hasSkyLight(), dimension.getMaxSections());
   }
 
   @Override

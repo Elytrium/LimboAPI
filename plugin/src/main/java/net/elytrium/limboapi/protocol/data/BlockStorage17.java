@@ -65,7 +65,7 @@ public class BlockStorage17 implements BlockStorage {
 
         ++this.pass;
       } else if (this.pass == 1) {
-        NibbleArray3d metadata = new NibbleArray3d(16 * 16 * 16);
+        NibbleArray3d metadata = new NibbleArray3d(SimpleChunk.MAX_BLOCKS_PER_SECTION);
         for (int i = 0; i < this.blocks.length; ++i) {
           metadata.set(i, 0);
         }
