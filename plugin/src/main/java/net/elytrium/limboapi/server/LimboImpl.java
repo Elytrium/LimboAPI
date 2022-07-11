@@ -580,7 +580,7 @@ public class LimboImpl implements Limbo {
 
   private ChunkDataPacket createChunkData(VirtualChunk chunk, Dimension dimension, int skyLightY) {
     chunk.setSkyLight(chunk.getX() & 15, skyLightY, chunk.getZ() & 15, (byte) 1);
-    return new ChunkDataPacket(chunk.getFullChunkSnapshot(), true, dimension.getMaxSections());
+    return new ChunkDataPacket(chunk.getFullChunkSnapshot(), dimension.hasSkyLight(), dimension.getMaxSections());
   }
 
   public Integer getReadTimeout() {
