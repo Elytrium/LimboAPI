@@ -29,6 +29,7 @@ import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.common.value.qual.IntRange;
 
 public class SimpleChunk implements VirtualChunk {
 
@@ -45,7 +46,11 @@ public class SimpleChunk implements VirtualChunk {
   public SimpleChunk(int posX, int posZ) {
     this.posX = posX;
     this.posZ = posZ;
-    //Arrays.fill(this.light, LightSection.DEFAULT);
+
+    for (int i = 0; i < this.light.length; i++) {
+      this.light[i] = new SimpleLightSection();
+    }
+
     Arrays.fill(this.biomes, Biome.PLAINS);
   }
 
@@ -81,22 +86,36 @@ public class SimpleChunk implements VirtualChunk {
 
   @Override
   public void setBlockLight(int x, int y, int z, byte light) {
-    this.getLightSection(y, true).setBlockLight(x, y & 15, z, light);
+    this.getLightSection(y).setBlockLight(x, y & 15, z, light);
   }
 
   @Override
   public byte getBlockLight(int x, int y, int z) {
-    return this.getLightSection(y, false).getBlockLight(x, y & 15, z);
+    return this.getLightSection(y).getBlockLight(x, y & 15, z);
   }
 
   @Override
   public void setSkyLight(int x, int y, int z, byte light) {
-    this.getLightSection(y, true).setSkyLight(x, y & 15, z, light);
+    this.getLightSection(y).setSkyLight(x, y & 15, z, light);
   }
 
   @Override
   public byte getSkyLight(int x, int y, int z) {
-    return this.getLightSection(y, false).getSkyLight(x, y & 15, z);
+    return this.getLightSection(y).getSkyLight(x, y & 15, z);
+  }
+
+  @Override
+  public void fillBlockLight(@IntRange(from = 0, to = 15) int level) {
+    for (LightSection lightSection : this.light) {
+      lightSection.getBlockLight().fill(level);
+    }
+  }
+
+  @Override
+  public void fillSkyLight(@IntRange(from = 0, to = 15) int level) {
+    for (LightSection lightSection : this.light) {
+      lightSection.getSkyLight().fill(level);
+    }
   }
 
   public int getX() {
@@ -127,9 +146,7 @@ public class SimpleChunk implements VirtualChunk {
 
     LightSection[] lightSnapshot = new LightSection[18];
     for (int i = 0; i < this.light.length; ++i) {
-      if (this.light[i] == null) {
-        lightSnapshot[i] = SimpleLightSection.DEFAULT;
-      } else if (this.light[i].getLastUpdate() > previousUpdate) {
+      if (this.light[i].getLastUpdate() > previousUpdate) {
         lightSnapshot[i] = this.light[i].copy();
       }
     }
@@ -156,14 +173,9 @@ public class SimpleChunk implements VirtualChunk {
     return function.apply(section);
   }
 
-  private LightSection getLightSection(int y, boolean create) {
+  private LightSection getLightSection(int y) {
     int index = y < 0 ? 0 : getSectionIndex(y) + 1;
-    LightSection result = this.light[index];
-    if (create && result == null) {
-      this.light[index] = result = new SimpleLightSection();
-    }
-
-    return result == null ? SimpleLightSection.DEFAULT : result;
+    return this.light[index];
   }
 
   private static int getSectionIndex(int y) {

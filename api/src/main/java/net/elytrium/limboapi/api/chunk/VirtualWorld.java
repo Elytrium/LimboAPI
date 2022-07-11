@@ -10,6 +10,7 @@ package net.elytrium.limboapi.api.chunk;
 import java.util.List;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.common.value.qual.IntRange;
 
 public interface VirtualWorld {
 
@@ -25,6 +26,10 @@ public interface VirtualWorld {
   byte getBlockLight(int x, int y, int z);
 
   void setBlockLight(int x, int y, int z, byte light);
+
+  void fillBlockLight(@IntRange(from = 0, to = 15) int level);
+
+  void fillSkyLight(@IntRange(from = 0, to = 15) int level);
 
   List<VirtualChunk> getChunks();
 

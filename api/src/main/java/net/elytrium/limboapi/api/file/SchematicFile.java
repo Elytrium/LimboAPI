@@ -40,6 +40,11 @@ public class SchematicFile implements WorldFile {
 
   @Override
   public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ) {
+    this.toWorld(factory, world, offsetX, offsetY, offsetZ, 15);
+  }
+
+  @Override
+  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, int lightLevel) {
     short[] blockIds = new short[this.blocks.length];
 
     for (int index = 0; index < this.blocks.length; ++index) {
@@ -62,6 +67,8 @@ public class SchematicFile implements WorldFile {
         }
       }
     }
+
+    world.fillSkyLight(lightLevel);
   }
 
   private void fromNBT(CompoundBinaryTag tag) {
