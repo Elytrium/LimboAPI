@@ -102,6 +102,20 @@ public class SimpleWorld implements VirtualWorld {
   }
 
   @Override
+  public void fillBlockLight(int level) {
+    for (SimpleChunk chunk : this.chunks.values()) {
+      chunk.fillBlockLight(level);
+    }
+  }
+
+  @Override
+  public void fillSkyLight(int level) {
+    for (SimpleChunk chunk : this.chunks.values()) {
+      chunk.fillSkyLight(level);
+    }
+  }
+
+  @Override
   public List<VirtualChunk> getChunks() {
     return ImmutableList.copyOf(this.chunks.values());
   }

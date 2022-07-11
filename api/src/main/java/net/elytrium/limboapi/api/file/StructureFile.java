@@ -44,11 +44,15 @@ public class StructureFile implements WorldFile {
 
   @Override
   public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ) {
+    this.toWorld(factory, world, offsetX, offsetY, offsetZ, 15);
+  }
+
+  @Override
+  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, int lightLevel) {
     VirtualBlock[] palettedBlocks = new VirtualBlock[this.palette.size()];
     for (int i = 0; i < this.palette.size(); i++) {
       CompoundBinaryTag map = this.palette.getCompound(i);
 
-      long propertyHash = 0L;
       Map<String, String> propertiesMap = null;
       if (map.keySet().contains("Properties")) {
         propertiesMap = new HashMap<>();
@@ -71,6 +75,8 @@ public class StructureFile implements WorldFile {
       VirtualBlock block = palettedBlocks[state];
       world.setBlock(offsetX + x, offsetY + y, offsetZ + z, block);
     }
+
+    world.fillSkyLight(lightLevel);
   }
 
   private void fromNBT(CompoundBinaryTag tag) {
