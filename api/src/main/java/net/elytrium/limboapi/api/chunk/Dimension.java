@@ -9,23 +9,24 @@ package net.elytrium.limboapi.api.chunk;
 
 public enum Dimension {
 
-  OVERWORLD("minecraft:overworld", 0, 0, 28, true), // (384 + 64) / 16
-  NETHER("minecraft:nether", -1, 2, 16, false), // 256 / 16
-  THE_END("minecraft:the_end", 1, 3, 16, false); // 256 / 16
+  OVERWORLD("minecraft:overworld", 0, 0, 28, true, BuiltInBiome.PLAINS), // (384 + 64) / 16
+  NETHER("minecraft:the_nether", -1, 1, 16, false, BuiltInBiome.NETHER_WASTES), // 256 / 16
+  THE_END("minecraft:the_end", 1, 2, 16, false, BuiltInBiome.THE_END); // 256 / 16
 
   private final String key;
   private final int legacyId;
   private final int modernId;
   private final int maxSections;
-
   private final boolean hasSkyLight;
+  private final BuiltInBiome defaultBiome;
 
-  Dimension(String key, int legacyId, int modernId, int maxSections, boolean hasSkyLight) {
+  Dimension(String key, int legacyId, int modernId, int maxSections, boolean hasSkyLight, BuiltInBiome defaultBiome) {
     this.key = key;
     this.legacyId = legacyId;
     this.modernId = modernId;
     this.maxSections = maxSections;
     this.hasSkyLight = hasSkyLight;
+    this.defaultBiome = defaultBiome;
   }
 
   public String getKey() {
@@ -46,6 +47,10 @@ public enum Dimension {
 
   public boolean hasSkyLight() {
     return this.hasSkyLight;
+  }
+
+  public BuiltInBiome getDefaultBiome() {
+    return this.defaultBiome;
   }
 }
 

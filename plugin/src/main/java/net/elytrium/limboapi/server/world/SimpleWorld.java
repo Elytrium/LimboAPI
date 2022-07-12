@@ -37,6 +37,7 @@ public class SimpleWorld implements VirtualWorld {
 
   @NonNull
   private final Dimension dimension;
+  private final VirtualBiome defaultBiome;
   private final Map<Long, SimpleChunk> chunks = new HashMap<>();
 
   private final double spawnX;
@@ -47,6 +48,7 @@ public class SimpleWorld implements VirtualWorld {
 
   public SimpleWorld(@NonNull Dimension dimension, double x, double y, double z, float yaw, float pitch) {
     this.dimension = dimension;
+    this.defaultBiome = Biome.of(dimension.getDefaultBiome());
 
     this.spawnX = x;
     this.spawnY = y;
@@ -133,7 +135,7 @@ public class SimpleWorld implements VirtualWorld {
     long index = getChunkIndex(x, z);
     SimpleChunk simpleChunk = this.chunks.get(index);
     if (simpleChunk == null) {
-      this.chunks.put(index, simpleChunk = new SimpleChunk(x, z));
+      this.chunks.put(index, simpleChunk = new SimpleChunk(x, z, this.defaultBiome));
     }
 
     return simpleChunk;
