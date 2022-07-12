@@ -11,7 +11,9 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import java.util.Map;
 import java.util.function.Supplier;
+import net.elytrium.limboapi.api.chunk.BuiltInBiome;
 import net.elytrium.limboapi.api.chunk.Dimension;
+import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
@@ -102,7 +104,7 @@ public interface LimboFactory {
   VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch);
 
   /**
-   * Creates new virtual chunk.
+   * Creates new virtual chunk with plain biomes set as default.
    * You need to provide the chunk location, you can get it using (block_coordinate >> 4)
    *
    * @param x Chunk location. (X)
@@ -110,7 +112,32 @@ public interface LimboFactory {
    *
    * @return new virtual chunk.
    */
+  @Deprecated
   VirtualChunk createVirtualChunk(int x, int z);
+
+  /**
+   * Creates new virtual chunk.
+   * You need to provide the chunk location, you can get it using (block_coordinate >> 4)
+   *
+   * @param x Chunk location. (X)
+   * @param z Chunk location. (Z)
+   * @param defaultBiome default biome to fill it.
+   *
+   * @return new virtual chunk.
+   */
+  VirtualChunk createVirtualChunk(int x, int z, VirtualBiome defaultBiome);
+
+  /**
+   * Creates new virtual chunk.
+   * You need to provide the chunk location, you can get it using (block_coordinate >> 4)
+   *
+   * @param x Chunk location. (X)
+   * @param z Chunk location. (Z)
+   * @param defaultBiome default biome to fill it.
+   *
+   * @return new virtual chunk.
+   */
+  VirtualChunk createVirtualChunk(int x, int z, BuiltInBiome defaultBiome);
 
   /**
    * Creates new virtual server.

@@ -44,6 +44,10 @@ public class SimpleChunk implements VirtualChunk {
   private final VirtualBiome[] biomes = new VirtualBiome[1024];
 
   public SimpleChunk(int posX, int posZ) {
+    this(posX, posZ, Biome.PLAINS);
+  }
+
+  public SimpleChunk(int posX, int posZ, VirtualBiome defaultBiome) {
     this.posX = posX;
     this.posZ = posZ;
 
@@ -51,7 +55,7 @@ public class SimpleChunk implements VirtualChunk {
       this.light[i] = new SimpleLightSection();
     }
 
-    Arrays.fill(this.biomes, Biome.PLAINS);
+    Arrays.fill(this.biomes, defaultBiome);
   }
 
   @Override

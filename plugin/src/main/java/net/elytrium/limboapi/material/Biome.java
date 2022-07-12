@@ -18,7 +18,9 @@
 package net.elytrium.limboapi.material;
 
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.stream.Collectors;
+import net.elytrium.limboapi.api.chunk.BuiltInBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.material.Biome.Effects.MoodSound;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -30,6 +32,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public enum Biome implements VirtualBiome {
 
   PLAINS(
+      BuiltInBiome.PLAINS,
       "minecraft:plains",
       1,
       new Element(
@@ -40,6 +43,7 @@ public enum Biome implements VirtualBiome {
       )
   ),
   SWAMP(
+      BuiltInBiome.SWAMP,
       "minecraft:swamp",
       6,
       new Element(
@@ -52,6 +56,7 @@ public enum Biome implements VirtualBiome {
       )
   ),
   SWAMP_HILLS(
+      BuiltInBiome.SWAMP_HILLS,
       "minecraft:swamp_hills",
       134,
       new Element(
@@ -62,13 +67,37 @@ public enum Biome implements VirtualBiome {
               .moodSound(MoodSound.of(6000, 2.0, 8, "minecraft:ambient.cave"))
               .build()
       )
+  ),
+  NETHER_WASTES(
+      BuiltInBiome.NETHER_WASTES,
+      "minecraft:nether_wastes",
+      8,
+      new Element("none", 0.1f, 2.0f, 0.2f, 0.0f, "nether",
+          Effects.builder(7254527, 329011, 3344392, 4159204)
+              .moodSound(MoodSound.of(6000, 2.0, 8, "minecraft:ambient.nether_wastes.mood"))
+              .build()
+      )
+  ),
+  THE_END(
+      BuiltInBiome.THE_END,
+      "minecraft:the_end",
+      9,
+      new Element("none", 0.1f, 0.5f, 0.2f, 0.5f, "the_end",
+          Effects.builder(0, 10518688, 12638463, 4159204)
+              .moodSound(MoodSound.of(6000, 2.0, 8, "minecraft:ambient.cave"))
+              .build()
+      )
   );
 
-  public final String name;
-  public final int id;
-  public final Element element;
+  private static final EnumMap<BuiltInBiome, Biome> BUILT_IN_BIOME_MAP = new EnumMap<>(BuiltInBiome.class);
 
-  Biome(String name, int id, Element element) {
+  private final BuiltInBiome index;
+  private final String name;
+  private final int id;
+  private final Element element;
+
+  Biome(BuiltInBiome index, String name, int id, Element element) {
+    this.index = index;
     this.name = name;
     this.id = id;
     this.element = element;
@@ -101,6 +130,16 @@ public enum Biome implements VirtualBiome {
 
   public Element getElement() {
     return this.element;
+  }
+
+  static {
+    for (Biome biome : Biome.values()) {
+      BUILT_IN_BIOME_MAP.put(biome.index, biome);
+    }
+  }
+
+  public static Biome of(BuiltInBiome index) {
+    return BUILT_IN_BIOME_MAP.get(index);
   }
 
   public static class Element {
@@ -200,10 +239,10 @@ public enum Biome implements VirtualBiome {
     private final Particle particle;
 
     public Effects(int skyColor,
-        int waterFogColor, int fogColor, int waterColor,
-        @Nullable Integer foliageColor, @Nullable String grassColorModifier, @Nullable Music music,
-        @Nullable String ambientSound, @Nullable AdditionsSound additionsSound,
-        @Nullable MoodSound moodSound, @Nullable Particle particle) {
+                   int waterFogColor, int fogColor, int waterColor,
+                   @Nullable Integer foliageColor, @Nullable String grassColorModifier, @Nullable Music music,
+                   @Nullable String ambientSound, @Nullable AdditionsSound additionsSound,
+                   @Nullable MoodSound moodSound, @Nullable Particle particle) {
       this.skyColor = skyColor;
       this.waterFogColor = waterFogColor;
       this.fogColor = fogColor;

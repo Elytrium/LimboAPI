@@ -62,7 +62,9 @@ import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.java.commons.updates.UpdatesChecker;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
+import net.elytrium.limboapi.api.chunk.BuiltInBiome;
 import net.elytrium.limboapi.api.chunk.Dimension;
+import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
@@ -82,6 +84,7 @@ import net.elytrium.limboapi.injection.packet.MinecraftDiscardCompressDecoder;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.injection.packet.PlayerListItemHook;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
+import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.PacketFactoryImpl;
 import net.elytrium.limboapi.server.CachedPackets;
@@ -300,6 +303,16 @@ public class LimboAPI implements LimboFactory {
   @Override
   public VirtualChunk createVirtualChunk(int x, int z) {
     return new SimpleChunk(x, z);
+  }
+
+  @Override
+  public VirtualChunk createVirtualChunk(int x, int z, VirtualBiome defaultBiome) {
+    return new SimpleChunk(x, z, defaultBiome);
+  }
+
+  @Override
+  public VirtualChunk createVirtualChunk(int x, int z, BuiltInBiome defaultBiome) {
+    return new SimpleChunk(x, z, Biome.of(defaultBiome));
   }
 
   @Override
