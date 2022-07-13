@@ -14,33 +14,33 @@ import org.checkerframework.common.value.qual.IntRange;
 
 public interface VirtualChunk {
 
-  void setBlock(int x, int y, int z, @Nullable VirtualBlock block);
+  void setBlock(int posX, int posY, int posZ, @Nullable VirtualBlock block);
 
   @NonNull
-  VirtualBlock getBlock(int x, int y, int z);
+  VirtualBlock getBlock(int posX, int posY, int posZ);
 
-  void setBiome2d(int x, int z, @NonNull VirtualBiome biome);
+  void setBiome2D(int posX, int posZ, @NonNull VirtualBiome biome);
 
-  void setBiome3d(int x, int y, int z, @NonNull VirtualBiome biome);
+  void setBiome3D(int posX, int posY, int posZ, @NonNull VirtualBiome biome);
 
   @NonNull
-  VirtualBiome getBiome(int x, int y, int z);
+  VirtualBiome getBiome(int posX, int posY, int posZ);
 
-  void setBlockLight(int x, int y, int z, byte light);
+  void setBlockLight(int posX, int posY, int posZ, byte light);
 
-  byte getBlockLight(int x, int y, int z);
+  byte getBlockLight(int posX, int posY, int posZ);
 
-  void setSkyLight(int x, int y, int z, byte light);
+  void setSkyLight(int posX, int posY, int posZ, byte light);
 
-  byte getSkyLight(int x, int y, int z);
+  byte getSkyLight(int posX, int posY, int posZ);
 
   void fillBlockLight(@IntRange(from = 0, to = 15) int level);
 
   void fillSkyLight(@IntRange(from = 0, to = 15) int level);
 
-  int getX();
+  int getPosX();
 
-  int getZ();
+  int getPosZ();
 
   ChunkSnapshot getFullChunkSnapshot();
 

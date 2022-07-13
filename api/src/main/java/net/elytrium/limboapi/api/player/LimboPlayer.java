@@ -28,6 +28,8 @@ public interface LimboPlayer {
 
   void closeWith(Object packetObj);
 
+  ScheduledExecutorService getScheduledExecutor();
+
   void sendImage(BufferedImage image);
 
   void sendImage(BufferedImage image, boolean sendItem);
@@ -46,7 +48,7 @@ public interface LimboPlayer {
 
   void setGameMode(GameMode gameMode);
 
-  void teleport(double x, double y, double z, float yaw, float pitch);
+  void teleport(double posX, double posY, double posZ, float yaw, float pitch);
 
   /**
    * @deprecated Use {@link Player#showTitle(Title)}
@@ -75,6 +77,4 @@ public interface LimboPlayer {
   int getPing();
 
   void setWorldTime(long ticks);
-
-  ScheduledExecutorService getScheduledExecutor();
 }

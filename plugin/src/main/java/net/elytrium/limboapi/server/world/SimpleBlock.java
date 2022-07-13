@@ -85,7 +85,7 @@ public class SimpleBlock implements VirtualBlock {
         LinkedTreeMap.class
     );
 
-    tempLegacyFlattenMap.forEach((k, v) -> LEGACY_IDS_FLATTEN_MAP.put(Short.valueOf(k), Short.valueOf(v)));
+    tempLegacyFlattenMap.forEach((key, value) -> LEGACY_IDS_FLATTEN_MAP.put(Short.valueOf(key), Short.valueOf(value)));
   }
 
   @SuppressWarnings("unchecked")

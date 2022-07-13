@@ -97,8 +97,8 @@ public class ChunkDataPacket implements MinecraftPacket {
       Preconditions.checkState(version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0);
     }
 
-    buf.writeInt(this.chunk.getX());
-    buf.writeInt(this.chunk.getZ());
+    buf.writeInt(this.chunk.getPosX());
+    buf.writeInt(this.chunk.getPosZ());
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
       // 1.17 mask.
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) <= 0) {
@@ -237,15 +237,15 @@ public class ChunkDataPacket implements MinecraftPacket {
     CompactStorage surface = pre116 ? new BitStorage19(9, 256) : new BitStorage116(9, 256);
     CompactStorage motionBlocking = pre116 ? new BitStorage19(9, 256) : new BitStorage116(9, 256);
 
-    for (int y = 0; y < 256; ++y) {
-      for (int x = 0; x < 16; ++x) {
-        for (int z = 0; z < 16; ++z) {
-          VirtualBlock block = this.chunk.getBlock(x, y, z);
+    for (int posY = 0; posY < 256; ++posY) {
+      for (int posX = 0; posX < 16; ++posX) {
+        for (int posZ = 0; posZ < 16; ++posZ) {
+          VirtualBlock block = this.chunk.getBlock(posX, posY, posZ);
           if (!block.isAir()) {
-            surface.set(x + (z << 4), y + 1);
+            surface.set(posX + (posZ << 4), posY + 1);
           }
           if (block.isMotionBlocking()) {
-            motionBlocking.set(x + (z << 4), y + 1);
+            motionBlocking.set(posX + (posZ << 4), posY + 1);
           }
         }
       }

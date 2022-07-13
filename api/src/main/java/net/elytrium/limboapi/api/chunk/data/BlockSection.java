@@ -12,9 +12,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public interface BlockSection {
 
-  void setBlockAt(int x, int y, int z, @Nullable VirtualBlock block);
+  void setBlockAt(int posX, int posY, int posZ, @Nullable VirtualBlock block);
 
-  VirtualBlock getBlockAt(int x, int y, int z);
+  VirtualBlock getBlockAt(int posX, int posY, int posZ);
 
   BlockSection getSnapshot();
 

@@ -68,9 +68,11 @@ public class SimpleLightSection implements LightSection {
   public void setSkyLight(int posX, int posY, int posZ, byte light) {
     this.checkIndexes(posX, posY, posZ);
     Preconditions.checkArgument(light >= 0 && light <= 15, "light should be between 0 and 15");
+
     if (this.skyLight == ALL_LIGHT && light != 15) {
       this.skyLight = new NibbleArray3D(SimpleChunk.MAX_BLOCKS_PER_SECTION);
     }
+
     this.skyLight.set(posX, posY, posZ, light);
     this.lastUpdate = System.nanoTime();
   }
@@ -86,14 +88,14 @@ public class SimpleLightSection implements LightSection {
     return (byte) this.skyLight.get(posX, posY, posZ);
   }
 
-  private void checkIndexes(int x, int y, int z) {
-    Preconditions.checkArgument(this.checkIndex(x), "x should be between 0 and 15");
-    Preconditions.checkArgument(this.checkIndex(y), "y should be between 0 and 15");
-    Preconditions.checkArgument(this.checkIndex(z), "z should be between 0 and 15");
+  private void checkIndexes(int posX, int posY, int posZ) {
+    Preconditions.checkArgument(this.checkIndex(posX), "x should be between 0 and 15");
+    Preconditions.checkArgument(this.checkIndex(posY), "y should be between 0 and 15");
+    Preconditions.checkArgument(this.checkIndex(posZ), "z should be between 0 and 15");
   }
 
-  private boolean checkIndex(int i) {
-    return i >= 0 && i <= 15;
+  private boolean checkIndex(int pos) {
+    return pos >= 0 && pos <= 15;
   }
 
   @Override

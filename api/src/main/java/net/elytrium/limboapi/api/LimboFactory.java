@@ -40,7 +40,7 @@ public interface LimboFactory {
   /**
    * Creates new virtual block from id and data.
    *
-   * @param legacyID Legacy block id (1.12.2 and lower)
+   * @param legacyID Legacy block id. (1.12.2 and lower)
    *
    * @return new virtual block.
    */
@@ -49,8 +49,8 @@ public interface LimboFactory {
   /**
    * Creates new virtual block from id and data.
    *
-   * @param modernID Modern block id
-   * @param properties Modern properties like {"waterlogged": "true"}
+   * @param modernID Modern block id.
+   * @param properties Modern properties like {"waterlogged": "true"}.
    *
    * @return new virtual block.
    */
@@ -59,7 +59,7 @@ public interface LimboFactory {
   /**
    * Creates new virtual block from id and data.
    *
-   * @param legacyID Block id
+   * @param legacyID Block id.
    * @param modern   Use the latest supported version ids or 1.12.2 and lower.
    *
    * @return new virtual block.
@@ -69,10 +69,10 @@ public interface LimboFactory {
   /**
    * Creates new virtual customizable block.
    *
-   * @param solid          Defines if the block is solid or not
-   * @param air            Defines if the block is the air
-   * @param motionBlocking Defines if the block blocks motions (1.14+)
-   * @param id             Block id
+   * @param solid          Defines if the block is solid or not.
+   * @param air            Defines if the block is the air.
+   * @param motionBlocking Defines if the block blocks motions. (1.14+)
+   * @param id             Block id.
    *
    * @return new virtual block.
    */
@@ -81,11 +81,11 @@ public interface LimboFactory {
   /**
    * Creates new virtual customizable block.
    *
-   * @param solid          Defines if the block is solid or not
-   * @param air            Defines if the block is the air
-   * @param motionBlocking Defines if the block blocks motions (1.14+)
-   * @param modernID       Block id
-   * @param properties     Modern properties like {"waterlogged": "true"}
+   * @param solid          Defines if the block is solid or not.
+   * @param air            Defines if the block is the air.
+   * @param motionBlocking Defines if the block blocks motions. (1.14+)
+   * @param modernID       Block id.
+   * @param properties     Modern properties like {"waterlogged": "true"}.
    *
    * @return new virtual block.
    */
@@ -123,7 +123,7 @@ public interface LimboFactory {
    *
    * @param posX         Chunk location. (X)
    * @param posZ         Chunk location. (Z)
-   * @param defaultBiome default biome to fill it.
+   * @param defaultBiome Default biome to fill it.
    *
    * @return new virtual chunk.
    */
@@ -135,7 +135,7 @@ public interface LimboFactory {
    *
    * @param posX         Chunk location. (X)
    * @param posZ         Chunk location. (Z)
-   * @param defaultBiome default biome to fill it.
+   * @param defaultBiome Default biome to fill it.
    *
    * @return new virtual chunk.
    */
@@ -160,8 +160,8 @@ public interface LimboFactory {
   /**
    * Creates new prepared packet builder.
    *
-   * @param minVersion Minimum version to prepare
-   * @param maxVersion Maximum version to prepare
+   * @param minVersion Minimum version to prepare.
+   * @param maxVersion Maximum version to prepare.
    *
    * @return new prepared packet.
    */

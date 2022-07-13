@@ -56,7 +56,7 @@ public class SchematicFile implements WorldFile {
   @Override
   public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, int lightLevel) {
     short[] blockIDs = new short[this.blocks.length];
-    for (int index = 0; index < this.blocks.length; ++index) {
+    for (int index = 0; index < blockIDs.length; ++index) {
       if ((index >> 1) >= this.addBlocks.length) {
         blockIDs[index] = (short) (this.blocks[index] & 0xFF);
       } else {
@@ -68,11 +68,11 @@ public class SchematicFile implements WorldFile {
       }
     }
 
-    for (int x = 0; x < this.width; ++x) {
-      for (int y = 0; y < this.height; ++y) {
-        for (int z = 0; z < this.length; ++z) {
-          int index = (y * this.length + z) * this.width + x;
-          world.setBlock(x + offsetX, y + offsetY, z + offsetZ, factory.createSimpleBlock(blockIDs[index]));
+    for (int posX = 0; posX < this.width; ++posX) {
+      for (int posY = 0; posY < this.height; ++posY) {
+        for (int posZ = 0; posZ < this.length; ++posZ) {
+          int index = (posY * this.length + posZ) * this.width + posX;
+          world.setBlock(posX + offsetX, posY + offsetY, posZ + offsetZ, factory.createSimpleBlock(blockIDs[index]));
         }
       }
     }

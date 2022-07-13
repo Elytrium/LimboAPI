@@ -101,6 +101,11 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
+  public ScheduledExecutorService getScheduledExecutor() {
+    return this.connection.eventLoop();
+  }
+
+  @Override
   public void sendImage(BufferedImage image) {
     this.sendImage(0, image, true, true);
   }
@@ -206,8 +211,8 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
-  public void teleport(double x, double y, double z, float yaw, float pitch) {
-    this.writePacketAndFlush(new PositionRotationPacket(x, y, z, yaw, pitch, false, 44, true));
+  public void teleport(double posX, double posY, double posZ, float yaw, float pitch) {
+    this.writePacketAndFlush(new PositionRotationPacket(posX, posY, posZ, yaw, pitch, false, 44, true));
   }
 
   /**
@@ -341,10 +346,5 @@ public class LimboPlayerImpl implements LimboPlayer {
   @Override
   public void setWorldTime(long ticks) {
     this.writePacketAndFlush(new TimeUpdatePacket(ticks, ticks));
-  }
-
-  @Override
-  public ScheduledExecutorService getScheduledExecutor() {
-    return this.connection.eventLoop();
   }
 }
