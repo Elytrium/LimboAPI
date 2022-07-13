@@ -50,7 +50,7 @@ public class StructureFile implements WorldFile {
   @Override
   public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, int lightLevel) {
     VirtualBlock[] palettedBlocks = new VirtualBlock[this.palette.size()];
-    for (int i = 0; i < this.palette.size(); i++) {
+    for (int i = 0; i < this.palette.size(); ++i) {
       CompoundBinaryTag map = this.palette.getCompound(i);
 
       Map<String, String> propertiesMap = null;
@@ -61,19 +61,15 @@ public class StructureFile implements WorldFile {
           propertiesMap.put(entry, properties.getString(entry));
         }
       }
+
       palettedBlocks[i] = factory.createSimpleBlock(map.getString("Name"), propertiesMap);
     }
 
     for (BinaryTag binaryTag : this.blocks) {
       CompoundBinaryTag blockMap = (CompoundBinaryTag) binaryTag;
       ListBinaryTag posTag = blockMap.getList("pos");
-      int x = posTag.getInt(0);
-      int y = posTag.getInt(1);
-      int z = posTag.getInt(2);
-
-      int state = blockMap.getInt("state");
-      VirtualBlock block = palettedBlocks[state];
-      world.setBlock(offsetX + x, offsetY + y, offsetZ + z, block);
+      VirtualBlock block = palettedBlocks[blockMap.getInt("state")];
+      world.setBlock(offsetX + posTag.getInt(0), offsetY + posTag.getInt(1), offsetZ + posTag.getInt(2), block);
     }
 
     world.fillSkyLight(lightLevel);

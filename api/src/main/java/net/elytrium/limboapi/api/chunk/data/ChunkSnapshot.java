@@ -12,11 +12,11 @@ import net.elytrium.limboapi.api.chunk.VirtualBlock;
 
 public interface ChunkSnapshot {
 
-  VirtualBlock getBlock(int x, int y, int z);
+  VirtualBlock getBlock(int posX, int posY, int posZ);
 
-  int getX();
+  int getPosX();
 
-  int getZ();
+  int getPosZ();
 
   boolean isFullChunk();
 

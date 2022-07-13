@@ -52,10 +52,7 @@ public class NetworkSection {
   }
 
   public int getDataLength(ProtocolVersion version) {
-    BlockStorage blockStorage = this.ensureStorageCreated(version);
-
-    int dataLength = blockStorage.getDataLength(version);
-
+    int dataLength = this.ensureStorageCreated(version).getDataLength(version);
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) < 0) {
       dataLength += this.blockLight.getData().length;
       if (this.skyLight != null) {
@@ -66,8 +63,7 @@ public class NetworkSection {
       dataLength += 2; // Block count short.
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
-      BiomeStorage118 biomeStorage = this.ensure118BiomeCreated(version);
-      dataLength += biomeStorage.getDataLength();
+      dataLength += this.ensure118BiomeCreated(version).getDataLength();
     }
 
     return dataLength;
@@ -153,8 +149,7 @@ public class NetworkSection {
   }
 
   private void write118Biomes(ByteBuf buf, ProtocolVersion version) {
-    BiomeStorage118 biomeStorage = this.ensure118BiomeCreated(version);
-    biomeStorage.write(buf, version);
+    this.ensure118BiomeCreated(version).write(buf, version);
   }
 
   private BiomeStorage118 ensure118BiomeCreated(ProtocolVersion version) {
@@ -166,6 +161,7 @@ public class NetworkSection {
         for (int biomeIndex = 0, biomeArrayIndex = offset; biomeIndex < SimpleChunk.MAX_BIOMES_PER_SECTION; ++biomeIndex, ++biomeArrayIndex) {
           storage.set(biomeIndex, this.biomes[biomeArrayIndex]);
         }
+
         this.biomeStorages.put(version, storage);
       }
     }
@@ -175,13 +171,13 @@ public class NetworkSection {
 
   private void fillBlocks(BlockStorage storage) {
     int blockCount = 0;
-    for (int y = 0; y < 16; ++y) {
-      for (int x = 0; x < 16; ++x) {
-        for (int z = 0; z < 16; ++z) {
-          VirtualBlock block = this.section.getBlockAt(x, y, z);
+    for (int posX = 0; posX < 16; ++posX) {
+      for (int posY = 0; posY < 16; ++posY) {
+        for (int posZ = 0; posZ < 16; ++posZ) {
+          VirtualBlock block = this.section.getBlockAt(posX, posY, posZ);
           if (!block.isAir()) {
             ++blockCount;
-            storage.set(x, y, z, block);
+            storage.set(posX, posY, posZ, block);
           }
         }
       }

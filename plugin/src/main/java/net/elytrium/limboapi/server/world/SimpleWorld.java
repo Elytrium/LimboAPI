@@ -75,27 +75,27 @@ public class SimpleWorld implements VirtualWorld {
   @NonNull
   @Override
   public VirtualBlock getBlock(int posX, int posY, int posZ) {
-    return this.chunkAction(posX, posZ, (chunk) -> chunk.getBlock(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ)), () -> SimpleBlock.AIR);
+    return this.chunkAction(posX, posZ, chunk -> chunk.getBlock(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ)), () -> SimpleBlock.AIR);
   }
 
   @Override
   public void setBiome2d(int posX, int posZ, @NonNull VirtualBiome biome) {
-    this.getChunkOrNew(posX, posZ).setBiome2d(getChunkCoordinate(posX), getChunkCoordinate(posZ), biome);
+    this.getChunkOrNew(posX, posZ).setBiome2D(getChunkCoordinate(posX), getChunkCoordinate(posZ), biome);
   }
 
   @Override
   public void setBiome3d(int posX, int posY, int posZ, @NonNull VirtualBiome biome) {
-    this.getChunkOrNew(posX, posZ).setBiome3d(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ), biome);
+    this.getChunkOrNew(posX, posZ).setBiome3D(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ), biome);
   }
 
   @Override
   public VirtualBiome getBiome(int posX, int posY, int posZ) {
-    return this.chunkAction(posX, posZ, (chunk) -> chunk.getBiome(posX, posY, posZ), () -> Biome.PLAINS);
+    return this.chunkAction(posX, posZ, chunk -> chunk.getBiome(posX, posY, posZ), () -> Biome.PLAINS);
   }
 
   @Override
   public byte getBlockLight(int posX, int posY, int posZ) {
-    return this.chunkAction(posX, posZ, (chunk) -> chunk.getBlockLight(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ)), () -> (byte) 0);
+    return this.chunkAction(posX, posZ, chunk -> chunk.getBlockLight(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ)), () -> (byte) 0);
   }
 
   @Override

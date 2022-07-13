@@ -17,8 +17,8 @@ import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
  */
 public class BiomeData {
 
-  private final byte[] pre115Biomes = new byte[256];
   private final int[] post115Biomes = new int[1024];
+  private final byte[] pre115Biomes = new byte[256];
 
   public BiomeData(ChunkSnapshot chunk) {
     VirtualBiome[] biomes = chunk.getBiomes();
@@ -28,31 +28,32 @@ public class BiomeData {
 
     // Down sample 4x4x4 3D biomes to 2D XZ.
     Map<Integer, Integer> samples = new HashMap<>(64);
-    for (int x = 0; x < 16; x += 4) {
-      for (int z = 0; z < 16; z += 4) {
+    for (int posX = 0; posX < 16; posX += 4) {
+      for (int posZ = 0; posZ < 16; posZ += 4) {
         samples.clear();
-        for (int y = 0; y < 256; y += 16) {
-          VirtualBiome biome = biomes[/*SimpleChunk.getBiomeIndex(x, y, z)*/((y >> 2) & 63) << 4 | ((z >> 2) & 3) << 2 | ((x >> 2) & 3)];
+        for (int posY = 0; posY < 256; posY += 16) {
+          VirtualBiome biome = biomes[/*SimpleChunk.getBiomeIndex(posX, posY, posZ)*/(posY >> 2 & 63) << 4 | (posZ >> 2 & 3) << 2 | posX >> 2 & 3];
           samples.put(biome.getID(), samples.getOrDefault(biome.getID(), 0) + 1);
         }
-        int id = samples.entrySet().stream()
+        int id = samples.entrySet()
+            .stream()
             .max(Map.Entry.comparingByValue())
             .orElseThrow()
             .getKey();
-        for (int xl = x; xl < x + 4; ++xl) {
-          for (int zl = z; zl < z + 4; ++zl) {
-            this.pre115Biomes[(zl << 4) + xl] = (byte) id;
+        for (int i = posX; i < posX + 4; ++i) {
+          for (int j = posZ; j < posZ + 4; ++j) {
+            this.pre115Biomes[(j << 4) + i] = (byte) id;
           }
         }
       }
     }
   }
 
-  public byte[] getPre115Biomes() {
-    return this.pre115Biomes;
-  }
-
   public int[] getPost115Biomes() {
     return this.post115Biomes;
+  }
+
+  public byte[] getPre115Biomes() {
+    return this.pre115Biomes;
   }
 }

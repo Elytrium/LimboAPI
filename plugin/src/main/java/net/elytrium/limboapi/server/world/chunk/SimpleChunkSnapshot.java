@@ -42,18 +42,18 @@ public class SimpleChunkSnapshot implements ChunkSnapshot {
   }
 
   @Override
-  public VirtualBlock getBlock(int x, int y, int z) {
-    SimpleSection section = this.sections[y >> 4];
-    return section == null ? SimpleBlock.AIR : section.getBlockAt(x, y & 15, z);
+  public VirtualBlock getBlock(int posX, int posY, int posZ) {
+    SimpleSection section = this.sections[posY >> 4];
+    return section == null ? SimpleBlock.AIR : section.getBlockAt(posX, posY & 15, posZ);
   }
 
   @Override
-  public int getX() {
+  public int getPosX() {
     return this.posX;
   }
 
   @Override
-  public int getZ() {
+  public int getPosZ() {
     return this.posZ;
   }
 

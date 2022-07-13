@@ -29,6 +29,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public class SimpleSection implements BlockSection {
 
   private final BlockStorage blocks;
+
   private long lastUpdate = System.nanoTime();
 
   public SimpleSection() {
@@ -45,16 +46,26 @@ public class SimpleSection implements BlockSection {
   }
 
   @Override
-  public void setBlockAt(int x, int y, int z, @Nullable VirtualBlock block) {
-    this.checkIndexes(x, y, z);
-    this.blocks.set(x, y, z, block == null ? SimpleBlock.AIR : block);
+  public void setBlockAt(int posX, int posY, int posZ, @Nullable VirtualBlock block) {
+    this.checkIndexes(posX, posY, posZ);
+    this.blocks.set(posX, posY, posZ, block == null ? SimpleBlock.AIR : block);
     this.lastUpdate = System.nanoTime();
   }
 
   @Override
-  public VirtualBlock getBlockAt(int x, int y, int z) {
-    this.checkIndexes(x, y, z);
-    return this.blocks.get(x, y, z);
+  public VirtualBlock getBlockAt(int posX, int posY, int posZ) {
+    this.checkIndexes(posX, posY, posZ);
+    return this.blocks.get(posX, posY, posZ);
+  }
+
+  private void checkIndexes(int posX, int posY, int posZ) {
+    Preconditions.checkArgument(this.checkIndex(posX), "x should be between 0 and 15");
+    Preconditions.checkArgument(this.checkIndex(posY), "y should be between 0 and 15");
+    Preconditions.checkArgument(this.checkIndex(posZ), "z should be between 0 and 15");
+  }
+
+  private boolean checkIndex(int pos) {
+    return pos >= 0 && pos <= 15;
   }
 
   @Override
@@ -65,15 +76,5 @@ public class SimpleSection implements BlockSection {
   @Override
   public long getLastUpdate() {
     return this.lastUpdate;
-  }
-
-  private void checkIndexes(int x, int y, int z) {
-    Preconditions.checkArgument(this.checkIndex(x), "x should be between 0 and 15");
-    Preconditions.checkArgument(this.checkIndex(y), "y should be between 0 and 15");
-    Preconditions.checkArgument(this.checkIndex(z), "z should be between 0 and 15");
-  }
-
-  private boolean checkIndex(int i) {
-    return i >= 0 && i <= 15;
   }
 }

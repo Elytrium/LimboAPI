@@ -567,16 +567,16 @@ public class LimboImpl implements Limbo {
     return new PluginMessage("MC|Brand", bufWithBrandString);
   }
 
-  private PositionRotationPacket createPlayerPosAndLook(double x, double y, double z, float yaw, float pitch) {
-    return new PositionRotationPacket(x, y, z, yaw, pitch, false, 44, true);
+  private PositionRotationPacket createPlayerPosAndLook(double posX, double posY, double posZ, float yaw, float pitch) {
+    return new PositionRotationPacket(posX, posY, posZ, yaw, pitch, false, 44, true);
   }
 
-  private UpdateViewPositionPacket createUpdateViewPosition(int x, int z) {
-    return new UpdateViewPositionPacket(x >> 4, z >> 4);
+  private UpdateViewPositionPacket createUpdateViewPosition(int posX, int posZ) {
+    return new UpdateViewPositionPacket(posX >> 4, posZ >> 4);
   }
 
   private ChunkDataPacket createChunkData(VirtualChunk chunk, Dimension dimension, int skyLightY) {
-    chunk.setSkyLight(chunk.getX() & 15, skyLightY, chunk.getZ() & 15, (byte) 1);
+    chunk.setSkyLight(chunk.getPosX() & 15, skyLightY, chunk.getPosZ() & 15, (byte) 1);
     return new ChunkDataPacket(chunk.getFullChunkSnapshot(), dimension.hasSkyLight(), dimension.getMaxSections());
   }
 
