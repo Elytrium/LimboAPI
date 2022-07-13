@@ -109,10 +109,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public boolean handle(MovePacket packet) {
     if (this.loaded) {
+      this.callback.onGround(packet.isOnGround());
       this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
       this.callback.onMove(packet.getX(), packet.getY(), packet.getZ(), packet.getYaw(), packet.getPitch());
       this.callback.onRotate(packet.getYaw(), packet.getPitch());
-      this.callback.onGround(packet.isOnGround());
     }
 
     return true;
@@ -120,8 +120,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public boolean handle(MovePositionOnlyPacket packet) {
     if (this.loaded) {
-      this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
       this.callback.onGround(packet.isOnGround());
+      this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
     }
 
     return true;
@@ -129,8 +129,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public boolean handle(MoveRotationOnlyPacket packet) {
     if (this.loaded) {
-      this.callback.onRotate(packet.getYaw(), packet.getPitch());
       this.callback.onGround(packet.isOnGround());
+      this.callback.onRotate(packet.getYaw(), packet.getPitch());
     }
 
     return true;
