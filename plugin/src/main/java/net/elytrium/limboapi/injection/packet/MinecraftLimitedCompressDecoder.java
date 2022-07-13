@@ -47,7 +47,7 @@ public class MinecraftLimitedCompressDecoder extends MinecraftCompressDecoder {
 
   private final int threshold;
   private final VelocityCompressor compressor;
-  private final int uncompressedKickCap = Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH;
+
   private int uncompressedCap = Settings.IMP.MAIN.MAX_PACKET_LENGTH_TO_SUPPRESS_IT;
 
   public MinecraftLimitedCompressDecoder(int threshold, VelocityCompressor compressor) {
@@ -61,29 +61,24 @@ public class MinecraftLimitedCompressDecoder extends MinecraftCompressDecoder {
     int claimedUncompressedSize = ProtocolUtils.readVarInt(in);
     if (claimedUncompressedSize == 0) {
       out.add(in.retain());
-      return;
-    }
-
-    if (claimedUncompressedSize > this.uncompressedKickCap) {
-      ctx.close();
-      return;
-    }
-
-    if (claimedUncompressedSize < this.threshold || claimedUncompressedSize > this.uncompressedCap) {
-      return;
-    }
-
-    ByteBuf compatibleIn = MoreByteBufUtils.ensureCompatible(ctx.alloc(), this.compressor, in);
-    ByteBuf uncompressed = MoreByteBufUtils.preferredBuffer(ctx.alloc(), this.compressor, claimedUncompressedSize);
-
-    try {
-      this.compressor.inflate(compatibleIn, uncompressed, claimedUncompressedSize);
-      out.add(uncompressed);
-    } catch (Exception e) {
-      uncompressed.release();
-      throw e;
-    } finally {
-      compatibleIn.release();
+    } else {
+      if (claimedUncompressedSize > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH) {
+        ctx.close();
+      } else {
+        if (claimedUncompressedSize >= this.threshold && claimedUncompressedSize <= this.uncompressedCap) {
+          ByteBuf compatibleIn = MoreByteBufUtils.ensureCompatible(ctx.alloc(), this.compressor, in);
+          ByteBuf uncompressed = MoreByteBufUtils.preferredBuffer(ctx.alloc(), this.compressor, claimedUncompressedSize);
+          try {
+            this.compressor.inflate(compatibleIn, uncompressed, claimedUncompressedSize);
+            out.add(uncompressed);
+          } catch (Exception e) {
+            uncompressed.release();
+            throw e;
+          } finally {
+            compatibleIn.release();
+          }
+        }
+      }
     }
   }
 

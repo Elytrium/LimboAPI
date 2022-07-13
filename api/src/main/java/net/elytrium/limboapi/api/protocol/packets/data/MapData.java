@@ -8,7 +8,7 @@
 package net.elytrium.limboapi.api.protocol.packets.data;
 
 /**
- * For MapDataPacket.
+ * For MapData packet.
  */
 public class MapData {
 

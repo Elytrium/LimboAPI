@@ -25,7 +25,7 @@ import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.data.BlockSection;
 import net.elytrium.limboapi.api.chunk.data.BlockStorage;
-import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3d;
+import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3D;
 import net.elytrium.limboapi.protocol.data.BiomeStorage118;
 import net.elytrium.limboapi.protocol.data.BlockStorage17;
 import net.elytrium.limboapi.protocol.data.BlockStorage19;
@@ -35,15 +35,15 @@ public class NetworkSection {
 
   private final Map<ProtocolVersion, BlockStorage> storages = new EnumMap<>(ProtocolVersion.class);
   private final Map<ProtocolVersion, BiomeStorage118> biomeStorages = new EnumMap<>(ProtocolVersion.class);
-  private final NibbleArray3d blockLight;
-  private final NibbleArray3d skyLight;
+  private final NibbleArray3D blockLight;
+  private final NibbleArray3D skyLight;
   private final BlockSection section;
   private final VirtualBiome[] biomes;
   private final int index;
 
   private int blockCount = -1;
 
-  public NetworkSection(int index, BlockSection section, NibbleArray3d blockLight, NibbleArray3d skyLight, VirtualBiome[] biomes) {
+  public NetworkSection(int index, BlockSection section, NibbleArray3D blockLight, NibbleArray3D skyLight, VirtualBiome[] biomes) {
     this.index = index;
     this.section = section;
     this.blockLight = blockLight;
@@ -179,11 +179,10 @@ public class NetworkSection {
       for (int x = 0; x < 16; ++x) {
         for (int z = 0; z < 16; ++z) {
           VirtualBlock block = this.section.getBlockAt(x, y, z);
-          if (block.isAir()) {
-            continue;
+          if (!block.isAir()) {
+            ++blockCount;
+            storage.set(x, y, z, block);
           }
-          ++blockCount;
-          storage.set(x, y, z, block);
         }
       }
     }

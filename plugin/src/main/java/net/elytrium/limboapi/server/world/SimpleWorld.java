@@ -35,10 +35,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SimpleWorld implements VirtualWorld {
 
+  private final Map<Long, SimpleChunk> chunks = new HashMap<>();
   @NonNull
   private final Dimension dimension;
   private final VirtualBiome defaultBiome;
-  private final Map<Long, SimpleChunk> chunks = new HashMap<>();
 
   private final double spawnX;
   private final double spawnY;
@@ -46,20 +46,20 @@ public class SimpleWorld implements VirtualWorld {
   private final float yaw;
   private final float pitch;
 
-  public SimpleWorld(@NonNull Dimension dimension, double x, double y, double z, float yaw, float pitch) {
+  public SimpleWorld(@NonNull Dimension dimension, double posX, double posY, double posZ, float yaw, float pitch) {
     this.dimension = dimension;
     this.defaultBiome = Biome.of(dimension.getDefaultBiome());
 
-    this.spawnX = x;
-    this.spawnY = y;
-    this.spawnZ = z;
+    this.spawnX = posX;
+    this.spawnY = posY;
+    this.spawnZ = posZ;
     this.yaw = yaw;
     this.pitch = pitch;
 
     // Modern Sodium versions don't load chunks if their "neighbours" are unloaded.
     // We are fixing this problem there by generating all the "neighbours".
-    int intX = (int) x >> 4;
-    int intZ = (int) z >> 4;
+    int intX = (int) posX >> 4;
+    int intZ = (int) posZ >> 4;
     for (int chunkX = intX - 1; chunkX <= intX + 1; ++chunkX) {
       for (int chunkZ = intZ - 1; chunkZ <= intZ + 1; ++chunkZ) {
         this.getChunkOrNew(chunkX << 4, chunkZ << 4);
@@ -68,39 +68,39 @@ public class SimpleWorld implements VirtualWorld {
   }
 
   @Override
-  public void setBlock(int x, int y, int z, @Nullable VirtualBlock block) {
-    this.getChunkOrNew(x, z).setBlock(getChunkCoordinate(x), y, getChunkCoordinate(z), block);
+  public void setBlock(int posX, int posY, int posZ, @Nullable VirtualBlock block) {
+    this.getChunkOrNew(posX, posZ).setBlock(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ), block);
   }
 
   @NonNull
   @Override
-  public VirtualBlock getBlock(int x, int y, int z) {
-    return this.chunkAction(x, z, (c) -> c.getBlock(getChunkCoordinate(x), y, getChunkCoordinate(z)), () -> SimpleBlock.AIR);
+  public VirtualBlock getBlock(int posX, int posY, int posZ) {
+    return this.chunkAction(posX, posZ, (chunk) -> chunk.getBlock(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ)), () -> SimpleBlock.AIR);
   }
 
   @Override
-  public void setBiome2d(int x, int z, @NonNull VirtualBiome biome) {
-    this.getChunkOrNew(x, z).setBiome2d(getChunkCoordinate(x), getChunkCoordinate(z), biome);
+  public void setBiome2d(int posX, int posZ, @NonNull VirtualBiome biome) {
+    this.getChunkOrNew(posX, posZ).setBiome2d(getChunkCoordinate(posX), getChunkCoordinate(posZ), biome);
   }
 
   @Override
-  public void setBiome3d(int x, int y, int z, @NonNull VirtualBiome biome) {
-    this.getChunkOrNew(x, z).setBiome3d(getChunkCoordinate(x), y, getChunkCoordinate(z), biome);
+  public void setBiome3d(int posX, int posY, int posZ, @NonNull VirtualBiome biome) {
+    this.getChunkOrNew(posX, posZ).setBiome3d(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ), biome);
   }
 
   @Override
-  public VirtualBiome getBiome(int x, int y, int z) {
-    return this.chunkAction(x, z, (c) -> c.getBiome(x, y, z), () -> Biome.PLAINS);
+  public VirtualBiome getBiome(int posX, int posY, int posZ) {
+    return this.chunkAction(posX, posZ, (chunk) -> chunk.getBiome(posX, posY, posZ), () -> Biome.PLAINS);
   }
 
   @Override
-  public byte getBlockLight(int x, int y, int z) {
-    return this.chunkAction(x, z, (c) -> c.getBlockLight(getChunkCoordinate(x), y, getChunkCoordinate(z)), () -> (byte) 0);
+  public byte getBlockLight(int posX, int posY, int posZ) {
+    return this.chunkAction(posX, posZ, (chunk) -> chunk.getBlockLight(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ)), () -> (byte) 0);
   }
 
   @Override
-  public void setBlockLight(int x, int y, int z, byte light) {
-    this.getChunkOrNew(x, z).setBlockLight(getChunkCoordinate(x), y, getChunkCoordinate(z), light);
+  public void setBlockLight(int posX, int posY, int posZ, byte light) {
+    this.getChunkOrNew(posX, posZ).setBlockLight(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ), light);
   }
 
   @Override
@@ -124,18 +124,18 @@ public class SimpleWorld implements VirtualWorld {
 
   @Nullable
   @Override
-  public SimpleChunk getChunk(int x, int z) {
-    return this.chunks.get(getChunkIndex(getChunkXZ(x), getChunkXZ(z)));
+  public SimpleChunk getChunk(int posX, int posZ) {
+    return this.chunks.get(getChunkIndex(getChunkXZ(posX), getChunkXZ(posZ)));
   }
 
   @Override
-  public SimpleChunk getChunkOrNew(int x, int z) {
-    x = getChunkXZ(x);
-    z = getChunkXZ(z);
-    long index = getChunkIndex(x, z);
+  public SimpleChunk getChunkOrNew(int posX, int posZ) {
+    posX = getChunkXZ(posX);
+    posZ = getChunkXZ(posZ);
+    long index = getChunkIndex(posX, posZ);
     SimpleChunk simpleChunk = this.chunks.get(index);
     if (simpleChunk == null) {
-      this.chunks.put(index, simpleChunk = new SimpleChunk(x, z, this.defaultBiome));
+      this.chunks.put(index, simpleChunk = new SimpleChunk(posX, posZ, this.defaultBiome));
     }
 
     return simpleChunk;
@@ -172,8 +172,8 @@ public class SimpleWorld implements VirtualWorld {
     return this.pitch;
   }
 
-  private <T> T chunkAction(int x, int z, Function<SimpleChunk, T> function, Supplier<T> ifNull) {
-    SimpleChunk chunk = this.getChunk(x, z);
+  private <T> T chunkAction(int posX, int posZ, Function<SimpleChunk, T> function, Supplier<T> ifNull) {
+    SimpleChunk chunk = this.getChunk(posX, posZ);
     if (chunk == null) {
       return ifNull.get();
     }
@@ -181,15 +181,15 @@ public class SimpleWorld implements VirtualWorld {
     return function.apply(chunk);
   }
 
-  private static long getChunkIndex(int x, int z) {
-    return (((long) x) << 32) | (z & 0xFFFFFFFFL);
+  private static long getChunkIndex(int posX, int posZ) {
+    return (long) posX << 32 | posZ & 0xFFFFFFFFL;
   }
 
-  private static int getChunkXZ(int xz) {
-    return xz >> 4;
+  private static int getChunkXZ(int pos) {
+    return pos >> 4;
   }
 
-  private static int getChunkCoordinate(int xz) {
-    return xz & 15;
+  private static int getChunkCoordinate(int pos) {
+    return pos & 15;
   }
 }

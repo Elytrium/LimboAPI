@@ -11,14 +11,13 @@ import com.velocitypowered.api.network.ProtocolVersion;
 
 public interface VirtualBlock {
 
-  short getModernId();
+  short getModernID();
 
-  short getId(ProtocolVersion version);
+  short getID(ProtocolVersion version);
 
   boolean isSolid();
 
   boolean isAir();
 
   boolean isMotionBlocking();
-
 }

@@ -26,11 +26,11 @@ import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
 public class TeleportConfirmPacket implements MinecraftPacket {
 
-  private int teleportId;
+  private int teleportID;
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    this.teleportId = ProtocolUtils.readVarInt(buf);
+    this.teleportID = ProtocolUtils.readVarInt(buf);
   }
 
   @Override
@@ -60,11 +60,11 @@ public class TeleportConfirmPacket implements MinecraftPacket {
   @Override
   public String toString() {
     return "TeleportConfirm{"
-        + "teleportId=" + this.teleportId
+        + "teleportID=" + this.teleportID
         + "}";
   }
 
-  public int getTeleportId() {
-    return this.teleportId;
+  public int getTeleportID() {
+    return this.teleportID;
   }
 }

@@ -19,6 +19,7 @@ package net.elytrium.limboapi.material;
 
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.stream.Collectors;
 import net.elytrium.limboapi.api.chunk.BuiltInBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
@@ -90,6 +91,7 @@ public enum Biome implements VirtualBiome {
   );
 
   private static final EnumMap<BuiltInBiome, Biome> BUILT_IN_BIOME_MAP = new EnumMap<>(BuiltInBiome.class);
+  private static final List<CompoundBinaryTag> BIOMES = Arrays.stream(Biome.values()).map(Biome::encodeBiome).collect(Collectors.toList());
 
   private final BuiltInBiome index;
   private final String name;
@@ -111,20 +113,13 @@ public enum Biome implements VirtualBiome {
         .build();
   }
 
-  public static CompoundBinaryTag getRegistry() {
-    return CompoundBinaryTag.builder()
-        .putString("type", "minecraft:worldgen/biome")
-        .put("value", ListBinaryTag.from(Arrays.stream(Biome.values()).map(Biome::encodeBiome).collect(Collectors.toList())))
-        .build();
-  }
-
   @Override
   public String getName() {
     return this.name;
   }
 
   @Override
-  public int getId() {
+  public int getID() {
     return this.id;
   }
 
@@ -140,6 +135,13 @@ public enum Biome implements VirtualBiome {
 
   public static Biome of(BuiltInBiome index) {
     return BUILT_IN_BIOME_MAP.get(index);
+  }
+
+  public static CompoundBinaryTag getRegistry() {
+    return CompoundBinaryTag.builder()
+        .putString("type", "minecraft:worldgen/biome")
+        .put("value", ListBinaryTag.from(BIOMES))
+        .build();
   }
 
   public static class Element {

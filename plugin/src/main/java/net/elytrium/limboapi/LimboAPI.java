@@ -263,25 +263,25 @@ public class LimboAPI implements LimboFactory {
 
   @Override
   public VirtualBlock createSimpleBlock(Block block) {
-    return SimpleBlock.fromLegacyId((short) block.getId());
+    return SimpleBlock.fromLegacyID((short) block.getID());
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(short legacyId) {
-    return this.createSimpleBlock(legacyId, false);
+  public VirtualBlock createSimpleBlock(short legacyID) {
+    return this.createSimpleBlock(legacyID, false);
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(String modernId, Map<String, String> properties) {
-    return SimpleBlock.fromModernId(modernId, properties);
+  public VirtualBlock createSimpleBlock(String modernID, Map<String, String> properties) {
+    return SimpleBlock.fromModernID(modernID, properties);
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(short id, boolean modern) {
+  public VirtualBlock createSimpleBlock(short legacyID, boolean modern) {
     if (modern) {
-      return SimpleBlock.solid(id);
+      return SimpleBlock.solid(legacyID);
     } else {
-      return SimpleBlock.fromLegacyId(id);
+      return SimpleBlock.fromLegacyID(legacyID);
     }
   }
 
@@ -291,28 +291,28 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernId, Map<String, String> properties) {
-    return new SimpleBlock(solid, air, motionBlocking, modernId, properties);
+  public VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernID, Map<String, String> properties) {
+    return new SimpleBlock(solid, air, motionBlocking, modernID, properties);
   }
 
   @Override
-  public VirtualWorld createVirtualWorld(Dimension dimension, double x, double y, double z, float yaw, float pitch) {
-    return new SimpleWorld(dimension, x, y, z, yaw, pitch);
+  public VirtualWorld createVirtualWorld(Dimension dimension, double posX, double posY, double posZ, float yaw, float pitch) {
+    return new SimpleWorld(dimension, posX, posY, posZ, yaw, pitch);
   }
 
   @Override
-  public VirtualChunk createVirtualChunk(int x, int z) {
-    return new SimpleChunk(x, z);
+  public VirtualChunk createVirtualChunk(int posX, int posZ) {
+    return new SimpleChunk(posX, posZ);
   }
 
   @Override
-  public VirtualChunk createVirtualChunk(int x, int z, VirtualBiome defaultBiome) {
-    return new SimpleChunk(x, z, defaultBiome);
+  public VirtualChunk createVirtualChunk(int posX, int posZ, VirtualBiome defaultBiome) {
+    return new SimpleChunk(posX, posZ, defaultBiome);
   }
 
   @Override
-  public VirtualChunk createVirtualChunk(int x, int z, BuiltInBiome defaultBiome) {
-    return new SimpleChunk(x, z, Biome.of(defaultBiome));
+  public VirtualChunk createVirtualChunk(int posX, int posZ, BuiltInBiome defaultBiome) {
+    return new SimpleChunk(posX, posZ, Biome.of(defaultBiome));
   }
 
   @Override

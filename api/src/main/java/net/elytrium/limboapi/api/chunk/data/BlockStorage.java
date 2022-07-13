@@ -13,18 +13,18 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 public interface BlockStorage {
 
-  void set(int x, int y, int z, @NonNull VirtualBlock block);
+  void write(Object byteBufObject, ProtocolVersion version);
+
+  void set(int posX, int posY, int posZ, @NonNull VirtualBlock block);
 
   @NonNull
-  VirtualBlock get(int x, int y, int z);
-
-  void write(Object byteBufObject, ProtocolVersion version);
+  VirtualBlock get(int posX, int posY, int posZ);
 
   int getDataLength(ProtocolVersion version);
 
   BlockStorage copy();
 
-  static int index(int x, int y, int z) {
-    return y << 8 | z << 4 | x;
+  static int index(int posX, int posY, int posZ) {
+    return posY << 8 | posZ << 4 | posX;
   }
 }

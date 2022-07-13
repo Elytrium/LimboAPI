@@ -38,15 +38,15 @@ public class SimpleItem implements VirtualItem {
 
   private static final Map<Item, SimpleItem> LEGACY_ID_MAP = new EnumMap<>(Item.class);
 
-  private final Map<Version, Short> versionIds = new EnumMap<>(Version.class);
+  private final Map<Version, Short> versionIDs = new EnumMap<>(Version.class);
 
   @Override
-  public short getId(ProtocolVersion version) {
-    return this.getId(Version.map(version));
+  public short getID(ProtocolVersion version) {
+    return this.getID(Version.map(version));
   }
 
-  public short getId(Version version) {
-    return this.versionIds.get(version);
+  public short getID(Version version) {
+    return this.versionIDs.get(version);
   }
 
   @SuppressWarnings("unchecked")
@@ -59,7 +59,7 @@ public class SimpleItem implements VirtualItem {
     );
     for (Item item : Item.values()) {
       SimpleItem simpleItem = new SimpleItem();
-      items.get(String.valueOf(item.getId())).forEach((key, value) -> simpleItem.versionIds.put(Version.parse(key), Short.parseShort(value)));
+      items.get(String.valueOf(item.getID())).forEach((key, value) -> simpleItem.versionIDs.put(Version.parse(key), Short.parseShort(value)));
       LEGACY_ID_MAP.put(item, simpleItem);
     }
   }

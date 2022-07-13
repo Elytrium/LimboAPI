@@ -59,6 +59,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -112,7 +113,7 @@ public class LimboImpl implements Limbo {
   private String limboName;
   private Integer readTimeout;
   private Long worldTicks;
-  private short gameMode = (short) GameMode.ADVENTURE.getId();
+  private short gameMode = GameMode.ADVENTURE.getID();
   private Integer maxSuppressPacketLength;
 
   private PreparedPacket joinPackets;
@@ -133,7 +134,6 @@ public class LimboImpl implements Limbo {
 
   protected void refresh() {
     this.built = true;
-    // TODO: Fix 1.16+ nether dimension
     JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGame joinGame = this.createJoinGamePacket(false);
     JoinGame joinGameModern = this.createJoinGamePacket(true);
@@ -169,7 +169,8 @@ public class LimboImpl implements Limbo {
         ).prepare(
             this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()),
             ProtocolVersion.MINECRAFT_1_14
-        ).build();
+        )
+        .build();
   }
 
   private void addPostJoin(PreparedPacket packet) {
@@ -203,31 +204,30 @@ public class LimboImpl implements Limbo {
       if (!pipeline.names().contains(LimboProtocol.PREPARED_ENCODER)) {
         // With an abnormally large number of connections from the same nickname,
         // requests don't have time to be processed, and an error occurs that "minecraft-encoder" doesn't exist.
-        if (!pipeline.names().contains(Connections.MINECRAFT_ENCODER)) {
-          connection.close();
-          return;
-        }
-
-        if (this.readTimeout != null) {
-          pipeline.replace(Connections.READ_TIMEOUT, LimboProtocol.READ_TIMEOUT, new ReadTimeoutHandler(this.readTimeout, TimeUnit.MILLISECONDS));
-        }
-
-        if (!pipeline.names().contains(PreparedPacketFactory.PREPARED_ENCODER)) {
-          if (this.plugin.isCompressionEnabled() && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-            pipeline.remove(MinecraftCompressorAndLengthEncoder.class);
-            pipeline.remove(MinecraftCompressDecoder.class);
-            this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
-          } else {
-            pipeline.remove(MinecraftVarintLengthEncoder.class);
+        if (pipeline.names().contains(Connections.MINECRAFT_ENCODER)) {
+          if (this.readTimeout != null) {
+            pipeline.replace(Connections.READ_TIMEOUT, LimboProtocol.READ_TIMEOUT, new ReadTimeoutHandler(this.readTimeout, TimeUnit.MILLISECONDS));
           }
 
-          this.plugin.inject3rdParty(player, connection, pipeline);
+          if (!pipeline.names().contains(PreparedPacketFactory.PREPARED_ENCODER)) {
+            if (this.plugin.isCompressionEnabled() && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+              pipeline.remove(MinecraftCompressorAndLengthEncoder.class);
+              pipeline.remove(MinecraftCompressDecoder.class);
+              this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
+            } else {
+              pipeline.remove(MinecraftVarintLengthEncoder.class);
+            }
+
+            this.plugin.inject3rdParty(player, connection, pipeline);
+          }
+        } else {
+          connection.close();
+          return;
         }
       }
 
       if (this.maxSuppressPacketLength != null) {
         MinecraftLimitedCompressDecoder decoder = pipeline.get(MinecraftLimitedCompressDecoder.class);
-
         if (decoder != null) {
           decoder.setUncompressedCap(this.maxSuppressPacketLength);
         }
@@ -237,7 +237,6 @@ public class LimboImpl implements Limbo {
       if (connection.getState() != LimboProtocol.getLimboStateRegistry()) {
         connection.setState(LimboProtocol.getLimboStateRegistry());
         VelocityServerConnection server = player.getConnectedServer();
-
         if (server != null) {
           server.disconnect();
           player.setConnectedServer(null);
@@ -256,7 +255,7 @@ public class LimboImpl implements Limbo {
         connection.delayedWrite(this.joinPackets);
       }
 
-      if (this.gameMode == GameMode.SPECTATOR.getId() && Settings.IMP.MAIN.FIX_SPECTATOR_FLY_THROUGH_BLOCKS) {
+      if (this.gameMode == GameMode.SPECTATOR.getID() && Settings.IMP.MAIN.FIX_SPECTATOR_FLY_THROUGH_BLOCKS) {
         connection.delayedWrite(
             this.plugin.encodeSingle(
                 new PlayerListItem(
@@ -347,7 +346,7 @@ public class LimboImpl implements Limbo {
 
   @Override
   public Limbo setGameMode(GameMode gameMode) {
-    this.gameMode = (short) gameMode.getId();
+    this.gameMode = gameMode.getID();
 
     this.built = false;
     return this;
@@ -416,44 +415,42 @@ public class LimboImpl implements Limbo {
 
   private DimensionData createDimensionData(Dimension dimension, boolean modern) {
     return new DimensionData(
-        dimension.getKey(), dimension.getModernId(), true,
-        0.0F, false, false, false, true,
-        false, false, false, false, 256,
-        modern ? "#minecraft:infiniburn_nether" : "minecraft:infiniburn_nether",
-        null, false, 1.0, dimension.getKey(), 0, 256,
+        dimension.getKey(), dimension.getModernID(), false,
+        0.0F, false, false, false, false,
+        false, false, false, true, 256,
+        modern ? "#minecraft:infiniburn_end" : "minecraft:infiniburn_end",
+        null, null, 1.0, dimension.getKey(), 0, 256,
         0, 0
     );
   }
 
   private JoinGame createJoinGamePacket(boolean modern) {
     Dimension dimension = this.world.getDimension();
-
     JoinGame joinGame = new JoinGame();
-    joinGame.setEntityId(0);
+    joinGame.setEntityId(1);
+    joinGame.setIsHardcore(true);
     joinGame.setGamemode(this.gameMode);
-    joinGame.setPreviousGamemode(this.gameMode);
-    joinGame.setDimension(dimension.getModernId());
+    joinGame.setPreviousGamemode((short) -1);
+    joinGame.setDimension(dimension.getModernID());
     joinGame.setDifficulty((short) 0);
-    joinGame.setMaxPlayers(1);
-
     try {
-      PARTIAL_HASHED_SEED_FIELD.set(joinGame, System.currentTimeMillis());
+      PARTIAL_HASHED_SEED_FIELD.set(joinGame, ThreadLocalRandom.current().nextLong());
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
+    joinGame.setMaxPlayers(1);
 
     joinGame.setLevelType("flat");
+
     joinGame.setViewDistance(10);
-    joinGame.setSimulationDistance(0);
+    joinGame.setSimulationDistance(9);
+
     joinGame.setReducedDebugInfo(true);
-    joinGame.setIsHardcore(true);
 
     String key = dimension.getKey();
     DimensionData dimensionData = this.createDimensionData(dimension, modern);
-
     joinGame.setDimensionRegistry(new DimensionRegistry(ImmutableSet.of(dimensionData), ImmutableSet.of(key)));
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
-
     try {
       CURRENT_DIMENSION_DATA_FIELD.set(joinGame, dimensionData);
     } catch (IllegalAccessException e) {
@@ -468,7 +465,7 @@ public class LimboImpl implements Limbo {
 
   private JoinGame createLegacyJoinGamePacket() {
     JoinGame joinGame = this.createJoinGamePacket(false);
-    joinGame.setDimension(this.world.getDimension().getLegacyId());
+    joinGame.setDimension(this.world.getDimension().getLegacyID());
     return joinGame;
   }
 
@@ -630,15 +627,19 @@ public class LimboImpl implements Limbo {
                                   .put(
                                       "narration",
                                       CompoundBinaryTag.builder()
-                                          .put("priority", StringBinaryTag.of("chat.type.text.narrate"))
-                                          .put("translation_key", StringBinaryTag.of("chat.type.text"))
-                                          .put("style", CompoundBinaryTag.empty())
+                                          .put("priority", StringBinaryTag.of("chat"))
                                           .put(
-                                              "parameters",
-                                              ListBinaryTag.builder()
-                                                  .add(StringBinaryTag.of("sender"))
-                                                  .add(StringBinaryTag.of("content"))
-                                                  .build()
+                                              "decoration",
+                                              CompoundBinaryTag.builder()
+                                                  .put("translation_key", StringBinaryTag.of("chat.type.text.narrate"))
+                                                  .put("style", CompoundBinaryTag.empty())
+                                                  .put(
+                                                      "parameters",
+                                                      ListBinaryTag.builder()
+                                                          .add(StringBinaryTag.of("sender"))
+                                                          .add(StringBinaryTag.of("content"))
+                                                          .build()
+                                                  ).build()
                                           ).build()
                                   ).build()
                           ).build()
@@ -663,7 +664,12 @@ public class LimboImpl implements Limbo {
                       CompoundBinaryTag.builder()
                           .put("name", StringBinaryTag.of("minecraft:game_info"))
                           .put("id", IntBinaryTag.of(2))
-                          .put("element", CompoundBinaryTag.builder().put("overlay", CompoundBinaryTag.empty()).build())
+                          .put(
+                              "element",
+                              CompoundBinaryTag.builder()
+                                  .put("overlay", CompoundBinaryTag.empty())
+                                  .build()
+                          )
                           .build()
                   ).build()
           ).build();

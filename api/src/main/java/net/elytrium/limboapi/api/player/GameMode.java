@@ -26,10 +26,10 @@ public enum GameMode {
    *
    * @return The ID.
    *
-   * @see #getById(int)
+   * @see #getByID(int)
    */
-  public int getId() {
-    return this.ordinal();
+  public short getID() {
+    return (short) this.ordinal();
   }
 
   /**
@@ -39,10 +39,10 @@ public enum GameMode {
    *
    * @return The {@link GameMode}, or {@code null} if it does not exist.
    *
-   * @see #getId()
+   * @see #getID()
    */
   @Nullable
-  public static GameMode getById(int id) {
+  public static GameMode getByID(int id) {
     return VALUES[id];
   }
 }

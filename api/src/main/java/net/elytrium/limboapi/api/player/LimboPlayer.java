@@ -32,11 +32,11 @@ public interface LimboPlayer {
 
   void sendImage(BufferedImage image, boolean sendItem);
 
-  void sendImage(int mapId, BufferedImage image);
+  void sendImage(int mapID, BufferedImage image);
 
-  void sendImage(int mapId, BufferedImage image, boolean sendItem);
+  void sendImage(int mapID, BufferedImage image, boolean sendItem);
 
-  void sendImage(int mapId, BufferedImage image, boolean sendItem, boolean resize);
+  void sendImage(int mapID, BufferedImage image, boolean sendItem, boolean resize);
 
   void setInventory(VirtualItem item, int count);
 

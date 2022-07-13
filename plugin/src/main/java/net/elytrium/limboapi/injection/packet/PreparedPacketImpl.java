@@ -24,6 +24,7 @@ import net.elytrium.fastprepare.PreparedPacket;
 import net.elytrium.fastprepare.PreparedPacketFactory;
 
 public class PreparedPacketImpl extends PreparedPacket implements net.elytrium.limboapi.api.protocol.PreparedPacket {
+
   public PreparedPacketImpl(ProtocolVersion minVersion, ProtocolVersion maxVersion, PreparedPacketFactory factory) {
     super(minVersion, maxVersion, factory);
   }

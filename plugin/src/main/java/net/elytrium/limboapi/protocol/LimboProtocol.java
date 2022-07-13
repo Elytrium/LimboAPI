@@ -136,13 +136,13 @@ public class LimboProtocol {
 
         versionField.set(protoRegistry, version);
 
-        var playPacketIdToSupplier = (IntObjectMap<Supplier<? extends MinecraftPacket>>) PACKET_ID_TO_SUPPLIER_FIELD.get(playProtoRegistry);
-        PACKET_ID_TO_SUPPLIER_FIELD.set(protoRegistry, new OverlayIntObjectMap<>(playPacketIdToSupplier, new IntObjectHashMap<>(16, 0.5F)));
+        var playPacketIDToSupplier = (IntObjectMap<Supplier<? extends MinecraftPacket>>) PACKET_ID_TO_SUPPLIER_FIELD.get(playProtoRegistry);
+        PACKET_ID_TO_SUPPLIER_FIELD.set(protoRegistry, new OverlayIntObjectMap<>(playPacketIDToSupplier, new IntObjectHashMap<>(16, 0.5F)));
 
-        var playPacketClassToId = (Object2IntMap<Class<? extends MinecraftPacket>>) PACKET_CLASS_TO_ID_FIELD.get(playProtoRegistry);
-        Object2IntMap<Class<? extends MinecraftPacket>> packetClassToId = new Object2IntOpenHashMap<>(16, 0.5F);
-        packetClassToId.defaultReturnValue(playPacketClassToId.defaultReturnValue());
-        PACKET_CLASS_TO_ID_FIELD.set(protoRegistry, new OverlayObject2IntMap<>(playPacketClassToId, packetClassToId));
+        var playPacketClassToID = (Object2IntMap<Class<? extends MinecraftPacket>>) PACKET_CLASS_TO_ID_FIELD.get(playProtoRegistry);
+        Object2IntMap<Class<? extends MinecraftPacket>> packetClassToID = new Object2IntOpenHashMap<>(16, 0.5F);
+        packetClassToID.defaultReturnValue(playPacketClassToID.defaultReturnValue());
+        PACKET_CLASS_TO_ID_FIELD.set(protoRegistry, new OverlayObject2IntMap<>(playPacketClassToID, packetClassToID));
 
         versions.put(version, protoRegistry);
       }
@@ -336,7 +336,7 @@ public class LimboProtocol {
   public static void register(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] mappings) {
     register(direction, packetClass, packetSupplier, Arrays.stream(mappings).map(mapping -> {
       try {
-        return createMapping(mapping.getId(), mapping.getProtocolVersion(), mapping.getLastValidProtocolVersion(), mapping.isEncodeOnly());
+        return createMapping(mapping.getID(), mapping.getProtocolVersion(), mapping.getLastValidProtocolVersion(), mapping.isEncodeOnly());
       } catch (ReflectiveOperationException e) {
         throw new ReflectionException(e);
       }

@@ -7,23 +7,23 @@
 
 package net.elytrium.limboapi.api.chunk.data;
 
-import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3d;
+import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3D;
 
 public interface LightSection {
 
-  NibbleArray3d getBlockLight();
+  void setBlockLight(int posX, int posY, int posZ, byte light);
 
-  byte getBlockLight(int x, int y, int z);
+  NibbleArray3D getBlockLight();
 
-  NibbleArray3d getSkyLight();
+  byte getBlockLight(int posX, int posY, int posZ);
 
-  byte getSkyLight(int x, int y, int z);
+  void setSkyLight(int posX, int posY, int posZ, byte light);
 
-  void setBlockLight(int x, int y, int z, byte light);
+  NibbleArray3D getSkyLight();
 
-  void setSkyLight(int x, int y, int z, byte light);
-
-  LightSection copy();
+  byte getSkyLight(int posX, int posY, int posZ);
 
   long getLastUpdate();
+
+  LightSection copy();
 }

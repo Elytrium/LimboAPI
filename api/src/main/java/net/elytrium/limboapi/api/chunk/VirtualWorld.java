@@ -15,17 +15,17 @@ import org.checkerframework.common.value.qual.IntRange;
 public interface VirtualWorld {
 
   @NonNull
-  VirtualBlock getBlock(int x, int y, int z);
+  VirtualBlock getBlock(int posX, int posY, int posZ);
 
-  void setBiome2d(int x, int z, @NonNull VirtualBiome biome);
+  void setBiome2d(int posX, int posZ, @NonNull VirtualBiome biome);
 
-  void setBiome3d(int x, int y, int z, @NonNull VirtualBiome biome);
+  void setBiome3d(int posX, int posY, int posZ, @NonNull VirtualBiome biome);
 
-  VirtualBiome getBiome(int x, int y, int z);
+  VirtualBiome getBiome(int posX, int posY, int posZ);
 
-  byte getBlockLight(int x, int y, int z);
+  byte getBlockLight(int posX, int posY, int posZ);
 
-  void setBlockLight(int x, int y, int z, byte light);
+  void setBlockLight(int posX, int posY, int posZ, byte light);
 
   void fillBlockLight(@IntRange(from = 0, to = 15) int level);
 
@@ -34,9 +34,9 @@ public interface VirtualWorld {
   List<VirtualChunk> getChunks();
 
   @Nullable
-  VirtualChunk getChunk(int x, int z);
+  VirtualChunk getChunk(int posX, int posZ);
 
-  VirtualChunk getChunkOrNew(int x, int z);
+  VirtualChunk getChunkOrNew(int posX, int posZ);
 
   @NonNull
   Dimension getDimension();
@@ -51,5 +51,5 @@ public interface VirtualWorld {
 
   float getPitch();
 
-  void setBlock(int x, int y, int z, @Nullable VirtualBlock block);
+  void setBlock(int posX, int posY, int posZ, @Nullable VirtualBlock block);
 }

@@ -111,26 +111,26 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
-  public void sendImage(int mapId, BufferedImage image) {
-    this.sendImage(mapId, image, true, true);
+  public void sendImage(int mapID, BufferedImage image) {
+    this.sendImage(mapID, image, true, true);
   }
 
   @Override
-  public void sendImage(int mapId, BufferedImage image, boolean sendItem) {
-    this.sendImage(mapId, image, sendItem, true);
+  public void sendImage(int mapID, BufferedImage image, boolean sendItem) {
+    this.sendImage(mapID, image, sendItem, true);
   }
 
   @Override
-  public void sendImage(int mapId, BufferedImage image, boolean sendItem, boolean resize) {
+  public void sendImage(int mapID, BufferedImage image, boolean sendItem, boolean resize) {
     if (sendItem) {
       this.setInventory(
           36,
           SimpleItem.fromItem(Item.FILLED_MAP),
           1,
-          mapId,
+          mapID,
           this.version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0
               ? null
-              : CompoundBinaryTag.builder().put("map", IntBinaryTag.of(mapId)).build()
+              : CompoundBinaryTag.builder().put("map", IntBinaryTag.of(mapID)).build()
       );
     }
 
@@ -145,9 +145,8 @@ public class LimboPlayerImpl implements LimboPlayer {
         image = resizedImage;
       } else {
         throw new IllegalStateException(
-            "You either need to provide an image of "
-                + MapData.MAP_DIM_SIZE + "x" + MapData.MAP_DIM_SIZE
-                + " pixels or set the resize parameter to true so that API will automatically resize your image."
+            "You either need to provide an image of " + MapData.MAP_DIM_SIZE + "x" + MapData.MAP_DIM_SIZE
+          + " pixels or set the resize parameter to true so that API will automatically resize your image."
         );
       }
     }
@@ -160,8 +159,9 @@ public class LimboPlayerImpl implements LimboPlayer {
       }
 
       for (int i = 0; i < MapData.MAP_DIM_SIZE; ++i) {
-        this.writePacket(new MapDataPacket(mapId, (byte) 0, new MapData(i, canvas[i])));
+        this.writePacket(new MapDataPacket(mapID, (byte) 0, new MapData(i, canvas[i])));
       }
+
       this.flushPackets();
     } else {
       byte[] canvas = new byte[MapData.MAP_SIZE];
@@ -169,7 +169,7 @@ public class LimboPlayerImpl implements LimboPlayer {
         canvas[i] = (byte) toWrite[i];
       }
 
-      this.writePacketAndFlush(new MapDataPacket(mapId, (byte) 0, new MapData(canvas)));
+      this.writePacketAndFlush(new MapDataPacket(mapID, (byte) 0, new MapData(canvas)));
     }
   }
 
@@ -191,20 +191,18 @@ public class LimboPlayerImpl implements LimboPlayer {
   @Override
   public void setGameMode(GameMode gameMode) {
     boolean is17 = this.version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0;
-    if (gameMode == GameMode.SPECTATOR && is17) {
-      return; // Spectator game mode was added in 1.8.
+    if (gameMode != GameMode.SPECTATOR || !is17) { // Spectator game mode was added in 1.8.
+      this.gameMode = gameMode;
+
+      int id = this.gameMode.getID();
+      this.sendAbilities();
+      if (!is17) {
+        this.writePacket(new PlayerListItem(PlayerListItem.UPDATE_GAMEMODE, List.of(new PlayerListItem.Item(this.player.getUniqueId()).setGameMode(id))));
+      }
+      this.writePacket(new ChangeGameStatePacket(3, id));
+
+      this.flushPackets();
     }
-
-    this.gameMode = gameMode;
-    int id = this.gameMode.getId();
-
-    this.sendAbilities();
-    if (!is17) {
-      this.writePacket(new PlayerListItem(PlayerListItem.UPDATE_GAMEMODE, List.of(new PlayerListItem.Item(this.player.getUniqueId()).setGameMode(id))));
-    }
-    this.writePacket(new ChangeGameStatePacket(3, id));
-
-    this.flushPackets();
   }
 
   @Override

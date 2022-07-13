@@ -11,5 +11,5 @@ public interface VirtualBiome {
 
   String getName();
 
-  int getId();
+  int getID();
 }

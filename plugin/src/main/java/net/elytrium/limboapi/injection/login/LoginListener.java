@@ -153,18 +153,18 @@ public class LoginListener {
                 this.plugin.inject3rdParty(player, connection, pipeline);
 
                 VelocityConfiguration configuration = this.server.getConfiguration();
-                UUID playerUniqueId = player.getUniqueId();
+                UUID playerUniqueID = player.getUniqueId();
                 if (configuration.getPlayerInfoForwardingMode() == PlayerInfoForwarding.NONE) {
-                  playerUniqueId = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
+                  playerUniqueID = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
                 }
 
                 ServerLoginSuccess success = new ServerLoginSuccess();
                 success.setUsername(player.getUsername());
                 success.setProperties(player.getGameProfileProperties());
-                success.setUuid(playerUniqueId);
+                success.setUuid(playerUniqueID);
                 connection.write(this.plugin.encodeSingleLogin(success, connection.getProtocolVersion()));
 
-                this.plugin.setInitialID(player, playerUniqueId);
+                this.plugin.setInitialID(player, playerUniqueID);
 
                 connection.setState(StateRegistry.PLAY);
 

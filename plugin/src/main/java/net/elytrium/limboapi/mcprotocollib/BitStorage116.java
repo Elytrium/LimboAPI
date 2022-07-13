@@ -101,26 +101,24 @@ public class BitStorage116 implements CompactStorage {
   public void set(int index, int value) {
     if (index < 0 || index > this.size - 1) {
       throw new IndexOutOfBoundsException();
-    }
-
-    if (value < 0 || value > this.maxValue) {
+    } else if (value < 0 || value > this.maxValue) {
       throw new IllegalArgumentException("Value cannot be outside of accepted range.");
+    } else {
+      int cellIndex = this.cellIndex(index);
+      int bitIndex = this.bitIndex(index, cellIndex);
+      this.data[cellIndex] = this.data[cellIndex] & ~(this.maxValue << bitIndex) | ((long) value & this.maxValue) << bitIndex;
     }
-
-    int cellIndex = this.cellIndex(index);
-    int bitIndex = this.bitIndex(index, cellIndex);
-    this.data[cellIndex] = this.data[cellIndex] & ~(this.maxValue << bitIndex) | ((long) value & this.maxValue) << bitIndex;
   }
 
   @Override
   public int get(int index) {
     if (index < 0 || index > this.size - 1) {
       throw new IndexOutOfBoundsException();
+    } else {
+      int cellIndex = this.cellIndex(index);
+      int bitIndex = this.bitIndex(index, cellIndex);
+      return (int) (this.data[cellIndex] >> bitIndex & this.maxValue);
     }
-
-    int cellIndex = this.cellIndex(index);
-    int bitIndex = this.bitIndex(index, cellIndex);
-    return (int) (this.data[cellIndex] >> bitIndex & this.maxValue);
   }
 
   @Override

@@ -352,7 +352,7 @@ public enum Item {
     this.id = id;
   }
 
-  public int getId() {
+  public int getID() {
     return this.id;
   }
 }

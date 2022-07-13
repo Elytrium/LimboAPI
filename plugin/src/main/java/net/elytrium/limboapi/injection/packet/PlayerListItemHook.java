@@ -88,12 +88,12 @@ public class PlayerListItemHook extends PlayerListItem {
     var playProtocolRegistryVersions = (Map<ProtocolVersion, StateRegistry.PacketRegistry.ProtocolRegistry>) LimboProtocol.VERSIONS_FIELD.get(registry);
     playProtocolRegistryVersions.forEach((protocolVersion, protocolRegistry) -> {
       try {
-        var packetIdToSupplier = (IntObjectMap<Supplier<? extends MinecraftPacket>>) LimboProtocol.PACKET_ID_TO_SUPPLIER_FIELD.get(protocolRegistry);
-        var packetClassToId = (Object2IntMap<Class<? extends MinecraftPacket>>) LimboProtocol.PACKET_CLASS_TO_ID_FIELD.get(protocolRegistry);
+        var packetIDToSupplier = (IntObjectMap<Supplier<? extends MinecraftPacket>>) LimboProtocol.PACKET_ID_TO_SUPPLIER_FIELD.get(protocolRegistry);
+        var packetClassToID = (Object2IntMap<Class<? extends MinecraftPacket>>) LimboProtocol.PACKET_CLASS_TO_ID_FIELD.get(protocolRegistry);
 
-        int id = packetClassToId.getInt(PlayerListItem.class);
-        packetClassToId.put(PlayerListItemHook.class, id);
-        packetIdToSupplier.put(id, () -> new PlayerListItemHook(plugin));
+        int id = packetClassToID.getInt(PlayerListItem.class);
+        packetClassToID.put(PlayerListItemHook.class, id);
+        packetIDToSupplier.put(id, () -> new PlayerListItemHook(plugin));
       } catch (ReflectiveOperationException e) {
         throw new ReflectionException(e);
       }

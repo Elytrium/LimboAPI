@@ -58,8 +58,8 @@ public class PacketFactoryImpl implements PacketFactory {
   }
 
   @Override
-  public Object createMapDataPacket(int mapId, byte scale, MapData mapData) {
-    return new MapDataPacket(mapId, scale, mapData);
+  public Object createMapDataPacket(int mapID, byte scale, MapData mapData) {
+    return new MapDataPacket(mapID, scale, mapData);
   }
 
   @Override

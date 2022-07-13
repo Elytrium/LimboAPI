@@ -21,11 +21,11 @@ import com.velocitypowered.api.network.ProtocolVersion;
 
 public class StorageUtils {
 
-  public static int fixBitsPerEntry(ProtocolVersion version, int newSize) {
-    if (newSize < 4) {
+  public static int fixBitsPerEntry(ProtocolVersion version, int bitsPerEntry) {
+    if (bitsPerEntry < 4) {
       return 4;
-    } else if (newSize < 9) {
-      return newSize;
+    } else if (bitsPerEntry < 9) {
+      return bitsPerEntry;
     } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_13) < 0) {
       return 13;
     } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_4) < 0) {

@@ -23,7 +23,7 @@ public class BiomeData {
   public BiomeData(ChunkSnapshot chunk) {
     VirtualBiome[] biomes = chunk.getBiomes();
     for (int i = 0; i < biomes.length; ++i) {
-      this.post115Biomes[i] = biomes[i].getId();
+      this.post115Biomes[i] = biomes[i].getID();
     }
 
     // Down sample 4x4x4 3D biomes to 2D XZ.
@@ -33,8 +33,7 @@ public class BiomeData {
         samples.clear();
         for (int y = 0; y < 256; y += 16) {
           VirtualBiome biome = biomes[/*SimpleChunk.getBiomeIndex(x, y, z)*/((y >> 2) & 63) << 4 | ((z >> 2) & 3) << 2 | ((x >> 2) & 3)];
-          int curr = samples.getOrDefault(biome.getId(), 0);
-          samples.put(biome.getId(), curr + 1);
+          samples.put(biome.getID(), samples.getOrDefault(biome.getID(), 0) + 1);
         }
         int id = samples.entrySet().stream()
             .max(Map.Entry.comparingByValue())

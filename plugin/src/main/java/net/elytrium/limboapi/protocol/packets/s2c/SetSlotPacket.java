@@ -63,7 +63,7 @@ public class SetSlotPacket implements MinecraftPacket {
     }
 
     buf.writeShort(this.slot);
-    int id = this.item.getId(protocolVersion);
+    int id = this.item.getID(protocolVersion);
     boolean present = id > 0;
 
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_13_2) >= 0) {

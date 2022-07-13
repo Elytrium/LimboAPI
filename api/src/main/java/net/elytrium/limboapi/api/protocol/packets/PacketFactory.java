@@ -25,7 +25,7 @@ public interface PacketFactory {
 
   Object createDefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle);
 
-  Object createMapDataPacket(int mapId, byte scale, MapData mapData);
+  Object createMapDataPacket(int mapID, byte scale, MapData mapData);
 
   /**
    * @param flags See {@link AbilityFlags}. (e.g. {@code AbilityFlags.ALLOW_FLYING | AbilityFlags.CREATIVE_MODE})
