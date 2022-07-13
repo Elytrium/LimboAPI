@@ -73,7 +73,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   //private boolean disconnected;
 
   public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player, LimboSessionHandler callback,
-                                 MinecraftSessionHandler originalHandler, RegisteredServer previousServer, Supplier<String> limboName) {
+      MinecraftSessionHandler originalHandler, RegisteredServer previousServer, Supplier<String> limboName) {
     this.plugin = plugin;
     this.limbo = limbo;
     this.player = player;

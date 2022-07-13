@@ -146,7 +146,7 @@ public class LimboPlayerImpl implements LimboPlayer {
       } else {
         throw new IllegalStateException(
             "You either need to provide an image of " + MapData.MAP_DIM_SIZE + "x" + MapData.MAP_DIM_SIZE
-          + " pixels or set the resize parameter to true so that API will automatically resize your image."
+                + " pixels or set the resize parameter to true so that API will automatically resize your image."
         );
       }
     }

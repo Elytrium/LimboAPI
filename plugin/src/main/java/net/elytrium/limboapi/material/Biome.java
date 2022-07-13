@@ -241,10 +241,10 @@ public enum Biome implements VirtualBiome {
     private final Particle particle;
 
     public Effects(int skyColor,
-                   int waterFogColor, int fogColor, int waterColor,
-                   @Nullable Integer foliageColor, @Nullable String grassColorModifier, @Nullable Music music,
-                   @Nullable String ambientSound, @Nullable AdditionsSound additionsSound,
-                   @Nullable MoodSound moodSound, @Nullable Particle particle) {
+        int waterFogColor, int fogColor, int waterColor,
+        @Nullable Integer foliageColor, @Nullable String grassColorModifier, @Nullable Music music,
+        @Nullable String ambientSound, @Nullable AdditionsSound additionsSound,
+        @Nullable MoodSound moodSound, @Nullable Particle particle) {
       this.skyColor = skyColor;
       this.waterFogColor = waterFogColor;
       this.fogColor = fogColor;
