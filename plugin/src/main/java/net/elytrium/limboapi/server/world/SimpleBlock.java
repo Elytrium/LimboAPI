@@ -53,16 +53,16 @@ public class SimpleBlock implements VirtualBlock {
         LinkedTreeMap.class
     );
     blockStates.forEach((key, value) -> {
-      String[] stringIdArgs = key.split("\\[");
-      if (!MODERN_STRING_MAP.containsKey(stringIdArgs[0])) {
-        MODERN_STRING_MAP.put(stringIdArgs[0], new HashMap<>());
+      String[] stringIDArgs = key.split("\\[");
+      if (!MODERN_STRING_MAP.containsKey(stringIDArgs[0])) {
+        MODERN_STRING_MAP.put(stringIDArgs[0], new HashMap<>());
       }
 
-      if (stringIdArgs.length == 1) {
-        MODERN_STRING_MAP.get(stringIdArgs[0]).put(null, Short.valueOf(value));
+      if (stringIDArgs.length == 1) {
+        MODERN_STRING_MAP.get(stringIDArgs[0]).put(null, Short.valueOf(value));
       } else {
-        stringIdArgs[1] = stringIdArgs[1].substring(0, stringIdArgs[1].length() - 1);
-        MODERN_STRING_MAP.get(stringIdArgs[0]).put(new HashSet<>(Arrays.asList(stringIdArgs[1].split(","))), Short.valueOf(value));
+        stringIDArgs[1] = stringIDArgs[1].substring(0, stringIDArgs[1].length() - 1);
+        MODERN_STRING_MAP.get(stringIDArgs[0]).put(new HashSet<>(Arrays.asList(stringIDArgs[1].split(","))), Short.valueOf(value));
       }
     });
 
@@ -70,17 +70,20 @@ public class SimpleBlock implements VirtualBlock {
         new InputStreamReader(Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/blocks.json")), StandardCharsets.UTF_8),
         LinkedTreeMap.class
     );
-    blocks.forEach((legacyBlockId, modernId) -> LEGACY_IDS_MAP.put(Short.valueOf(legacyBlockId), solid(Short.parseShort(modernId))));
+    blocks.forEach((legacyBlockID, modernID) -> LEGACY_IDS_MAP.put(Short.valueOf(legacyBlockID), solid(Short.parseShort(modernID))));
 
     LEGACY_IDS_MAP.put((short) 0, AIR);
 
     loadModernMap("/mapping/legacyblockdata.json", MODERN_IDS_MAP);
     loadModernMap("/mapping/flatteningblockdata.json", MODERN_IDS_FLATTEN_MAP);
 
-    LinkedTreeMap<String, String> tempLegacyFlattenMap = GSON.fromJson(new InputStreamReader(
-        Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/preflatteningblockdataid.json")),
-        StandardCharsets.UTF_8
-    ), LinkedTreeMap.class);
+    LinkedTreeMap<String, String> tempLegacyFlattenMap = GSON.fromJson(
+        new InputStreamReader(
+            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/preflatteningblockdataid.json")),
+            StandardCharsets.UTF_8
+        ),
+        LinkedTreeMap.class
+    );
 
     tempLegacyFlattenMap.forEach((k, v) -> LEGACY_IDS_FLATTEN_MAP.put(Short.valueOf(k), Short.valueOf(v)));
   }
@@ -93,10 +96,9 @@ public class SimpleBlock implements VirtualBlock {
     );
 
     modernMap.forEach((version, idMap) -> {
-      ProtocolVersion protocolVersion = ProtocolVersion.valueOf(version);
-      ShortObjectMap<Short> versionIdMap = new ShortObjectHashMap<>();
-      idMap.forEach((oldId, newId) -> versionIdMap.put(Short.valueOf(oldId), Short.valueOf(newId)));
-      map.put(protocolVersion, versionIdMap);
+      ShortObjectMap<Short> versionIDMap = new ShortObjectHashMap<>();
+      idMap.forEach((oldID, newID) -> versionIDMap.put(Short.valueOf(oldID), Short.valueOf(newID)));
+      map.put(ProtocolVersion.valueOf(version), versionIDMap);
     });
   }
 
@@ -112,11 +114,11 @@ public class SimpleBlock implements VirtualBlock {
     this.id = id;
   }
 
-  public SimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernId, Map<String, String> properties) {
+  public SimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernID, Map<String, String> properties) {
     this.solid = solid;
     this.air = air;
     this.motionBlocking = motionBlocking;
-    this.id = transformId(modernId, properties);
+    this.id = transformID(modernID, properties);
   }
 
   public SimpleBlock(SimpleBlock block) {
@@ -127,28 +129,28 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   @Override
-  public short getModernId() {
+  public short getModernID() {
     return this.id;
   }
 
   @Override
-  public short getId(ProtocolVersion version) {
+  public short getID(ProtocolVersion version) {
     Short id = MODERN_IDS_MAP.get(version).get(this.id);
-    return this.getFlattenId(version, Objects.requireNonNullElse(id, this.id));
+    return this.getFlattenID(version, Objects.requireNonNullElse(id, this.id));
   }
 
-  private short getFlattenId(ProtocolVersion version, Short id) {
-    Short flattenId;
+  private short getFlattenID(ProtocolVersion version, Short id) {
+    Short flattenID;
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_12_2) <= 0) {
-      flattenId = LEGACY_IDS_FLATTEN_MAP.get(this.id);
+      flattenID = LEGACY_IDS_FLATTEN_MAP.get(this.id);
     } else {
-      flattenId = MODERN_IDS_FLATTEN_MAP.get(version).get(this.id);
+      flattenID = MODERN_IDS_FLATTEN_MAP.get(version).get(this.id);
     }
 
-    if (flattenId == null) {
+    if (flattenID == null) {
       return id;
     } else {
-      return flattenId;
+      return flattenID;
     }
   }
 
@@ -167,31 +169,31 @@ public class SimpleBlock implements VirtualBlock {
     return this.motionBlocking;
   }
 
-  public static VirtualBlock fromModernId(String modernId, Map<String, String> properties) {
-    return solid(transformId(modernId, properties));
+  public static VirtualBlock fromModernID(String modernID, Map<String, String> properties) {
+    return solid(transformID(modernID, properties));
   }
 
-  private static short transformId(String modernId, Map<String, String> properties) {
+  private static short transformID(String modernID, Map<String, String> properties) {
     if (properties == null || properties.size() == 0) {
-      return transformId(modernId, (Set<String>) null);
+      return transformID(modernID, (Set<String>) null);
+    } else {
+      Set<String> propertiesSet = new HashSet<>();
+      properties.forEach((key, value) -> propertiesSet.add(key + "=" + value));
+      return transformID(modernID, propertiesSet);
     }
-
-    Set<String> propertiesSet = new HashSet<>();
-    properties.forEach((k, v) -> propertiesSet.add(k + "=" + v));
-    return transformId(modernId, propertiesSet);
   }
 
-  private static short transformId(String modernId, Set<String> properties) {
+  private static short transformID(String modernID, Set<String> properties) {
     Short id;
     if (properties == null || properties.size() == 0) {
-      id = MODERN_STRING_MAP.get(modernId).get(null);
+      id = MODERN_STRING_MAP.get(modernID).get(null);
     } else {
-      id = MODERN_STRING_MAP.get(modernId).get(properties);
+      id = MODERN_STRING_MAP.get(modernID).get(properties);
     }
 
     if (id == null) {
-      LimboAPI.getLogger().warn("Block " + modernId + " is not supported, and was replaced with air.");
-      return AIR.getModernId();
+      LimboAPI.getLogger().warn("Block " + modernID + " is not supported, and was replaced with air.");
+      return AIR.getModernID();
     } else {
       return id;
     }
@@ -218,12 +220,22 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   @NonNull
-  public static SimpleBlock fromLegacyId(short id) {
+  public static SimpleBlock fromLegacyID(short id) {
     if (LEGACY_IDS_MAP.containsKey(id)) {
       return LEGACY_IDS_MAP.get(id);
     } else {
       LimboAPI.getLogger().warn("Block #" + id + " is not supported, and was replaced with air.");
       return AIR;
     }
+  }
+
+  @Override
+  public String toString() {
+    return "SimpleBlock{"
+        + "solid=" + this.solid
+        + ", air=" + this.air
+        + ", motionBlocking=" + this.motionBlocking
+        + ", id=" + this.id
+        + "}";
   }
 }

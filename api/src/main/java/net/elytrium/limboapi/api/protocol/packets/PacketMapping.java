@@ -29,7 +29,7 @@ public class PacketMapping {
     this.encodeOnly = encodeOnly;
   }
 
-  public int getId() {
+  public int getID() {
     return this.id;
   }
 

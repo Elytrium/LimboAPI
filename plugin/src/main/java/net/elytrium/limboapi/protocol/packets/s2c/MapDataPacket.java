@@ -26,12 +26,12 @@ import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 
 public class MapDataPacket implements MinecraftPacket {
 
-  private final int mapId;
+  private final int mapID;
   private final byte scale;
   private final MapData mapData;
 
-  public MapDataPacket(int mapId, byte scale, MapData mapData) {
-    this.mapId = mapId;
+  public MapDataPacket(int mapID, byte scale, MapData mapData) {
+    this.mapID = mapID;
     this.scale = scale;
     this.mapData = mapData;
   }
@@ -47,7 +47,7 @@ public class MapDataPacket implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    ProtocolUtils.writeVarInt(buf, this.mapId);
+    ProtocolUtils.writeVarInt(buf, this.mapID);
     byte[] data = this.mapData.getData();
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       buf.writeShort(data.length + 3);
@@ -90,7 +90,7 @@ public class MapDataPacket implements MinecraftPacket {
   @Override
   public String toString() {
     return "MapDataPacket{"
-        + "mapId=" + this.mapId
+        + "mapID=" + this.mapID
         + ", scale=" + this.scale
         + ", mapData=" + this.mapData
         + "}";

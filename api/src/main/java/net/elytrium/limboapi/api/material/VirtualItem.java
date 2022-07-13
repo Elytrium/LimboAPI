@@ -11,5 +11,5 @@ import com.velocitypowered.api.network.ProtocolVersion;
 
 public interface VirtualItem {
 
-  short getId(ProtocolVersion version);
+  short getID(ProtocolVersion version);
 }

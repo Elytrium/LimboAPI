@@ -146,7 +146,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public boolean handle(TeleportConfirmPacket packet) {
     if (this.loaded) {
-      this.callback.onTeleport(packet.getTeleportId());
+      this.callback.onTeleport(packet.getTeleportID());
     }
 
     return true;

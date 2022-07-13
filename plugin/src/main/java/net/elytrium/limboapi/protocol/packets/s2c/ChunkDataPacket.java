@@ -99,7 +99,16 @@ public class ChunkDataPacket implements MinecraftPacket {
 
     buf.writeInt(this.chunk.getX());
     buf.writeInt(this.chunk.getZ());
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0) {
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
+      // 1.17 mask.
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) <= 0) {
+        long[] mask = this.create117Mask();
+        ProtocolUtils.writeVarInt(buf, mask.length);
+        for (long l : mask) {
+          buf.writeLong(l);
+        }
+      }
+    } else {
       buf.writeBoolean(this.chunk.isFullChunk());
 
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) >= 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) < 0) {
@@ -113,13 +122,6 @@ public class ChunkDataPacket implements MinecraftPacket {
         // OptiFine devs have over-optimized the chunk loading by breaking loading of void-chunks.
         // We are changing void-chunks length here, and OptiFine client thinks that the chunk is not void-alike.
         buf.writeShort(this.mask == 0 ? 1 : this.mask);
-      }
-    } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) <= 0) {
-      // 1.17 mask.
-      long[] mask = this.create117Mask();
-      ProtocolUtils.writeVarInt(buf, mask.length);
-      for (long m : mask) {
-        buf.writeLong(m);
       }
     }
 
@@ -206,10 +208,10 @@ public class ChunkDataPacket implements MinecraftPacket {
         } else if (pass == 0 && version.compareTo(ProtocolVersion.MINECRAFT_1_18) >= 0) {
           data.writeShort(0); // Block count = 0.
           data.writeByte(0); // BlockStorage: 0 bit per entry = Single palette.
-          ProtocolUtils.writeVarInt(data, Block.AIR.getId()); // Only air block in the palette.
+          ProtocolUtils.writeVarInt(data, Block.AIR.getID()); // Only air block in the palette.
           ProtocolUtils.writeVarInt(data, 0); // BlockStorage: 0 entries.
           data.writeByte(0); // BiomeStorage: 0 bit per entry = Single palette.
-          ProtocolUtils.writeVarInt(data, Biome.PLAINS.getId()); // Only Plain biome in the palette.
+          ProtocolUtils.writeVarInt(data, Biome.PLAINS.getID()); // Only Plain biome in the palette.
           ProtocolUtils.writeVarInt(data, 0); // BiomeStorage: 0 entries.
         }
       }

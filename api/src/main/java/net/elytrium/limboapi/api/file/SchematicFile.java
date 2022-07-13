@@ -25,50 +25,15 @@ public class SchematicFile implements WorldFile {
   //private byte[] blocksData;
 
   public SchematicFile(Path file) throws IOException {
-    CompoundBinaryTag tag = BinaryTagIO.unlimitedReader().read(file, BinaryTagIO.Compression.GZIP);
-    this.fromNBT(tag);
+    this.fromNBT(BinaryTagIO.unlimitedReader().read(file, BinaryTagIO.Compression.GZIP));
   }
 
   public SchematicFile(InputStream stream) throws IOException {
-    CompoundBinaryTag tag = BinaryTagIO.unlimitedReader().read(stream, BinaryTagIO.Compression.GZIP);
-    this.fromNBT(tag);
+    this.fromNBT(BinaryTagIO.unlimitedReader().read(stream, BinaryTagIO.Compression.GZIP));
   }
 
   public SchematicFile(CompoundBinaryTag tag) {
     this.fromNBT(tag);
-  }
-
-  @Override
-  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ) {
-    this.toWorld(factory, world, offsetX, offsetY, offsetZ, 15);
-  }
-
-  @Override
-  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, int lightLevel) {
-    short[] blockIds = new short[this.blocks.length];
-
-    for (int index = 0; index < this.blocks.length; ++index) {
-      if ((index >> 1) >= this.addBlocks.length) {
-        blockIds[index] = (short) (this.blocks[index] & 0xFF);
-      } else {
-        if ((index & 1) == 0) {
-          blockIds[index] = (short) (((this.addBlocks[index >> 1] & 0x0F) << 8) + (this.addBlocks[index] & 0xFF));
-        } else {
-          blockIds[index] = (short) (((this.addBlocks[index >> 1] & 0xF0) << 4) + (this.addBlocks[index] & 0xFF));
-        }
-      }
-    }
-
-    for (int x = 0; x < this.width; ++x) {
-      for (int y = 0; y < this.height; ++y) {
-        for (int z = 0; z < this.length; ++z) {
-          int index = (y * this.length + z) * this.width + x;
-          world.setBlock(x + offsetX, y + offsetY, z + offsetZ, factory.createSimpleBlock(blockIds[index]));
-        }
-      }
-    }
-
-    world.fillSkyLight(lightLevel);
   }
 
   private void fromNBT(CompoundBinaryTag tag) {
@@ -81,5 +46,37 @@ public class SchematicFile implements WorldFile {
     if (tag.keySet().contains("AddBlocks")) {
       this.addBlocks = tag.getByteArray("AddBlocks");
     }
+  }
+
+  @Override
+  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ) {
+    this.toWorld(factory, world, offsetX, offsetY, offsetZ, 15);
+  }
+
+  @Override
+  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, int lightLevel) {
+    short[] blockIDs = new short[this.blocks.length];
+    for (int index = 0; index < this.blocks.length; ++index) {
+      if ((index >> 1) >= this.addBlocks.length) {
+        blockIDs[index] = (short) (this.blocks[index] & 0xFF);
+      } else {
+        if ((index & 1) == 0) {
+          blockIDs[index] = (short) (((this.addBlocks[index >> 1] & 0x0F) << 8) + (this.addBlocks[index] & 0xFF));
+        } else {
+          blockIDs[index] = (short) (((this.addBlocks[index >> 1] & 0xF0) << 4) + (this.addBlocks[index] & 0xFF));
+        }
+      }
+    }
+
+    for (int x = 0; x < this.width; ++x) {
+      for (int y = 0; y < this.height; ++y) {
+        for (int z = 0; z < this.length; ++z) {
+          int index = (y * this.length + z) * this.width + x;
+          world.setBlock(x + offsetX, y + offsetY, z + offsetZ, factory.createSimpleBlock(blockIDs[index]));
+        }
+      }
+    }
+
+    world.fillSkyLight(lightLevel);
   }
 }

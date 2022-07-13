@@ -19,6 +19,7 @@ package net.elytrium.limboapi.injection.disconnect;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.proxy.Player;
 import net.elytrium.limboapi.LimboAPI;
 
 public class DisconnectListener {
@@ -31,9 +32,10 @@ public class DisconnectListener {
 
   @Subscribe
   public void onDisconnect(DisconnectEvent event) {
-    this.plugin.unsetLimboJoined(event.getPlayer());
-    this.plugin.removeLoginQueue(event.getPlayer());
-    this.plugin.removeNextServer(event.getPlayer());
-    this.plugin.removeInitialID(event.getPlayer());
+    Player player = event.getPlayer();
+    this.plugin.unsetLimboJoined(player);
+    this.plugin.removeLoginQueue(player);
+    this.plugin.removeNextServer(player);
+    this.plugin.removeInitialID(player);
   }
 }

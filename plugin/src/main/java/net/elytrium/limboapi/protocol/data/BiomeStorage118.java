@@ -44,7 +44,7 @@ public class BiomeStorage118 {
 
     for (Biome biome : Biome.values()) {
       this.palette.add(biome);
-      this.rawToBiome.put(biome.getId(), biome);
+      this.rawToBiome.put(biome.getID(), biome);
     }
 
     this.storage = new BitStorage116(3, SimpleChunk.MAX_BIOMES_PER_SECTION);
@@ -57,9 +57,9 @@ public class BiomeStorage118 {
     this.storage = storage;
   }
 
-  public void set(int x, int y, int z, @NonNull VirtualBiome biome) {
+  public void set(int posX, int posY, int posZ, @NonNull VirtualBiome biome) {
     int id = this.getIndex(biome);
-    this.storage.set(index(x, y, z), id);
+    this.storage.set(index(posX, posY, posZ), id);
   }
 
   public void set(int index, @NonNull VirtualBiome biome) {
@@ -68,8 +68,8 @@ public class BiomeStorage118 {
   }
 
   @NonNull
-  public VirtualBiome get(int x, int y, int z) {
-    return this.get(index(x, y, z));
+  public VirtualBiome get(int posX, int posY, int posZ) {
+    return this.get(index(posX, posY, posZ));
   }
 
   private VirtualBiome get(int index) {
@@ -86,7 +86,7 @@ public class BiomeStorage118 {
     if (this.storage.getBitsPerEntry() <= 8) {
       ProtocolUtils.writeVarInt(buf, this.palette.size());
       for (VirtualBiome biome : this.palette) {
-        ProtocolUtils.writeVarInt(buf, biome.getId());
+        ProtocolUtils.writeVarInt(buf, biome.getID());
       }
     }
 
@@ -98,7 +98,7 @@ public class BiomeStorage118 {
     if (this.storage.getBitsPerEntry() <= 8) {
       length += ProtocolUtils.varIntBytes(this.palette.size());
       for (VirtualBiome biome : this.palette) {
-        length += ProtocolUtils.varIntBytes(biome.getId());
+        length += ProtocolUtils.varIntBytes(biome.getID());
       }
     }
 
@@ -111,7 +111,7 @@ public class BiomeStorage118 {
 
   private int getIndex(VirtualBiome biome) {
     if (this.storage.getBitsPerEntry() > 8) {
-      int raw = biome.getId();
+      int raw = biome.getID();
       this.rawToBiome.put(raw, biome);
       return raw;
     } else {
@@ -133,10 +133,8 @@ public class BiomeStorage118 {
   private void resize(int newSize) {
     newSize = StorageUtils.fixBitsPerEntry(this.version, newSize);
     CompactStorage newStorage = new BitStorage116(newSize, SimpleChunk.MAX_BIOMES_PER_SECTION);
-
     for (int i = 0; i < SimpleChunk.MAX_BIOMES_PER_SECTION; ++i) {
-      int newId = newSize > 8 ? this.palette.get(this.storage.get(i)).getId() : this.storage.get(i);
-      newStorage.set(i, newId);
+      newStorage.set(i, newSize > 8 ? this.palette.get(this.storage.get(i)).getID() : this.storage.get(i));
     }
 
     this.storage = newStorage;
@@ -152,7 +150,7 @@ public class BiomeStorage118 {
         + "}";
   }
 
-  private static int index(int x, int y, int z) {
-    return y << 4 | z << 2 | x;
+  private static int index(int posX, int posY, int posZ) {
+    return posY << 4 | posZ << 2 | posX;
   }
 }

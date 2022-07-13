@@ -14,16 +14,16 @@ public enum Dimension {
   THE_END("minecraft:the_end", 1, 2, 16, false, BuiltInBiome.THE_END); // 256 / 16
 
   private final String key;
-  private final int legacyId;
-  private final int modernId;
+  private final int legacyID;
+  private final int modernID;
   private final int maxSections;
   private final boolean hasSkyLight;
   private final BuiltInBiome defaultBiome;
 
-  Dimension(String key, int legacyId, int modernId, int maxSections, boolean hasSkyLight, BuiltInBiome defaultBiome) {
+  Dimension(String key, int legacyID, int modernID, int maxSections, boolean hasSkyLight, BuiltInBiome defaultBiome) {
     this.key = key;
-    this.legacyId = legacyId;
-    this.modernId = modernId;
+    this.legacyID = legacyID;
+    this.modernID = modernID;
     this.maxSections = maxSections;
     this.hasSkyLight = hasSkyLight;
     this.defaultBiome = defaultBiome;
@@ -33,12 +33,12 @@ public enum Dimension {
     return this.key;
   }
 
-  public int getLegacyId() {
-    return this.legacyId;
+  public int getLegacyID() {
+    return this.legacyID;
   }
 
-  public int getModernId() {
-    return this.modernId;
+  public int getModernID() {
+    return this.modernID;
   }
 
   public int getMaxSections() {

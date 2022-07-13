@@ -15,11 +15,11 @@ public interface LimboSessionHandler {
 
   }
 
-  default void onMove(double x, double y, double z) {
+  default void onMove(double posX, double posY, double posZ) {
 
   }
 
-  default void onMove(double x, double y, double z, float yaw, float pitch) {
+  default void onMove(double posX, double posY, double posZ, float yaw, float pitch) {
 
   }
 
@@ -31,7 +31,7 @@ public interface LimboSessionHandler {
 
   }
 
-  default void onTeleport(int teleportId) {
+  default void onTeleport(int teleportID) {
 
   }
 
@@ -40,7 +40,7 @@ public interface LimboSessionHandler {
   }
 
   /**
-   * @param packet Any velocity built-in packet or any packet registered via {@link LimboFactory#registerPacket}
+   * @param packet Any velocity built-in packet or any packet registered via {@link LimboFactory#registerPacket}.
    */
   default void onGeneric(Object packet) {
 
