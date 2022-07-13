@@ -50,6 +50,7 @@ public interface LimboFactory {
    * Creates new virtual block from id and data.
    *
    * @param modernID Modern block id
+   * @param properties Modern properties like {"waterlogged": "true"}
    *
    * @return new virtual block.
    */
@@ -84,6 +85,7 @@ public interface LimboFactory {
    * @param air            Defines if the block is the air
    * @param motionBlocking Defines if the block blocks motions (1.14+)
    * @param modernID       Block id
+   * @param properties     Modern properties like {"waterlogged": "true"}
    *
    * @return new virtual block.
    */
