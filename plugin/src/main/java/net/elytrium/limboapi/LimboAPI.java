@@ -20,6 +20,7 @@ package net.elytrium.limboapi;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.Plugin;
@@ -53,6 +54,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import net.elytrium.fastprepare.PreparedPacketFactory;
 import net.elytrium.java.commons.config.YamlConfig;
@@ -78,6 +80,7 @@ import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
+import net.elytrium.limboapi.injection.kick.KickListener;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
 import net.elytrium.limboapi.injection.packet.MinecraftDiscardCompressDecoder;
@@ -128,6 +131,7 @@ public class LimboAPI implements LimboFactory {
   private final CachedPackets packets;
   private final PacketFactory packetFactory;
   private final HashMap<Player, LoginTasksQueue> loginQueue;
+  private final HashMap<Player, Function<KickedFromServerEvent, Boolean>> kickCallback;
   private final HashMap<Player, RegisteredServer> nextServer;
   private final HashMap<Player, UUID> initialID;
 
@@ -149,6 +153,7 @@ public class LimboAPI implements LimboFactory {
     this.packetFactory = new PacketFactoryImpl();
     this.packets = new CachedPackets(this);
     this.loginQueue = new HashMap<>();
+    this.kickCallback = new HashMap<>();
     this.nextServer = new HashMap<>();
     this.initialID = new HashMap<>();
 
@@ -228,6 +233,7 @@ public class LimboAPI implements LimboFactory {
     VelocityEventManager eventManager = this.server.getEventManager();
     eventManager.unregisterListeners(this);
     eventManager.register(this, this.loginListener);
+    eventManager.register(this, new KickListener(this));
     eventManager.register(this, new DisconnectListener(this));
     eventManager.register(this, new ReloadListener(this));
 
@@ -473,6 +479,22 @@ public class LimboAPI implements LimboFactory {
 
   public LoginTasksQueue getLoginQueue(Player player) {
     return this.loginQueue.get(player);
+  }
+
+  public void setKickCallback(Player player, Function<KickedFromServerEvent, Boolean> queue) {
+    this.kickCallback.put(player, queue);
+  }
+
+  public void removeKickCallback(Player player) {
+    this.kickCallback.remove(player);
+  }
+
+  public boolean hasKickCallback(Player player) {
+    return this.kickCallback.containsKey(player);
+  }
+
+  public Function<KickedFromServerEvent, Boolean> getKickCallback(Player player) {
+    return this.kickCallback.get(player);
   }
 
   public void setNextServer(Player player, RegisteredServer nextServer) {
