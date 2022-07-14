@@ -68,7 +68,7 @@ public class MapPalette {
    */
   public static int[] imageToBytes(BufferedImage image, ProtocolVersion version) {
     int[] result = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
-    return imageToBytes(result, version);
+    return imageToBytes(result, result, version);
   }
 
   /**
@@ -80,12 +80,41 @@ public class MapPalette {
    * @return A byte[] containing the pixels of the image.
    */
   public static int[] imageToBytes(int[] image, ProtocolVersion version) {
-    int[] newImage = new int[image.length];
-    for (int i = 0; i < image.length; ++i) {
-      newImage[i] = tryFastMatchColor(image[i], version);
+    return imageToBytes(image, new int[image.length], version);
+  }
+
+  /**
+   * Convert an image to a byte[] using the palette.
+   *
+   * @param from    The image to convert.
+   * @param to      Output image.
+   * @param version The ProtocolVersion to support more colors.
+   *
+   * @return A byte[] containing the pixels of the image.
+   */
+  public static int[] imageToBytes(int[] from, int[] to, ProtocolVersion version) {
+    for (int i = 0; i < from.length; ++i) {
+      to[i] = tryFastMatchColor(from[i], version);
     }
 
-    return newImage;
+    return to;
+  }
+
+  /**
+   * Convert an image to a byte[] using the palette.
+   *
+   * @param from    The image to convert.
+   * @param to      Output image.
+   * @param version The ProtocolVersion to support more colors.
+   *
+   * @return A byte[] containing the pixels of the image.
+   */
+  public static byte[] imageToBytes(int[] from, byte[] to, ProtocolVersion version) {
+    for (int i = 0; i < from.length; ++i) {
+      to[i] = tryFastMatchColor(from[i], version);
+    }
+
+    return to;
   }
 
   /**
@@ -123,13 +152,61 @@ public class MapPalette {
    * @return A byte[] containing the pixels of the image.
    */
   public static int[] convertImage(int[] image, MapVersion version) {
+    return convertImage(image, new int[image.length], version);
+  }
+
+  /**
+   * Convert an image from MapVersion.MAXIMUM_VERSION to the desired version
+   *
+   * @param from    The image to convert.
+   * @param to      Output image.
+   * @param version The ProtocolVersion to support more colors.
+   *
+   * @return A byte[] containing the pixels of the image.
+   */
+  public static int[] convertImage(int[] from, int[] to, MapVersion version) {
     byte[] remapBuffer = REMAP_BUFFERS.get(version);
-    int[] newImage = new int[image.length];
-    for (int i = 0; i < image.length; ++i) {
-      newImage[i] = remapByte(remapBuffer, (byte) image[i]);
+    for (int i = 0; i < from.length; ++i) {
+      to[i] = remapByte(remapBuffer, (byte) from[i]);
     }
 
-    return newImage;
+    return to;
+  }
+
+  /**
+   * Convert an image from MapVersion.MAXIMUM_VERSION to the desired version
+   *
+   * @param from    The image to convert.
+   * @param to      Output image.
+   * @param version The ProtocolVersion to support more colors.
+   *
+   * @return A byte[] containing the pixels of the image.
+   */
+  public static byte[] convertImage(byte[] from, byte[] to, MapVersion version) {
+    byte[] remapBuffer = REMAP_BUFFERS.get(version);
+    for (int i = 0; i < from.length; ++i) {
+      to[i] = remapByte(remapBuffer, from[i]);
+    }
+
+    return to;
+  }
+
+  /**
+   * Convert an image from MapVersion.MAXIMUM_VERSION to the desired version
+   *
+   * @param from    The image to convert.
+   * @param to      Output image.
+   * @param version The ProtocolVersion to support more colors.
+   *
+   * @return A byte[] containing the pixels of the image.
+   */
+  public static byte[] convertImage(int[] from, byte[] to, MapVersion version) {
+    byte[] remapBuffer = REMAP_BUFFERS.get(version);
+    for (int i = 0; i < from.length; ++i) {
+      to[i] = remapByte(remapBuffer, (byte) from[i]);
+    }
+
+    return to;
   }
 
   private static byte remapByte(byte[] remapBuffer, byte oldByte) {
