@@ -50,6 +50,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
@@ -73,23 +74,24 @@ public class KickListener {
   @Subscribe(order = PostOrder.LAST)
   public void onPlayerKicked(KickedFromServerEvent event) {
     ConnectedPlayer player = (ConnectedPlayer) event.getPlayer();
-    if (this.plugin.hasKickCallback(player)) {
+    Function<KickedFromServerEvent, Boolean> callback = this.plugin.getKickCallback(player);
+    if (callback != null) {
       MinecraftConnection connection = player.getConnection();
       VelocityServerConnection backendConnection = player.getConnectedServer();
 
       try {
         CONNECTION_FIELD.set(player, DUMMY_CONNECTION);
-        BACKEND_CONNECTION_FIELD.set(player, null);
 
         EventLoop eventLoop = connection.getChannel().eventLoop();
         eventLoop.schedule(() -> {
           try {
+            BACKEND_CONNECTION_FIELD.set(player, null);
             if (connection.isClosed()) {
               return;
             }
 
             CONNECTION_FIELD.set(player, connection);
-            if (!this.plugin.getKickCallback(player).apply(event)) {
+            if (!callback.apply(event)) {
               this.handleThen(event, player, backendConnection);
             }
           } catch (IllegalAccessException | InvocationTargetException e) {

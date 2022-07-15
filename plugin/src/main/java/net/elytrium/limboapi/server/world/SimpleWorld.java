@@ -58,7 +58,7 @@ public class SimpleWorld implements VirtualWorld {
 
     // Modern Sodium versions don't load chunks if their "neighbours" are unloaded.
     // We are fixing this problem there by generating all the "neighbours".
-    // Sodium won't connect us to the server if we generate every neighbour, not only spawn chunks neighbours
+    // Sodium won't connect us to the server if we generate every neighbour, not only spawn chunks neighbours.
     int intX = (int) posX >> 4;
     int intZ = (int) posZ >> 4;
     for (int chunkX = intX - 1; chunkX <= intX + 1; ++chunkX) {
