@@ -489,10 +489,6 @@ public class LimboAPI implements LimboFactory {
     this.kickCallback.remove(player);
   }
 
-  public boolean hasKickCallback(Player player) {
-    return this.kickCallback.containsKey(player);
-  }
-
   public Function<KickedFromServerEvent, Boolean> getKickCallback(Player player) {
     return this.kickCallback.get(player);
   }
