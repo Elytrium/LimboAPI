@@ -17,15 +17,15 @@ public enum Dimension {
   private final int legacyID;
   private final int modernID;
   private final int maxSections;
-  private final boolean hasSkyLight;
+  private final boolean hasLegacySkyLight;
   private final BuiltInBiome defaultBiome;
 
-  Dimension(String key, int legacyID, int modernID, int maxSections, boolean hasSkyLight, BuiltInBiome defaultBiome) {
+  Dimension(String key, int legacyID, int modernID, int maxSections, boolean hasLegacySkyLight, BuiltInBiome defaultBiome) {
     this.key = key;
     this.legacyID = legacyID;
     this.modernID = modernID;
     this.maxSections = maxSections;
-    this.hasSkyLight = hasSkyLight;
+    this.hasLegacySkyLight = hasLegacySkyLight;
     this.defaultBiome = defaultBiome;
   }
 
@@ -45,8 +45,8 @@ public enum Dimension {
     return this.maxSections;
   }
 
-  public boolean hasSkyLight() {
-    return this.hasSkyLight;
+  public boolean hasLegacySkyLight() {
+    return this.hasLegacySkyLight;
   }
 
   public BuiltInBiome getDefaultBiome() {

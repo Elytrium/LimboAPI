@@ -51,7 +51,7 @@ public class ChunkDataPacket implements MinecraftPacket {
   private final CompoundBinaryTag heightmap114;
   private final CompoundBinaryTag heightmap116;
 
-  public ChunkDataPacket(ChunkSnapshot chunkSnapshot, boolean skyLight, int maxSections) {
+  public ChunkDataPacket(ChunkSnapshot chunkSnapshot, boolean hasLegacySkyLight, int maxSections) {
     this.maxSections = maxSections;
     this.sections = new NetworkSection[maxSections];
 
@@ -67,7 +67,7 @@ public class ChunkDataPacket implements MinecraftPacket {
             i,
             this.chunk.getSections()[i],
             light.getBlockLight(),
-            skyLight ? light.getSkyLight() : null,
+            hasLegacySkyLight ? light.getSkyLight() : null,
             this.chunk.getBiomes()
         );
         this.sections[i] = section;

@@ -416,9 +416,9 @@ public class LimboImpl implements Limbo {
   private DimensionData createDimensionData(Dimension dimension, boolean modern) {
     return new DimensionData(
         dimension.getKey(), dimension.getModernID(), false,
-        0.0F, false, false, false, false,
-        false, false, false, true, 256,
-        modern ? "#minecraft:infiniburn_end" : "minecraft:infiniburn_end",
+        0.0F, false, false, false, true,
+        false, false, false, false, 256,
+        modern ? "#minecraft:infiniburn_nether" : "minecraft:infiniburn_nether",
         null, null, 1.0, dimension.getKey(), 0, 256,
         0, 0
     );
@@ -491,7 +491,7 @@ public class LimboImpl implements Limbo {
   private List<ChunkDataPacket> createChunksPackets() {
     List<ChunkDataPacket> packets = new ArrayList<>();
     for (VirtualChunk chunk : this.world.getChunks()) {
-      packets.add(this.createChunkData(chunk, this.world.getDimension(), (int) this.world.getSpawnY()));
+      packets.add(this.createChunkData(chunk, this.world.getDimension()));
     }
 
     return packets;
@@ -575,9 +575,8 @@ public class LimboImpl implements Limbo {
     return new UpdateViewPositionPacket(posX >> 4, posZ >> 4);
   }
 
-  private ChunkDataPacket createChunkData(VirtualChunk chunk, Dimension dimension, int skyLightY) {
-    chunk.setSkyLight(chunk.getPosX() & 15, skyLightY, chunk.getPosZ() & 15, (byte) 1);
-    return new ChunkDataPacket(chunk.getFullChunkSnapshot(), dimension.hasSkyLight(), dimension.getMaxSections());
+  private ChunkDataPacket createChunkData(VirtualChunk chunk, Dimension dimension) {
+    return new ChunkDataPacket(chunk.getFullChunkSnapshot(), dimension.hasLegacySkyLight(), dimension.getMaxSections());
   }
 
   public Integer getReadTimeout() {
