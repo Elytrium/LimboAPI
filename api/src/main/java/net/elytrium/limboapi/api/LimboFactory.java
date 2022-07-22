@@ -150,6 +150,13 @@ public interface LimboFactory {
    */
   Limbo createLimbo(VirtualWorld world);
 
+
+  /**
+   * Releases a thread after PreparedPacket#build executions.
+   * Used to free compression libraries.
+   */
+  void releasePreparedPacketThread(Thread thread);
+
   /**
    * Creates new prepared packet builder.
    *

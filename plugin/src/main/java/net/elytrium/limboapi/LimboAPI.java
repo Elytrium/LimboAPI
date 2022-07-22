@@ -327,6 +327,11 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
+  public void releasePreparedPacketThread(Thread thread) {
+    this.preparedPacketFactory.releaseThread(thread);
+  }
+
+  @Override
   public PreparedPacket createPreparedPacket() {
     return (PreparedPacket) this.preparedPacketFactory.createPreparedPacket(this.minVersion, this.maxVersion);
   }
