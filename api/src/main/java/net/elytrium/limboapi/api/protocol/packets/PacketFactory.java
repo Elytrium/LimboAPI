@@ -19,7 +19,7 @@ public interface PacketFactory {
 
   Object createChangeGameStatePacket(int reason, float value);
 
-  Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, boolean skyLight, int maxSections);
+  Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, boolean legacySkyLight, int maxSections);
 
   Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, Dimension dimension);
 

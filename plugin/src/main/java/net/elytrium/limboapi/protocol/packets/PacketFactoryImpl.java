@@ -43,13 +43,13 @@ public class PacketFactoryImpl implements PacketFactory {
   }
 
   @Override
-  public Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, boolean skyLight, int maxSections) {
-    return new ChunkDataPacket(chunkSnapshot, skyLight, maxSections);
+  public Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, boolean legacySkyLight, int maxSections) {
+    return new ChunkDataPacket(chunkSnapshot, legacySkyLight, maxSections);
   }
 
   @Override
   public Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, Dimension dimension) {
-    return new ChunkDataPacket(chunkSnapshot, dimension.hasSkyLight(), dimension.getMaxSections());
+    return new ChunkDataPacket(chunkSnapshot, dimension.hasLegacySkyLight(), dimension.getMaxSections());
   }
 
   @Override
