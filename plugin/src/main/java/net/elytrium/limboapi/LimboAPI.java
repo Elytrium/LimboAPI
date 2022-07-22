@@ -172,6 +172,8 @@ public class LimboAPI implements LimboFactory {
         LimboProtocol.init();
       } catch (ReflectiveOperationException e) {
         throw new ReflectionException(e);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
       }
     }
   }

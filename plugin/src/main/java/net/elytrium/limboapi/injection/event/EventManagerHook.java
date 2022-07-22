@@ -209,10 +209,10 @@ public class EventManagerHook extends VelocityEventManager {
     }
   }
 
-  public static void init(LimboAPI plugin) throws ReflectiveOperationException {
+  public static void init(LimboAPI plugin) throws ReflectiveOperationException, InterruptedException {
     VelocityServer server = plugin.getServer();
     EventManager newEventManager = new EventManagerHook(server.getPluginManager(), plugin);
-    EventManager oldEventManager = server.getEventManager();
+    VelocityEventManager oldEventManager = server.getEventManager();
     HANDLERS_BY_TYPE_FIELD.set(newEventManager, HANDLERS_BY_TYPE_FIELD.get(oldEventManager));
     HANDLERS_CACHE_FIELD.set(newEventManager, HANDLERS_CACHE_FIELD.get(oldEventManager));
     UNTARGETED_METHOD_HANDLERS_FIELD.set(newEventManager, UNTARGETED_METHOD_HANDLERS_FIELD.get(oldEventManager));
@@ -221,5 +221,7 @@ public class EventManagerHook extends VelocityEventManager {
 
     VELOCITY_SERVER_EVENT_MANAGER_FIELD.set(server, newEventManager);
     VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD.set(server.getCommandManager(), newEventManager);
+
+    oldEventManager.shutdown();
   }
 }
