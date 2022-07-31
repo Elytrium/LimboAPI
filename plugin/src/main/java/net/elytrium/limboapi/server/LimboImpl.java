@@ -96,6 +96,7 @@ public class LimboImpl implements Limbo {
   private static final Field ROOT_NODE_FIELD;
 
   private static final CompoundBinaryTag CHAT_TYPE_119;
+  private static final CompoundBinaryTag CHAT_TYPE_1191;
 
   private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
   private final LimboAPI plugin;
@@ -135,13 +136,15 @@ public class LimboImpl implements Limbo {
   protected void refresh() {
     this.built = true;
     JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
-    JoinGame joinGame = this.createJoinGamePacket(false);
-    JoinGame joinGameModern = this.createJoinGamePacket(true);
+    JoinGame joinGame = this.createJoinGamePacket(false, CHAT_TYPE_119);
+    JoinGame joinGameModern = this.createJoinGamePacket(true, CHAT_TYPE_119);
+    JoinGame joinGame1191 = this.createJoinGamePacket(true, CHAT_TYPE_1191);
 
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_18)
-        .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2);
+        .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2, ProtocolVersion.MINECRAFT_1_19)
+        .prepare(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1);
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
@@ -149,7 +152,9 @@ public class LimboImpl implements Limbo {
     this.createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_16)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_18));
     this.createFastClientServerSwitch(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2));
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2, ProtocolVersion.MINECRAFT_1_19));
+    this.createFastClientServerSwitch(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1)
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_1));
     this.fastRejoinPackets.build();
 
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame)).build();
@@ -424,7 +429,7 @@ public class LimboImpl implements Limbo {
     );
   }
 
-  private JoinGame createJoinGamePacket(boolean modern) {
+  private JoinGame createJoinGamePacket(boolean modern, CompoundBinaryTag chatTypeRegistry) {
     Dimension dimension = this.world.getDimension();
     JoinGame joinGame = new JoinGame();
     joinGame.setEntityId(1);
@@ -458,13 +463,13 @@ public class LimboImpl implements Limbo {
     }
 
     joinGame.setBiomeRegistry(Biome.getRegistry());
-    joinGame.setChatTypeRegistry(CHAT_TYPE_119);
+    joinGame.setChatTypeRegistry(chatTypeRegistry);
 
     return joinGame;
   }
 
   private JoinGame createLegacyJoinGamePacket() {
-    JoinGame joinGame = this.createJoinGamePacket(false);
+    JoinGame joinGame = this.createJoinGamePacket(false, CHAT_TYPE_119);
     joinGame.setDimension(this.world.getDimension().getLegacyID());
     return joinGame;
   }
@@ -670,6 +675,46 @@ public class LimboImpl implements Limbo {
                                   .build()
                           )
                           .build()
+                  ).build()
+          ).build();
+
+      CHAT_TYPE_1191 = CompoundBinaryTag.builder()
+          .put("type", StringBinaryTag.of("minecraft:chat_type"))
+          .put(
+              "value",
+              ListBinaryTag.builder()
+                  .add(
+                      CompoundBinaryTag.builder()
+                          .put("name", StringBinaryTag.of("minecraft:chat"))
+                          .put("id", IntBinaryTag.of(1))
+                          .put(
+                              "element",
+                              CompoundBinaryTag.builder()
+                                  .put(
+                                      "chat",
+                                      CompoundBinaryTag.builder()
+                                          .put("translation_key", StringBinaryTag.of("chat.type.text"))
+                                          .put(
+                                              "parameters",
+                                              ListBinaryTag.builder()
+                                                  .add(StringBinaryTag.of("sender"))
+                                                  .add(StringBinaryTag.of("content"))
+                                                  .build()
+                                          ).build()
+                                  )
+                                  .put(
+                                      "narration",
+                                      CompoundBinaryTag.builder()
+                                          .put("translation_key", StringBinaryTag.of("chat.type.text.narrate"))
+                                          .put(
+                                              "parameters",
+                                              ListBinaryTag.builder()
+                                                  .add(StringBinaryTag.of("sender"))
+                                                  .add(StringBinaryTag.of("content"))
+                                                  .build()
+                                          ).build()
+                                  ).build()
+                          ).build()
                   ).build()
           ).build();
     } catch (NoSuchFieldException e) {
