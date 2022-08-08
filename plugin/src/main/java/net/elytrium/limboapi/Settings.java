@@ -82,7 +82,7 @@ public class Settings extends YamlConfig {
             "With this you can change velocity brand",
             "Available placeholders: {LimboBrand}"
     })
-    public String DEFAULT_SERVER_BRAND = "{LimboBrand}";
+    public String DEFAULT_SERVER_BRAND_IN_LIMBO_SERVER = "{LimboBrand}";
 
     @Comment("Helpful if you want some plugins proceed before LimboAPI. For example, it is needed to Floodgate to replace UUID.")
     public List<String> PRE_LIMBO_PROFILE_REQUEST_PLUGINS = List.of("floodgate", "geyser");

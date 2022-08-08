@@ -561,7 +561,7 @@ public class LimboImpl implements Limbo {
   }
 
   private PluginMessage createBrandMessage(ProtocolVersion version) {
-    String brand = Settings.IMP.MAIN.DEFAULT_SERVER_BRAND
+    String brand = Settings.IMP.MAIN.DEFAULT_SERVER_BRAND_IN_LIMBO_SERVER
             .replace("{LimboBrand}", "LimboAPI (" + Settings.IMP.VERSION + ") -> " + this.limboName);
 
     ByteBuf bufWithBrandString = Unpooled.buffer();
