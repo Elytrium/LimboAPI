@@ -78,6 +78,12 @@ public class Settings extends YamlConfig {
     public String PREPARE_MIN_VERSION = "1_7_2";
     public String PREPARE_MAX_VERSION = "LATEST";
 
+    @Comment({
+            "With this you can change velocity brand",
+            "Available placeholders: {LimboBrand}"
+    })
+    public String DEFAULT_SERVER_BRAND = "{LimboBrand}";
+
     @Comment("Helpful if you want some plugins proceed before LimboAPI. For example, it is needed to Floodgate to replace UUID.")
     public List<String> PRE_LIMBO_PROFILE_REQUEST_PLUGINS = List.of("floodgate", "geyser");
 

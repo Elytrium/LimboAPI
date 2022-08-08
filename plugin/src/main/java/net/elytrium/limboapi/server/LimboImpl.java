@@ -561,7 +561,9 @@ public class LimboImpl implements Limbo {
   }
 
   private PluginMessage createBrandMessage(ProtocolVersion version) {
-    String brand = "LimboAPI (" + Settings.IMP.VERSION + ") -> " + this.limboName;
+    String brand = Settings.IMP.MAIN.DEFAULT_SERVER_BRAND
+            .replace("{LimboBrand}", "LimboAPI (" + Settings.IMP.VERSION + ") -> " + this.limboName);
+
     ByteBuf bufWithBrandString = Unpooled.buffer();
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       bufWithBrandString.writeCharSequence(brand, StandardCharsets.UTF_8);
