@@ -84,6 +84,10 @@ public class Settings extends YamlConfig {
     @Comment("Regenerates listeners that need to proceed before LimboAPI on each EventManager#register call.")
     public boolean AUTO_REGENERATE_LISTENERS = false;
 
+    @Comment("Decrease if you have to get closer to see more blocks.")
+    public int VIEW_DISTANCE = 10;
+    public int SIMULATION_DISTANCE = 9;
+
     @Create
     public MESSAGES MESSAGES;
 

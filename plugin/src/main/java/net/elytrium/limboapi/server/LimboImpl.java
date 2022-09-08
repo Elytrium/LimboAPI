@@ -447,8 +447,8 @@ public class LimboImpl implements Limbo {
 
     joinGame.setLevelType("flat");
 
-    joinGame.setViewDistance(10);
-    joinGame.setSimulationDistance(9);
+    joinGame.setViewDistance(Settings.IMP.MAIN.VIEW_DISTANCE);
+    joinGame.setSimulationDistance(Settings.IMP.MAIN.SIMULATION_DISTANCE);
 
     joinGame.setReducedDebugInfo(true);
 
