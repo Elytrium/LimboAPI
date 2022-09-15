@@ -6,7 +6,7 @@ plugins {
 dependencies {
   compileOnly("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
 
-  api("net.elytrium:elytrium-java-commons:1.0.5")
+  api("net.elytrium:elytrium-java-commons:1.0.7")
 
   api("net.kyori:adventure-nbt:4.11.0")
 
