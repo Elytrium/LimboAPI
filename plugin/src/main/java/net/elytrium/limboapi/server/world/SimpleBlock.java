@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -44,6 +45,7 @@ public class SimpleBlock implements VirtualBlock {
   private static final ShortObjectHashMap<Short> LEGACY_IDS_FLATTEN_MAP = new ShortObjectHashMap<>();
   private static final EnumMap<ProtocolVersion, ShortObjectMap<Short>> MODERN_IDS_MAP = new EnumMap<>(ProtocolVersion.class);
   private static final EnumMap<ProtocolVersion, ShortObjectMap<Short>> MODERN_IDS_FLATTEN_MAP = new EnumMap<>(ProtocolVersion.class);
+  private static final HashMap<String, Set<String>> MODERN_PROPERTIES = new HashMap<>();
   private static final HashMap<String, HashMap<Set<String>, Short>> MODERN_STRING_MAP = new HashMap<>();
 
   @SuppressWarnings("unchecked")
@@ -62,7 +64,9 @@ public class SimpleBlock implements VirtualBlock {
         MODERN_STRING_MAP.get(stringIDArgs[0]).put(null, Short.valueOf(value));
       } else {
         stringIDArgs[1] = stringIDArgs[1].substring(0, stringIDArgs[1].length() - 1);
-        MODERN_STRING_MAP.get(stringIDArgs[0]).put(new HashSet<>(Arrays.asList(stringIDArgs[1].split(","))), Short.valueOf(value));
+        String[] properties = stringIDArgs[1].split(",");
+        MODERN_PROPERTIES.computeIfAbsent(stringIDArgs[0], k -> Arrays.stream(properties).map(p -> p.split("=")[0]).collect(Collectors.toSet()));
+        MODERN_STRING_MAP.get(stringIDArgs[0]).put(new HashSet<>(Arrays.asList(properties)), Short.valueOf(value));
       }
     });
 
@@ -178,7 +182,11 @@ public class SimpleBlock implements VirtualBlock {
       return transformID(modernID, (Set<String>) null);
     } else {
       Set<String> propertiesSet = new HashSet<>();
-      properties.forEach((key, value) -> propertiesSet.add(key + "=" + value));
+      properties.forEach((key, value) -> {
+        if (MODERN_PROPERTIES.get(modernID).contains(key)) {
+          propertiesSet.add(key + "=" + value);
+        }
+      });
       return transformID(modernID, propertiesSet);
     }
   }
