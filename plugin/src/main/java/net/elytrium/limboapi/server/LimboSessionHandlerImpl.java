@@ -206,8 +206,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   @Override
   public void handleUnknown(ByteBuf packet) {
     int readableBytes = packet.readableBytes();
+    this.genericBytes += readableBytes;
     if (readableBytes > Settings.IMP.MAIN.MAX_UNKNOWN_PACKET_LENGTH) {
       this.kickTooBigPacket("unknown", readableBytes);
+    } else if (this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
+      this.kickTooBigPacket("unknown, multi", this.genericBytes);
     }
   }
 
