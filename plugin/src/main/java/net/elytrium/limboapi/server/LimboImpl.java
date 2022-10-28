@@ -429,6 +429,21 @@ public class LimboImpl implements Limbo {
     );
   }
 
+  private DimensionRegistry createDimensionRegistry(boolean modern) {
+    return new DimensionRegistry(
+        ImmutableSet.of(
+            this.createDimensionData(Dimension.OVERWORLD, modern),
+            this.createDimensionData(Dimension.NETHER, modern),
+            this.createDimensionData(Dimension.THE_END, modern)
+        ),
+        ImmutableSet.of(
+            Dimension.OVERWORLD.getKey(),
+            Dimension.NETHER.getKey(),
+            Dimension.THE_END.getKey()
+        )
+    );
+  }
+
   private JoinGame createJoinGamePacket(boolean modern, CompoundBinaryTag chatTypeRegistry) {
     Dimension dimension = this.world.getDimension();
     JoinGame joinGame = new JoinGame();
@@ -453,11 +468,11 @@ public class LimboImpl implements Limbo {
     joinGame.setReducedDebugInfo(true);
 
     String key = dimension.getKey();
-    DimensionData dimensionData = this.createDimensionData(dimension, modern);
-    joinGame.setDimensionRegistry(new DimensionRegistry(ImmutableSet.of(dimensionData), ImmutableSet.of(key)));
+    DimensionRegistry dimensionRegistry = this.createDimensionRegistry(modern);
+    joinGame.setDimensionRegistry(dimensionRegistry);
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
     try {
-      CURRENT_DIMENSION_DATA_FIELD.set(joinGame, dimensionData);
+      CURRENT_DIMENSION_DATA_FIELD.set(joinGame, dimensionRegistry.getDimensionData(dimension.getKey()));
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
