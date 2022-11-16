@@ -28,10 +28,10 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -45,8 +45,8 @@ public class SimpleBlock implements VirtualBlock {
   private static final ShortObjectHashMap<Short> LEGACY_IDS_FLATTEN_MAP = new ShortObjectHashMap<>();
   private static final EnumMap<ProtocolVersion, ShortObjectMap<Short>> MODERN_IDS_MAP = new EnumMap<>(ProtocolVersion.class);
   private static final EnumMap<ProtocolVersion, ShortObjectMap<Short>> MODERN_IDS_FLATTEN_MAP = new EnumMap<>(ProtocolVersion.class);
-  private static final HashMap<String, Set<String>> MODERN_PROPERTIES = new HashMap<>();
   private static final HashMap<String, HashMap<Set<String>, Short>> MODERN_STRING_MAP = new HashMap<>();
+  private static final HashMap<String, HashMap<String, String>> DEFAULT_PROPERTIES_MAP = new HashMap<>();
 
   @SuppressWarnings("unchecked")
   public static void init() {
@@ -64,9 +64,7 @@ public class SimpleBlock implements VirtualBlock {
         MODERN_STRING_MAP.get(stringIDArgs[0]).put(null, Short.valueOf(value));
       } else {
         stringIDArgs[1] = stringIDArgs[1].substring(0, stringIDArgs[1].length() - 1);
-        String[] properties = stringIDArgs[1].split(",");
-        MODERN_PROPERTIES.computeIfAbsent(stringIDArgs[0], k -> Arrays.stream(properties).map(p -> p.split("=")[0]).collect(Collectors.toSet()));
-        MODERN_STRING_MAP.get(stringIDArgs[0]).put(new HashSet<>(Arrays.asList(properties)), Short.valueOf(value));
+        MODERN_STRING_MAP.get(stringIDArgs[0]).put(new HashSet<>(Arrays.asList(stringIDArgs[1].split(","))), Short.valueOf(value));
       }
     });
 
@@ -90,6 +88,15 @@ public class SimpleBlock implements VirtualBlock {
     );
 
     tempLegacyFlattenMap.forEach((key, value) -> LEGACY_IDS_FLATTEN_MAP.put(Short.valueOf(key), Short.valueOf(value)));
+
+    LinkedTreeMap<String, LinkedTreeMap<String, String>> properties = GSON.fromJson(
+        new InputStreamReader(
+            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/defaultblockproperties.json")),
+            StandardCharsets.UTF_8
+        ),
+        LinkedTreeMap.class
+    );
+    properties.forEach((key, value) -> DEFAULT_PROPERTIES_MAP.put(key, new HashMap<>(value)));
   }
 
   @SuppressWarnings("unchecked")
@@ -178,14 +185,17 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   private static short transformID(String modernID, Map<String, String> properties) {
-    if (properties == null || properties.size() == 0) {
+    Map<String, String> defaultProperties = DEFAULT_PROPERTIES_MAP.get(modernID);
+    if (defaultProperties == null || defaultProperties.size() == 0) {
       return transformID(modernID, (Set<String>) null);
     } else {
       Set<String> propertiesSet = new HashSet<>();
-      properties.forEach((key, value) -> {
-        if (MODERN_PROPERTIES.get(modernID).contains(key)) {
-          propertiesSet.add(key + "=" + value);
+      defaultProperties.forEach((key, value) -> {
+        if (properties != null) {
+          value = properties.getOrDefault(key, value);
         }
+
+        propertiesSet.add(key + "=" + value.toLowerCase(Locale.ROOT));
       });
       return transformID(modernID, propertiesSet);
     }
