@@ -96,7 +96,7 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfo {
         var packetClassToID = (Object2IntMap<Class<? extends MinecraftPacket>>) LimboProtocol.PACKET_CLASS_TO_ID_FIELD.get(protocolRegistry);
 
         int id = packetClassToID.getInt(UpsertPlayerInfo.class);
-        packetClassToID.put(UpsertPlayerInfo.class, id);
+        packetClassToID.put(UpsertPlayerInfoHook.class, id);
         packetIDToSupplier.put(id, () -> new UpsertPlayerInfoHook(plugin));
       } catch (ReflectiveOperationException e) {
         throw new ReflectionException(e);
