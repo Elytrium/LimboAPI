@@ -25,11 +25,13 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
+import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
+import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import net.elytrium.limboapi.LimboAPI;
@@ -202,7 +204,20 @@ public class LimboPlayerImpl implements LimboPlayer {
       int id = this.gameMode.getID();
       this.sendAbilities();
       if (!is17) {
-        this.writePacket(new PlayerListItem(PlayerListItem.UPDATE_GAMEMODE, List.of(new PlayerListItem.Item(this.player.getUniqueId()).setGameMode(id))));
+        if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
+          this.writePacket(
+              new LegacyPlayerListItem(LegacyPlayerListItem.UPDATE_GAMEMODE,
+                  List.of(
+                      new LegacyPlayerListItem.Item(this.player.getUniqueId()).setGameMode(id)
+                  )
+              )
+          );
+        } else {
+          UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
+          playerInfoEntry.setGameMode(id);
+
+          this.writePacket(new UpsertPlayerInfo(EnumSet.of(UpsertPlayerInfo.Action.UPDATE_GAME_MODE), List.of(playerInfoEntry)));
+        }
       }
       this.writePacket(new ChangeGameStatePacket(3, id));
 

@@ -46,9 +46,10 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEnco
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
-import com.velocitypowered.proxy.protocol.packet.PlayerListItem;
+import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.Respawn;
+import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
@@ -56,6 +57,7 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +90,7 @@ import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
 import net.kyori.adventure.nbt.StringBinaryTag;
+import net.kyori.adventure.text.Component;
 
 public class LimboImpl implements Limbo {
 
@@ -260,21 +263,35 @@ public class LimboImpl implements Limbo {
         connection.delayedWrite(this.joinPackets);
       }
 
-      if (this.gameMode == GameMode.SPECTATOR.getID() && Settings.IMP.MAIN.FIX_SPECTATOR_FLY_THROUGH_BLOCKS) {
-        connection.delayedWrite(
-            this.plugin.encodeSingle(
-                new PlayerListItem(
-                    PlayerListItem.ADD_PLAYER,
-                    List.of(
-                        new PlayerListItem.Item(player.getUniqueId())
-                            .setName(player.getUsername())
-                            .setGameMode(this.gameMode)
-                            .setProperties(player.getGameProfileProperties())
-                    )
-                ), connection.getProtocolVersion()
+      MinecraftPacket playerInfoPacket;
+
+      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
+        playerInfoPacket = new LegacyPlayerListItem(
+            LegacyPlayerListItem.ADD_PLAYER,
+            List.of(
+                new LegacyPlayerListItem.Item(player.getUniqueId())
+                    .setName(player.getUsername())
+                    .setGameMode(this.gameMode)
+                    .setProperties(player.getGameProfileProperties())
             )
         );
+      } else {
+        UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(player.getUniqueId());
+        playerInfoEntry.setDisplayName(Component.text(player.getUsername()));
+        playerInfoEntry.setGameMode(this.gameMode);
+        playerInfoEntry.setProfile(player.getGameProfile());
+
+        playerInfoPacket = new UpsertPlayerInfo(
+            EnumSet.of(
+                UpsertPlayerInfo.Action.UPDATE_DISPLAY_NAME,
+                UpsertPlayerInfo.Action.UPDATE_GAME_MODE,
+                UpsertPlayerInfo.Action.ADD_PLAYER),
+            List.of(playerInfoEntry));
       }
+
+      connection.delayedWrite(
+          this.plugin.encodeSingle(playerInfoPacket, connection.getProtocolVersion())
+      );
 
       connection.delayedWrite(this.getBrandMessage(handlerClass));
 
