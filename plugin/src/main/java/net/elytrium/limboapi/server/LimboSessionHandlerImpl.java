@@ -27,9 +27,9 @@ import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
-import com.velocitypowered.proxy.protocol.packet.chat.LegacyChat;
-import com.velocitypowered.proxy.protocol.packet.chat.PlayerChat;
-import com.velocitypowered.proxy.protocol.packet.chat.PlayerCommand;
+import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerChat;
+import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerCommand;
+import com.velocitypowered.proxy.protocol.packet.chat.legacy.LegacyChat;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -183,12 +183,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(PlayerChat packet) {
+  public boolean handle(KeyedPlayerChat packet) {
     return this.handleChat(packet.getMessage());
   }
 
   @Override
-  public boolean handle(PlayerCommand packet) {
+  public boolean handle(KeyedPlayerCommand packet) {
     return this.handleChat("/" + packet.getCommand());
   }
 

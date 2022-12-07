@@ -83,10 +83,11 @@ import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.elytrium.limboapi.injection.kick.KickListener;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
+import net.elytrium.limboapi.injection.packet.LegacyPlayerListItemHook;
 import net.elytrium.limboapi.injection.packet.MinecraftDiscardCompressDecoder;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
-import net.elytrium.limboapi.injection.packet.PlayerListItemHook;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
+import net.elytrium.limboapi.injection.packet.UpsertPlayerInfoHook;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.PacketFactoryImpl;
@@ -165,10 +166,11 @@ public class LimboAPI implements LimboFactory {
       SimpleBlock.init();
       LOGGER.info("Initializing Simple Virtual Item system...");
       SimpleItem.init();
-      LOGGER.info("Hooking into EventManager, PlayerList and StateRegistry...");
+      LOGGER.info("Hooking into EventManager, PlayerList/UpsertPlayerInfo and StateRegistry...");
       try {
         EventManagerHook.init(this);
-        PlayerListItemHook.init(this, StateRegistry.PLAY.clientbound);
+        LegacyPlayerListItemHook.init(this, StateRegistry.PLAY.clientbound);
+        UpsertPlayerInfoHook.init(this, StateRegistry.PLAY.clientbound);
         LimboProtocol.init();
       } catch (ReflectiveOperationException e) {
         throw new ReflectionException(e);

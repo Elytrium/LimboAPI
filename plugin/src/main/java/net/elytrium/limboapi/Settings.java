@@ -56,8 +56,6 @@ public class Settings extends YamlConfig {
         "Can be increased with Limbo#setMaxSuppressPacketLength"
     })
     public int MAX_PACKET_LENGTH_TO_SUPPRESS_IT = 512;
-    @Comment("Allows to fly through blocks in gamemode 3. Disabling this setting improves performance during attacks")
-    public boolean FIX_SPECTATOR_FLY_THROUGH_BLOCKS = true;
     @Comment({
         "Discards all packets longer than compression-threshold. Helps to mitigate some attacks.",
         "Needs compression-threshold to be 300 or higher to support 1.19 chat-signing, so it is disabled by default"
