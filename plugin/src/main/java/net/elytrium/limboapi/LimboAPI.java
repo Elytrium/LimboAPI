@@ -119,6 +119,7 @@ import org.slf4j.Logger;
 public class LimboAPI implements LimboFactory {
 
   private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_MAP = new HashMap<>();
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 761;
 
   @MonotonicNonNull
   private static Logger LOGGER;
@@ -158,9 +159,14 @@ public class LimboAPI implements LimboFactory {
     this.nextServer = new HashMap<>();
     this.initialID = new HashMap<>();
 
-    if (ProtocolVersion.MAXIMUM_VERSION.getProtocol() < 761) {
+    int maximumProtocolVersionNumber = ProtocolVersion.MAXIMUM_VERSION.getProtocol();
+    if (maximumProtocolVersionNumber < SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
       LOGGER.error("Please update Velocity (https://papermc.io/downloads#Velocity). LimboAPI support: https://ely.su/discord");
       this.server.shutdown();
+    } else if (maximumProtocolVersionNumber != SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
+      LOGGER.warn("Current LimboAPI version doesn't support current Velocity version (protocol version numbers: supported - {}, velocity - {})",
+          SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER, maximumProtocolVersionNumber);
+      LOGGER.warn("Please update LimboAPI (https://github.com/Elytrium/LimboAPI/releases). LimboAPI support: https://ely.su/discord");
     } else {
       LOGGER.info("Initializing Simple Virtual Block system...");
       SimpleBlock.init();
