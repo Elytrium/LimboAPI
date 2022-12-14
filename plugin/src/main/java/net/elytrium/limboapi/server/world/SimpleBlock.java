@@ -42,9 +42,7 @@ public class SimpleBlock implements VirtualBlock {
 
   private static final Gson GSON = new Gson();
   private static final ShortObjectHashMap<SimpleBlock> LEGACY_IDS_MAP = new ShortObjectHashMap<>();
-  private static final ShortObjectHashMap<Short> LEGACY_IDS_FLATTEN_MAP = new ShortObjectHashMap<>();
   private static final EnumMap<ProtocolVersion, ShortObjectMap<Short>> MODERN_IDS_MAP = new EnumMap<>(ProtocolVersion.class);
-  private static final EnumMap<ProtocolVersion, ShortObjectMap<Short>> MODERN_IDS_FLATTEN_MAP = new EnumMap<>(ProtocolVersion.class);
   private static final HashMap<String, HashMap<Set<String>, Short>> MODERN_STRING_MAP = new HashMap<>();
   private static final HashMap<String, HashMap<String, String>> DEFAULT_PROPERTIES_MAP = new HashMap<>();
 
@@ -77,17 +75,6 @@ public class SimpleBlock implements VirtualBlock {
     LEGACY_IDS_MAP.put((short) 0, AIR);
 
     loadModernMap("/mapping/legacyblockdata.json", MODERN_IDS_MAP);
-    loadModernMap("/mapping/flatteningblockdata.json", MODERN_IDS_FLATTEN_MAP);
-
-    LinkedTreeMap<String, String> tempLegacyFlattenMap = GSON.fromJson(
-        new InputStreamReader(
-            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/preflatteningblockdataid.json")),
-            StandardCharsets.UTF_8
-        ),
-        LinkedTreeMap.class
-    );
-
-    tempLegacyFlattenMap.forEach((key, value) -> LEGACY_IDS_FLATTEN_MAP.put(Short.valueOf(key), Short.valueOf(value)));
 
     LinkedTreeMap<String, LinkedTreeMap<String, String>> properties = GSON.fromJson(
         new InputStreamReader(
@@ -106,10 +93,12 @@ public class SimpleBlock implements VirtualBlock {
         LinkedTreeMap.class
     );
 
-    modernMap.forEach((version, idMap) -> {
-      ShortObjectMap<Short> versionIDMap = new ShortObjectHashMap<>();
-      idMap.forEach((oldID, newID) -> versionIDMap.put(Short.valueOf(oldID), Short.valueOf(newID)));
-      map.put(ProtocolVersion.valueOf(version), versionIDMap);
+    modernMap.forEach((modernID, versionMap) -> {
+      Short id = null;
+      for (ProtocolVersion version : ProtocolVersion.SUPPORTED_VERSIONS) {
+        id = Short.valueOf(versionMap.getOrDefault(version.toString(), String.valueOf(id)));
+        map.computeIfAbsent(version, k -> new ShortObjectHashMap<>()).put(Short.parseShort(modernID), id);
+      }
     });
   }
 
@@ -146,23 +135,7 @@ public class SimpleBlock implements VirtualBlock {
 
   @Override
   public short getID(ProtocolVersion version) {
-    Short id = MODERN_IDS_MAP.get(version).get(this.id);
-    return this.getFlattenID(version, Objects.requireNonNullElse(id, this.id));
-  }
-
-  private short getFlattenID(ProtocolVersion version, Short id) {
-    Short flattenID;
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_12_2) <= 0) {
-      flattenID = LEGACY_IDS_FLATTEN_MAP.get(this.id);
-    } else {
-      flattenID = MODERN_IDS_FLATTEN_MAP.get(version).get(this.id);
-    }
-
-    if (flattenID == null) {
-      return id;
-    } else {
-      return flattenID;
-    }
+    return MODERN_IDS_MAP.get(version).getOrDefault(this.id, this.id);
   }
 
   @Override
