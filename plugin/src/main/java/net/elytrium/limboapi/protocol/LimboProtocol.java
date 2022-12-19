@@ -41,6 +41,7 @@ import net.elytrium.limboapi.protocol.packets.c2s.MoveOnGroundOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MovePacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MovePositionOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveRotationOnlyPacket;
+import net.elytrium.limboapi.protocol.packets.c2s.PlayerChatSessionPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.TeleportConfirmPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.ChangeGameStatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.ChunkDataPacket;
@@ -358,6 +359,10 @@ public class LimboProtocol {
         TeleportConfirmPacket.class, TeleportConfirmPacket::new,
         createMapping(0x00, ProtocolVersion.MINECRAFT_1_9, false)
     );
+
+    register(StateRegistry.PLAY.serverbound,
+        PlayerChatSessionPacket.class, PlayerChatSessionPacket::new,
+        createMapping(0x20, ProtocolVersion.MINECRAFT_1_19_3, false));
   }
 
   public static void register(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] mappings) {
@@ -370,22 +375,24 @@ public class LimboProtocol {
     }).toArray(StateRegistry.PacketMapping[]::new));
   }
 
-  private static void register(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping... mappings) {
-    StateRegistry.PacketRegistry registry;
+  public static void register(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping... mappings) {
     switch (direction) {
       case CLIENTBOUND: {
-        registry = LIMBO_STATE_REGISTRY.clientbound;
+        register(LIMBO_STATE_REGISTRY.clientbound, packetClass, packetSupplier, mappings);
         break;
       }
       case SERVERBOUND: {
-        registry = LIMBO_STATE_REGISTRY.serverbound;
+        register(LIMBO_STATE_REGISTRY.serverbound, packetClass, packetSupplier, mappings);
         break;
       }
       default: {
         throw new IllegalStateException("Unexpected value: " + direction);
       }
     }
+  }
 
+  public static void register(StateRegistry.PacketRegistry registry,
+                              Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping... mappings) {
     try {
       REGISTER_METHOD.invoke(registry, packetClass, packetSupplier, mappings);
     } catch (IllegalAccessException | InvocationTargetException e) {
