@@ -42,14 +42,17 @@ import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.proxy.InboundConnection;
+import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
+import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
 import java.lang.reflect.Constructor;
@@ -73,6 +76,7 @@ public class LoginTasksQueue {
   private static final Constructor<InitialConnectSessionHandler> INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR;
   private static final Field MC_CONNECTION_FIELD;
   private static final Method CONNECT_TO_INITIAL_SERVER_METHOD;
+  private static final Field PLAYER_KEY_FIELD;
 
   private final LimboAPI plugin;
   private final Object handler;
@@ -154,6 +158,7 @@ public class LoginTasksQueue {
   }
 
   // From Velocity.
+  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void initialize(MinecraftConnection connection) throws IllegalAccessException {
     connection.setAssociation(this.player);
     connection.setState(StateRegistry.PLAY);
@@ -163,6 +168,23 @@ public class LoginTasksQueue {
 
     if (!pipeline.names().contains(Connections.FRAME_ENCODER) && !pipeline.names().contains(Connections.COMPRESSION_ENCODER)) {
       this.plugin.fixCompressor(pipeline, connection.getProtocolVersion());
+    }
+
+    if (this.player.getIdentifiedKey() != null) {
+      IdentifiedKey playerKey = this.player.getIdentifiedKey();
+      if (playerKey.getSignatureHolder() == null) {
+        if (playerKey instanceof IdentifiedKeyImpl) {
+          IdentifiedKeyImpl unlinkedKey = (IdentifiedKeyImpl) playerKey;
+          // Failsafe
+          if (!unlinkedKey.internalAddHolder(this.player.getUniqueId())) {
+            PLAYER_KEY_FIELD.set(this.player, null);
+          }
+        }
+      } else {
+        if (!Objects.equals(playerKey.getSignatureHolder(), this.player.getUniqueId())) {
+          PLAYER_KEY_FIELD.set(this.player, null);
+        }
+      }
     }
 
     Logger logger = LimboAPI.getLogger();
@@ -219,6 +241,9 @@ public class LoginTasksQueue {
 
       CONNECT_TO_INITIAL_SERVER_METHOD = AuthSessionHandler.class.getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
       CONNECT_TO_INITIAL_SERVER_METHOD.setAccessible(true);
+
+      PLAYER_KEY_FIELD = ConnectedPlayer.class.getDeclaredField("playerKey");
+      PLAYER_KEY_FIELD.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException e) {
       throw new ReflectionException(e);
     }
