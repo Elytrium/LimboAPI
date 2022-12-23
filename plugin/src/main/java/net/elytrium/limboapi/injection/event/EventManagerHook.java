@@ -26,9 +26,12 @@ import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommandManager;
 import com.velocitypowered.proxy.event.VelocityEventManager;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,9 +53,9 @@ public class EventManagerHook extends VelocityEventManager {
   private static final Field VELOCITY_SERVER_EVENT_MANAGER_FIELD;
   private static final Class<?> HANDLER_REGISTRATION_CLASS;
   private static final Field UNTARGETED_METHOD_HANDLERS_FIELD;
-  private static final Field PLUGIN_FIELD;
+  private static final VarHandle PLUGIN_FIELD;
   private static final Field VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD;
-  private static final Method FIRE_METHOD;
+  private static final MethodHandle FIRE_METHOD;
 
   private final Set<GameProfile> proceededProfiles = new HashSet<>();
   private final LimboAPI plugin;
@@ -122,11 +125,12 @@ public class EventManagerHook extends VelocityEventManager {
 
         try {
           if (this.hasHandlerRegistration) {
-            FIRE_METHOD.invoke(this, fireFuture, event, 0, false, this.handlerRegistrations);
+            FIRE_METHOD.invokeExact(this, fireFuture, event, 0, false, this.handlerRegistrations);
           } else {
             fireFuture.complete(event);
           }
-        } catch (IllegalAccessException | InvocationTargetException e) {
+        } catch (Throwable e) {
+          e.printStackTrace();
           fireFuture.complete(event);
         }
 
@@ -191,20 +195,29 @@ public class EventManagerHook extends VelocityEventManager {
       EVENT_TYPE_TRACKER_FIELD.setAccessible(true);
 
       HANDLER_REGISTRATION_CLASS = Class.forName("com.velocitypowered.proxy.event.VelocityEventManager$HandlerRegistration");
-      PLUGIN_FIELD = HANDLER_REGISTRATION_CLASS.getDeclaredField("plugin");
-      PLUGIN_FIELD.setAccessible(true);
+      PLUGIN_FIELD = MethodHandles.privateLookupIn(HANDLER_REGISTRATION_CLASS, MethodHandles.lookup())
+          .findVarHandle(HANDLER_REGISTRATION_CLASS, "plugin", PluginContainer.class);
 
       VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD = VelocityCommandManager.class.getDeclaredField("eventManager");
       VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD.setAccessible(true);
 
       // The desired 5-argument fire method is private, and its 5th argument is the array of the private class,
       // so we can't pass it into the Class#getDeclaredMethod(Class...) method.
-      FIRE_METHOD = Arrays.stream(VelocityEventManager.class.getDeclaredMethods())
+      Method fireMethod = Arrays.stream(VelocityEventManager.class.getDeclaredMethods())
           .filter(method -> method.getName().equals("fire") && method.getParameterCount() == 5)
           .findFirst()
           .orElseThrow();
-      FIRE_METHOD.setAccessible(true);
-    } catch (NoSuchFieldException | ClassNotFoundException e) {
+      fireMethod.setAccessible(true);
+      FIRE_METHOD = MethodHandles.privateLookupIn(VelocityEventManager.class, MethodHandles.lookup())
+          .findVirtual(VelocityEventManager.class, "fire", MethodType.methodType(
+              void.class,
+              CompletableFuture.class,
+              Object.class,
+              int.class,
+              boolean.class,
+              Array.newInstance(HANDLER_REGISTRATION_CLASS, 0).getClass()
+          ));
+    } catch (NoSuchFieldException | ClassNotFoundException | IllegalAccessException | NoSuchMethodException e) {
       throw new ReflectionException(e);
     }
   }

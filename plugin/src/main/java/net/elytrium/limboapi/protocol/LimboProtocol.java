@@ -25,10 +25,10 @@ import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import java.lang.reflect.Constructor;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -61,9 +61,8 @@ import sun.misc.Unsafe;
 public class LimboProtocol {
 
   private static final StateRegistry LIMBO_STATE_REGISTRY;
-  private static final Method GET_PROTOCOL_REGISTRY_METHOD;
-  private static final Method REGISTER_METHOD;
-  private static final Constructor<StateRegistry.PacketMapping> PACKET_MAPPING_CONSTRUCTOR;
+  private static final MethodHandle REGISTER_METHOD;
+  private static final MethodHandle PACKET_MAPPING_CONSTRUCTOR;
 
   public static final String PREPARED_ENCODER = "prepared-encoder";
   public static final String READ_TIMEOUT = "limboapi-read-timeout";
@@ -93,24 +92,13 @@ public class LimboProtocol {
       overlayRegistry(unsafe, "clientbound", StateRegistry.PLAY.clientbound);
       overlayRegistry(unsafe, "serverbound", StateRegistry.PLAY.serverbound);
 
-      GET_PROTOCOL_REGISTRY_METHOD = StateRegistry.PacketRegistry.class.getDeclaredMethod("getProtocolRegistry", ProtocolVersion.class);
-      GET_PROTOCOL_REGISTRY_METHOD.setAccessible(true);
+      REGISTER_METHOD = MethodHandles.privateLookupIn(StateRegistry.PacketRegistry.class, MethodHandles.lookup())
+          .findVirtual(StateRegistry.PacketRegistry.class, "register",
+              MethodType.methodType(void.class, Class.class, Supplier.class, StateRegistry.PacketMapping[].class));
 
-      REGISTER_METHOD = StateRegistry.PacketRegistry.class.getDeclaredMethod(
-          "register",
-          Class.class,
-          Supplier.class,
-          StateRegistry.PacketMapping[].class
-      );
-      REGISTER_METHOD.setAccessible(true);
-
-      PACKET_MAPPING_CONSTRUCTOR = StateRegistry.PacketMapping.class.getDeclaredConstructor(
-          int.class,
-          ProtocolVersion.class,
-          ProtocolVersion.class,
-          boolean.class
-      );
-      PACKET_MAPPING_CONSTRUCTOR.setAccessible(true);
+      PACKET_MAPPING_CONSTRUCTOR = MethodHandles.privateLookupIn(StateRegistry.PacketRegistry.class, MethodHandles.lookup())
+          .findConstructor(StateRegistry.PacketMapping.class,
+              MethodType.methodType(void.class, int.class, ProtocolVersion.class, ProtocolVersion.class, boolean.class));
     } catch (ReflectiveOperationException e) {
       throw new ReflectionException(e);
     }
@@ -160,7 +148,7 @@ public class LimboProtocol {
     registryField.set(LIMBO_STATE_REGISTRY, registry);
   }
 
-  public static void init() throws ReflectiveOperationException {
+  public static void init() throws Throwable {
     register(PacketDirection.CLIENTBOUND,
         ChangeGameStatePacket.class, ChangeGameStatePacket::new,
         createMapping(0x2B, ProtocolVersion.MINECRAFT_1_7_2, true),
@@ -369,7 +357,7 @@ public class LimboProtocol {
     register(direction, packetClass, packetSupplier, Arrays.stream(mappings).map(mapping -> {
       try {
         return createMapping(mapping.getID(), mapping.getProtocolVersion(), mapping.getLastValidProtocolVersion(), mapping.isEncodeOnly());
-      } catch (ReflectiveOperationException e) {
+      } catch (Throwable e) {
         throw new ReflectionException(e);
       }
     }).toArray(StateRegistry.PacketMapping[]::new));
@@ -394,19 +382,19 @@ public class LimboProtocol {
   public static void register(StateRegistry.PacketRegistry registry,
                               Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping... mappings) {
     try {
-      REGISTER_METHOD.invoke(registry, packetClass, packetSupplier, mappings);
-    } catch (IllegalAccessException | InvocationTargetException e) {
+      REGISTER_METHOD.invokeExact(registry, packetClass, packetSupplier, mappings);
+    } catch (Throwable e) {
       throw new ReflectionException(e);
     }
   }
 
-  private static StateRegistry.PacketMapping createMapping(int id, ProtocolVersion version, boolean encodeOnly) throws ReflectiveOperationException {
+  private static StateRegistry.PacketMapping createMapping(int id, ProtocolVersion version, boolean encodeOnly) throws Throwable {
     return createMapping(id, version, null, encodeOnly);
   }
 
   private static StateRegistry.PacketMapping createMapping(int id, ProtocolVersion version, ProtocolVersion lastValidProtocolVersion, boolean encodeOnly)
-      throws ReflectiveOperationException {
-    return PACKET_MAPPING_CONSTRUCTOR.newInstance(id, version, lastValidProtocolVersion, encodeOnly);
+      throws Throwable {
+    return (StateRegistry.PacketMapping) PACKET_MAPPING_CONSTRUCTOR.invokeExact(id, version, lastValidProtocolVersion, encodeOnly);
   }
 
   public static StateRegistry getLimboStateRegistry() {

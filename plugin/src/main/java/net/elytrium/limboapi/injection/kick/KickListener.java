@@ -46,9 +46,11 @@ import com.velocitypowered.proxy.connection.util.ConnectionMessages;
 import com.velocitypowered.proxy.connection.util.ConnectionRequestResults;
 import com.velocitypowered.proxy.protocol.packet.Disconnect;
 import io.netty.channel.EventLoop;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import net.elytrium.limboapi.LimboAPI;
@@ -62,8 +64,8 @@ public class KickListener {
 
   private static final MinecraftConnection DUMMY_CONNECTION = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), null);
   private static Field CONNECTION_FIELD;
-  private static Field BACKEND_CONNECTION_FIELD;
-  private static Method CREATE_CONNECTION_REQUEST;
+  private static VarHandle BACKEND_CONNECTION_FIELD;
+  private static MethodHandle CREATE_CONNECTION_REQUEST;
 
   private final LimboAPI plugin;
 
@@ -94,7 +96,7 @@ public class KickListener {
             if (!callback.apply(event)) {
               this.handleThen(event, player, backendConnection);
             }
-          } catch (IllegalAccessException | InvocationTargetException e) {
+          } catch (Throwable e) {
             e.printStackTrace();
             connection.close();
           }
@@ -108,13 +110,13 @@ public class KickListener {
 
   // From Velocity.
   private void handleThen(KickedFromServerEvent event, ConnectedPlayer player, VelocityServerConnection serverConnection)
-      throws InvocationTargetException, IllegalAccessException {
+      throws Throwable {
     if (event.getResult() instanceof KickedFromServerEvent.DisconnectPlayer) {
       KickedFromServerEvent.DisconnectPlayer res = (KickedFromServerEvent.DisconnectPlayer) event.getResult();
       player.disconnect(res.getReasonComponent());
     } else if (event.getResult() instanceof KickedFromServerEvent.RedirectPlayer) {
       KickedFromServerEvent.RedirectPlayer res = (KickedFromServerEvent.RedirectPlayer) event.getResult();
-      ((ConnectionRequestBuilder) CREATE_CONNECTION_REQUEST.invoke(player, res.getServer(), serverConnection))
+      ((ConnectionRequestBuilder) CREATE_CONNECTION_REQUEST.invokeExact(player, res.getServer(), serverConnection))
           .connect()
           .whenCompleteAsync((status, throwable) -> {
             if (throwable != null) {
@@ -173,13 +175,13 @@ public class KickListener {
       CONNECTION_FIELD = ConnectedPlayer.class.getDeclaredField("connection");
       CONNECTION_FIELD.setAccessible(true);
 
-      BACKEND_CONNECTION_FIELD = ConnectedPlayer.class.getDeclaredField("connectedServer");
-      BACKEND_CONNECTION_FIELD.setAccessible(true);
+      BACKEND_CONNECTION_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findVarHandle(ConnectedPlayer.class, "connectedServer", VelocityServerConnection.class);
 
-      CREATE_CONNECTION_REQUEST =
-          ConnectedPlayer.class.getDeclaredMethod("createConnectionRequest", RegisteredServer.class, VelocityServerConnection.class);
-      CREATE_CONNECTION_REQUEST.setAccessible(true);
-    } catch (NoSuchFieldException | NoSuchMethodException e) {
+      CREATE_CONNECTION_REQUEST = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findVirtual(ConnectedPlayer.class, "createConnectionRequest",
+              MethodType.methodType(ConnectionRequestBuilder.class, RegisteredServer.class, VelocityServerConnection.class));
+    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
       e.printStackTrace();
     }
   }

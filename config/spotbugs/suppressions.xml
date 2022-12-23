@@ -10,4 +10,7 @@
     <Match>
         <Bug pattern="THROWS_METHOD_THROWS_CLAUSE_BASIC_EXCEPTION"/>
     </Match>
+    <Match>
+        <Bug pattern="THROWS_METHOD_THROWS_CLAUSE_THROWABLE"/>
+    </Match>
 </FindBugsFilter>

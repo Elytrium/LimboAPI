@@ -43,6 +43,7 @@ import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
+import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
@@ -55,13 +56,15 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
-import java.lang.reflect.Constructor;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
@@ -70,13 +73,13 @@ import org.slf4j.Logger;
 
 public class LoginTasksQueue {
 
-  private static final Field PROFILE_FIELD;
+  private static final VarHandle PROFILE_FIELD;
   private static final Field DEFAULT_PERMISSIONS_FIELD;
-  private static final Method SET_PERMISSION_FUNCTION_METHOD;
-  private static final Constructor<InitialConnectSessionHandler> INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR;
+  private static final MethodHandle SET_PERMISSION_FUNCTION_METHOD;
+  private static final MethodHandle INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR;
   private static final Field MC_CONNECTION_FIELD;
-  private static final Method CONNECT_TO_INITIAL_SERVER_METHOD;
-  private static final Field PLAYER_KEY_FIELD;
+  private static final MethodHandle CONNECT_TO_INITIAL_SERVER_METHOD;
+  private static final VarHandle PLAYER_KEY_FIELD;
 
   private final LimboAPI plugin;
   private final Object handler;
@@ -137,8 +140,8 @@ public class LoginTasksQueue {
                           );
                         } else {
                           try {
-                            SET_PERMISSION_FUNCTION_METHOD.invoke(this.player, function);
-                          } catch (IllegalAccessException | InvocationTargetException ex) {
+                            SET_PERMISSION_FUNCTION_METHOD.invokeExact(this.player, function);
+                          } catch (Throwable ex) {
                             logger.error("Exception while completing injection to {}", this.player, ex);
                           }
                         }
@@ -199,16 +202,19 @@ public class LoginTasksQueue {
         } else {
           if (this.server.registerConnection(this.player)) {
             try {
-              connection.setSessionHandler(INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.newInstance(this.player));
+              connection.setSessionHandler((InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player));
               this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
                 try {
                   MC_CONNECTION_FIELD.set(this.handler, connection);
-                  CONNECT_TO_INITIAL_SERVER_METHOD.invoke(this.handler, this.player);
-                } catch (IllegalAccessException | InvocationTargetException e) {
+                  // There must be a CompletableFuture variable here, since we are using MethodHandle#invokeExact
+                  //noinspection unused
+                  CompletableFuture<?> completableFuture =
+                      (CompletableFuture<?>) CONNECT_TO_INITIAL_SERVER_METHOD.invokeExact((AuthSessionHandler) this.handler, this.player);
+                } catch (Throwable e) {
                   logger.error("Exception while connecting {} to initial server", this.player, e);
                 }
               });
-            } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+            } catch (Throwable e) {
               e.printStackTrace();
             }
           } else {
@@ -224,27 +230,28 @@ public class LoginTasksQueue {
 
   static {
     try {
-      PROFILE_FIELD = ConnectedPlayer.class.getDeclaredField("profile");
-      PROFILE_FIELD.setAccessible(true);
+      PROFILE_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findVarHandle(ConnectedPlayer.class, "profile", GameProfile.class);
 
       DEFAULT_PERMISSIONS_FIELD = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
       DEFAULT_PERMISSIONS_FIELD.setAccessible(true);
 
-      SET_PERMISSION_FUNCTION_METHOD = ConnectedPlayer.class.getDeclaredMethod("setPermissionFunction", PermissionFunction.class);
-      SET_PERMISSION_FUNCTION_METHOD.setAccessible(true);
+      SET_PERMISSION_FUNCTION_METHOD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findVirtual(ConnectedPlayer.class, "setPermissionFunction", MethodType.methodType(void.class, PermissionFunction.class));
 
-      INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR = InitialConnectSessionHandler.class.getDeclaredConstructor(ConnectedPlayer.class);
-      INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.setAccessible(true);
+      INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR = MethodHandles
+          .privateLookupIn(InitialConnectSessionHandler.class, MethodHandles.lookup())
+          .findConstructor(InitialConnectSessionHandler.class, MethodType.methodType(void.class, ConnectedPlayer.class));
+
+      CONNECT_TO_INITIAL_SERVER_METHOD = MethodHandles.privateLookupIn(AuthSessionHandler.class, MethodHandles.lookup())
+          .findVirtual(AuthSessionHandler.class, "connectToInitialServer", MethodType.methodType(CompletableFuture.class, ConnectedPlayer.class));
 
       MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
       MC_CONNECTION_FIELD.setAccessible(true);
 
-      CONNECT_TO_INITIAL_SERVER_METHOD = AuthSessionHandler.class.getDeclaredMethod("connectToInitialServer", ConnectedPlayer.class);
-      CONNECT_TO_INITIAL_SERVER_METHOD.setAccessible(true);
-
-      PLAYER_KEY_FIELD = ConnectedPlayer.class.getDeclaredField("playerKey");
-      PLAYER_KEY_FIELD.setAccessible(true);
-    } catch (NoSuchFieldException | NoSuchMethodException e) {
+      PLAYER_KEY_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findVarHandle(ConnectedPlayer.class, "playerKey", IdentifiedKey.class);
+    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }
   }
