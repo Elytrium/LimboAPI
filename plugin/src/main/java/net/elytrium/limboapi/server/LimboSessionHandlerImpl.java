@@ -35,8 +35,9 @@ import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerComma
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +56,7 @@ import net.elytrium.limboapi.protocol.packets.c2s.TeleportConfirmPacket;
 
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
-  private static final Method TEARDOWN_METHOD;
+  private static final MethodHandle TEARDOWN_METHOD;
 
   private final LimboAPI plugin;
   private final LimboImpl limbo;
@@ -271,9 +272,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     MinecraftConnection connection = this.player.getConnection();
     if (connection.isClosed()) {
       try {
-        TEARDOWN_METHOD.invoke(this.player);
-      } catch (IllegalAccessException | InvocationTargetException e) {
-        e.printStackTrace();
+        TEARDOWN_METHOD.invokeExact(this.player);
+      } catch (Throwable e) {
+        throw new ReflectionException(e);
       }
 
       return;
@@ -302,9 +303,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   static {
     try {
-      TEARDOWN_METHOD = ConnectedPlayer.class.getDeclaredMethod("teardown");
-      TEARDOWN_METHOD.setAccessible(true);
-    } catch (NoSuchMethodException e) {
+      TEARDOWN_METHOD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findVirtual(ConnectedPlayer.class, "teardown", MethodType.methodType(void.class));
+    } catch (NoSuchMethodException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }
   }

@@ -54,7 +54,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import java.lang.reflect.Field;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -94,9 +95,9 @@ import net.kyori.adventure.text.Component;
 
 public class LimboImpl implements Limbo {
 
-  private static final Field PARTIAL_HASHED_SEED_FIELD;
-  private static final Field CURRENT_DIMENSION_DATA_FIELD;
-  private static final Field ROOT_NODE_FIELD;
+  private static final VarHandle PARTIAL_HASHED_SEED_FIELD;
+  private static final VarHandle CURRENT_DIMENSION_DATA_FIELD;
+  private static final VarHandle ROOT_NODE_FIELD;
 
   private static final CompoundBinaryTag CHAT_TYPE_119;
   private static final CompoundBinaryTag CHAT_TYPE_1191;
@@ -470,11 +471,7 @@ public class LimboImpl implements Limbo {
     joinGame.setPreviousGamemode((short) -1);
     joinGame.setDimension(dimension.getModernID());
     joinGame.setDifficulty((short) 0);
-    try {
-      PARTIAL_HASHED_SEED_FIELD.set(joinGame, ThreadLocalRandom.current().nextLong());
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-    }
+    PARTIAL_HASHED_SEED_FIELD.set(joinGame, ThreadLocalRandom.current().nextLong());
     joinGame.setMaxPlayers(1);
 
     joinGame.setLevelType("flat");
@@ -488,11 +485,7 @@ public class LimboImpl implements Limbo {
     DimensionRegistry dimensionRegistry = this.createDimensionRegistry(modern);
     joinGame.setDimensionRegistry(dimensionRegistry);
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
-    try {
-      CURRENT_DIMENSION_DATA_FIELD.set(joinGame, dimensionRegistry.getDimensionData(dimension.getKey()));
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-    }
+    CURRENT_DIMENSION_DATA_FIELD.set(joinGame, dimensionRegistry.getDimensionData(dimension.getKey()));
 
     joinGame.setBiomeRegistry(Biome.getRegistry());
     joinGame.setChatTypeRegistry(chatTypeRegistry);
@@ -515,14 +508,9 @@ public class LimboImpl implements Limbo {
   }
 
   private AvailableCommands createAvailableCommandsPacket() {
-    try {
-      AvailableCommands packet = new AvailableCommands();
-      ROOT_NODE_FIELD.set(packet, this.commandNode);
-      return packet;
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-      return null;
-    }
+    AvailableCommands packet = new AvailableCommands();
+    ROOT_NODE_FIELD.set(packet, this.commandNode);
+    return packet;
   }
 
   private List<ChunkDataPacket> createChunksPackets() {
@@ -622,15 +610,12 @@ public class LimboImpl implements Limbo {
 
   static {
     try {
-      PARTIAL_HASHED_SEED_FIELD = JoinGame.class.getDeclaredField("partialHashedSeed");
-      PARTIAL_HASHED_SEED_FIELD.setAccessible(true);
-
-      CURRENT_DIMENSION_DATA_FIELD = JoinGame.class.getDeclaredField("currentDimensionData");
-      CURRENT_DIMENSION_DATA_FIELD.setAccessible(true);
-
-      ROOT_NODE_FIELD = AvailableCommands.class.getDeclaredField("rootNode");
-      ROOT_NODE_FIELD.setAccessible(true);
-
+      PARTIAL_HASHED_SEED_FIELD = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
+          .findVarHandle(JoinGame.class, "partialHashedSeed", long.class);
+      CURRENT_DIMENSION_DATA_FIELD = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
+          .findVarHandle(JoinGame.class, "currentDimensionData", DimensionData.class);
+      ROOT_NODE_FIELD = MethodHandles.privateLookupIn(AvailableCommands.class, MethodHandles.lookup())
+          .findVarHandle(AvailableCommands.class, "rootNode", RootCommandNode.class);
       CHAT_TYPE_119 = CompoundBinaryTag.builder()
           .put("type", StringBinaryTag.of("minecraft:chat_type"))
           .put(
@@ -749,7 +734,7 @@ public class LimboImpl implements Limbo {
                           ).build()
                   ).build()
           ).build();
-    } catch (NoSuchFieldException e) {
+    } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }
   }

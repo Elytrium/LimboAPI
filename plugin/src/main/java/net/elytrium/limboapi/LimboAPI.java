@@ -178,10 +178,8 @@ public class LimboAPI implements LimboFactory {
         LegacyPlayerListItemHook.init(this, StateRegistry.PLAY.clientbound);
         UpsertPlayerInfoHook.init(this, StateRegistry.PLAY.clientbound);
         LimboProtocol.init();
-      } catch (ReflectiveOperationException e) {
+      } catch (Throwable e) {
         throw new ReflectionException(e);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
       }
     }
   }

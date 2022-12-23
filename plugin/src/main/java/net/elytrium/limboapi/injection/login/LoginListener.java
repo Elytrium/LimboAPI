@@ -59,9 +59,11 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
 import com.velocitypowered.proxy.protocol.packet.SetCompression;
 import io.netty.channel.ChannelPipeline;
-import java.lang.reflect.Constructor;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,10 +81,10 @@ public class LoginListener {
 
   private static final ClosedMinecraftConnection CLOSED_MINECRAFT_CONNECTION;
 
-  private static final Field DELEGATE_FIELD;
+  private static final VarHandle DELEGATE_FIELD;
   private static final Field MC_CONNECTION_FIELD;
-  private static final Constructor<ConnectedPlayer> CONNECTED_PLAYER_CONSTRUCTOR;
-  private static final Field SPAWNED_FIELD;
+  private static final MethodHandle CONNECTED_PLAYER_CONSTRUCTOR;
+  private static final VarHandle SPAWNED_FIELD;
 
   private final List<String> onlineMode = new ArrayList<>();
   private final LimboAPI plugin;
@@ -131,7 +133,7 @@ public class LoginListener {
         connection.eventLoop().execute(() -> {
           try {
             // Initiate a regular connection and move over to it.
-            ConnectedPlayer player = CONNECTED_PLAYER_CONSTRUCTOR.newInstance(
+            ConnectedPlayer player = (ConnectedPlayer) CONNECTED_PLAYER_CONSTRUCTOR.invokeExact(
                 this.server,
                 event.getGameProfile(),
                 connection,
@@ -181,7 +183,7 @@ public class LoginListener {
             } else {
               player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
             }
-          } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+          } catch (Throwable e) {
             e.printStackTrace();
           }
         });
@@ -197,11 +199,7 @@ public class LoginListener {
     connection.eventLoop().execute(() -> {
       if (!(connection.getSessionHandler() instanceof ClientPlaySessionHandler)) {
         ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
-        try {
-          SPAWNED_FIELD.set(playHandler, this.plugin.isLimboJoined(player));
-        } catch (IllegalAccessException e) {
-          LimboAPI.getLogger().error("Exception while hooking into ClientPlaySessionHandler of {}.", player, e);
-        }
+        SPAWNED_FIELD.set(playHandler, this.plugin.isLimboJoined(player));
 
         connection.setSessionHandler(playHandler);
       }
@@ -212,25 +210,28 @@ public class LoginListener {
     CLOSED_MINECRAFT_CONNECTION = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), null);
 
     try {
-      CONNECTED_PLAYER_CONSTRUCTOR = ConnectedPlayer.class.getDeclaredConstructor(
-          VelocityServer.class,
-          GameProfile.class,
-          MinecraftConnection.class,
-          InetSocketAddress.class,
-          boolean.class,
-          IdentifiedKey.class
-      );
-      CONNECTED_PLAYER_CONSTRUCTOR.setAccessible(true);
+      CONNECTED_PLAYER_CONSTRUCTOR = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findConstructor(ConnectedPlayer.class,
+              MethodType.methodType(
+                  void.class,
+                  VelocityServer.class,
+                  GameProfile.class,
+                  MinecraftConnection.class,
+                  InetSocketAddress.class,
+                  boolean.class,
+                  IdentifiedKey.class
+              )
+          );
 
-      DELEGATE_FIELD = LoginInboundConnection.class.getDeclaredField("delegate");
-      DELEGATE_FIELD.setAccessible(true);
+      DELEGATE_FIELD = MethodHandles.privateLookupIn(LoginInboundConnection.class, MethodHandles.lookup())
+          .findVarHandle(LoginInboundConnection.class, "delegate", InitialInboundConnection.class);
 
       MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
       MC_CONNECTION_FIELD.setAccessible(true);
 
-      SPAWNED_FIELD = ClientPlaySessionHandler.class.getDeclaredField("spawned");
-      SPAWNED_FIELD.setAccessible(true);
-    } catch (NoSuchFieldException | NoSuchMethodException e) {
+      SPAWNED_FIELD = MethodHandles.privateLookupIn(ClientPlaySessionHandler.class, MethodHandles.lookup())
+          .findVarHandle(ClientPlaySessionHandler.class, "spawned", boolean.class);
+    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }
   }

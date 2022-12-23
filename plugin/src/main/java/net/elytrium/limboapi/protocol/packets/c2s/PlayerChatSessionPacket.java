@@ -25,13 +25,15 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import java.lang.reflect.Field;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.UUID;
 import net.elytrium.java.commons.reflection.ReflectionException;
 
+@SuppressWarnings("unused")
 public class PlayerChatSessionPacket implements MinecraftPacket {
 
-  public static final Field PLAYER_FIELD;
+  public static final VarHandle PLAYER_FIELD;
 
   private UUID holderId;
   private IdentifiedKey playerKey;
@@ -52,16 +54,10 @@ public class PlayerChatSessionPacket implements MinecraftPacket {
   public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
     // LimboAPI hook - discard if there is no identified key or unmatched UUID
     if (minecraftSessionHandler instanceof ClientPlaySessionHandler) {
-      try {
-        ClientPlaySessionHandler playSessionHandler = (ClientPlaySessionHandler) minecraftSessionHandler;
-        ConnectedPlayer player = (ConnectedPlayer) PLAYER_FIELD.get(playSessionHandler);
+      ClientPlaySessionHandler playSessionHandler = (ClientPlaySessionHandler) minecraftSessionHandler;
+      ConnectedPlayer player = (ConnectedPlayer) PLAYER_FIELD.get(playSessionHandler);
 
-        if (player.getIdentifiedKey() == null || player.getUniqueId() != this.holderId) {
-          return true;
-        }
-      } catch (IllegalAccessException e) {
-        throw new ReflectionException(e);
-      }
+      return player.getIdentifiedKey() == null || player.getUniqueId() != this.holderId;
     }
 
     return false;
@@ -85,9 +81,9 @@ public class PlayerChatSessionPacket implements MinecraftPacket {
 
   static {
     try {
-      PLAYER_FIELD = ClientPlaySessionHandler.class.getDeclaredField("player");
-      PLAYER_FIELD.setAccessible(true);
-    } catch (NoSuchFieldException e) {
+      PLAYER_FIELD = MethodHandles.privateLookupIn(ClientPlaySessionHandler.class, MethodHandles.lookup())
+          .findVarHandle(ClientPlaySessionHandler.class, "player", ConnectedPlayer.class);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }
   }
