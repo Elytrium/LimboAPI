@@ -70,7 +70,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private long keepAliveKey;
   private boolean keepAlivePending;
   private long keepAliveSentTime;
-  private int ping;
+  private int ping = -1;
   private int genericBytes;
   private boolean loaded;
   //private boolean disconnected;
@@ -167,7 +167,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         return false;
       } else {
         this.keepAlivePending = false;
-        this.ping = (this.ping * 3 + (int) (System.currentTimeMillis() - this.keepAliveSentTime)) / 4;
+        int currentPing = (int) (System.currentTimeMillis() - this.keepAliveSentTime);
+        if (this.ping == -1) {
+          this.ping = currentPing;
+        } else {
+          this.ping = (this.ping * 3 + currentPing) / 4;
+        }
         return true;
       }
     } else {
