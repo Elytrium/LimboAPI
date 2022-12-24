@@ -207,9 +207,10 @@ public class LoginTasksQueue {
                 try {
                   MC_CONNECTION_FIELD.set(this.handler, connection);
                   // There must be a CompletableFuture variable here, since we are using MethodHandle#invokeExact
-                  //noinspection unused
                   CompletableFuture<?> completableFuture =
                       (CompletableFuture<?>) CONNECT_TO_INITIAL_SERVER_METHOD.invokeExact((AuthSessionHandler) this.handler, this.player);
+
+                  completableFuture.thenRun(() -> {});
                 } catch (Throwable e) {
                   logger.error("Exception while connecting {} to initial server", this.player, e);
                 }
