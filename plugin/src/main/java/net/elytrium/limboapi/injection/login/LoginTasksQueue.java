@@ -39,6 +39,7 @@ import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
+import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.proxy.InboundConnection;
@@ -53,6 +54,8 @@ import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
+import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
@@ -61,6 +64,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
@@ -122,6 +127,32 @@ public class LoginTasksQueue {
             .thenAcceptAsync(safeGameProfile -> {
               try {
                 PROFILE_FIELD.set(this.player, safeGameProfile.getGameProfile());
+
+                if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
+                  connection.delayedWrite(new LegacyPlayerListItem(
+                      LegacyPlayerListItem.REMOVE_PLAYER,
+                      List.of(new LegacyPlayerListItem.Item(this.player.getUniqueId()))
+                  ));
+
+                  connection.delayedWrite(new LegacyPlayerListItem(
+                      LegacyPlayerListItem.ADD_PLAYER,
+                      List.of(
+                          new LegacyPlayerListItem.Item(this.player.getUniqueId())
+                              .setName(this.player.getUsername())
+                              .setProperties(this.player.getGameProfileProperties())
+                      )
+                  ));
+                } else {
+                  UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
+                  playerInfoEntry.setDisplayName(Component.text(this.player.getUsername()));
+                  playerInfoEntry.setProfile(this.player.getGameProfile());
+
+                  connection.delayedWrite(new UpsertPlayerInfo(
+                      EnumSet.of(
+                          UpsertPlayerInfo.Action.UPDATE_DISPLAY_NAME,
+                          UpsertPlayerInfo.Action.ADD_PLAYER),
+                      List.of(playerInfoEntry)));
+                }
 
                 // From Velocity.
                 eventManager

@@ -51,11 +51,12 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfo {
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     if (handler instanceof BackendPlaySessionHandler) {
+      ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.get(handler)).getPlayer();
+      UUID initialID = this.plugin.getInitialID(player);
       List<Entry> items = this.getEntries();
+
       for (int i = 0; i < items.size(); ++i) {
         Entry item = items.get(i);
-        ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.get(handler)).getPlayer();
-        UUID initialID = this.plugin.getInitialID(player);
 
         if (player.getUniqueId().equals(item.getProfileId())) {
           Entry fixedEntry = new Entry(initialID);
