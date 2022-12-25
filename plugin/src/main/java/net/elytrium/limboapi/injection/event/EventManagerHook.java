@@ -29,7 +29,6 @@ import com.velocitypowered.proxy.event.VelocityEventManager;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -53,7 +52,7 @@ public class EventManagerHook extends VelocityEventManager {
   private static final Field VELOCITY_SERVER_EVENT_MANAGER_FIELD;
   private static final Class<?> HANDLER_REGISTRATION_CLASS;
   private static final Field UNTARGETED_METHOD_HANDLERS_FIELD;
-  private static final VarHandle PLUGIN_FIELD;
+  private static final MethodHandle PLUGIN_FIELD;
   private static final Field VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD;
   private static final MethodHandle FIRE_METHOD;
 
@@ -118,7 +117,7 @@ public class EventManagerHook extends VelocityEventManager {
             this.proceededProfiles.add(profile);
 
             hookFuture.complete(modifiedEvent);
-          } catch (IllegalAccessException e) {
+          } catch (Throwable e) {
             e.printStackTrace();
           }
         });
@@ -154,14 +153,18 @@ public class EventManagerHook extends VelocityEventManager {
       }
     }
 
-    for (Object handler : disabledHandlers) {
-      PluginContainer pluginContainer = (PluginContainer) PLUGIN_FIELD.get(handler);
-      String id = pluginContainer.getDescription().getId();
-      if (Settings.IMP.MAIN.PRE_LIMBO_PROFILE_REQUEST_PLUGINS.contains(id)) {
-        LimboAPI.getLogger().info("Hooking all GameProfileRequestEvent events from {} ", id);
-        preEvents.add(handler);
-        newHandlers.remove(handler);
+    try {
+      for (Object handler : disabledHandlers) {
+        PluginContainer pluginContainer = (PluginContainer) PLUGIN_FIELD.invoke(handler);
+        String id = pluginContainer.getDescription().getId();
+        if (Settings.IMP.MAIN.PRE_LIMBO_PROFILE_REQUEST_PLUGINS.contains(id)) {
+          LimboAPI.getLogger().info("Hooking all GameProfileRequestEvent events from {} ", id);
+          preEvents.add(handler);
+          newHandlers.remove(handler);
+        }
       }
+    } catch (Throwable e) {
+      throw new ReflectionException(e);
     }
 
     handlersMap.replaceValues(GameProfileRequestEvent.class, newHandlers);
@@ -196,7 +199,7 @@ public class EventManagerHook extends VelocityEventManager {
 
       HANDLER_REGISTRATION_CLASS = Class.forName("com.velocitypowered.proxy.event.VelocityEventManager$HandlerRegistration");
       PLUGIN_FIELD = MethodHandles.privateLookupIn(HANDLER_REGISTRATION_CLASS, MethodHandles.lookup())
-          .findVarHandle(HANDLER_REGISTRATION_CLASS, "plugin", PluginContainer.class);
+          .findGetter(HANDLER_REGISTRATION_CLASS, "plugin", PluginContainer.class);
 
       VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD = VelocityCommandManager.class.getDeclaredField("eventManager");
       VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD.setAccessible(true);

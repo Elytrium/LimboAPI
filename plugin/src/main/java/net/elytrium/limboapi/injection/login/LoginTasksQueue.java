@@ -62,7 +62,6 @@ import io.netty.channel.EventLoop;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.util.EnumSet;
 import java.util.List;
@@ -78,13 +77,13 @@ import org.slf4j.Logger;
 
 public class LoginTasksQueue {
 
-  private static final VarHandle PROFILE_FIELD;
+  private static final MethodHandle PROFILE_FIELD;
   private static final Field DEFAULT_PERMISSIONS_FIELD;
   private static final MethodHandle SET_PERMISSION_FUNCTION_METHOD;
   private static final MethodHandle INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR;
   private static final Field MC_CONNECTION_FIELD;
   private static final MethodHandle CONNECT_TO_INITIAL_SERVER_METHOD;
-  private static final VarHandle PLAYER_KEY_FIELD;
+  private static final MethodHandle PLAYER_KEY_FIELD;
 
   private final LimboAPI plugin;
   private final Object handler;
@@ -126,7 +125,7 @@ public class LoginTasksQueue {
         gameProfile -> eventManager.fire(new SafeGameProfileRequestEvent(gameProfile.getGameProfile(), gameProfile.isOnlineMode()))
             .thenAcceptAsync(safeGameProfile -> {
               try {
-                PROFILE_FIELD.set(this.player, safeGameProfile.getGameProfile());
+                PROFILE_FIELD.invokeExact(this.player, safeGameProfile.getGameProfile());
 
                 if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
                   connection.delayedWrite(new LegacyPlayerListItem(
@@ -178,12 +177,12 @@ public class LoginTasksQueue {
                         }
                         try {
                           this.initialize(connection);
-                        } catch (IllegalAccessException e) {
+                        } catch (Throwable e) {
                           e.printStackTrace();
                         }
                       }
                     }, connection.eventLoop());
-              } catch (IllegalAccessException e) {
+              } catch (Throwable e) {
                 logger.error("Exception while completing injection to {}", this.player, e);
               }
             }, connection.eventLoop()),
@@ -193,7 +192,7 @@ public class LoginTasksQueue {
 
   // From Velocity.
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
-  private void initialize(MinecraftConnection connection) throws IllegalAccessException {
+  private void initialize(MinecraftConnection connection) throws Throwable {
     connection.setAssociation(this.player);
     connection.setState(StateRegistry.PLAY);
 
@@ -211,12 +210,12 @@ public class LoginTasksQueue {
           IdentifiedKeyImpl unlinkedKey = (IdentifiedKeyImpl) playerKey;
           // Failsafe
           if (!unlinkedKey.internalAddHolder(this.player.getUniqueId())) {
-            PLAYER_KEY_FIELD.set(this.player, null);
+            PLAYER_KEY_FIELD.invokeExact(this.player, (IdentifiedKey) null);
           }
         }
       } else {
         if (!Objects.equals(playerKey.getSignatureHolder(), this.player.getUniqueId())) {
-          PLAYER_KEY_FIELD.set(this.player, null);
+          PLAYER_KEY_FIELD.invokeExact(this.player, (IdentifiedKey) null);
         }
       }
     }
@@ -237,11 +236,7 @@ public class LoginTasksQueue {
               this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
                 try {
                   MC_CONNECTION_FIELD.set(this.handler, connection);
-                  // There must be a CompletableFuture variable here, since we are using MethodHandle#invokeExact
-                  CompletableFuture<?> completableFuture =
-                      (CompletableFuture<?>) CONNECT_TO_INITIAL_SERVER_METHOD.invokeExact((AuthSessionHandler) this.handler, this.player);
-
-                  completableFuture.thenRun(() -> {});
+                  CONNECT_TO_INITIAL_SERVER_METHOD.invoke((AuthSessionHandler) this.handler, this.player);
                 } catch (Throwable e) {
                   logger.error("Exception while connecting {} to initial server", this.player, e);
                 }
@@ -263,7 +258,7 @@ public class LoginTasksQueue {
   static {
     try {
       PROFILE_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
-          .findVarHandle(ConnectedPlayer.class, "profile", GameProfile.class);
+          .findSetter(ConnectedPlayer.class, "profile", GameProfile.class);
 
       DEFAULT_PERMISSIONS_FIELD = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
       DEFAULT_PERMISSIONS_FIELD.setAccessible(true);
@@ -282,7 +277,7 @@ public class LoginTasksQueue {
       MC_CONNECTION_FIELD.setAccessible(true);
 
       PLAYER_KEY_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
-          .findVarHandle(ConnectedPlayer.class, "playerKey", IdentifiedKey.class);
+          .findSetter(ConnectedPlayer.class, "playerKey", IdentifiedKey.class);
     } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }
