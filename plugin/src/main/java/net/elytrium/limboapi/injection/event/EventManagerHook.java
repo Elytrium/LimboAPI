@@ -102,8 +102,7 @@ public class EventManagerHook extends VelocityEventManager {
   private <E> CompletableFuture<E> proxyHook(E event) {
     if (event instanceof GameProfileRequestEvent) {
       GameProfile originalProfile = ((GameProfileRequestEvent) event).getGameProfile();
-      if (this.proceededProfiles.contains(originalProfile)) {
-        this.proceededProfiles.remove(originalProfile);
+      if (this.proceededProfiles.remove(originalProfile)) {
         return null;
       } else {
         CompletableFuture<E> fireFuture = new CompletableFuture<>();
@@ -111,11 +110,7 @@ public class EventManagerHook extends VelocityEventManager {
         fireFuture.thenAccept(modifiedEvent -> {
           try {
             GameProfileRequestEvent requestEvent = (GameProfileRequestEvent) modifiedEvent;
-            GameProfile profile = requestEvent.getGameProfile();
-
             this.plugin.getLoginListener().hookLoginSession(requestEvent);
-            this.proceededProfiles.add(profile);
-
             hookFuture.complete(modifiedEvent);
           } catch (Throwable e) {
             e.printStackTrace();
@@ -138,6 +133,10 @@ public class EventManagerHook extends VelocityEventManager {
     } else {
       return null;
     }
+  }
+
+  public void proceedProfile(GameProfile profile) {
+    this.proceededProfiles.add(profile);
   }
 
   @SuppressWarnings("rawtypes")
