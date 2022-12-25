@@ -51,7 +51,6 @@ import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
 import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
-import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
@@ -72,6 +71,7 @@ import java.util.concurrent.CompletableFuture;
 import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
+import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
@@ -118,9 +118,11 @@ public class LoginTasksQueue {
   private void finish() {
     this.plugin.removeLoginQueue(this.player);
 
-    VelocityEventManager eventManager = this.server.getEventManager();
+    EventManagerHook eventManager = (EventManagerHook) this.server.getEventManager();
     MinecraftConnection connection = this.player.getConnection();
     Logger logger = LimboAPI.getLogger();
+
+    eventManager.proceedProfile(this.player.getGameProfile());
     eventManager.fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode())).thenAcceptAsync(
         gameProfile -> eventManager.fire(new SafeGameProfileRequestEvent(gameProfile.getGameProfile(), gameProfile.isOnlineMode()))
             .thenAcceptAsync(safeGameProfile -> {
