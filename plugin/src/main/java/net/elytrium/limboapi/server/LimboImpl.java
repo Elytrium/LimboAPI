@@ -54,8 +54,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -95,9 +95,9 @@ import net.kyori.adventure.text.Component;
 
 public class LimboImpl implements Limbo {
 
-  private static final VarHandle PARTIAL_HASHED_SEED_FIELD;
-  private static final VarHandle CURRENT_DIMENSION_DATA_FIELD;
-  private static final VarHandle ROOT_NODE_FIELD;
+  private static final MethodHandle PARTIAL_HASHED_SEED_FIELD;
+  private static final MethodHandle CURRENT_DIMENSION_DATA_FIELD;
+  private static final MethodHandle ROOT_NODE_FIELD;
 
   private static final CompoundBinaryTag CHAT_TYPE_119;
   private static final CompoundBinaryTag CHAT_TYPE_1191;
@@ -471,7 +471,11 @@ public class LimboImpl implements Limbo {
     joinGame.setPreviousGamemode((short) -1);
     joinGame.setDimension(dimension.getModernID());
     joinGame.setDifficulty((short) 0);
-    PARTIAL_HASHED_SEED_FIELD.set(joinGame, ThreadLocalRandom.current().nextLong());
+    try {
+      PARTIAL_HASHED_SEED_FIELD.invokeExact(joinGame, ThreadLocalRandom.current().nextLong());
+    } catch (Throwable e) {
+      throw new ReflectionException(e);
+    }
     joinGame.setMaxPlayers(1);
 
     joinGame.setLevelType("flat");
@@ -485,7 +489,11 @@ public class LimboImpl implements Limbo {
     DimensionRegistry dimensionRegistry = this.createDimensionRegistry(modern);
     joinGame.setDimensionRegistry(dimensionRegistry);
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
-    CURRENT_DIMENSION_DATA_FIELD.set(joinGame, dimensionRegistry.getDimensionData(dimension.getKey()));
+    try {
+      CURRENT_DIMENSION_DATA_FIELD.invokeExact(joinGame, dimensionRegistry.getDimensionData(dimension.getKey()));
+    } catch (Throwable e) {
+      throw new ReflectionException(e);
+    }
 
     joinGame.setBiomeRegistry(Biome.getRegistry());
     joinGame.setChatTypeRegistry(chatTypeRegistry);
@@ -508,9 +516,13 @@ public class LimboImpl implements Limbo {
   }
 
   private AvailableCommands createAvailableCommandsPacket() {
-    AvailableCommands packet = new AvailableCommands();
-    ROOT_NODE_FIELD.set(packet, this.commandNode);
-    return packet;
+    try {
+      AvailableCommands packet = new AvailableCommands();
+      ROOT_NODE_FIELD.invokeExact(packet, this.commandNode);
+      return packet;
+    } catch (Throwable e) {
+      throw new ReflectionException(e);
+    }
   }
 
   private List<ChunkDataPacket> createChunksPackets() {
@@ -611,11 +623,11 @@ public class LimboImpl implements Limbo {
   static {
     try {
       PARTIAL_HASHED_SEED_FIELD = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
-          .findVarHandle(JoinGame.class, "partialHashedSeed", long.class);
+          .findSetter(JoinGame.class, "partialHashedSeed", long.class);
       CURRENT_DIMENSION_DATA_FIELD = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
-          .findVarHandle(JoinGame.class, "currentDimensionData", DimensionData.class);
+          .findSetter(JoinGame.class, "currentDimensionData", DimensionData.class);
       ROOT_NODE_FIELD = MethodHandles.privateLookupIn(AvailableCommands.class, MethodHandles.lookup())
-          .findVarHandle(AvailableCommands.class, "rootNode", RootCommandNode.class);
+          .findSetter(AvailableCommands.class, "rootNode", RootCommandNode.class);
       CHAT_TYPE_119 = CompoundBinaryTag.builder()
           .put("type", StringBinaryTag.of("minecraft:chat_type"))
           .put(

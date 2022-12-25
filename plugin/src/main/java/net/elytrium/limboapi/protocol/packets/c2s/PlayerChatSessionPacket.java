@@ -25,15 +25,15 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.UUID;
 import net.elytrium.java.commons.reflection.ReflectionException;
 
 @SuppressWarnings("unused")
 public class PlayerChatSessionPacket implements MinecraftPacket {
 
-  public static final VarHandle PLAYER_FIELD;
+  public static final MethodHandle PLAYER_FIELD;
 
   private UUID holderId;
   private IdentifiedKey playerKey;
@@ -55,9 +55,12 @@ public class PlayerChatSessionPacket implements MinecraftPacket {
     // LimboAPI hook - discard if there is no identified key or unmatched UUID
     if (minecraftSessionHandler instanceof ClientPlaySessionHandler) {
       ClientPlaySessionHandler playSessionHandler = (ClientPlaySessionHandler) minecraftSessionHandler;
-      ConnectedPlayer player = (ConnectedPlayer) PLAYER_FIELD.get(playSessionHandler);
-
-      return player.getIdentifiedKey() == null || player.getUniqueId() != this.holderId;
+      try {
+        ConnectedPlayer player = (ConnectedPlayer) PLAYER_FIELD.invokeExact(playSessionHandler);
+        return player.getIdentifiedKey() == null || player.getUniqueId() != this.holderId;
+      } catch (Throwable e) {
+        throw new ReflectionException(e);
+      }
     }
 
     return false;
@@ -82,7 +85,7 @@ public class PlayerChatSessionPacket implements MinecraftPacket {
   static {
     try {
       PLAYER_FIELD = MethodHandles.privateLookupIn(ClientPlaySessionHandler.class, MethodHandles.lookup())
-          .findVarHandle(ClientPlaySessionHandler.class, "player", ConnectedPlayer.class);
+          .findGetter(ClientPlaySessionHandler.class, "player", ConnectedPlayer.class);
     } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }

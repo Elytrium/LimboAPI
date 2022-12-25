@@ -27,8 +27,8 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -40,7 +40,7 @@ import net.elytrium.limboapi.protocol.LimboProtocol;
 @SuppressWarnings("unchecked")
 public class UpsertPlayerInfoHook extends UpsertPlayerInfo {
 
-  private static final VarHandle SERVER_CONN_FIELD;
+  private static final MethodHandle SERVER_CONN_FIELD;
 
   private final LimboAPI plugin;
 
@@ -51,25 +51,29 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfo {
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     if (handler instanceof BackendPlaySessionHandler) {
-      ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.get(handler)).getPlayer();
-      UUID initialID = this.plugin.getInitialID(player);
-      List<Entry> items = this.getEntries();
+      try {
+        ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.invokeExact((BackendPlaySessionHandler) handler)).getPlayer();
+        UUID initialID = this.plugin.getInitialID(player);
+        List<Entry> items = this.getEntries();
 
-      for (int i = 0; i < items.size(); ++i) {
-        Entry item = items.get(i);
+        for (int i = 0; i < items.size(); ++i) {
+          Entry item = items.get(i);
 
-        if (player.getUniqueId().equals(item.getProfileId())) {
-          Entry fixedEntry = new Entry(initialID);
-          fixedEntry.setDisplayName(item.getDisplayName());
-          fixedEntry.setGameMode(item.getGameMode());
-          fixedEntry.setLatency(item.getLatency());
-          fixedEntry.setDisplayName(item.getDisplayName());
-          fixedEntry.setProfile(item.getProfile());
-          fixedEntry.setListed(item.isListed());
-          fixedEntry.setChatSession(item.getChatSession());
+          if (player.getUniqueId().equals(item.getProfileId())) {
+            Entry fixedEntry = new Entry(initialID);
+            fixedEntry.setDisplayName(item.getDisplayName());
+            fixedEntry.setGameMode(item.getGameMode());
+            fixedEntry.setLatency(item.getLatency());
+            fixedEntry.setDisplayName(item.getDisplayName());
+            fixedEntry.setProfile(item.getProfile());
+            fixedEntry.setListed(item.isListed());
+            fixedEntry.setChatSession(item.getChatSession());
 
-          items.set(i, fixedEntry);
+            items.set(i, fixedEntry);
+          }
         }
+      } catch (Throwable e) {
+        throw new ReflectionException(e);
       }
     }
 
@@ -79,7 +83,7 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfo {
   static {
     try {
       SERVER_CONN_FIELD = MethodHandles.privateLookupIn(BackendPlaySessionHandler.class, MethodHandles.lookup())
-          .findVarHandle(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
+          .findGetter(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
     } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }

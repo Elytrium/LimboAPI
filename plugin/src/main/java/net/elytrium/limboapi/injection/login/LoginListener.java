@@ -62,7 +62,6 @@ import io.netty.channel.ChannelPipeline;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -81,10 +80,10 @@ public class LoginListener {
 
   private static final ClosedMinecraftConnection CLOSED_MINECRAFT_CONNECTION;
 
-  private static final VarHandle DELEGATE_FIELD;
+  private static final MethodHandle DELEGATE_FIELD;
   private static final Field MC_CONNECTION_FIELD;
   private static final MethodHandle CONNECTED_PLAYER_CONSTRUCTOR;
-  private static final VarHandle SPAWNED_FIELD;
+  private static final MethodHandle SPAWNED_FIELD;
 
   private final List<String> onlineMode = new ArrayList<>();
   private final LimboAPI plugin;
@@ -116,14 +115,14 @@ public class LoginListener {
   }
 
   @SuppressWarnings("ConstantConditions")
-  public void hookLoginSession(GameProfileRequestEvent event) throws IllegalAccessException {
+  public void hookLoginSession(GameProfileRequestEvent event) throws Throwable {
     LoginInboundConnection inboundConnection = (LoginInboundConnection) event.getConnection();
     // In some cases, e.g. if the player logged out or was kicked right before the GameProfileRequestEvent hook,
     // the connection will be broken (possibly by GC) and we can't get it from the delegate field.
     if (LoginInboundConnection.class.isAssignableFrom(inboundConnection.getClass())) {
       // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
       // method (which checks mcConnection.isActive()) and to override it. :)
-      InitialInboundConnection inbound = (InitialInboundConnection) DELEGATE_FIELD.get(inboundConnection);
+      InitialInboundConnection inbound = (InitialInboundConnection) DELEGATE_FIELD.invokeExact(inboundConnection);
       MinecraftConnection connection = inbound.getConnection();
       Object handler = connection.getSessionHandler();
       MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
@@ -198,10 +197,13 @@ public class LoginListener {
 
     connection.eventLoop().execute(() -> {
       if (!(connection.getSessionHandler() instanceof ClientPlaySessionHandler)) {
-        ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
-        SPAWNED_FIELD.set(playHandler, this.plugin.isLimboJoined(player));
-
-        connection.setSessionHandler(playHandler);
+        try {
+          ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
+          SPAWNED_FIELD.invokeExact(playHandler, this.plugin.isLimboJoined(player));
+          connection.setSessionHandler(playHandler);
+        } catch (Throwable e) {
+          throw new ReflectionException(e);
+        }
       }
     });
   }
@@ -224,13 +226,13 @@ public class LoginListener {
           );
 
       DELEGATE_FIELD = MethodHandles.privateLookupIn(LoginInboundConnection.class, MethodHandles.lookup())
-          .findVarHandle(LoginInboundConnection.class, "delegate", InitialInboundConnection.class);
+          .findGetter(LoginInboundConnection.class, "delegate", InitialInboundConnection.class);
 
       MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
       MC_CONNECTION_FIELD.setAccessible(true);
 
       SPAWNED_FIELD = MethodHandles.privateLookupIn(ClientPlaySessionHandler.class, MethodHandles.lookup())
-          .findVarHandle(ClientPlaySessionHandler.class, "spawned", boolean.class);
+          .findSetter(ClientPlaySessionHandler.class, "spawned", boolean.class);
     } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }

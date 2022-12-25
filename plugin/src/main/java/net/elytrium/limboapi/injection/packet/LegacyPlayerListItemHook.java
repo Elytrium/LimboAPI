@@ -27,8 +27,8 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -40,7 +40,7 @@ import net.elytrium.limboapi.protocol.LimboProtocol;
 @SuppressWarnings("unchecked")
 public class LegacyPlayerListItemHook extends LegacyPlayerListItem {
 
-  private static final VarHandle SERVER_CONN_FIELD;
+  private static final MethodHandle SERVER_CONN_FIELD;
 
   private final LimboAPI plugin;
 
@@ -53,17 +53,21 @@ public class LegacyPlayerListItemHook extends LegacyPlayerListItem {
     if (handler instanceof BackendPlaySessionHandler) {
       List<Item> items = this.getItems();
       for (int i = 0; i < items.size(); ++i) {
-        Item item = items.get(i);
-        ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.get(handler)).getPlayer();
-        UUID initialID = this.plugin.getInitialID(player);
+        try {
+          Item item = items.get(i);
+          ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.invokeExact((BackendPlaySessionHandler) handler)).getPlayer();
+          UUID initialID = this.plugin.getInitialID(player);
 
-        if (player.getUniqueId().equals(item.getUuid())) {
-          items.set(i, new Item(initialID)
-              .setDisplayName(item.getDisplayName())
-              .setGameMode(item.getGameMode())
-              .setLatency(item.getLatency())
-              .setName(item.getName())
-              .setProperties(item.getProperties()));
+          if (player.getUniqueId().equals(item.getUuid())) {
+            items.set(i, new Item(initialID)
+                .setDisplayName(item.getDisplayName())
+                .setGameMode(item.getGameMode())
+                .setLatency(item.getLatency())
+                .setName(item.getName())
+                .setProperties(item.getProperties()));
+          }
+        } catch (Throwable e) {
+          throw new ReflectionException(e);
         }
       }
     }
@@ -74,7 +78,7 @@ public class LegacyPlayerListItemHook extends LegacyPlayerListItem {
   static {
     try {
       SERVER_CONN_FIELD = MethodHandles.privateLookupIn(BackendPlaySessionHandler.class, MethodHandles.lookup())
-          .findVarHandle(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
+          .findGetter(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
     } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }

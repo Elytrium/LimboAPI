@@ -49,7 +49,6 @@ import io.netty.channel.EventLoop;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -64,7 +63,7 @@ public class KickListener {
 
   private static final MinecraftConnection DUMMY_CONNECTION = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), null);
   private static Field CONNECTION_FIELD;
-  private static VarHandle BACKEND_CONNECTION_FIELD;
+  private static MethodHandle BACKEND_CONNECTION_FIELD;
   private static MethodHandle CREATE_CONNECTION_REQUEST;
 
   private final LimboAPI plugin;
@@ -87,7 +86,7 @@ public class KickListener {
         EventLoop eventLoop = connection.getChannel().eventLoop();
         eventLoop.schedule(() -> {
           try {
-            BACKEND_CONNECTION_FIELD.set(player, null);
+            BACKEND_CONNECTION_FIELD.invokeExact(player, (VelocityServerConnection) null);
             if (connection.isClosed()) {
               return;
             }
@@ -176,7 +175,7 @@ public class KickListener {
       CONNECTION_FIELD.setAccessible(true);
 
       BACKEND_CONNECTION_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
-          .findVarHandle(ConnectedPlayer.class, "connectedServer", VelocityServerConnection.class);
+          .findSetter(ConnectedPlayer.class, "connectedServer", VelocityServerConnection.class);
 
       CREATE_CONNECTION_REQUEST = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findVirtual(ConnectedPlayer.class, "createConnectionRequest",
