@@ -119,7 +119,7 @@ public class EventManagerHook extends VelocityEventManager {
 
         try {
           if (this.hasHandlerRegistration) {
-            FIRE_METHOD.invokeExact(this, fireFuture, event, 0, false, this.handlerRegistrations);
+            FIRE_METHOD.invoke(this, fireFuture, event, 0, false, this.handlerRegistrations);
           } else {
             fireFuture.complete(event);
           }
