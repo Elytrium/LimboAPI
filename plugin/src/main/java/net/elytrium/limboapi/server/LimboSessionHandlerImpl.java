@@ -94,6 +94,14 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     Integer serverReadTimeout = this.limbo.getReadTimeout();
     this.keepAliveTask = player.getScheduledExecutor().scheduleAtFixedRate(() -> {
       MinecraftConnection connection = this.player.getConnection();
+
+      // Sometimes there is a bug where player is kicked from the proxy by
+      // the limbo and this task is not cancelled in LimboSessionHandlerImpl#disconnected
+      // More info in issue #73
+      if (connection.isClosed()) {
+        this.keepAliveTask.cancel(true);
+      }
+
       if (this.keepAlivePending) {
         connection.closeWith(this.plugin.getPackets().getTimeOut());
         if (Settings.IMP.MAIN.LOGGING_ENABLED) {
