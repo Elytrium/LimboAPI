@@ -100,6 +100,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       // More info in issue #73
       if (connection.isClosed()) {
         this.keepAliveTask.cancel(true);
+        return;
       }
 
       if (this.keepAlivePending) {
