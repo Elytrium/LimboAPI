@@ -62,6 +62,11 @@ public class Settings extends YamlConfig {
     })
     public boolean DISCARD_COMPRESSION_ON_LOGIN = false;
     public boolean DISCARD_COMPRESSION_AFTER_LOGIN = false;
+    @Comment({
+        "LimboAPI will consume more RAM if this option is enabled, but compatibility with other plugins will be better",
+        "Enable it if you have a plugin installed that bypasses compression (e.g. Geyser)"
+    })
+    public boolean SAVE_UNCOMPRESSED_PACKETS = true;
 
     @Comment("Logging for connect and disconnect messages.")
     public boolean LOGGING_ENABLED = true;

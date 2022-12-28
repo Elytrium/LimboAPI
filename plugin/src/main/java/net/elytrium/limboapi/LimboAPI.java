@@ -84,6 +84,7 @@ import net.elytrium.limboapi.injection.kick.KickListener;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
 import net.elytrium.limboapi.injection.packet.LegacyPlayerListItemHook;
+import net.elytrium.limboapi.injection.packet.LimboCompressDecoder;
 import net.elytrium.limboapi.injection.packet.MinecraftDiscardCompressDecoder;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
@@ -188,12 +189,33 @@ public class LimboAPI implements LimboFactory {
   public void onProxyInitialization(ProxyInitializeEvent event) {
     Settings.IMP.setLogger(LOGGER);
 
+    if (Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX) == YamlConfig.LoadResult.CONFIG_NOT_EXISTS) {
+      LOGGER.warn("************* FIRST LAUNCH *************");
+      LOGGER.warn("Thanks for installing LimboAPI!");
+      LOGGER.warn("(C) 2021 - 2022 Elytrium");
+      LOGGER.warn("");
+      LOGGER.warn("Check out our plugins here: https://ely.su/github <3");
+      LOGGER.warn("Discord: https://ely.su/discord");
+      LOGGER.warn("****************************************");
+    }
+
     int level = this.server.getConfiguration().getCompressionLevel();
     int threshold = this.server.getConfiguration().getCompressionThreshold();
-    this.preparedPacketFactory =
-        new PreparedPacketFactory(PreparedPacketImpl::new, LimboProtocol.getLimboStateRegistry(), this.compressionEnabled, level, threshold);
-    this.loginPreparedPacketFactory =
-        new PreparedPacketFactory(PreparedPacketImpl::new, StateRegistry.LOGIN, this.compressionEnabled, level, threshold);
+    this.preparedPacketFactory = new PreparedPacketFactory(
+        PreparedPacketImpl::new,
+        LimboProtocol.getLimboStateRegistry(),
+        this.compressionEnabled,
+        level,
+        threshold,
+        Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS
+    );
+    this.loginPreparedPacketFactory = new PreparedPacketFactory(
+        PreparedPacketImpl::new,
+        StateRegistry.LOGIN,
+        this.compressionEnabled,
+        level,
+        threshold,
+        Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
     this.reloadPreparedPacketFactory();
     this.reload();
 
@@ -216,16 +238,7 @@ public class LimboAPI implements LimboFactory {
 
   @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "LEGACY_AMPERSAND can't be null in velocity.")
   public void reload() {
-    if (Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX) == YamlConfig.LoadResult.CONFIG_NOT_EXISTS) {
-      LOGGER.warn("************* FIRST LAUNCH *************");
-      LOGGER.warn("Thanks for installing LimboAPI!");
-      LOGGER.warn("(C) 2021 - 2022 Elytrium");
-      LOGGER.warn("");
-      LOGGER.warn("Check out our plugins here: https://ely.su/github <3");
-      LOGGER.warn("Discord: https://ely.su/discord");
-      LOGGER.warn("****************************************");
-    }
-
+    Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX);
     ComponentSerializer<Component, Component, String> serializer = Serializers.valueOf(Settings.IMP.SERIALIZER.toUpperCase(Locale.ROOT)).getSerializer();
     if (serializer == null) {
       LOGGER.warn("The specified serializer could not be founded, using default. (LEGACY_AMPERSAND)");
@@ -271,8 +284,8 @@ public class LimboAPI implements LimboFactory {
     int threshold = this.server.getConfiguration().getCompressionThreshold();
     this.compressionEnabled = threshold != -1;
 
-    this.preparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold);
-    this.loginPreparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold);
+    this.preparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold, Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
+    this.loginPreparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold, Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
   }
 
   @Override
@@ -377,7 +390,7 @@ public class LimboAPI implements LimboFactory {
       decoder = new MinecraftLimitedCompressDecoder(threshold, compressor);
     }
 
-    pipeline.addBefore(Connections.MINECRAFT_DECODER, LimboProtocol.DECOMPRESSOR, decoder);
+    pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.COMPRESSION_DECODER, decoder);
   }
 
   public void fixCompressor(ChannelPipeline pipeline, ProtocolVersion version) {
@@ -390,9 +403,9 @@ public class LimboAPI implements LimboFactory {
       MinecraftCompressorAndLengthEncoder encoder = new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor);
       pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER, encoder);
 
-      if (pipeline.names().contains(LimboProtocol.DECOMPRESSOR)) {
+      if (pipeline.get(Connections.COMPRESSION_DECODER) instanceof LimboCompressDecoder) {
         MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(compressionThreshold, compressor);
-        pipeline.replace(LimboProtocol.DECOMPRESSOR, Connections.COMPRESSION_DECODER, decoder);
+        pipeline.replace(Connections.COMPRESSION_DECODER, Connections.COMPRESSION_DECODER, decoder);
       }
     }
   }

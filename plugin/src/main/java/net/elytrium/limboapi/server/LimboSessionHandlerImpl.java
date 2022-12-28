@@ -291,7 +291,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();
 
-    if (pipeline.names().contains(LimboProtocol.READ_TIMEOUT)) {
+    if (pipeline.get(LimboProtocol.READ_TIMEOUT) != null) {
       pipeline.replace(LimboProtocol.READ_TIMEOUT, Connections.READ_TIMEOUT,
           new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS)
       );

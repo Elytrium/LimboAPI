@@ -66,7 +66,6 @@ public class LimboProtocol {
 
   public static final String PREPARED_ENCODER = "prepared-encoder";
   public static final String READ_TIMEOUT = "limboapi-read-timeout";
-  public static final String DECOMPRESSOR = "limboapi-decompressor";
 
   public static final Field VERSIONS_FIELD;
   public static final Field PACKET_ID_TO_SUPPLIER_FIELD;

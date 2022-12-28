@@ -43,7 +43,7 @@ import io.netty.channel.ChannelHandlerContext;
 import java.util.List;
 import net.elytrium.limboapi.Settings;
 
-public class MinecraftLimitedCompressDecoder extends MinecraftCompressDecoder {
+public class MinecraftLimitedCompressDecoder extends MinecraftCompressDecoder implements LimboCompressDecoder {
 
   private final int threshold;
   private final VelocityCompressor compressor;

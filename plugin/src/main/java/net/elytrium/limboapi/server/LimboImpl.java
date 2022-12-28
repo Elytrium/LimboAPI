@@ -41,9 +41,6 @@ import com.velocitypowered.proxy.connection.registry.DimensionRegistry;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
-import com.velocitypowered.proxy.protocol.netty.MinecraftCompressDecoder;
-import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
-import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
@@ -52,6 +49,7 @@ import com.velocitypowered.proxy.protocol.packet.Respawn;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.invoke.MethodHandle;
@@ -210,21 +208,26 @@ public class LimboImpl implements Limbo {
         LimboAPI.getLogger().info(player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + this.limboName + " Limbo");
       }
 
-      if (!pipeline.names().contains(LimboProtocol.PREPARED_ENCODER)) {
+      if (pipeline.get(LimboProtocol.PREPARED_ENCODER) == null) {
         // With an abnormally large number of connections from the same nickname,
         // requests don't have time to be processed, and an error occurs that "minecraft-encoder" doesn't exist.
-        if (pipeline.names().contains(Connections.MINECRAFT_ENCODER)) {
+        if (pipeline.get(Connections.MINECRAFT_ENCODER) != null) {
           if (this.readTimeout != null) {
             pipeline.replace(Connections.READ_TIMEOUT, LimboProtocol.READ_TIMEOUT, new ReadTimeoutHandler(this.readTimeout, TimeUnit.MILLISECONDS));
           }
 
-          if (!pipeline.names().contains(PreparedPacketFactory.PREPARED_ENCODER)) {
+          if (pipeline.get(PreparedPacketFactory.PREPARED_ENCODER) == null) {
             if (this.plugin.isCompressionEnabled() && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-              pipeline.remove(MinecraftCompressorAndLengthEncoder.class);
-              pipeline.remove(MinecraftCompressDecoder.class);
-              this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
+              if (pipeline.get(Connections.FRAME_ENCODER) != null) {
+                pipeline.remove(Connections.FRAME_ENCODER);
+              } else {
+                ChannelHandler minecraftCompressDecoder = pipeline.remove(Connections.COMPRESSION_DECODER);
+                if (minecraftCompressDecoder != null) {
+                  this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
+                }
+              }
             } else {
-              pipeline.remove(MinecraftVarintLengthEncoder.class);
+              pipeline.remove(Connections.FRAME_ENCODER);
             }
 
             this.plugin.inject3rdParty(player, connection, pipeline);
