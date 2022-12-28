@@ -127,8 +127,6 @@ public class LoginTasksQueue {
         gameProfile -> eventManager.fire(new SafeGameProfileRequestEvent(gameProfile.getGameProfile(), gameProfile.isOnlineMode()))
             .thenAcceptAsync(safeGameProfile -> {
               try {
-                PROFILE_FIELD.invokeExact(this.player, safeGameProfile.getGameProfile());
-
                 if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
                   connection.delayedWrite(new LegacyPlayerListItem(
                       LegacyPlayerListItem.REMOVE_PLAYER,
@@ -139,14 +137,14 @@ public class LoginTasksQueue {
                       LegacyPlayerListItem.ADD_PLAYER,
                       List.of(
                           new LegacyPlayerListItem.Item(this.player.getUniqueId())
-                              .setName(this.player.getUsername())
-                              .setProperties(this.player.getGameProfileProperties())
+                              .setName(safeGameProfile.getUsername())
+                              .setProperties(safeGameProfile.getGameProfile().getProperties())
                       )
                   ));
                 } else {
                   UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
-                  playerInfoEntry.setDisplayName(Component.text(this.player.getUsername()));
-                  playerInfoEntry.setProfile(this.player.getGameProfile());
+                  playerInfoEntry.setDisplayName(Component.text(safeGameProfile.getUsername()));
+                  playerInfoEntry.setProfile(safeGameProfile.getGameProfile());
 
                   connection.delayedWrite(new UpsertPlayerInfo(
                       EnumSet.of(
@@ -154,6 +152,8 @@ public class LoginTasksQueue {
                           UpsertPlayerInfo.Action.ADD_PLAYER),
                       List.of(playerInfoEntry)));
                 }
+
+                PROFILE_FIELD.invokeExact(this.player, safeGameProfile.getGameProfile());
 
                 // From Velocity.
                 eventManager
