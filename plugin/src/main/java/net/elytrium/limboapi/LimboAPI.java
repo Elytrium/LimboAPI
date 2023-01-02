@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2022 Elytrium
+ * Copyright (C) 2021 - 2023 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -110,10 +110,9 @@ import org.slf4j.Logger;
     name = "LimboAPI",
     version = BuildConstants.LIMBO_VERSION,
     description = "Velocity plugin for making virtual servers.",
-    url = "ely.su",
+    url = "https://elytrium.net/",
     authors = {
-        "hevav",
-        "mdxd44"
+        "Elytrium (https://elytrium.net/)",
     }
 )
 @SuppressFBWarnings("MS_EXPOSE_REP")
@@ -176,8 +175,9 @@ public class LimboAPI implements LimboFactory {
       LOGGER.info("Hooking into EventManager, PlayerList/UpsertPlayerInfo and StateRegistry...");
       try {
         EventManagerHook.init(this);
-        LegacyPlayerListItemHook.init(this, StateRegistry.PLAY.clientbound);
-        UpsertPlayerInfoHook.init(this, StateRegistry.PLAY.clientbound);
+        LegacyPlayerListItemHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
+        UpsertPlayerInfoHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
+
         LimboProtocol.init();
       } catch (Throwable e) {
         throw new ReflectionException(e);
@@ -192,7 +192,7 @@ public class LimboAPI implements LimboFactory {
     if (Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX) == YamlConfig.LoadResult.CONFIG_NOT_EXISTS) {
       LOGGER.warn("************* FIRST LAUNCH *************");
       LOGGER.warn("Thanks for installing LimboAPI!");
-      LOGGER.warn("(C) 2021 - 2022 Elytrium");
+      LOGGER.warn("(C) 2021 - 2023 Elytrium");
       LOGGER.warn("");
       LOGGER.warn("Check out our plugins here: https://ely.su/github <3");
       LOGGER.warn("Discord: https://ely.su/discord");
