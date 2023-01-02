@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2022 Elytrium
+ * Copyright (C) 2021 - 2023 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -103,7 +103,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.keepAliveKey = ThreadLocalRandom.current().nextInt();
         KeepAlive keepAlive = new KeepAlive();
         keepAlive.setRandomId(this.keepAliveKey);
-        connection.write(this.plugin.encodeSingle(keepAlive, connection.getProtocolVersion()));
+        connection.write(keepAlive);
         this.keepAlivePending = true;
         this.keepAliveSentTime = System.currentTimeMillis();
       }
@@ -291,7 +291,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();
 
-    if (pipeline.names().contains(LimboProtocol.READ_TIMEOUT)) {
+    if (pipeline.get(LimboProtocol.READ_TIMEOUT) != null) {
       pipeline.replace(LimboProtocol.READ_TIMEOUT, Connections.READ_TIMEOUT,
           new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS)
       );
