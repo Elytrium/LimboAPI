@@ -103,7 +103,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.keepAliveKey = ThreadLocalRandom.current().nextInt();
         KeepAlive keepAlive = new KeepAlive();
         keepAlive.setRandomId(this.keepAliveKey);
-        connection.write(this.plugin.encodeSingle(keepAlive, connection.getProtocolVersion()));
+        connection.write(keepAlive);
         this.keepAlivePending = true;
         this.keepAliveSentTime = System.currentTimeMillis();
       }

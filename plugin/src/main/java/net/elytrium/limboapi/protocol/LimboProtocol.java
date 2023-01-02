@@ -94,18 +94,17 @@ public class LimboProtocol {
 
       MethodHandle clientboundGetter = MethodHandles.privateLookupIn(StateRegistry.class, MethodHandles.lookup())
           .findGetter(StateRegistry.class, "clientbound", StateRegistry.PacketRegistry.class);
-
-      PLAY_CLIENTBOUND_REGISTRY = (StateRegistry.PacketRegistry) clientboundGetter.invokeExact(StateRegistry.PLAY);
-      LIMBO_CLIENTBOUND_REGISTRY = (StateRegistry.PacketRegistry) clientboundGetter.invokeExact(LIMBO_STATE_REGISTRY);
-
       MethodHandle serverboundGetter = MethodHandles.privateLookupIn(StateRegistry.class, MethodHandles.lookup())
           .findGetter(StateRegistry.class, "serverbound", StateRegistry.PacketRegistry.class);
 
+      PLAY_CLIENTBOUND_REGISTRY = (StateRegistry.PacketRegistry) clientboundGetter.invokeExact(StateRegistry.PLAY);
       PLAY_SERVERBOUND_REGISTRY = (StateRegistry.PacketRegistry) serverboundGetter.invokeExact(StateRegistry.PLAY);
-      LIMBO_SERVERBOUND_REGISTRY = (StateRegistry.PacketRegistry) serverboundGetter.invokeExact(LIMBO_STATE_REGISTRY);
 
       overlayRegistry(unsafe, "clientbound", PLAY_CLIENTBOUND_REGISTRY);
       overlayRegistry(unsafe, "serverbound", PLAY_SERVERBOUND_REGISTRY);
+
+      LIMBO_SERVERBOUND_REGISTRY = (StateRegistry.PacketRegistry) serverboundGetter.invokeExact(LIMBO_STATE_REGISTRY);
+      LIMBO_CLIENTBOUND_REGISTRY = (StateRegistry.PacketRegistry) clientboundGetter.invokeExact(LIMBO_STATE_REGISTRY);
 
       REGISTER_METHOD = MethodHandles.privateLookupIn(StateRegistry.PacketRegistry.class, MethodHandles.lookup())
           .findVirtual(StateRegistry.PacketRegistry.class, "register",

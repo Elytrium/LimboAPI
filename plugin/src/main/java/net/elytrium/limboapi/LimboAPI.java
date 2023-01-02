@@ -138,6 +138,7 @@ public class LimboAPI implements LimboFactory {
   private final HashMap<Player, UUID> initialID;
 
   private PreparedPacketFactory preparedPacketFactory;
+  private PreparedPacketFactory loginUncompressedPreparedPacketFactory;
   private PreparedPacketFactory loginPreparedPacketFactory;
   private ProtocolVersion minVersion;
   private ProtocolVersion maxVersion;
@@ -209,13 +210,22 @@ public class LimboAPI implements LimboFactory {
         threshold,
         Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS
     );
+    this.loginUncompressedPreparedPacketFactory = new PreparedPacketFactory(
+        PreparedPacketImpl::new,
+        StateRegistry.LOGIN,
+        false,
+        level,
+        threshold,
+        false
+    );
     this.loginPreparedPacketFactory = new PreparedPacketFactory(
         PreparedPacketImpl::new,
         StateRegistry.LOGIN,
         this.compressionEnabled,
         level,
         threshold,
-        Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
+        Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS
+    );
     this.reloadPreparedPacketFactory();
     this.reload();
 
@@ -362,12 +372,12 @@ public class LimboAPI implements LimboFactory {
     return (PreparedPacket) this.preparedPacketFactory.createPreparedPacket(minVersion, maxVersion);
   }
 
-  public ByteBuf encodeSingle(MinecraftPacket packet, ProtocolVersion version) {
-    return this.preparedPacketFactory.encodeSingle(packet, version);
-  }
-
   public ByteBuf encodeSingleLogin(MinecraftPacket packet, ProtocolVersion version) {
     return this.loginPreparedPacketFactory.encodeSingle(packet, version);
+  }
+
+  public ByteBuf encodeSingleLoginUncompressed(MinecraftPacket packet, ProtocolVersion version) {
+    return this.loginUncompressedPreparedPacketFactory.encodeSingle(packet, version);
   }
 
   public void inject3rdParty(Player player, MinecraftConnection connection, ChannelPipeline pipeline) {
@@ -394,13 +404,15 @@ public class LimboAPI implements LimboFactory {
   }
 
   public void fixCompressor(ChannelPipeline pipeline, ProtocolVersion version) {
-    int compressionThreshold = this.server.getConfiguration().getCompressionThreshold();
-    if (compressionThreshold == -1 || version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+    ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
+    if (compressionHandler == null) {
       pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE);
     } else {
       int level = this.server.getConfiguration().getCompressionLevel();
+      int compressionThreshold = this.server.getConfiguration().getCompressionThreshold();
       VelocityCompressor compressor = Natives.compress.get().create(level);
       MinecraftCompressorAndLengthEncoder encoder = new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor);
+      pipeline.remove(compressionHandler);
       pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER, encoder);
 
       if (pipeline.get(Connections.COMPRESSION_DECODER) instanceof LimboCompressDecoder) {

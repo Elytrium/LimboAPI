@@ -201,7 +201,7 @@ public class LoginTasksQueue {
     ChannelPipeline pipeline = connection.getChannel().pipeline();
     this.plugin.deject3rdParty(pipeline);
 
-    if (pipeline.get(Connections.FRAME_ENCODER) == null && pipeline.get(Connections.COMPRESSION_ENCODER) == null) {
+    if (pipeline.get(Connections.FRAME_ENCODER) == null) {
       this.plugin.fixCompressor(pipeline, connection.getProtocolVersion());
     }
 

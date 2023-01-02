@@ -41,6 +41,7 @@ import com.velocitypowered.proxy.connection.registry.DimensionRegistry;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
@@ -50,6 +51,7 @@ import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.invoke.MethodHandle;
@@ -216,6 +218,8 @@ public class LimboImpl implements Limbo {
             pipeline.replace(Connections.READ_TIMEOUT, LimboProtocol.READ_TIMEOUT, new ReadTimeoutHandler(this.readTimeout, TimeUnit.MILLISECONDS));
           }
 
+          boolean compressionEnabled = false;
+
           if (pipeline.get(PreparedPacketFactory.PREPARED_ENCODER) == null) {
             if (this.plugin.isCompressionEnabled() && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
               if (pipeline.get(Connections.FRAME_ENCODER) != null) {
@@ -224,6 +228,8 @@ public class LimboImpl implements Limbo {
                 ChannelHandler minecraftCompressDecoder = pipeline.remove(Connections.COMPRESSION_DECODER);
                 if (minecraftCompressDecoder != null) {
                   this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
+                  pipeline.replace(Connections.COMPRESSION_ENCODER, Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
+                  compressionEnabled = true;
                 }
               }
             } else {
@@ -231,6 +237,9 @@ public class LimboImpl implements Limbo {
             }
 
             this.plugin.inject3rdParty(player, connection, pipeline);
+            if (compressionEnabled) {
+              pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_ENABLED);
+            }
           }
         } else {
           connection.close();
@@ -293,9 +302,7 @@ public class LimboImpl implements Limbo {
             List.of(playerInfoEntry));
       }
 
-      connection.delayedWrite(
-          this.plugin.encodeSingle(playerInfoPacket, connection.getProtocolVersion())
-      );
+      connection.delayedWrite(playerInfoPacket);
 
       connection.delayedWrite(this.getBrandMessage(handlerClass));
 

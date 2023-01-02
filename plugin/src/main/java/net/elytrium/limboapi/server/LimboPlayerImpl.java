@@ -22,7 +22,6 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
@@ -76,20 +75,12 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void writePacket(Object packetObj) {
-    if (packetObj instanceof MinecraftPacket) {
-      this.connection.delayedWrite(this.plugin.encodeSingle((MinecraftPacket) packetObj, this.connection.getProtocolVersion()));
-    } else {
-      this.connection.delayedWrite(packetObj);
-    }
+    this.connection.delayedWrite(packetObj);
   }
 
   @Override
   public void writePacketAndFlush(Object packetObj) {
-    if (packetObj instanceof MinecraftPacket) {
-      this.connection.write(this.plugin.encodeSingle((MinecraftPacket) packetObj, this.connection.getProtocolVersion()));
-    } else {
-      this.connection.write(packetObj);
-    }
+    this.connection.write(packetObj);
   }
 
   @Override

@@ -59,6 +59,7 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
 import com.velocitypowered.proxy.protocol.packet.SetCompression;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import java.lang.invoke.MethodHandle;
@@ -173,15 +174,21 @@ public class LoginListener {
                 successHook.setUuid(playerUniqueID);
                 connection.write(successHook);
 
-                if (pipeline.get(Connections.COMPRESSION_ENCODER) != null) {
-                  pipeline.remove(Connections.COMPRESSION_ENCODER);
-                  ServerLoginSuccess success = new ServerLoginSuccess();
-                  success.setUsername(player.getUsername());
-                  success.setProperties(player.getGameProfileProperties());
-                  success.setUuid(playerUniqueID);
+                ServerLoginSuccess success = new ServerLoginSuccess();
+                success.setUsername(player.getUsername());
+                success.setProperties(player.getGameProfileProperties());
+                success.setUuid(playerUniqueID);
+
+                ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
+                if (compressionHandler != null) {
                   connection.write(this.plugin.encodeSingleLogin(success, connection.getProtocolVersion()));
                 } else {
-                  pipeline.remove(Connections.FRAME_ENCODER);
+                  ChannelHandler frameHandler = pipeline.get(Connections.FRAME_ENCODER);
+                  if (frameHandler != null) {
+                    pipeline.remove(frameHandler);
+                  }
+
+                  connection.write(this.plugin.encodeSingleLoginUncompressed(success, connection.getProtocolVersion()));
                 }
 
                 this.plugin.setInitialID(player, playerUniqueID);
