@@ -76,7 +76,7 @@ public class EventManagerHook extends VelocityEventManager {
       try {
         this.reloadHandlers();
       } catch (IllegalAccessException e) {
-        e.printStackTrace();
+        throw new ReflectionException(e);
       }
     }
   }
@@ -113,18 +113,18 @@ public class EventManagerHook extends VelocityEventManager {
             this.plugin.getLoginListener().hookLoginSession(requestEvent);
             hookFuture.complete(modifiedEvent);
           } catch (Throwable e) {
-            e.printStackTrace();
+            throw new ReflectionException(e);
           }
         });
 
-        try {
-          if (this.hasHandlerRegistration) {
+        if (this.hasHandlerRegistration) {
+          try {
             FIRE_METHOD.invoke(this, fireFuture, event, 0, false, this.handlerRegistrations);
-          } else {
+          } catch (Throwable e) {
             fireFuture.complete(event);
+            throw new ReflectionException(e);
           }
-        } catch (Throwable e) {
-          e.printStackTrace();
+        } else {
           fireFuture.complete(event);
         }
 
