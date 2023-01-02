@@ -49,7 +49,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -249,7 +248,7 @@ public class LimboAPI implements LimboFactory {
   @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "LEGACY_AMPERSAND can't be null in velocity.")
   public void reload() {
     Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX);
-    ComponentSerializer<Component, Component, String> serializer = Serializers.valueOf(Settings.IMP.SERIALIZER.toUpperCase(Locale.ROOT)).getSerializer();
+    ComponentSerializer<Component, Component, String> serializer = Settings.IMP.SERIALIZER.getSerializer();
     if (serializer == null) {
       LOGGER.warn("The specified serializer could not be founded, using default. (LEGACY_AMPERSAND)");
       setSerializer(new Serializer(Objects.requireNonNull(Serializers.LEGACY_AMPERSAND.getSerializer())));
