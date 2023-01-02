@@ -52,6 +52,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import net.elytrium.java.commons.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
@@ -62,9 +63,9 @@ import net.kyori.adventure.text.Component;
 public class KickListener {
 
   private static final MinecraftConnection DUMMY_CONNECTION = new ClosedMinecraftConnection(new ClosedChannel(new DummyEventPool()), null);
-  private static Field CONNECTION_FIELD;
-  private static MethodHandle BACKEND_CONNECTION_FIELD;
-  private static MethodHandle CREATE_CONNECTION_REQUEST;
+  private static final Field CONNECTION_FIELD;
+  private static final MethodHandle BACKEND_CONNECTION_FIELD;
+  private static final MethodHandle CREATE_CONNECTION_REQUEST;
 
   private final LimboAPI plugin;
 
@@ -96,13 +97,13 @@ public class KickListener {
               this.handleThen(event, player, backendConnection);
             }
           } catch (Throwable e) {
-            e.printStackTrace();
             connection.close();
+            throw new ReflectionException(e);
           }
         }, 250, TimeUnit.MILLISECONDS);
       } catch (IllegalAccessException e) {
-        e.printStackTrace();
         connection.close();
+        throw new ReflectionException(e);
       }
     }
   }
@@ -181,7 +182,7 @@ public class KickListener {
           .findVirtual(ConnectedPlayer.class, "createConnectionRequest",
               MethodType.methodType(ConnectionRequestBuilder.class, RegisteredServer.class, VelocityServerConnection.class));
     } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
-      e.printStackTrace();
+      throw new ReflectionException(e);
     }
   }
 }

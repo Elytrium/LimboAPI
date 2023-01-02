@@ -180,7 +180,7 @@ public class LoginTasksQueue {
                         try {
                           this.initialize(connection);
                         } catch (Throwable e) {
-                          e.printStackTrace();
+                          throw new ReflectionException(e);
                         }
                       }
                     }, connection.eventLoop());
@@ -240,11 +240,11 @@ public class LoginTasksQueue {
                   MC_CONNECTION_FIELD.set(this.handler, connection);
                   CONNECT_TO_INITIAL_SERVER_METHOD.invoke((AuthSessionHandler) this.handler, this.player);
                 } catch (Throwable e) {
-                  logger.error("Exception while connecting {} to initial server", this.player, e);
+                  throw new ReflectionException(e);
                 }
               });
             } catch (Throwable e) {
-              e.printStackTrace();
+              throw new ReflectionException(e);
             }
           } else {
             this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), true);

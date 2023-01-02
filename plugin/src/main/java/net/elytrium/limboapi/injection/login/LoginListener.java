@@ -209,7 +209,7 @@ public class LoginListener {
               player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
             }
           } catch (Throwable e) {
-            e.printStackTrace();
+            throw new ReflectionException(e);
           }
         });
       }
