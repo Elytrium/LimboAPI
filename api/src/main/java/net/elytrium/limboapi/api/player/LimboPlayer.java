@@ -58,6 +58,8 @@ public interface LimboPlayer {
 
   void disableFalling();
 
+  void enableFalling();
+
   void disconnect();
 
   void disconnect(RegisteredServer server);

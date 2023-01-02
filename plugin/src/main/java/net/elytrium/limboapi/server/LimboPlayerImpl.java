@@ -255,6 +255,11 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
+  public void enableFalling() {
+    this.writePacketAndFlush(new PlayerAbilitiesPacket((byte) (this.getAbilities() & (~AbilityFlags.FLYING)), 0.05F, 0.1F));
+  }
+
+  @Override
   public void disconnect() {
     LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
     if (handler != null) {
