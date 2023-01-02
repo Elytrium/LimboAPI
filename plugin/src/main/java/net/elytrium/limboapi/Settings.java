@@ -19,6 +19,7 @@ package net.elytrium.limboapi;
 
 import java.util.List;
 import net.elytrium.java.commons.config.YamlConfig;
+import net.elytrium.java.commons.mc.serialization.Serializers;
 
 public class Settings extends YamlConfig {
 
@@ -36,7 +37,7 @@ public class Settings extends YamlConfig {
       "GSON - \"[{\"text\":\"Example\",\"bold\":true,\"color\":\"red\"},{\"text\":\" \",\"bold\":true},{\"text\":\"Text\",\"bold\":true,\"color\":\"blue\"}]\". (https://minecraft.tools/en/json_text.php/)",
       "GSON_COLOR_DOWNSAMPLING - Same as GSON, but uses downsampling."
   })
-  public String SERIALIZER = "LEGACY_AMPERSAND";
+  public Serializers SERIALIZER = Serializers.LEGACY_AMPERSAND;
   public String PREFIX = "LimboAPI &6>>&f";
 
   @Create
