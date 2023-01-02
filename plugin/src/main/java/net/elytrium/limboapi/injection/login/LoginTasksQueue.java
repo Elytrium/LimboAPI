@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2022 Elytrium
+ * Copyright (C) 2021 - 2023 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -201,7 +201,7 @@ public class LoginTasksQueue {
     ChannelPipeline pipeline = connection.getChannel().pipeline();
     this.plugin.deject3rdParty(pipeline);
 
-    if (!pipeline.names().contains(Connections.FRAME_ENCODER) && !pipeline.names().contains(Connections.COMPRESSION_ENCODER)) {
+    if (pipeline.get(Connections.FRAME_ENCODER) == null) {
       this.plugin.fixCompressor(pipeline, connection.getProtocolVersion());
     }
 

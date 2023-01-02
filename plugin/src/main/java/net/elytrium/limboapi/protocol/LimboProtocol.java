@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2022 Elytrium
+ * Copyright (C) 2021 - 2023 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -66,11 +66,14 @@ public class LimboProtocol {
 
   public static final String PREPARED_ENCODER = "prepared-encoder";
   public static final String READ_TIMEOUT = "limboapi-read-timeout";
-  public static final String DECOMPRESSOR = "limboapi-decompressor";
 
   public static final Field VERSIONS_FIELD;
   public static final Field PACKET_ID_TO_SUPPLIER_FIELD;
   public static final Field PACKET_CLASS_TO_ID_FIELD;
+  public static final StateRegistry.PacketRegistry PLAY_CLIENTBOUND_REGISTRY;
+  public static final StateRegistry.PacketRegistry PLAY_SERVERBOUND_REGISTRY;
+  public static final StateRegistry.PacketRegistry LIMBO_CLIENTBOUND_REGISTRY;
+  public static final StateRegistry.PacketRegistry LIMBO_SERVERBOUND_REGISTRY;
 
   static {
     try {
@@ -89,8 +92,19 @@ public class LimboProtocol {
       PACKET_CLASS_TO_ID_FIELD = StateRegistry.PacketRegistry.ProtocolRegistry.class.getDeclaredField("packetClassToId");
       PACKET_CLASS_TO_ID_FIELD.setAccessible(true);
 
-      overlayRegistry(unsafe, "clientbound", StateRegistry.PLAY.clientbound);
-      overlayRegistry(unsafe, "serverbound", StateRegistry.PLAY.serverbound);
+      MethodHandle clientboundGetter = MethodHandles.privateLookupIn(StateRegistry.class, MethodHandles.lookup())
+          .findGetter(StateRegistry.class, "clientbound", StateRegistry.PacketRegistry.class);
+      MethodHandle serverboundGetter = MethodHandles.privateLookupIn(StateRegistry.class, MethodHandles.lookup())
+          .findGetter(StateRegistry.class, "serverbound", StateRegistry.PacketRegistry.class);
+
+      PLAY_CLIENTBOUND_REGISTRY = (StateRegistry.PacketRegistry) clientboundGetter.invokeExact(StateRegistry.PLAY);
+      PLAY_SERVERBOUND_REGISTRY = (StateRegistry.PacketRegistry) serverboundGetter.invokeExact(StateRegistry.PLAY);
+
+      overlayRegistry(unsafe, "clientbound", PLAY_CLIENTBOUND_REGISTRY);
+      overlayRegistry(unsafe, "serverbound", PLAY_SERVERBOUND_REGISTRY);
+
+      LIMBO_SERVERBOUND_REGISTRY = (StateRegistry.PacketRegistry) serverboundGetter.invokeExact(LIMBO_STATE_REGISTRY);
+      LIMBO_CLIENTBOUND_REGISTRY = (StateRegistry.PacketRegistry) clientboundGetter.invokeExact(LIMBO_STATE_REGISTRY);
 
       REGISTER_METHOD = MethodHandles.privateLookupIn(StateRegistry.PacketRegistry.class, MethodHandles.lookup())
           .findVirtual(StateRegistry.PacketRegistry.class, "register",
@@ -99,7 +113,7 @@ public class LimboProtocol {
       PACKET_MAPPING_CONSTRUCTOR = MethodHandles.privateLookupIn(StateRegistry.PacketRegistry.class, MethodHandles.lookup())
           .findConstructor(StateRegistry.PacketMapping.class,
               MethodType.methodType(void.class, int.class, ProtocolVersion.class, ProtocolVersion.class, boolean.class));
-    } catch (ReflectiveOperationException e) {
+    } catch (Throwable e) {
       throw new ReflectionException(e);
     }
   }
@@ -348,7 +362,7 @@ public class LimboProtocol {
         createMapping(0x00, ProtocolVersion.MINECRAFT_1_9, false)
     );
 
-    register(StateRegistry.PLAY.serverbound,
+    register(PLAY_SERVERBOUND_REGISTRY,
         PlayerChatSessionPacket.class, PlayerChatSessionPacket::new,
         createMapping(0x20, ProtocolVersion.MINECRAFT_1_19_3, false));
   }
@@ -366,11 +380,11 @@ public class LimboProtocol {
   public static void register(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, StateRegistry.PacketMapping... mappings) {
     switch (direction) {
       case CLIENTBOUND: {
-        register(LIMBO_STATE_REGISTRY.clientbound, packetClass, packetSupplier, mappings);
+        register(LIMBO_CLIENTBOUND_REGISTRY, packetClass, packetSupplier, mappings);
         break;
       }
       case SERVERBOUND: {
-        register(LIMBO_STATE_REGISTRY.serverbound, packetClass, packetSupplier, mappings);
+        register(LIMBO_SERVERBOUND_REGISTRY, packetClass, packetSupplier, mappings);
         break;
       }
       default: {

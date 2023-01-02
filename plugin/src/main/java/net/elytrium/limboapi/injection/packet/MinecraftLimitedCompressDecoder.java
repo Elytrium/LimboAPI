@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2022 Elytrium
+ * Copyright (C) 2021 - 2023 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -43,7 +43,7 @@ import io.netty.channel.ChannelHandlerContext;
 import java.util.List;
 import net.elytrium.limboapi.Settings;
 
-public class MinecraftLimitedCompressDecoder extends MinecraftCompressDecoder {
+public class MinecraftLimitedCompressDecoder extends MinecraftCompressDecoder implements LimboCompressDecoder {
 
   private final int threshold;
   private final VelocityCompressor compressor;
