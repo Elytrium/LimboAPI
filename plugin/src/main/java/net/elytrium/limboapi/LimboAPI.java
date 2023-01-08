@@ -32,6 +32,7 @@ import com.velocitypowered.natives.compression.VelocityCompressor;
 import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
@@ -159,8 +160,9 @@ public class LimboAPI implements LimboFactory {
     this.nextServer = new HashMap<>();
     this.initialID = new HashMap<>();
 
+    boolean temp761VelocityUpdateFlag = InitialConnectSessionHandler.class.getDeclaredConstructors()[0].getParameterCount() != 2;
     int maximumProtocolVersionNumber = ProtocolVersion.MAXIMUM_VERSION.getProtocol();
-    if (maximumProtocolVersionNumber < SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
+    if (temp761VelocityUpdateFlag || maximumProtocolVersionNumber < SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
       LOGGER.error("Please update Velocity (https://papermc.io/downloads#Velocity). LimboAPI support: https://ely.su/discord");
       this.server.shutdown();
     } else if (maximumProtocolVersionNumber != SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {

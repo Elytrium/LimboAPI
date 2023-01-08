@@ -234,7 +234,8 @@ public class LoginTasksQueue {
         } else {
           if (this.server.registerConnection(this.player)) {
             try {
-              connection.setSessionHandler((InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player));
+              connection.setSessionHandler(
+                  (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
               this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
                 try {
                   MC_CONNECTION_FIELD.set(this.handler, connection);
@@ -270,7 +271,7 @@ public class LoginTasksQueue {
 
       INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR = MethodHandles
           .privateLookupIn(InitialConnectSessionHandler.class, MethodHandles.lookup())
-          .findConstructor(InitialConnectSessionHandler.class, MethodType.methodType(void.class, ConnectedPlayer.class));
+          .findConstructor(InitialConnectSessionHandler.class, MethodType.methodType(void.class, ConnectedPlayer.class, VelocityServer.class));
 
       CONNECT_TO_INITIAL_SERVER_METHOD = MethodHandles.privateLookupIn(AuthSessionHandler.class, MethodHandles.lookup())
           .findVirtual(AuthSessionHandler.class, "connectToInitialServer", MethodType.methodType(CompletableFuture.class, ConnectedPlayer.class));
