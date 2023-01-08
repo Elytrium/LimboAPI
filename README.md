@@ -53,7 +53,7 @@ Test server: [``ely.su``](https://hotmc.ru/minecraft-server-203216)
         <dependency>
             <groupId>net.elytrium</groupId>
             <artifactId>limboapi-api</artifactId>
-            <version>1.0.8</version>
+            <version>1.0.9</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
