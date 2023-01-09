@@ -31,6 +31,12 @@ public interface Limbo {
 
   Limbo setShouldRespawn(boolean shouldRespawn);
 
+  Limbo setReducedDebugInfo(boolean reducedDebugInfo);
+
+  Limbo setViewDistance(int viewDistance);
+
+  Limbo setSimulationDistance(int simulationDistance);
+
   Limbo setMaxSuppressPacketLength(int maxSuppressPacketLength);
 
   Limbo registerCommand(LimboCommandMeta commandMeta);

@@ -88,6 +88,13 @@ public class Settings extends YamlConfig {
     @Comment("Regenerates listeners that need to proceed before LimboAPI on each EventManager#register call.")
     public boolean AUTO_REGENERATE_LISTENERS = false;
 
+    @Comment("Should reduced debug info be enabled (reduced information in F3) if there is no preference for Limbo")
+    public boolean REDUCED_DEBUG_INFO = false;
+
+    public int VIEW_DISTANCE = 10;
+
+    public int SIMULATION_DISTANCE = 9;
+
     @Create
     public MESSAGES MESSAGES;
 
