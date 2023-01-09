@@ -127,6 +127,9 @@ public class LimboImpl implements Limbo {
   private PreparedPacket chunks;
   private PreparedPacket spawnPosition;
   private boolean shouldRespawn = true;
+  private boolean reducedDebugInfo = Settings.IMP.MAIN.REDUCED_DEBUG_INFO;
+  private int viewDistance = Settings.IMP.MAIN.VIEW_DISTANCE;
+  private int simulationDistance = Settings.IMP.MAIN.SIMULATION_DISTANCE;
   private boolean built = true;
   private boolean disposeScheduled = false;
 
@@ -393,6 +396,27 @@ public class LimboImpl implements Limbo {
   }
 
   @Override
+  public Limbo setReducedDebugInfo(boolean reducedDebugInfo) {
+    this.reducedDebugInfo = reducedDebugInfo;
+
+    return this;
+  }
+
+  @Override
+  public Limbo setViewDistance(int viewDistance) {
+    this.viewDistance = viewDistance;
+
+    return this;
+  }
+
+  @Override
+  public Limbo setSimulationDistance(int simulationDistance) {
+    this.simulationDistance = simulationDistance;
+
+    return this;
+  }
+
+  @Override
   public Limbo setMaxSuppressPacketLength(int maxSuppressPacketLength) {
     this.maxSuppressPacketLength = maxSuppressPacketLength;
 
@@ -490,10 +514,10 @@ public class LimboImpl implements Limbo {
 
     joinGame.setLevelType("flat");
 
-    joinGame.setViewDistance(10);
-    joinGame.setSimulationDistance(9);
+    joinGame.setViewDistance(this.viewDistance);
+    joinGame.setSimulationDistance(this.simulationDistance);
 
-    joinGame.setReducedDebugInfo(true);
+    joinGame.setReducedDebugInfo(this.reducedDebugInfo);
 
     String key = dimension.getKey();
     DimensionRegistry dimensionRegistry = this.createDimensionRegistry(modern);
