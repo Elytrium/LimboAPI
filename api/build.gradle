@@ -1,16 +1,19 @@
+//file:noinspection GroovyAssignabilityCheck
+
 plugins {
   id("java-library")
   id("maven-publish")
 }
 
 dependencies {
-  compileOnly("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
+  compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
+  api("net.elytrium.commons:config:$elytriumCommonsVersion")
+  api("net.elytrium.commons:utils:$elytriumCommonsVersion")
+  api("net.elytrium.commons:velocity:$elytriumCommonsVersion")
+  api("net.elytrium.commons:kyori:$elytriumCommonsVersion")
+  api("net.kyori:adventure-nbt:$adventureVersion")
 
-  api("net.elytrium:java-commons:1.1.0-SNAPSHOT")
-
-  api("net.kyori:adventure-nbt:4.11.0")
-
-  compileOnly("com.github.spotbugs:spotbugs-annotations:4.7.0")
+  compileOnly("com.github.spotbugs:spotbugs-annotations:$spotbugsVersion")
 }
 
 license {

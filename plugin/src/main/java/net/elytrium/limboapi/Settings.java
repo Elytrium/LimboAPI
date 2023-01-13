@@ -18,8 +18,8 @@
 package net.elytrium.limboapi;
 
 import java.util.List;
-import net.elytrium.java.commons.config.YamlConfig;
-import net.elytrium.java.commons.mc.serialization.Serializers;
+import net.elytrium.commons.config.YamlConfig;
+import net.elytrium.commons.kyori.serialization.Serializers;
 
 public class Settings extends YamlConfig {
 

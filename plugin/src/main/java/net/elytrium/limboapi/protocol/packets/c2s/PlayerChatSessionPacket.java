@@ -28,7 +28,7 @@ import io.netty.buffer.ByteBuf;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.UUID;
-import net.elytrium.java.commons.reflection.ReflectionException;
+import net.elytrium.commons.utils.reflection.ReflectionException;
 
 @SuppressWarnings("unused")
 public class PlayerChatSessionPacket implements MinecraftPacket {

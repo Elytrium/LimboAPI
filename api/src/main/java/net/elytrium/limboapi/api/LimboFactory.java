@@ -22,7 +22,6 @@ import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
-import net.elytrium.limboapi.api.protocol.packets.BuiltInPackets;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 
@@ -173,19 +172,6 @@ public interface LimboFactory {
    * @return new prepared packet.
    */
   PreparedPacket createPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion);
-
-  /**
-   * Instantiates new MinecraftPacket object.
-   *
-   * @param data You can find data arguments at the constructors
-   *     <a href="https://github.com/Elytrium/LimboAPI/blob/master/plugin/src/main/java/net/elytrium/limboapi/protocol/packets/s2c/">here</a>.
-   *
-   * @return MinecraftPacket object.
-   *
-   * @deprecated See {@link LimboFactory#getPacketFactory}.
-   */
-  @Deprecated(forRemoval = true)
-  Object instantiatePacket(BuiltInPackets packetType, Object... data);
 
   /**
    * Registers self-made packet.
