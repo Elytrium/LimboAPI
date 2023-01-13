@@ -45,8 +45,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,12 +54,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import net.elytrium.commons.config.YamlConfig;
+import net.elytrium.commons.kyori.serialization.Serializer;
+import net.elytrium.commons.kyori.serialization.Serializers;
+import net.elytrium.commons.utils.reflection.ReflectionException;
+import net.elytrium.commons.utils.updates.UpdatesChecker;
 import net.elytrium.fastprepare.PreparedPacketFactory;
-import net.elytrium.java.commons.config.YamlConfig;
-import net.elytrium.java.commons.mc.serialization.Serializer;
-import net.elytrium.java.commons.mc.serialization.Serializers;
-import net.elytrium.java.commons.reflection.ReflectionException;
-import net.elytrium.java.commons.updates.UpdatesChecker;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limboapi.api.chunk.BuiltInBiome;
@@ -75,7 +73,6 @@ import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
-import net.elytrium.limboapi.api.protocol.packets.BuiltInPackets;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
@@ -423,37 +420,6 @@ public class LimboAPI implements LimboFactory {
     }
   }
 
-  @Override
-  public Object instantiatePacket(BuiltInPackets packetType, Object... data) {
-    try {
-      for (Constructor<?> constructor : packetType.getPacketClass().getDeclaredConstructors()) {
-        if (this.compareData(constructor.getParameterTypes(), data)) {
-          return constructor.newInstance(data);
-        }
-      }
-
-      throw new IllegalArgumentException("No constructor found with the correct arguments!");
-    } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
-      throw new ReflectionException(e);
-    }
-  }
-
-  @Deprecated(forRemoval = true)
-  private boolean compareData(Class<?>[] parameterTypes, Object[] data) {
-    if (parameterTypes.length != data.length) {
-      return false;
-    } else {
-      for (int i = 0; i < parameterTypes.length; ++i) {
-        if (data[i] != null && !this.primitiveToWrapper(parameterTypes[i]).isAssignableFrom(this.primitiveToWrapper(data[i].getClass()))) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-  }
-
-  // From apache commons.
   private Class<?> primitiveToWrapper(Class<?> cls) {
     if (cls.isPrimitive()) {
       return PRIMITIVE_WRAPPER_MAP.get(cls);

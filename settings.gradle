@@ -1,6 +1,3 @@
 getRootProject().setName("limboapi")
 
 include("api", "plugin")
-
-findProject(":api")?.setName("limboapi-api")
-findProject(":plugin")?.setName("limboapi-plugin")

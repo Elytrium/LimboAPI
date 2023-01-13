@@ -52,7 +52,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import net.elytrium.java.commons.reflection.ReflectionException;
+import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;

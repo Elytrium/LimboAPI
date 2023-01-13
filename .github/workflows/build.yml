@@ -23,7 +23,7 @@ jobs:
         uses: actions/upload-artifact@v3.1.0
         with:
           name: LimboAPI Plugin Built On ${{ matrix.java }} JDK
-          path: "plugin/build/libs/limboapi-plugin-*.jar"
+          path: "plugin/build/libs/limboapi-*.jar"
       - uses: dev-drprasad/delete-tag-and-release@v0.2.0
         if: ${{ github.event_name == 'push' }}
         with:
@@ -35,7 +35,7 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         uses: ncipollo/release-action@v1.10.0
         with:
-          artifacts: "plugin/build/libs/limboapi-plugin-*.jar"
+          artifacts: "plugin/build/libs/limboapi-*.jar"
           body: ${{ join(github.event.commits.*.message, '\n') }}
           prerelease: true
           name: JDK ${{ matrix.java }} Dev-build

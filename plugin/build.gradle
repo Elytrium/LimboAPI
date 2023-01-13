@@ -1,35 +1,39 @@
+//file:noinspection GroovyAssignabilityCheck
+
 plugins {
   id("java")
   id("com.github.johnrengelman.shadow").version("7.1.2")
 }
 
 dependencies {
-  implementation(project(":limboapi-api"))
+  implementation(project(":api"))
 
-  implementation("net.elytrium:fastprepare:1.0.4")
-  compileOnly("com.velocitypowered:velocity-api:3.2.0-SNAPSHOT")
-  annotationProcessor("com.velocitypowered:velocity-api:3.2.0-SNAPSHOT")
-  compileOnly("com.velocitypowered:velocity-proxy:3.2.0-SNAPSHOT") // From Elytrium Repo.
-  compileOnly("com.velocitypowered:velocity-native:3.2.0-SNAPSHOT")
+  implementation("net.elytrium:fastprepare:$fastPrepareVersion")
+  compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
+  annotationProcessor("com.velocitypowered:velocity-api:$velocityVersion")
+  compileOnly("com.velocitypowered:velocity-proxy:$velocityVersion") // From Elytrium Repo.
+  compileOnly("com.velocitypowered:velocity-native:$velocityVersion")
 
   // Needs for some velocity methods.
-  compileOnly('io.netty:netty-codec:4.1.86.Final')
-  compileOnly("io.netty:netty-handler:4.1.86.Final")
-  compileOnly("it.unimi.dsi:fastutil-core:8.5.8")
+  compileOnly("io.netty:netty-codec:$nettyVersion")
+  compileOnly("io.netty:netty-handler:$nettyVersion")
+  compileOnly("it.unimi.dsi:fastutil-core:$fastutilVersion")
 
-  implementation("org.bstats:bstats-velocity:3.0.0")
+  implementation("org.bstats:bstats-velocity:$bstatsVersion")
 
-  compileOnly("com.github.spotbugs:spotbugs-annotations:4.7.0")
+  compileOnly("com.github.spotbugs:spotbugs-annotations:$spotbugsVersion")
 }
 
 shadowJar {
-  getArchiveClassifier().set(this.getVersion().contains("-") ? getCurrentShortRevision() : "")
+  getArchiveClassifier().set(this.getVersion().contains("-") ? getCurrentShortRevision() : "release")
+  setArchiveFileName("limboapi-${version}-${classifier}.${extension}")
 
   exclude("META-INF/versions/**")
   exclude("net/kyori/**")
 
   relocate("org.bstats", "net.elytrium.limboapi.thirdparty.org.bstats")
   relocate("net.elytrium.fastprepare", "net.elytrium.limboapi.thirdparty.fastprepare")
+  relocate("net.elytrium.commons", "net.elytrium.limboapi.thirdparty.commons")
 }
 
 license {

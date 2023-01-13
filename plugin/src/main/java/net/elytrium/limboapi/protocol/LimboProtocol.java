@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Supplier;
-import net.elytrium.java.commons.reflection.ReflectionException;
+import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveOnGroundOnlyPacket;
