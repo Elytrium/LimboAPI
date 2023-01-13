@@ -7,6 +7,10 @@ plugins {
 
 dependencies {
   implementation(project(":api"))
+  implementation("net.elytrium.commons:config:$elytriumCommonsVersion")
+  implementation("net.elytrium.commons:utils:$elytriumCommonsVersion")
+  implementation("net.elytrium.commons:velocity:$elytriumCommonsVersion")
+  implementation("net.elytrium.commons:kyori:$elytriumCommonsVersion")
 
   implementation("net.elytrium:fastprepare:$fastPrepareVersion")
   compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
@@ -33,7 +37,9 @@ shadowJar {
 
   relocate("org.bstats", "net.elytrium.limboapi.thirdparty.org.bstats")
   relocate("net.elytrium.fastprepare", "net.elytrium.limboapi.thirdparty.fastprepare")
-  relocate("net.elytrium.commons", "net.elytrium.limboapi.thirdparty.commons")
+  relocate("net.elytrium.commons.velocity", "net.elytrium.limboapi.thirdparty.commons.velocity")
+  relocate("net.elytrium.commons.kyori", "net.elytrium.limboapi.thirdparty.commons.kyori")
+  relocate("net.elytrium.commons.config", "net.elytrium.limboapi.thirdparty.commons.config")
 }
 
 license {
