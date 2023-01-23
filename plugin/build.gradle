@@ -55,9 +55,7 @@ license {
 
 task finalize {
   doLast {
-    if (this.getVersion().contains("-")) {
-      file("build/libs/${this.getName()}-${this.getVersion()}.jar").delete()
-    }
+    file("build/libs/${this.getName()}-${this.getVersion()}.jar").delete()
   }
 }
 
