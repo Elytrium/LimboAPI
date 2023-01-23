@@ -33,9 +33,7 @@ public interface VirtualWorld {
 
   List<VirtualChunk> getChunks();
 
-  List<VirtualChunk> getOrderedChunks();
-
-  List<VirtualChunk> getOrderedChunks(int startRadius, int endRadius);
+  List<List<VirtualChunk>> getOrderedChunks();
 
   @Nullable
   VirtualChunk getChunk(int posX, int posZ);
