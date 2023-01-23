@@ -63,6 +63,11 @@ public class PacketFactoryImpl implements PacketFactory {
   }
 
   @Override
+  public Object createPlayerAbilitiesPacket(int flags, float flySpeed, float walkSpeed) {
+    return new PlayerAbilitiesPacket((byte) flags, flySpeed, walkSpeed);
+  }
+
+  @Override
   public Object createPlayerAbilitiesPacket(byte flags, float flySpeed, float walkSpeed) {
     return new PlayerAbilitiesPacket(flags, flySpeed, walkSpeed);
   }

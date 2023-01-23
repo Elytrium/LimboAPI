@@ -30,6 +30,11 @@ public interface PacketFactory {
   /**
    * @param flags See {@link AbilityFlags}. (e.g. {@code AbilityFlags.ALLOW_FLYING | AbilityFlags.CREATIVE_MODE})
    */
+  Object createPlayerAbilitiesPacket(int flags, float flySpeed, float walkSpeed);
+
+  /**
+   * @param flags See {@link AbilityFlags}. (e.g. {@code AbilityFlags.ALLOW_FLYING | AbilityFlags.CREATIVE_MODE})
+   */
   Object createPlayerAbilitiesPacket(byte flags, float flySpeed, float walkSpeed);
 
   Object createPositionRotationPacket(double posX, double posY, double posZ, float yaw, float pitch,
