@@ -124,7 +124,8 @@ public class LimboImpl implements Limbo {
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
   private PreparedPacket safeRejoinPackets;
-  private PreparedPacket chunks;
+  private PreparedPacket preSpawnChunks;
+  private PreparedPacket postSpawnChunks;
   private PreparedPacket spawnPosition;
   private boolean shouldRespawn = true;
   private boolean reducedDebugInfo = Settings.IMP.MAIN.REDUCED_DEBUG_INFO;
@@ -170,8 +171,11 @@ public class LimboImpl implements Limbo {
     this.addPostJoin(this.fastRejoinPackets);
     this.addPostJoin(this.safeRejoinPackets);
 
-    List<ChunkDataPacket> chunkPackets = this.createChunksPackets();
-    this.chunks = chunkPackets.size() == 0 ? null : this.plugin.createPreparedPacket().prepare(chunkPackets).build();
+    List<ChunkDataPacket> preSpawnChunkPackets = this.createChunksPackets(0, Settings.IMP.MAIN.PRE_SPAWN_CHUNK_RADIUS);
+    this.preSpawnChunks = preSpawnChunkPackets.size() == 0 ? null : this.plugin.createPreparedPacket().prepare(preSpawnChunkPackets).build();
+
+    List<ChunkDataPacket> postSpawnChunkPackets = this.createChunksPackets(Settings.IMP.MAIN.PRE_SPAWN_CHUNK_RADIUS, Integer.MAX_VALUE);
+    this.postSpawnChunks = postSpawnChunkPackets.size() == 0 ? null : this.plugin.createPreparedPacket().prepare(postSpawnChunkPackets).build();
 
     this.spawnPosition = this.plugin.createPreparedPacket()
         .prepare(
@@ -338,8 +342,14 @@ public class LimboImpl implements Limbo {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
     connection.delayedWrite(this.spawnPosition);
-    if (this.chunks != null) {
-      connection.delayedWrite(this.chunks);
+    if (this.preSpawnChunks != null) {
+      connection.delayedWrite(this.preSpawnChunks);
+    }
+
+    connection.flush();
+
+    if (this.postSpawnChunks != null) {
+      connection.delayedWrite(this.postSpawnChunks);
     }
 
     connection.flush();
@@ -455,7 +465,8 @@ public class LimboImpl implements Limbo {
     this.joinPackets.release();
     this.fastRejoinPackets.release();
     this.safeRejoinPackets.release();
-    this.chunks.release();
+    this.preSpawnChunks.release();
+    this.postSpawnChunks.release();
     this.spawnPosition.release();
   }
 
@@ -559,9 +570,9 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private List<ChunkDataPacket> createChunksPackets() {
+  private List<ChunkDataPacket> createChunksPackets(int startRadius, int endRadius) {
     List<ChunkDataPacket> packets = new ArrayList<>();
-    for (VirtualChunk chunk : this.world.getChunks()) {
+    for (VirtualChunk chunk : this.world.getOrderedChunks(startRadius, endRadius)) {
       packets.add(this.createChunkData(chunk, this.world.getDimension()));
     }
 
