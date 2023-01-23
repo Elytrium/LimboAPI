@@ -57,16 +57,8 @@ public class SimpleWorld implements VirtualWorld {
     this.yaw = yaw;
     this.pitch = pitch;
 
-    // Modern Sodium versions don't load chunks if their "neighbours" are unloaded.
-    // We are fixing this problem there by generating all the "neighbours".
-    // Sodium won't connect us to the server if we generate every neighbour, not only spawn chunks neighbours.
-    int intX = (int) posX >> 4;
-    int intZ = (int) posZ >> 4;
-    for (int chunkX = intX - 1; chunkX <= intX + 1; ++chunkX) {
-      for (int chunkZ = intZ - 1; chunkZ <= intZ + 1; ++chunkZ) {
-        this.getChunkOrNew(chunkX << 4, chunkZ << 4);
-      }
-    }
+
+    this.getChunkOrNew((int) posX, (int) posZ);
   }
 
   @Override
@@ -159,13 +151,24 @@ public class SimpleWorld implements VirtualWorld {
   public SimpleChunk getChunkOrNew(int posX, int posZ) {
     posX = getChunkXZ(posX);
     posZ = getChunkXZ(posZ);
-    long index = getChunkIndex(posX, posZ);
-    SimpleChunk simpleChunk = this.chunks.get(index);
-    if (simpleChunk == null) {
-      this.chunks.put(index, simpleChunk = new SimpleChunk(posX, posZ, this.defaultBiome));
+
+    // Modern Sodium versions don't load chunks if their "neighbours" are unloaded.
+    // We are fixing this problem there by generating all the "neighbours".
+    // Sodium won't connect us to the server if we generate every neighbour, not only spawn chunks neighbours.
+    for (int chunkX = posX - 1; chunkX <= posX + 1; ++chunkX) {
+      for (int chunkZ = posZ - 1; chunkZ <= posZ + 1; ++chunkZ) {
+        this.localCreateChunk(chunkX, chunkZ);
+      }
     }
 
-    return simpleChunk;
+    return this.chunks.get(getChunkIndex(posX, posZ));
+  }
+
+  private void localCreateChunk(int posX, int posZ) {
+    long index = getChunkIndex(posX, posZ);
+    if (!this.chunks.containsKey(index)) {
+      this.chunks.put(index, new SimpleChunk(posX, posZ, this.defaultBiome));
+    }
   }
 
   @NonNull
