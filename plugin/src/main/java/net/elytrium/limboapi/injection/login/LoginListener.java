@@ -111,6 +111,8 @@ public class LoginListener {
     if (this.plugin.hasNextServer(event.getPlayer())) {
       event.setInitialServer(this.plugin.getNextServer(event.getPlayer()));
     }
+
+    this.plugin.setLimboJoined(event.getPlayer());
   }
 
   @Subscribe
