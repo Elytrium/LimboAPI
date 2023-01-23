@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
@@ -121,6 +122,31 @@ public class SimpleWorld implements VirtualWorld {
   @Override
   public List<VirtualChunk> getChunks() {
     return ImmutableList.copyOf(this.chunks.values());
+  }
+
+  @Override
+  public List<VirtualChunk> getOrderedChunks() {
+    return this.chunks.values().stream()
+        .sorted((c1, c2) -> this.getSquaredDistanceToSpawn(c1) - this.getSquaredDistanceToSpawn(c2))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<VirtualChunk> getOrderedChunks(int startRadius, int endRadius) {
+    return this.chunks.values()
+        .stream()
+        .filter(c -> {
+          int diff = (int) Math.sqrt(this.getSquaredDistanceToSpawn(c));
+          return diff >= startRadius && diff < endRadius;
+        })
+        .sorted((c1, c2) -> this.getSquaredDistanceToSpawn(c1) - this.getSquaredDistanceToSpawn(c2))
+        .collect(Collectors.toList());
+  }
+
+  private int getSquaredDistanceToSpawn(VirtualChunk chunk) {
+    int diffX = (int) this.spawnX - chunk.getPosX();
+    int diffZ = (int) this.spawnZ - chunk.getPosZ();
+    return (diffX * diffX) + (diffZ * diffZ);
   }
 
   @Nullable

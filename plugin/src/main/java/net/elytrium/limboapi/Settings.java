@@ -95,6 +95,9 @@ public class Settings extends YamlConfig {
 
     public int SIMULATION_DISTANCE = 9;
 
+    @Comment("How many chunks we should send before player spawns")
+    public int PRE_SPAWN_CHUNK_RADIUS = 4;
+
     @Create
     public MESSAGES MESSAGES;
 
