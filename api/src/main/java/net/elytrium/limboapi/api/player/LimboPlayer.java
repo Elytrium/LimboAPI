@@ -66,6 +66,8 @@ public interface LimboPlayer {
 
   void sendAbilities();
 
+  void sendAbilities(int abilities, float flySpeed, float walkSpeed);
+
   void sendAbilities(byte abilities, float flySpeed, float walkSpeed);
 
   byte getAbilities();

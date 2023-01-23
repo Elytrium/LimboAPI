@@ -310,6 +310,11 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
+  public void sendAbilities(int abilities, float flySpeed, float walkSpeed) {
+    this.writePacketAndFlush(new PlayerAbilitiesPacket((byte) abilities, flySpeed, walkSpeed));
+  }
+
+  @Override
   public void sendAbilities(byte abilities, float flySpeed, float walkSpeed) {
     this.writePacketAndFlush(new PlayerAbilitiesPacket(abilities, flySpeed, walkSpeed));
   }
