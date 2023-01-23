@@ -60,6 +60,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -124,8 +125,7 @@ public class LimboImpl implements Limbo {
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
   private PreparedPacket safeRejoinPackets;
-  private PreparedPacket preSpawnChunks;
-  private PreparedPacket postSpawnChunks;
+  private List<PreparedPacket> chunks;
   private PreparedPacket spawnPosition;
   private boolean shouldRespawn = true;
   private boolean reducedDebugInfo = Settings.IMP.MAIN.REDUCED_DEBUG_INFO;
@@ -171,12 +171,7 @@ public class LimboImpl implements Limbo {
     this.addPostJoin(this.fastRejoinPackets);
     this.addPostJoin(this.safeRejoinPackets);
 
-    List<ChunkDataPacket> preSpawnChunkPackets = this.createChunksPackets(0, Settings.IMP.MAIN.PRE_SPAWN_CHUNK_RADIUS);
-    this.preSpawnChunks = preSpawnChunkPackets.size() == 0 ? null : this.plugin.createPreparedPacket().prepare(preSpawnChunkPackets).build();
-
-    List<ChunkDataPacket> postSpawnChunkPackets = this.createChunksPackets(Settings.IMP.MAIN.PRE_SPAWN_CHUNK_RADIUS, Integer.MAX_VALUE);
-    this.postSpawnChunks = postSpawnChunkPackets.size() == 0 ? null : this.plugin.createPreparedPacket().prepare(postSpawnChunkPackets).build();
-
+    this.chunks = this.createChunksPackets();
     this.spawnPosition = this.plugin.createPreparedPacket()
         .prepare(
             this.createPlayerPosAndLook(
@@ -342,17 +337,16 @@ public class LimboImpl implements Limbo {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
     connection.delayedWrite(this.spawnPosition);
-    if (this.preSpawnChunks != null) {
-      connection.delayedWrite(this.preSpawnChunks);
+
+    int packetIndex = 0;
+    for (PreparedPacket chunk : this.chunks) {
+      connection.eventLoop().schedule(() -> connection.write(chunk), (++packetIndex) * 50L, TimeUnit.MILLISECONDS);
     }
 
-    connection.flush();
-
-    if (this.postSpawnChunks != null) {
-      connection.delayedWrite(this.postSpawnChunks);
+    // We should send first chunks without scheduling
+    if (this.chunks.size() != 0) {
+      connection.write(this.chunks.get(0));
     }
-
-    connection.flush();
   }
 
   @Override
@@ -465,9 +459,8 @@ public class LimboImpl implements Limbo {
     this.joinPackets.release();
     this.fastRejoinPackets.release();
     this.safeRejoinPackets.release();
-    this.preSpawnChunks.release();
-    this.postSpawnChunks.release();
     this.spawnPosition.release();
+    this.chunks.forEach(PreparedPacket::release);
   }
 
   // From Velocity.
@@ -570,11 +563,28 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private List<ChunkDataPacket> createChunksPackets(int startRadius, int endRadius) {
-    List<ChunkDataPacket> packets = new ArrayList<>();
-    for (VirtualChunk chunk : this.world.getOrderedChunks(startRadius, endRadius)) {
-      packets.add(this.createChunkData(chunk, this.world.getDimension()));
+  private List<PreparedPacket> createChunksPackets() {
+    List<List<VirtualChunk>> orderedChunks = this.world.getOrderedChunks();
+    if (orderedChunks.size() == 0) {
+      return List.of();
     }
+
+    List<PreparedPacket> packets = new LinkedList<>();
+    PreparedPacket packet = this.plugin.createPreparedPacket();
+    int chunkCounter = 0;
+
+    for (List<VirtualChunk> chunksWithSameDistance : orderedChunks) {
+      for (VirtualChunk chunk : chunksWithSameDistance) {
+        if (++chunkCounter > Settings.IMP.MAIN.CHUNKS_PER_TICK) {
+          packets.add(packet.build());
+          packet = this.plugin.createPreparedPacket();
+        }
+
+        packet.prepare(this.createChunkData(chunk, this.world.getDimension()));
+      }
+    }
+
+    packets.add(packet.build());
 
     return packets;
   }

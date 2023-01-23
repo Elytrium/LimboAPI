@@ -71,4 +71,6 @@ String getCurrentShortRevision() {
 
     setStandardOutput(outputStream)
   }
+
+  return outputStream.toString().trim()
 }
