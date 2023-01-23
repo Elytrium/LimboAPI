@@ -29,8 +29,8 @@ dependencies {
 }
 
 shadowJar {
-  getArchiveClassifier().set(this.getVersion().contains("-") ? getCurrentShortRevision() : "release")
-  setArchiveFileName("limboapi-${version}-${classifier}.${extension}")
+  getArchiveClassifier().set("")
+  setArchiveFileName("limboapi-${version}.${extension}")
 
   exclude("META-INF/versions/**")
   exclude("net/kyori/**")
