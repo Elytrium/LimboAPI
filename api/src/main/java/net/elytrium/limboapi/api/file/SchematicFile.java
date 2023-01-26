@@ -15,6 +15,7 @@ import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
+@Deprecated(forRemoval = true)
 public class SchematicFile implements WorldFile {
 
   private short width;
@@ -24,14 +25,26 @@ public class SchematicFile implements WorldFile {
   private byte[] addBlocks = new byte[0];
   //private byte[] blocksData;
 
+  /**
+   * @deprecated See {@link LimboFactory#openWorldFile(BuiltInWorldFileType, Path)}
+   */
+  @Deprecated(forRemoval = true)
   public SchematicFile(Path file) throws IOException {
     this.fromNBT(BinaryTagIO.unlimitedReader().read(file, BinaryTagIO.Compression.GZIP));
   }
 
+  /**
+   * @deprecated See {@link LimboFactory#openWorldFile(BuiltInWorldFileType, InputStream)}
+   */
+  @Deprecated(forRemoval = true)
   public SchematicFile(InputStream stream) throws IOException {
     this.fromNBT(BinaryTagIO.unlimitedReader().read(stream, BinaryTagIO.Compression.GZIP));
   }
 
+  /**
+   * @deprecated See {@link LimboFactory#openWorldFile(BuiltInWorldFileType, CompoundBinaryTag)}
+   */
+  @Deprecated(forRemoval = true)
   public SchematicFile(CompoundBinaryTag tag) {
     this.fromNBT(tag);
   }

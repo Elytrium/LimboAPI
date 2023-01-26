@@ -45,6 +45,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,6 +70,8 @@ import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
+import net.elytrium.limboapi.api.file.BuiltInWorldFileType;
+import net.elytrium.limboapi.api.file.WorldFile;
 import net.elytrium.limboapi.api.material.Block;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
@@ -75,6 +79,7 @@ import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
+import net.elytrium.limboapi.file.WorldFileTypeRegistry;
 import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.elytrium.limboapi.injection.kick.KickListener;
@@ -97,6 +102,7 @@ import net.elytrium.limboapi.server.world.SimpleTagManager;
 import net.elytrium.limboapi.server.world.SimpleWorld;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.elytrium.limboapi.utils.ReloadListener;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
 import org.bstats.velocity.Metrics;
@@ -305,6 +311,11 @@ public class LimboAPI implements LimboFactory {
   @Override
   public VirtualBlock createSimpleBlock(short legacyID) {
     return SimpleBlock.fromLegacyID(legacyID);
+  }
+
+  @Override
+  public VirtualBlock createSimpleBlock(String modernID) {
+    return SimpleBlock.fromModernID(modernID);
   }
 
   @Override
@@ -551,6 +562,21 @@ public class LimboAPI implements LimboFactory {
 
   public ProtocolVersion getPrepareMaxVersion() {
     return this.maxVersion;
+  }
+
+  @Override
+  public WorldFile openWorldFile(BuiltInWorldFileType apiType, Path file) throws IOException {
+    return WorldFileTypeRegistry.fromApiType(apiType, file);
+  }
+
+  @Override
+  public WorldFile openWorldFile(BuiltInWorldFileType apiType, InputStream stream) throws IOException {
+    return WorldFileTypeRegistry.fromApiType(apiType, stream);
+  }
+
+  @Override
+  public WorldFile openWorldFile(BuiltInWorldFileType apiType, CompoundBinaryTag tag) {
+    return WorldFileTypeRegistry.fromApiType(apiType, tag);
   }
 
   static {

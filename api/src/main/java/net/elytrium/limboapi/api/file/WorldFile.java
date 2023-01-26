@@ -13,7 +13,9 @@ import org.checkerframework.common.value.qual.IntRange;
 
 public interface WorldFile {
 
-  void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ);
+  default void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ) {
+    this.toWorld(factory, world, offsetX, offsetY, offsetZ, 15);
+  }
 
   void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, @IntRange(from = 0, to = 15) int lightLevel);
 }
