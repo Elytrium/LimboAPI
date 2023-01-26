@@ -71,7 +71,7 @@ public interface LimboFactory {
    * @param solid          Defines if the block is solid or not.
    * @param air            Defines if the block is the air.
    * @param motionBlocking Defines if the block blocks motions. (1.14+)
-   * @param id             Block id.
+   * @param id             Block protocol id.
    *
    * @return new virtual block.
    */
@@ -130,7 +130,7 @@ public interface LimboFactory {
 
   /**
    * Creates new virtual chunk.
-   * You need to provide the chunk location, you can get it using (block_coordinate >> 4)
+   * You need to provide the chunk location, you can get it using ({@code block_coordinate >> 4})
    *
    * @param posX         Chunk location. (X)
    * @param posZ         Chunk location. (Z)
@@ -198,6 +198,24 @@ public interface LimboFactory {
    * @return new virtual item.
    */
   VirtualItem getItem(Item item);
+
+  /**
+   * Creates new virtual item from Item enum.
+   *
+   * @param itemID Modern item identifier.
+   *
+   * @return new virtual item.
+   */
+  VirtualItem getItem(String itemID);
+
+  /**
+   * Creates new virtual item from Item enum.
+   *
+   * @param itemLegacyID Legacy item ID
+   *
+   * @return new virtual item.
+   */
+  VirtualItem getLegacyItem(int itemLegacyID);
 
   /**
    * A factory to instantiate Minecraft packet objects.

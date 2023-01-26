@@ -8,12 +8,20 @@
 package net.elytrium.limboapi.api.chunk;
 
 import com.velocitypowered.api.network.ProtocolVersion;
+import net.elytrium.limboapi.api.material.WorldVersion;
 
 public interface VirtualBlock {
 
   short getModernID();
 
+  @Deprecated
   short getID(ProtocolVersion version);
+
+  short getBlockID(WorldVersion version);
+
+  short getBlockID(ProtocolVersion version);
+
+  short getBlockStateID(ProtocolVersion version);
 
   boolean isSolid();
 

@@ -7,9 +7,13 @@
 
 package net.elytrium.limboapi.api.protocol.packets;
 
+import com.velocitypowered.api.network.ProtocolVersion;
+import java.util.List;
+import java.util.Map;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.api.material.WorldVersion;
 import net.elytrium.limboapi.api.protocol.packets.data.AbilityFlags;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -47,4 +51,10 @@ public interface PacketFactory {
   Object createTimeUpdatePacket(long worldAge, long timeOfDay);
 
   Object createUpdateViewPositionPacket(int posX, int posZ);
+
+  Object createUpdateTagsPacket(WorldVersion version);
+
+  Object createUpdateTagsPacket(ProtocolVersion version);
+
+  Object createUpdateTagsPacket(Map<String, Map<String, List<Integer>>> tags);
 }

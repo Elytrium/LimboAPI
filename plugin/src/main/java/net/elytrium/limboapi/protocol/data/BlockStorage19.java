@@ -48,7 +48,7 @@ public class BlockStorage19 implements BlockStorage {
     this.rawToBlock = new HashMap<>();
 
     this.palette.add(SimpleBlock.AIR);
-    this.rawToBlock.put(SimpleBlock.AIR.getID(version), SimpleBlock.AIR);
+    this.rawToBlock.put(SimpleBlock.AIR.getBlockStateID(version), SimpleBlock.AIR);
 
     this.storage = this.createStorage(4);
   }
@@ -72,7 +72,7 @@ public class BlockStorage19 implements BlockStorage {
     } else {
       ProtocolUtils.writeVarInt(buf, this.palette.size());
       for (VirtualBlock state : this.palette) {
-        ProtocolUtils.writeVarInt(buf, state.getID(this.version));
+        ProtocolUtils.writeVarInt(buf, state.getBlockStateID(this.version));
       }
     }
 
@@ -87,7 +87,7 @@ public class BlockStorage19 implements BlockStorage {
 
   private int getIndex(VirtualBlock block) {
     if (this.storage.getBitsPerEntry() > 8) {
-      short raw = block.getID(this.version);
+      short raw = block.getBlockStateID(this.version);
       this.rawToBlock.put(raw, block);
       return raw;
     } else {
@@ -97,7 +97,7 @@ public class BlockStorage19 implements BlockStorage {
           int bitsPerEntry = StorageUtils.fixBitsPerEntry(this.version, this.storage.getBitsPerEntry() + 1);
           CompactStorage newStorage = this.createStorage(bitsPerEntry);
           for (int i = 0; i < SimpleChunk.MAX_BLOCKS_PER_SECTION; ++i) {
-            newStorage.set(i, bitsPerEntry > 8 ? this.palette.get(this.storage.get(i)).getID(this.version) : this.storage.get(i));
+            newStorage.set(i, bitsPerEntry > 8 ? this.palette.get(this.storage.get(i)).getBlockStateID(this.version) : this.storage.get(i));
           }
 
           this.storage = newStorage;
@@ -140,7 +140,7 @@ public class BlockStorage19 implements BlockStorage {
     } else {
       length += ProtocolUtils.varIntBytes(this.palette.size());
       for (VirtualBlock state : this.palette) {
-        length += ProtocolUtils.varIntBytes(state.getID(this.version));
+        length += ProtocolUtils.varIntBytes(state.getBlockStateID(this.version));
       }
     }
 

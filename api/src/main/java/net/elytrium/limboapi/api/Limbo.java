@@ -31,6 +31,8 @@ public interface Limbo {
 
   Limbo setShouldRespawn(boolean shouldRespawn);
 
+  Limbo setShouldUpdateTags(boolean shouldUpdateTags);
+
   Limbo setReducedDebugInfo(boolean reducedDebugInfo);
 
   Limbo setViewDistance(int viewDistance);
