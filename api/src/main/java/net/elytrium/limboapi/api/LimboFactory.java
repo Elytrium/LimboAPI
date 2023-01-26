@@ -9,6 +9,9 @@ package net.elytrium.limboapi.api;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.elytrium.limboapi.api.chunk.BuiltInBiome;
@@ -17,6 +20,8 @@ import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
+import net.elytrium.limboapi.api.file.BuiltInWorldFileType;
+import net.elytrium.limboapi.api.file.WorldFile;
 import net.elytrium.limboapi.api.material.Block;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
@@ -24,6 +29,7 @@ import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
 
 public interface LimboFactory {
 
@@ -44,6 +50,15 @@ public interface LimboFactory {
    * @return new virtual block.
    */
   VirtualBlock createSimpleBlock(short legacyID);
+
+  /**
+   * Creates new virtual block from id and data.
+   *
+   * @param modernID Modern block id.
+   *
+   * @return new virtual block.
+   */
+  VirtualBlock createSimpleBlock(String modernID);
 
   /**
    * Creates new virtual block from id and data.
@@ -225,4 +240,33 @@ public interface LimboFactory {
   ProtocolVersion getPrepareMinVersion();
 
   ProtocolVersion getPrepareMaxVersion();
+
+  /**
+   * Opens world file (a.k.a. schematic file)
+   *
+   * @param apiType World file type
+   * @param file World file
+   * @return Ready to use WorldFile
+   */
+  WorldFile openWorldFile(BuiltInWorldFileType apiType, Path file) throws IOException;
+
+
+  /**
+   * Opens world file (a.k.a. schematic file)
+   *
+   * @param apiType World file type
+   * @param stream World file stream
+   * @return Ready to use WorldFile
+   */
+  WorldFile openWorldFile(BuiltInWorldFileType apiType, InputStream stream) throws IOException;
+
+
+  /**
+   * Opens world file (a.k.a. schematic file)
+   *
+   * @param apiType World file type
+   * @param tag World file NBT tag
+   * @return Ready to use WorldFile
+   */
+  WorldFile openWorldFile(BuiltInWorldFileType apiType, CompoundBinaryTag tag);
 }

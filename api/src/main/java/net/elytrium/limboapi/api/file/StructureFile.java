@@ -20,6 +20,7 @@ import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
 
+@Deprecated(forRemoval = true)
 public class StructureFile implements WorldFile {
 
   // private int width;
@@ -28,16 +29,25 @@ public class StructureFile implements WorldFile {
   private ListBinaryTag blocks;
   private ListBinaryTag palette;
 
+  /**
+   * @deprecated See {@link LimboFactory#openWorldFile(BuiltInWorldFileType, Path)}
+   */
   public StructureFile(Path file) throws IOException {
     CompoundBinaryTag tag = BinaryTagIO.unlimitedReader().read(file, BinaryTagIO.Compression.GZIP);
     this.fromNBT(tag);
   }
 
+  /**
+   * @deprecated See {@link LimboFactory#openWorldFile(BuiltInWorldFileType, InputStream)}
+   */
   public StructureFile(InputStream stream) throws IOException {
     CompoundBinaryTag tag = BinaryTagIO.unlimitedReader().read(stream, BinaryTagIO.Compression.GZIP);
     this.fromNBT(tag);
   }
 
+  /**
+   * @deprecated See {@link LimboFactory#openWorldFile(BuiltInWorldFileType, CompoundBinaryTag)}
+   */
   public StructureFile(CompoundBinaryTag tag) {
     this.fromNBT(tag);
   }

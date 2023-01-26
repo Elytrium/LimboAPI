@@ -209,6 +209,21 @@ public class SimpleBlock implements VirtualBlock {
     return this.motionBlocking;
   }
 
+  public static VirtualBlock fromModernID(String modernID) {
+    String[] deserializedModernId = modernID.split("[\\[\\]]");
+    if (deserializedModernId.length < 2) {
+      return fromModernID(modernID, Map.of());
+    } else {
+      Map<String, String> properties = new HashMap<>();
+      for (String property : deserializedModernId[1].split(",")) {
+        String[] propertyKeyValue = property.split("=");
+        properties.put(propertyKeyValue[0], propertyKeyValue[1]);
+      }
+
+      return fromModernID(deserializedModernId[0], properties);
+    }
+  }
+
   public static VirtualBlock fromModernID(String modernID, Map<String, String> properties) {
     return solid(modernID, transformID(modernID, properties));
   }
