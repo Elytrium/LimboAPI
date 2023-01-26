@@ -59,7 +59,15 @@ public class StructureNbtFile implements WorldFile {
       CompoundBinaryTag blockMap = (CompoundBinaryTag) binaryTag;
       ListBinaryTag posTag = blockMap.getList("pos");
       VirtualBlock block = palettedBlocks[blockMap.getInt("state")];
-      world.setBlock(offsetX + posTag.getInt(0), offsetY + posTag.getInt(1), offsetZ + posTag.getInt(2), block);
+      int x = offsetX + posTag.getInt(0);
+      int y = offsetY + posTag.getInt(1);
+      int z = offsetZ + posTag.getInt(2);
+      world.setBlock(x, y, z, block);
+
+      CompoundBinaryTag blockEntityNbt = blockMap.getCompound("nbt");
+      if (blockEntityNbt.keySet().size() != 0) {
+        world.setBlockEntity(x, y, z, blockEntityNbt, factory.getBlockEntity(block.getModernStringID()));
+      }
     }
 
     world.fillSkyLight(lightLevel);

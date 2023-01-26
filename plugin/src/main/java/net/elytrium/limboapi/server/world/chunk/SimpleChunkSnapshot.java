@@ -17,8 +17,10 @@
 
 package net.elytrium.limboapi.server.world.chunk;
 
+import java.util.List;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.server.world.SimpleBlock;
@@ -31,14 +33,17 @@ public class SimpleChunkSnapshot implements ChunkSnapshot {
   private final SimpleSection[] sections;
   private final LightSection[] light;
   private final VirtualBiome[] biomes;
+  private final List<VirtualBlockEntity.Entry> blockEntityEntries;
 
-  public SimpleChunkSnapshot(int posX, int posZ, boolean fullChunk, SimpleSection[] sections, LightSection[] light, VirtualBiome[] biomes) {
+  public SimpleChunkSnapshot(int posX, int posZ, boolean fullChunk, SimpleSection[] sections, LightSection[] light,
+                             VirtualBiome[] biomes, List<VirtualBlockEntity.Entry> blockEntityEntries) {
     this.posX = posX;
     this.posZ = posZ;
     this.fullChunk = fullChunk;
     this.sections = sections;
     this.light = light;
     this.biomes = biomes;
+    this.blockEntityEntries = blockEntityEntries;
   }
 
   @Override
@@ -75,5 +80,10 @@ public class SimpleChunkSnapshot implements ChunkSnapshot {
   @Override
   public VirtualBiome[] getBiomes() {
     return this.biomes;
+  }
+
+  @Override
+  public List<VirtualBlockEntity.Entry> getBlockEntityEntries() {
+    return this.blockEntityEntries;
   }
 }

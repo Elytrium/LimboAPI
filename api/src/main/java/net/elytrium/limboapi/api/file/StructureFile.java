@@ -32,6 +32,7 @@ public class StructureFile implements WorldFile {
   /**
    * @deprecated See {@link LimboFactory#openWorldFile(BuiltInWorldFileType, Path)}
    */
+  @Deprecated
   public StructureFile(Path file) throws IOException {
     CompoundBinaryTag tag = BinaryTagIO.unlimitedReader().read(file, BinaryTagIO.Compression.GZIP);
     this.fromNBT(tag);
@@ -40,6 +41,7 @@ public class StructureFile implements WorldFile {
   /**
    * @deprecated See {@link LimboFactory#openWorldFile(BuiltInWorldFileType, InputStream)}
    */
+  @Deprecated
   public StructureFile(InputStream stream) throws IOException {
     CompoundBinaryTag tag = BinaryTagIO.unlimitedReader().read(stream, BinaryTagIO.Compression.GZIP);
     this.fromNBT(tag);
@@ -48,6 +50,7 @@ public class StructureFile implements WorldFile {
   /**
    * @deprecated See {@link LimboFactory#openWorldFile(BuiltInWorldFileType, CompoundBinaryTag)}
    */
+  @Deprecated
   public StructureFile(CompoundBinaryTag tag) {
     this.fromNBT(tag);
   }

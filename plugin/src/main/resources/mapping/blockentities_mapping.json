@@ -1,0 +1,154 @@
+{
+  "minecraft:banner": {
+    "1.19": "19",
+    "legacy": "18"
+  },
+  "minecraft:barrel": {
+    "1.19": "26",
+    "legacy": "25"
+  },
+  "minecraft:beacon": {
+    "1.19": "14",
+    "legacy": "13"
+  },
+  "minecraft:bed": {
+    "1.19": "24",
+    "legacy": "23"
+  },
+  "minecraft:beehive": {
+    "1.19": "33",
+    "legacy": "32"
+  },
+  "minecraft:bell": {
+    "1.19": "30",
+    "legacy": "29"
+  },
+  "minecraft:blast_furnace": {
+    "1.19": "28",
+    "legacy": "27"
+  },
+  "minecraft:brewing_stand": {
+    "1.19": "11",
+    "legacy": "10"
+  },
+  "minecraft:campfire": {
+    "1.19": "32",
+    "legacy": "31"
+  },
+  "minecraft:chest": {
+    "1.19": "1",
+    "legacy": "1"
+  },
+  "minecraft:chiseled_bookshelf": {
+    "1.19": "37",
+    "legacy": "36"
+  },
+  "minecraft:command_block": {
+    "1.19": "22",
+    "legacy": "21"
+  },
+  "minecraft:comparator": {
+    "1.19": "18",
+    "legacy": "17"
+  },
+  "minecraft:conduit": {
+    "1.19": "25",
+    "legacy": "24"
+  },
+  "minecraft:daylight_detector": {
+    "1.19": "16",
+    "legacy": "15"
+  },
+  "minecraft:dispenser": {
+    "1.19": "5",
+    "legacy": "5"
+  },
+  "minecraft:dropper": {
+    "1.19": "6",
+    "legacy": "6"
+  },
+  "minecraft:enchanting_table": {
+    "1.19": "12",
+    "legacy": "11"
+  },
+  "minecraft:end_gateway": {
+    "1.19": "21",
+    "legacy": "20"
+  },
+  "minecraft:end_portal": {
+    "1.19": "13",
+    "legacy": "12"
+  },
+  "minecraft:ender_chest": {
+    "1.19": "3",
+    "legacy": "3"
+  },
+  "minecraft:furnace": {
+    "1.19": "0",
+    "legacy": "0"
+  },
+  "minecraft:hanging_sign": {
+    "1.19": "8",
+    "legacy": "7"
+  },
+  "minecraft:hopper": {
+    "1.19": "17",
+    "legacy": "16"
+  },
+  "minecraft:jigsaw": {
+    "1.19": "31",
+    "legacy": "30"
+  },
+  "minecraft:jukebox": {
+    "1.19": "4",
+    "legacy": "4"
+  },
+  "minecraft:lectern": {
+    "1.19": "29",
+    "legacy": "28"
+  },
+  "minecraft:mob_spawner": {
+    "1.19": "9",
+    "legacy": "8"
+  },
+  "minecraft:piston": {
+    "1.19": "10",
+    "legacy": "9"
+  },
+  "minecraft:sculk_catalyst": {
+    "1.19": "35",
+    "legacy": "34"
+  },
+  "minecraft:sculk_sensor": {
+    "1.19": "34",
+    "legacy": "33"
+  },
+  "minecraft:sculk_shrieker": {
+    "1.19": "36",
+    "legacy": "35"
+  },
+  "minecraft:shulker_box": {
+    "1.19": "23",
+    "legacy": "22"
+  },
+  "minecraft:sign": {
+    "1.19": "7",
+    "legacy": "7"
+  },
+  "minecraft:skull": {
+    "1.19": "15",
+    "legacy": "14"
+  },
+  "minecraft:smoker": {
+    "1.19": "27",
+    "legacy": "26"
+  },
+  "minecraft:structure_block": {
+    "1.19": "20",
+    "legacy": "19"
+  },
+  "minecraft:trapped_chest": {
+    "1.19": "2",
+    "legacy": "2"
+  }
+}

@@ -24,8 +24,10 @@ import net.elytrium.limboapi.api.LimboFactory;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.file.WorldFile;
+import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
+import net.kyori.adventure.nbt.ListBinaryTag;
 
 public class WorldEditSchemFile implements WorldFile {
 
@@ -34,6 +36,7 @@ public class WorldEditSchemFile implements WorldFile {
   private final short length;
   private final int[] blocks;
   private final CompoundBinaryTag palette;
+  private final ListBinaryTag blockEntities;
 
   public WorldEditSchemFile(CompoundBinaryTag tag) {
     this.width = tag.getShort("Width");
@@ -47,6 +50,8 @@ public class WorldEditSchemFile implements WorldFile {
     for (int i = 0; i < this.blocks.length; i++) {
       this.blocks[i] = ProtocolUtils.readVarInt(blockDataBuf);
     }
+
+    this.blockEntities = tag.getList("BlockEntities");
   }
 
   @Override
@@ -61,6 +66,17 @@ public class WorldEditSchemFile implements WorldFile {
           world.setBlock(posX + offsetX, posY + offsetY, posZ + offsetZ, palettedBlocks[this.blocks[index]]);
         }
       }
+    }
+
+    for (BinaryTag blockEntity : this.blockEntities) {
+      CompoundBinaryTag blockEntityData = (CompoundBinaryTag) blockEntity;
+      int[] posTag = blockEntityData.getIntArray("Pos");
+      world.setBlockEntity(
+          offsetX + posTag[0],
+          offsetY + posTag[1],
+          offsetZ + posTag[2],
+          blockEntityData,
+          factory.getBlockEntity(blockEntityData.getString("Id")));
     }
 
     world.fillSkyLight(lightLevel);

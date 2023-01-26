@@ -14,6 +14,8 @@ public interface VirtualBlock {
 
   short getModernID();
 
+  String getModernStringID();
+
   @Deprecated
   short getID(ProtocolVersion version);
 
