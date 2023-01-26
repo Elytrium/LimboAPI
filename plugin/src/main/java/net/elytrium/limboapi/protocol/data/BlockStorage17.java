@@ -51,7 +51,7 @@ public class BlockStorage17 implements BlockStorage {
         byte[] raw = new byte[this.blocks.length];
         for (int i = 0; i < this.blocks.length; ++i) {
           VirtualBlock block = this.blocks[i];
-          raw[i] = (byte) (block == null ? 0 : block.getID(ProtocolVersion.MINECRAFT_1_7_2) >> 4);
+          raw[i] = (byte) (block == null ? 0 : block.getBlockStateID(ProtocolVersion.MINECRAFT_1_7_2) >> 4);
         }
 
         buf.writeBytes(raw);
@@ -59,7 +59,7 @@ public class BlockStorage17 implements BlockStorage {
         short[] raw = new short[this.blocks.length];
         for (int i = 0; i < this.blocks.length; ++i) {
           VirtualBlock block = this.blocks[i];
-          raw[i] = (short) (block == null ? 0 : block.getID(ProtocolVersion.MINECRAFT_1_8));
+          raw[i] = (short) (block == null ? 0 : block.getBlockStateID(ProtocolVersion.MINECRAFT_1_8));
         }
 
         for (short s : raw) {
@@ -72,7 +72,7 @@ public class BlockStorage17 implements BlockStorage {
       NibbleArray3D metadata = new NibbleArray3D(SimpleChunk.MAX_BLOCKS_PER_SECTION);
       for (int i = 0; i < this.blocks.length; ++i) {
         VirtualBlock block = this.blocks[i];
-        metadata.set(i, block == null ? 0 : block.getID(ProtocolVersion.MINECRAFT_1_7_2) & 0xFFFF);
+        metadata.set(i, block == null ? 0 : block.getBlockStateID(ProtocolVersion.MINECRAFT_1_7_2) & 0xFFFF);
       }
 
       buf.writeBytes(metadata.getData());

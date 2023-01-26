@@ -12,4 +12,12 @@ import com.velocitypowered.api.network.ProtocolVersion;
 public interface VirtualItem {
 
   short getID(ProtocolVersion version);
+
+  short getID(WorldVersion version);
+
+  boolean isSupportedOn(ProtocolVersion version);
+
+  boolean isSupportedOn(WorldVersion version);
+
+  String getModernID();
 }
