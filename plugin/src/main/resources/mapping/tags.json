@@ -2818,44 +2818,12 @@
   },
   "minecraft:fluid": {
     "minecraft:lava": [
-      "minecraft:flowing_lava[falling=true,level=1]",
-      "minecraft:flowing_lava[falling=true,level=2]",
-      "minecraft:flowing_lava[falling=true,level=3]",
-      "minecraft:flowing_lava[falling=true,level=4]",
-      "minecraft:flowing_lava[falling=true,level=5]",
-      "minecraft:flowing_lava[falling=true,level=6]",
-      "minecraft:flowing_lava[falling=true,level=7]",
-      "minecraft:flowing_lava[falling=true,level=8]",
-      "minecraft:flowing_lava[falling=false,level=1]",
-      "minecraft:flowing_lava[falling=false,level=2]",
-      "minecraft:flowing_lava[falling=false,level=3]",
-      "minecraft:flowing_lava[falling=false,level=4]",
-      "minecraft:flowing_lava[falling=false,level=5]",
-      "minecraft:flowing_lava[falling=false,level=6]",
-      "minecraft:flowing_lava[falling=false,level=7]",
-      "minecraft:flowing_lava[falling=false,level=8]",
-      "minecraft:lava[falling=true]",
-      "minecraft:lava[falling=false]"
+      "minecraft:flowing_lava",
+      "minecraft:lava"
     ],
     "minecraft:water": [
-      "minecraft:flowing_water[falling=true,level=1]",
-      "minecraft:flowing_water[falling=true,level=2]",
-      "minecraft:flowing_water[falling=true,level=3]",
-      "minecraft:flowing_water[falling=true,level=4]",
-      "minecraft:flowing_water[falling=true,level=5]",
-      "minecraft:flowing_water[falling=true,level=6]",
-      "minecraft:flowing_water[falling=true,level=7]",
-      "minecraft:flowing_water[falling=true,level=8]",
-      "minecraft:flowing_water[falling=false,level=1]",
-      "minecraft:flowing_water[falling=false,level=2]",
-      "minecraft:flowing_water[falling=false,level=3]",
-      "minecraft:flowing_water[falling=false,level=4]",
-      "minecraft:flowing_water[falling=false,level=5]",
-      "minecraft:flowing_water[falling=false,level=6]",
-      "minecraft:flowing_water[falling=false,level=7]",
-      "minecraft:flowing_water[falling=false,level=8]",
-      "minecraft:water[falling=true]",
-      "minecraft:water[falling=false]"
+      "minecraft:flowing_water",
+      "minecraft:water"
     ]
   },
   "minecraft:game_event": {
