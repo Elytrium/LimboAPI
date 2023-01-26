@@ -30,7 +30,7 @@ import net.kyori.adventure.nbt.CompoundBinaryTag;
 public enum WorldFileTypeRegistry {
   SCHEMATIC(BuiltInWorldFileType.SCHEMATIC, MCEditSchematicFile::new),
   WORLDEDIT_SCHEM(BuiltInWorldFileType.WORLDEDIT_SCHEM, WorldEditSchemFile::new),
-  STRUCTURE(BuiltInWorldFileType.STRUCTURE, WorldEditSchemFile::new);
+  STRUCTURE(BuiltInWorldFileType.STRUCTURE, StructureNbtFile::new);
 
   private static final EnumMap<BuiltInWorldFileType, WorldFileTypeRegistry> API_TYPE_MAP = new EnumMap<>(BuiltInWorldFileType.class);
   private final BuiltInWorldFileType apiType;
