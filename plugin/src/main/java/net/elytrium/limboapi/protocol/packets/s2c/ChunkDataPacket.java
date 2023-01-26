@@ -26,9 +26,11 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.BitSet;
+import java.util.List;
 import java.util.zip.Deflater;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.api.chunk.util.CompactStorage;
@@ -154,7 +156,23 @@ public class ChunkDataPacket implements MinecraftPacket {
         ProtocolUtils.writeVarInt(buf, data.readableBytes());
         buf.writeBytes(data);
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_9_4) >= 0) {
-          ProtocolUtils.writeVarInt(buf, 0); // Tile entities currently doesnt supported.
+          List<VirtualBlockEntity.Entry> blockEntityEntries = this.chunk.getBlockEntityEntries();
+          ProtocolUtils.writeVarInt(buf, blockEntityEntries.size());
+          for (VirtualBlockEntity.Entry blockEntityEntry : blockEntityEntries) {
+            CompoundBinaryTag blockEntityNbt = blockEntityEntry.getNbt();
+            if (version.compareTo(ProtocolVersion.MINECRAFT_1_18) >= 0) {
+              buf.writeByte(((blockEntityEntry.getPosX() & 15) << 4) | (blockEntityEntry.getPosZ() & 15));
+              buf.writeShort(blockEntityEntry.getPosY());
+              ProtocolUtils.writeVarInt(buf, blockEntityEntry.getID(version));
+            } else {
+              blockEntityNbt.putString("id", blockEntityEntry.getBlockEntity().getModernID());
+              blockEntityNbt.putInt("x", blockEntityEntry.getPosX());
+              blockEntityNbt.putInt("y", blockEntityEntry.getPosY());
+              blockEntityNbt.putInt("z", blockEntityEntry.getPosZ());
+            }
+
+            ProtocolUtils.writeCompoundTag(buf, blockEntityNbt);
+          }
         }
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
           long[] mask = this.create117Mask();

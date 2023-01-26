@@ -18,6 +18,7 @@ import net.elytrium.limboapi.api.chunk.BuiltInBiome;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.file.BuiltInWorldFileType;
@@ -231,6 +232,8 @@ public interface LimboFactory {
    * @return new virtual item.
    */
   VirtualItem getLegacyItem(int itemLegacyID);
+
+  VirtualBlockEntity getBlockEntity(String entityID);
 
   /**
    * A factory to instantiate Minecraft packet objects.

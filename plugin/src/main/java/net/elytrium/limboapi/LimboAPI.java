@@ -68,6 +68,7 @@ import net.elytrium.limboapi.api.chunk.BuiltInBiome;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.file.BuiltInWorldFileType;
@@ -97,6 +98,7 @@ import net.elytrium.limboapi.protocol.packets.PacketFactoryImpl;
 import net.elytrium.limboapi.server.CachedPackets;
 import net.elytrium.limboapi.server.LimboImpl;
 import net.elytrium.limboapi.server.world.SimpleBlock;
+import net.elytrium.limboapi.server.world.SimpleBlockEntity;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.elytrium.limboapi.server.world.SimpleTagManager;
 import net.elytrium.limboapi.server.world.SimpleWorld;
@@ -176,6 +178,7 @@ public class LimboAPI implements LimboFactory {
     } else {
       LOGGER.info("Initializing Simple Virtual World system...");
       SimpleBlock.init();
+      SimpleBlockEntity.init();
       SimpleItem.init();
       SimpleTagManager.init();
       LOGGER.info("Hooking into EventManager, PlayerList/UpsertPlayerInfo and StateRegistry...");
@@ -465,6 +468,11 @@ public class LimboAPI implements LimboFactory {
   @Override
   public VirtualItem getLegacyItem(int itemLegacyID) {
     return SimpleItem.fromLegacyID(itemLegacyID);
+  }
+
+  @Override
+  public VirtualBlockEntity getBlockEntity(String entityID) {
+    return SimpleBlockEntity.fromModernID(entityID);
   }
 
   @Override

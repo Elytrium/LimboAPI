@@ -17,14 +17,18 @@
 
 package net.elytrium.limboapi.server.world.chunk;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.chunk.data.LightSection;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.server.world.SimpleBlock;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.value.qual.IntRange;
@@ -40,6 +44,7 @@ public class SimpleChunk implements VirtualChunk {
   private final SimpleSection[] sections = new SimpleSection[16];
   private final LightSection[] light = new LightSection[18];
   private final VirtualBiome[] biomes = new VirtualBiome[1024];
+  private final List<VirtualBlockEntity.Entry> blockEntityEntries = new ArrayList<>();
 
   public SimpleChunk(int posX, int posZ) {
     this(posX, posZ, Biome.PLAINS);
@@ -59,6 +64,21 @@ public class SimpleChunk implements VirtualChunk {
   @Override
   public void setBlock(int posX, int posY, int posZ, @Nullable VirtualBlock block) {
     this.getSection(posY).setBlockAt(posX, posY & 15, posZ, block);
+  }
+
+  @Override
+  public void setBlockEntity(int posX, int posY, int posZ, @Nullable CompoundBinaryTag nbt, @Nullable VirtualBlockEntity blockEntity) {
+    if (blockEntity == null) {
+      this.blockEntityEntries.removeIf(entry -> entry.getPosX() == posX && entry.getPosY() == posY && entry.getPosZ() == posZ);
+      return;
+    }
+
+    this.blockEntityEntries.add(blockEntity.getEntry(posX, posY, posZ, nbt));
+  }
+
+  @Override
+  public void setBlockEntity(VirtualBlockEntity.Entry blockEntityEntry) {
+    this.blockEntityEntries.add(blockEntityEntry);
   }
 
   private SimpleSection getSection(int posY) {
@@ -174,7 +194,8 @@ public class SimpleChunk implements VirtualChunk {
       }
     }
 
-    return new SimpleChunkSnapshot(this.posX, this.posZ, full, sectionsSnapshot, lightSnapshot, Arrays.copyOf(this.biomes, this.biomes.length));
+    return new SimpleChunkSnapshot(this.posX, this.posZ, full, sectionsSnapshot, lightSnapshot,
+        Arrays.copyOf(this.biomes, this.biomes.length), List.copyOf(this.blockEntityEntries));
   }
 
   private static int getBiomeIndex(int posX, int posY, int posZ) {

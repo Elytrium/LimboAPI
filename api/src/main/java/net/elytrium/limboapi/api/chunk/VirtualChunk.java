@@ -8,6 +8,7 @@
 package net.elytrium.limboapi.api.chunk;
 
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.value.qual.IntRange;
@@ -15,6 +16,10 @@ import org.checkerframework.common.value.qual.IntRange;
 public interface VirtualChunk {
 
   void setBlock(int posX, int posY, int posZ, @Nullable VirtualBlock block);
+
+  void setBlockEntity(int posX, int posY, int posZ, @Nullable CompoundBinaryTag nbt, @Nullable VirtualBlockEntity blockEntity);
+
+  void setBlockEntity(VirtualBlockEntity.Entry blockEntityEntry);
 
   @NonNull
   VirtualBlock getBlock(int posX, int posY, int posZ);

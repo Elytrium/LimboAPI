@@ -30,10 +30,12 @@ import java.util.stream.Collectors;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
+import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
 import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
+import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -68,6 +70,11 @@ public class SimpleWorld implements VirtualWorld {
   @Override
   public void setBlock(int posX, int posY, int posZ, @Nullable VirtualBlock block) {
     this.getChunkOrNew(posX, posZ).setBlock(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ), block);
+  }
+
+  @Override
+  public void setBlockEntity(int posX, int posY, int posZ, @Nullable CompoundBinaryTag nbt, @Nullable VirtualBlockEntity blockEntity) {
+    this.getChunkOrNew(posX, posZ).setBlockEntity(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ), nbt, blockEntity);
   }
 
   @NonNull

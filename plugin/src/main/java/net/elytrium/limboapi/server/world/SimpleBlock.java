@@ -175,6 +175,11 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   @Override
+  public String getModernStringID() {
+    return this.modernID;
+  }
+
+  @Override
   public short getID(ProtocolVersion version) {
     return this.getBlockStateID(version);
   }
