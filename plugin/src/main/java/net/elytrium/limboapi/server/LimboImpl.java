@@ -88,6 +88,7 @@ import net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
+import net.elytrium.limboapi.server.world.SimpleTagManager;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
@@ -126,8 +127,9 @@ public class LimboImpl implements Limbo {
   private PreparedPacket fastRejoinPackets;
   private PreparedPacket safeRejoinPackets;
   private List<PreparedPacket> chunks;
-  private PreparedPacket spawnPosition;
+  private PreparedPacket respawnPackets;
   private boolean shouldRespawn = true;
+  private boolean shouldUpdateTags = true;
   private boolean reducedDebugInfo = Settings.IMP.MAIN.REDUCED_DEBUG_INFO;
   private int viewDistance = Settings.IMP.MAIN.VIEW_DISTANCE;
   private int simulationDistance = Settings.IMP.MAIN.SIMULATION_DISTANCE;
@@ -172,7 +174,7 @@ public class LimboImpl implements Limbo {
     this.addPostJoin(this.safeRejoinPackets);
 
     this.chunks = this.createChunksPackets();
-    this.spawnPosition = this.plugin.createPreparedPacket()
+    this.respawnPackets = this.plugin.createPreparedPacket()
         .prepare(
             this.createPlayerPosAndLook(
                 this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
@@ -180,8 +182,13 @@ public class LimboImpl implements Limbo {
         ).prepare(
             this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()),
             ProtocolVersion.MINECRAFT_1_14
-        )
-        .build();
+        );
+
+    if (this.shouldUpdateTags) {
+      this.respawnPackets.prepare(SimpleTagManager::getUpdateTagsPacket, ProtocolVersion.MINECRAFT_1_13);
+    }
+
+    this.respawnPackets.build();
   }
 
   private void addPostJoin(PreparedPacket packet) {
@@ -336,7 +343,7 @@ public class LimboImpl implements Limbo {
   public void respawnPlayer(Player player) {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
-    connection.delayedWrite(this.spawnPosition);
+    connection.delayedWrite(this.respawnPackets);
 
     int packetIndex = 0;
     for (PreparedPacket chunk : this.chunks) {
@@ -396,6 +403,15 @@ public class LimboImpl implements Limbo {
   public Limbo setShouldRespawn(boolean shouldRespawn) {
     this.shouldRespawn = shouldRespawn;
 
+    this.built = false;
+    return this;
+  }
+
+  @Override
+  public Limbo setShouldUpdateTags(boolean shouldUpdateTags) {
+    this.shouldUpdateTags = shouldUpdateTags;
+
+    this.built = false;
     return this;
   }
 
@@ -403,6 +419,7 @@ public class LimboImpl implements Limbo {
   public Limbo setReducedDebugInfo(boolean reducedDebugInfo) {
     this.reducedDebugInfo = reducedDebugInfo;
 
+    this.built = false;
     return this;
   }
 
@@ -410,6 +427,7 @@ public class LimboImpl implements Limbo {
   public Limbo setViewDistance(int viewDistance) {
     this.viewDistance = viewDistance;
 
+    this.built = false;
     return this;
   }
 
@@ -417,6 +435,7 @@ public class LimboImpl implements Limbo {
   public Limbo setSimulationDistance(int simulationDistance) {
     this.simulationDistance = simulationDistance;
 
+    this.built = false;
     return this;
   }
 
@@ -459,7 +478,7 @@ public class LimboImpl implements Limbo {
     this.joinPackets.release();
     this.fastRejoinPackets.release();
     this.safeRejoinPackets.release();
-    this.spawnPosition.release();
+    this.respawnPackets.release();
     this.chunks.forEach(PreparedPacket::release);
   }
 

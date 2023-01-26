@@ -17,9 +17,13 @@
 
 package net.elytrium.limboapi.protocol.packets;
 
+import com.velocitypowered.api.network.ProtocolVersion;
+import java.util.List;
+import java.util.Map;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.api.material.WorldVersion;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 import net.elytrium.limboapi.protocol.packets.s2c.ChangeGameStatePacket;
@@ -31,7 +35,9 @@ import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.SetExperiencePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.SetSlotPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
+import net.elytrium.limboapi.protocol.packets.s2c.UpdateTagsPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
+import net.elytrium.limboapi.server.world.SimpleTagManager;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -96,5 +102,20 @@ public class PacketFactoryImpl implements PacketFactory {
   @Override
   public Object createUpdateViewPositionPacket(int posX, int posZ) {
     return new UpdateViewPositionPacket(posX, posZ);
+  }
+
+  @Override
+  public Object createUpdateTagsPacket(WorldVersion version) {
+    return SimpleTagManager.getUpdateTagsPacket(version);
+  }
+
+  @Override
+  public Object createUpdateTagsPacket(ProtocolVersion version) {
+    return SimpleTagManager.getUpdateTagsPacket(version);
+  }
+
+  @Override
+  public Object createUpdateTagsPacket(Map<String, Map<String, List<Integer>>> tags) {
+    return new UpdateTagsPacket(tags);
   }
 }

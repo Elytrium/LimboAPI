@@ -93,6 +93,7 @@ import net.elytrium.limboapi.server.CachedPackets;
 import net.elytrium.limboapi.server.LimboImpl;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.SimpleItem;
+import net.elytrium.limboapi.server.world.SimpleTagManager;
 import net.elytrium.limboapi.server.world.SimpleWorld;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.elytrium.limboapi.utils.ReloadListener;
@@ -167,10 +168,10 @@ public class LimboAPI implements LimboFactory {
           SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER, maximumProtocolVersionNumber);
       LOGGER.warn("Please update LimboAPI (https://github.com/Elytrium/LimboAPI/releases). LimboAPI support: https://ely.su/discord");
     } else {
-      LOGGER.info("Initializing Simple Virtual Block system...");
+      LOGGER.info("Initializing Simple Virtual World system...");
       SimpleBlock.init();
-      LOGGER.info("Initializing Simple Virtual Item system...");
       SimpleItem.init();
+      SimpleTagManager.init();
       LOGGER.info("Hooking into EventManager, PlayerList/UpsertPlayerInfo and StateRegistry...");
       try {
         EventManagerHook.init(this);
@@ -303,7 +304,7 @@ public class LimboAPI implements LimboFactory {
 
   @Override
   public VirtualBlock createSimpleBlock(short legacyID) {
-    return this.createSimpleBlock(legacyID, false);
+    return SimpleBlock.fromLegacyID(legacyID);
   }
 
   @Override
@@ -312,11 +313,11 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(short legacyID, boolean modern) {
+  public VirtualBlock createSimpleBlock(short id, boolean modern) {
     if (modern) {
-      return SimpleBlock.solid(legacyID);
+      return SimpleBlock.solid(id);
     } else {
-      return SimpleBlock.fromLegacyID(legacyID);
+      return SimpleBlock.fromLegacyID(id);
     }
   }
 
@@ -443,6 +444,16 @@ public class LimboAPI implements LimboFactory {
   @Override
   public VirtualItem getItem(Item item) {
     return SimpleItem.fromItem(item);
+  }
+
+  @Override
+  public VirtualItem getItem(String itemID) {
+    return SimpleItem.fromModernID(itemID);
+  }
+
+  @Override
+  public VirtualItem getLegacyItem(int itemLegacyID) {
+    return SimpleItem.fromLegacyID(itemLegacyID);
   }
 
   @Override

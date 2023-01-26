@@ -52,6 +52,7 @@ import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.SetExperiencePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.SetSlotPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
+import net.elytrium.limboapi.protocol.packets.s2c.UpdateTagsPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
 import net.elytrium.limboapi.utils.OverlayIntObjectMap;
 import net.elytrium.limboapi.utils.OverlayObject2IntMap;
@@ -299,6 +300,18 @@ public class LimboProtocol {
         createMapping(0x48, ProtocolVersion.MINECRAFT_1_19, true),
         createMapping(0x4B, ProtocolVersion.MINECRAFT_1_19_1, true),
         createMapping(0x4A, ProtocolVersion.MINECRAFT_1_19_3, true)
+    );
+    register(PacketDirection.CLIENTBOUND,
+        UpdateTagsPacket.class, UpdateTagsPacket::new,
+        createMapping(0x55, ProtocolVersion.MINECRAFT_1_13, true),
+        createMapping(0x5B, ProtocolVersion.MINECRAFT_1_14, true),
+        createMapping(0x5C, ProtocolVersion.MINECRAFT_1_15, true),
+        createMapping(0x5B, ProtocolVersion.MINECRAFT_1_16, true),
+        createMapping(0x66, ProtocolVersion.MINECRAFT_1_17, true),
+        createMapping(0x67, ProtocolVersion.MINECRAFT_1_18, true),
+        createMapping(0x68, ProtocolVersion.MINECRAFT_1_19, true),
+        createMapping(0x6B, ProtocolVersion.MINECRAFT_1_19_1, true),
+        createMapping(0x6A, ProtocolVersion.MINECRAFT_1_19_3, true)
     );
 
     register(PacketDirection.SERVERBOUND,

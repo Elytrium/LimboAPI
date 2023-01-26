@@ -352,7 +352,12 @@ public enum Item {
     this.id = id;
   }
 
+  @Deprecated
   public int getID() {
+    return this.id;
+  }
+
+  public int getLegacyID() {
     return this.id;
   }
 }
