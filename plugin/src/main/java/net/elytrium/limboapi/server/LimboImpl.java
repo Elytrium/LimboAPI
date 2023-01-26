@@ -129,6 +129,7 @@ public class LimboImpl implements Limbo {
   private List<PreparedPacket> chunks;
   private PreparedPacket respawnPackets;
   private boolean shouldRespawn = true;
+  private boolean shouldUpdateTags = true;
   private boolean reducedDebugInfo = Settings.IMP.MAIN.REDUCED_DEBUG_INFO;
   private int viewDistance = Settings.IMP.MAIN.VIEW_DISTANCE;
   private int simulationDistance = Settings.IMP.MAIN.SIMULATION_DISTANCE;
@@ -181,9 +182,13 @@ public class LimboImpl implements Limbo {
         ).prepare(
             this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()),
             ProtocolVersion.MINECRAFT_1_14
-        )
-        .prepare(SimpleTagManager::getUpdateTagsPacket, ProtocolVersion.MINECRAFT_1_13)
-        .build();
+        );
+
+    if (this.shouldUpdateTags) {
+      this.respawnPackets.prepare(SimpleTagManager::getUpdateTagsPacket, ProtocolVersion.MINECRAFT_1_13);
+    }
+
+    this.respawnPackets.build();
   }
 
   private void addPostJoin(PreparedPacket packet) {
@@ -397,6 +402,14 @@ public class LimboImpl implements Limbo {
   @Override
   public Limbo setShouldRespawn(boolean shouldRespawn) {
     this.shouldRespawn = shouldRespawn;
+
+    this.built = false;
+    return this;
+  }
+
+  @Override
+  public Limbo setShouldUpdateTags(boolean shouldUpdateTags) {
+    this.shouldUpdateTags = shouldUpdateTags;
 
     this.built = false;
     return this;
