@@ -72,17 +72,13 @@ public class NetworkSection {
   public void writeData(ByteBuf buf, int pass, ProtocolVersion version) {
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_9) < 0) {
       BlockStorage storage = this.ensureStorageCreated(version);
-      if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-        this.write17Data(buf, pass, storage);
-      } else {
-        this.write18Data(buf, pass, storage);
-      }
+      this.write17Data(buf, storage, version, pass);
     } else if (pass == 0) {
       BlockStorage storage = this.ensureStorageCreated(version);
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) < 0) {
-        this.write19Data(buf, storage, version);
+        this.write19Data(buf, storage, version, pass);
       } else {
-        this.write114Data(buf, storage, version);
+        this.write114Data(buf, storage, version, pass);
 
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
           this.write118Biomes(buf, version);
@@ -113,11 +109,9 @@ public class NetworkSection {
     }
   }
 
-  private void write17Data(ByteBuf buf, int pass, BlockStorage storage) {
-    if (pass == 0) {
-      storage.write(buf, ProtocolVersion.MINECRAFT_1_7_2);
-    } else if (pass == 1) {
-      storage.write(buf, ProtocolVersion.MINECRAFT_1_7_2);
+  private void write17Data(ByteBuf buf, BlockStorage storage, ProtocolVersion version, int pass) {
+    if (pass == 0 || pass == 1) {
+      storage.write(buf, version, pass);
     } else if (pass == 2) {
       buf.writeBytes(this.blockLight.getData());
     } else if (pass == 3 && this.skyLight != null) {
@@ -125,27 +119,17 @@ public class NetworkSection {
     }
   }
 
-  private void write18Data(ByteBuf buf, int pass, BlockStorage storage) {
-    if (pass == 0) {
-      storage.write(buf, ProtocolVersion.MINECRAFT_1_8);
-    } else if (pass == 1) {
-      buf.writeBytes(this.blockLight.getData());
-    } else if (pass == 2 && this.skyLight != null) {
-      buf.writeBytes(this.skyLight.getData());
-    }
-  }
-
-  private void write19Data(ByteBuf buf, BlockStorage storage, ProtocolVersion version) {
-    storage.write(buf, version);
+  private void write19Data(ByteBuf buf, BlockStorage storage, ProtocolVersion version, int pass) {
+    storage.write(buf, version, pass);
     buf.writeBytes(this.blockLight.getData());
     if (this.skyLight != null) {
       buf.writeBytes(this.skyLight.getData());
     }
   }
 
-  private void write114Data(ByteBuf buf, BlockStorage storage, ProtocolVersion version) {
+  private void write114Data(ByteBuf buf, BlockStorage storage, ProtocolVersion version, int pass) {
     buf.writeShort(this.blockCount);
-    storage.write(buf, version);
+    storage.write(buf, version, pass);
   }
 
   private void write118Biomes(ByteBuf buf, ProtocolVersion version) {

@@ -61,7 +61,7 @@ public class BlockStorage19 implements BlockStorage {
   }
 
   @Override
-  public void write(Object byteBufObject, ProtocolVersion version) {
+  public void write(Object byteBufObject, ProtocolVersion version, int pass) {
     Preconditions.checkArgument(byteBufObject instanceof ByteBuf);
     ByteBuf buf = (ByteBuf) byteBufObject;
     buf.writeByte(this.storage.getBitsPerEntry());
