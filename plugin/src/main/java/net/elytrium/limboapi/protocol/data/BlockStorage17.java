@@ -32,8 +32,6 @@ public class BlockStorage17 implements BlockStorage {
 
   private final VirtualBlock[] blocks;
 
-  private int pass;
-
   public BlockStorage17() {
     this(new VirtualBlock[SimpleChunk.MAX_BLOCKS_PER_SECTION]);
   }
@@ -43,10 +41,10 @@ public class BlockStorage17 implements BlockStorage {
   }
 
   @Override
-  public void write(Object byteBufObject, ProtocolVersion version) {
+  public void write(Object byteBufObject, ProtocolVersion version, int pass) {
     Preconditions.checkArgument(byteBufObject instanceof ByteBuf);
     ByteBuf buf = (ByteBuf) byteBufObject;
-    if (this.pass == 0) {
+    if (pass == 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
         byte[] raw = new byte[this.blocks.length];
         for (int i = 0; i < this.blocks.length; ++i) {
@@ -66,9 +64,7 @@ public class BlockStorage17 implements BlockStorage {
           buf.writeShortLE(s);
         }
       }
-
-      ++this.pass;
-    } else if (this.pass == 1) {
+    } else if (pass == 1 && version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       NibbleArray3D metadata = new NibbleArray3D(SimpleChunk.MAX_BLOCKS_PER_SECTION);
       for (int i = 0; i < this.blocks.length; ++i) {
         VirtualBlock block = this.blocks[i];
@@ -76,7 +72,6 @@ public class BlockStorage17 implements BlockStorage {
       }
 
       buf.writeBytes(metadata.getData());
-      this.pass = 0;
     }
   }
 
@@ -106,7 +101,6 @@ public class BlockStorage17 implements BlockStorage {
   public String toString() {
     return "BlockStorage17{"
         + "blocks=" + Arrays.toString(this.blocks)
-        + ", pass=" + this.pass
         + "}";
   }
 }
