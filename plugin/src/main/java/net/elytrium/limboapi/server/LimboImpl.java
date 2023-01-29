@@ -60,6 +60,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -126,7 +127,8 @@ public class LimboImpl implements Limbo {
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
   private PreparedPacket safeRejoinPackets;
-  private List<PreparedPacket> chunks;
+  private PreparedPacket firstChunks;
+  private List<PreparedPacket> delayedChunks;
   private PreparedPacket respawnPackets;
   private boolean shouldRespawn = true;
   private boolean shouldUpdateTags = true;
@@ -173,7 +175,8 @@ public class LimboImpl implements Limbo {
     this.addPostJoin(this.fastRejoinPackets);
     this.addPostJoin(this.safeRejoinPackets);
 
-    this.chunks = this.createChunksPackets();
+    this.firstChunks = this.createFirstChunks();
+    this.delayedChunks = this.createDelayedChunksPackets();
     this.respawnPackets = this.plugin.createPreparedPacket()
         .prepare(
             this.createPlayerPosAndLook(
@@ -344,15 +347,13 @@ public class LimboImpl implements Limbo {
     MinecraftConnection connection = ((ConnectedPlayer) player).getConnection();
 
     connection.delayedWrite(this.respawnPackets);
-
-    int packetIndex = 0;
-    for (PreparedPacket chunk : this.chunks) {
-      connection.eventLoop().schedule(() -> connection.write(chunk), (++packetIndex) * 50L, TimeUnit.MILLISECONDS);
+    if (this.firstChunks != null) {
+      connection.write(this.firstChunks);
     }
 
-    // We should send first chunks without scheduling
-    if (this.chunks.size() != 0) {
-      connection.write(this.chunks.get(0));
+    int packetIndex = 0;
+    for (PreparedPacket chunk : this.delayedChunks) {
+      connection.eventLoop().schedule(() -> connection.write(chunk), (++packetIndex) * 50L, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -479,7 +480,8 @@ public class LimboImpl implements Limbo {
     this.fastRejoinPackets.release();
     this.safeRejoinPackets.release();
     this.respawnPackets.release();
-    this.chunks.forEach(PreparedPacket::release);
+    this.firstChunks.release();
+    this.delayedChunks.forEach(PreparedPacket::release);
   }
 
   // From Velocity.
@@ -582,9 +584,27 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private List<PreparedPacket> createChunksPackets() {
+  private PreparedPacket createFirstChunks() {
+    PreparedPacket packet = this.plugin.createPreparedPacket();
     List<List<VirtualChunk>> orderedChunks = this.world.getOrderedChunks();
-    if (orderedChunks.size() == 0) {
+
+    int chunkCounter = 0;
+    for (List<VirtualChunk> chunksWithSameDistance : orderedChunks) {
+      if (++chunkCounter > Settings.IMP.MAIN.CHUNK_RADIUS_SEND_ON_SPAWN) {
+        break;
+      }
+
+      for (VirtualChunk chunk : chunksWithSameDistance) {
+        packet.prepare(this.createChunkData(chunk, this.world.getDimension()));
+      }
+    }
+
+    return packet.build();
+  }
+
+  private List<PreparedPacket> createDelayedChunksPackets() {
+    List<List<VirtualChunk>> orderedChunks = this.world.getOrderedChunks();
+    if (orderedChunks.size() <= Settings.IMP.MAIN.CHUNK_RADIUS_SEND_ON_SPAWN) {
       return List.of();
     }
 
@@ -592,11 +612,17 @@ public class LimboImpl implements Limbo {
     PreparedPacket packet = this.plugin.createPreparedPacket();
     int chunkCounter = 0;
 
-    for (List<VirtualChunk> chunksWithSameDistance : orderedChunks) {
-      for (VirtualChunk chunk : chunksWithSameDistance) {
+    Iterator<List<VirtualChunk>> distanceIterator = orderedChunks.listIterator();
+    for (int i = 0; i < Settings.IMP.MAIN.CHUNK_RADIUS_SEND_ON_SPAWN; i++) {
+      distanceIterator.next();
+    }
+
+    while (distanceIterator.hasNext()) {
+      for (VirtualChunk chunk : distanceIterator.next()) {
         if (++chunkCounter > Settings.IMP.MAIN.CHUNKS_PER_TICK) {
           packets.add(packet.build());
           packet = this.plugin.createPreparedPacket();
+          chunkCounter = 0;
         }
 
         packet.prepare(this.createChunkData(chunk, this.world.getDimension()));

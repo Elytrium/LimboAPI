@@ -95,8 +95,18 @@ public class Settings extends YamlConfig {
 
     public int SIMULATION_DISTANCE = 9;
 
+    @Comment({
+        "How many chunks we should send when a player spawns.",
+        " 0 = send no chunks on spawn.",
+        " 1 = send only the spawn chunk.",
+        " 2 = send the spawn chunk and chunks next to the spawn chunk.",
+        " 3 = send the spawn chunk, chunks next to the spawn chunk and next to these chunks.",
+        " and so on.."
+    })
+    public int CHUNK_RADIUS_SEND_ON_SPAWN = 2;
+
     @Comment("How many chunks we should send per tick")
-    public int CHUNKS_PER_TICK = 8;
+    public int CHUNKS_PER_TICK = 16;
 
     @Create
     public MESSAGES MESSAGES;

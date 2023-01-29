@@ -205,4 +205,12 @@ public class SimpleChunk implements VirtualChunk {
   private static int getSectionIndex(int posY) {
     return posY >> 4;
   }
+
+  @Override
+  public String toString() {
+    return "SimpleChunk{"
+        + "posX=" + this.posX
+        + ", posZ=" + this.posZ
+        + '}';
+  }
 }

@@ -48,9 +48,7 @@ public class SimpleTagManager {
         LinkedTreeMap.class
     );
 
-    fluids.forEach((id, protocolId) -> {
-      FLUIDS.put(id, Integer.valueOf(protocolId));
-    });
+    fluids.forEach((id, protocolId) -> FLUIDS.put(id, Integer.valueOf(protocolId)));
 
     LinkedTreeMap<String, LinkedTreeMap<String, List<String>>> tags = gson.fromJson(
         new InputStreamReader(
@@ -82,7 +80,9 @@ public class SimpleTagManager {
         case "minecraft:block": {
           defaultTagList.forEach((tagName, blockList) ->
               tagList.put(tagName, blockList.stream()
-                  .map(e -> (int) SimpleBlock.fromModernID(e, Map.of()).getBlockID(version))
+                  .map(e -> SimpleBlock.fromModernID(e, Map.of()))
+                  .filter(e -> e.isSupportedOn(version))
+                  .map(e -> (int) e.getBlockID(version))
                   .collect(Collectors.toList())));
           break;
         }

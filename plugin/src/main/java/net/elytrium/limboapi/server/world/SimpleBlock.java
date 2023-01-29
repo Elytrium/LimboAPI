@@ -186,12 +186,22 @@ public class SimpleBlock implements VirtualBlock {
 
   @Override
   public short getBlockID(WorldVersion version) {
-    return LEGACY_BLOCK_IDS_MAP.get(this.blockID).getOrDefault(version, this.blockID);
+    return LEGACY_BLOCK_IDS_MAP.get(this.blockID).get(version);
   }
 
   @Override
   public short getBlockID(ProtocolVersion version) {
     return this.getBlockID(WorldVersion.from(version));
+  }
+
+  @Override
+  public boolean isSupportedOn(WorldVersion version) {
+    return LEGACY_BLOCK_IDS_MAP.get(this.blockID).containsKey(version);
+  }
+
+  @Override
+  public boolean isSupportedOn(ProtocolVersion version) {
+    return this.isSupportedOn(WorldVersion.from(version));
   }
 
   @Override

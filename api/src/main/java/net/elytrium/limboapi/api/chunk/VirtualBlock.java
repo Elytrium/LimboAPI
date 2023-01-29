@@ -23,6 +23,10 @@ public interface VirtualBlock {
 
   short getBlockID(ProtocolVersion version);
 
+  boolean isSupportedOn(ProtocolVersion version);
+
+  boolean isSupportedOn(WorldVersion version);
+
   short getBlockStateID(ProtocolVersion version);
 
   boolean isSolid();
