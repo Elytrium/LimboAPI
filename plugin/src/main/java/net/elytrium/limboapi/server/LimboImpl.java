@@ -101,6 +101,7 @@ public class LimboImpl implements Limbo {
   private static final MethodHandle PARTIAL_HASHED_SEED_FIELD;
   private static final MethodHandle CURRENT_DIMENSION_DATA_FIELD;
   private static final MethodHandle ROOT_NODE_FIELD;
+  private static final MethodHandle GRACEFUL_DISCONNECT_FIELD;
 
   private static final CompoundBinaryTag CHAT_TYPE_119;
   private static final CompoundBinaryTag CHAT_TYPE_1191;
@@ -127,10 +128,12 @@ public class LimboImpl implements Limbo {
   private PreparedPacket joinPackets;
   private PreparedPacket fastRejoinPackets;
   private PreparedPacket safeRejoinPackets;
+  private PreparedPacket postJoinPackets;
   private PreparedPacket firstChunks;
   private List<PreparedPacket> delayedChunks;
   private PreparedPacket respawnPackets;
   private boolean shouldRespawn = true;
+  private boolean shouldRejoin = true;
   private boolean shouldUpdateTags = true;
   private boolean reducedDebugInfo = Settings.IMP.MAIN.REDUCED_DEBUG_INFO;
   private int viewDistance = Settings.IMP.MAIN.VIEW_DISTANCE;
@@ -167,13 +170,14 @@ public class LimboImpl implements Limbo {
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2, ProtocolVersion.MINECRAFT_1_19));
     this.createFastClientServerSwitch(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_1));
-    this.fastRejoinPackets.build();
 
-    this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame)).build();
+    this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
+    this.postJoinPackets = this.plugin.createPreparedPacket();
 
     this.addPostJoin(this.joinPackets);
     this.addPostJoin(this.fastRejoinPackets);
     this.addPostJoin(this.safeRejoinPackets);
+    this.addPostJoin(this.postJoinPackets);
 
     this.firstChunks = this.createFirstChunks();
     this.delayedChunks = this.createDelayedChunksPackets();
@@ -210,53 +214,85 @@ public class LimboImpl implements Limbo {
 
     ConnectedPlayer player = (ConnectedPlayer) apiPlayer;
     MinecraftConnection connection = player.getConnection();
-    Class<? extends LimboSessionHandler> handlerClass = handler.getClass();
-    if (this.limboName == null) {
-      this.limboName = handlerClass.getSimpleName();
+
+    boolean shouldSpawnPlayerImmediately = true;
+
+    if (connection.getState() != LimboProtocol.getLimboStateRegistry()) {
+      connection.eventLoop().execute(() -> connection.setState(LimboProtocol.getLimboStateRegistry()));
+      VelocityServerConnection server = player.getConnectedServer();
+      if (server != null) {
+        RegisteredServer previousServer = server.getServer();
+        MinecraftConnection serverConnection = server.getConnection();
+        if (serverConnection != null) {
+          try {
+            GRACEFUL_DISCONNECT_FIELD.invokeExact(server, true);
+          } catch (Throwable e) {
+            throw new ReflectionException(e);
+          }
+
+          connection.eventLoop().execute(() ->
+              serverConnection.getChannel().close().addListener(f -> this.spawnPlayerLocal(player, handler, previousServer)));
+          shouldSpawnPlayerImmediately = false;
+        }
+
+        player.setConnectedServer(null);
+        this.plugin.setLimboJoined(player);
+      }
     }
 
+    if (shouldSpawnPlayerImmediately) {
+      this.spawnPlayerLocal(player, handler, null);
+    }
+  }
+
+  private void spawnPlayerLocal(ConnectedPlayer player, LimboSessionHandler handler, RegisteredServer previousServer) {
+    MinecraftConnection connection = player.getConnection();
     connection.eventLoop().execute(() -> {
+      connection.flush();
+
       ChannelPipeline pipeline = connection.getChannel().pipeline();
+      Class<? extends LimboSessionHandler> handlerClass = handler.getClass();
+      if (this.limboName == null) {
+        this.limboName = handlerClass.getSimpleName();
+      }
 
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
         LimboAPI.getLogger().info(player.getUsername() + " (" + player.getRemoteAddress() + ") has connected to the " + this.limboName + " Limbo");
       }
 
-      if (pipeline.get(LimboProtocol.PREPARED_ENCODER) == null) {
-        // With an abnormally large number of connections from the same nickname,
-        // requests don't have time to be processed, and an error occurs that "minecraft-encoder" doesn't exist.
-        if (pipeline.get(Connections.MINECRAFT_ENCODER) != null) {
-          if (this.readTimeout != null) {
-            pipeline.replace(Connections.READ_TIMEOUT, LimboProtocol.READ_TIMEOUT, new ReadTimeoutHandler(this.readTimeout, TimeUnit.MILLISECONDS));
-          }
-
-          boolean compressionEnabled = false;
-
-          if (pipeline.get(PreparedPacketFactory.PREPARED_ENCODER) == null) {
-            if (this.plugin.isCompressionEnabled() && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
-              if (pipeline.get(Connections.FRAME_ENCODER) != null) {
-                pipeline.remove(Connections.FRAME_ENCODER);
-              } else {
-                ChannelHandler minecraftCompressDecoder = pipeline.remove(Connections.COMPRESSION_DECODER);
-                if (minecraftCompressDecoder != null) {
-                  this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
-                  pipeline.replace(Connections.COMPRESSION_ENCODER, Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
-                  compressionEnabled = true;
-                }
-              }
-            } else {
-              pipeline.remove(Connections.FRAME_ENCODER);
-            }
-
-            this.plugin.inject3rdParty(player, connection, pipeline);
-            if (compressionEnabled) {
-              pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_ENABLED);
-            }
-          }
-        } else {
-          connection.close();
-          return;
+      // With an abnormally large number of connections from the same nickname,
+      // requests don't have time to be processed, and an error occurs that "minecraft-encoder" doesn't exist.
+      if (pipeline.get(Connections.MINECRAFT_ENCODER) != null) {
+        if (this.readTimeout != null) {
+          pipeline.replace(Connections.READ_TIMEOUT, LimboProtocol.READ_TIMEOUT, new ReadTimeoutHandler(this.readTimeout, TimeUnit.MILLISECONDS));
         }
+
+        boolean compressionEnabled = false;
+
+        if (pipeline.get(PreparedPacketFactory.PREPARED_ENCODER) == null) {
+          if (this.plugin.isCompressionEnabled() && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
+            if (pipeline.get(Connections.FRAME_ENCODER) != null) {
+              pipeline.remove(Connections.FRAME_ENCODER);
+            } else {
+              ChannelHandler minecraftCompressDecoder = pipeline.remove(Connections.COMPRESSION_DECODER);
+              if (minecraftCompressDecoder != null) {
+                this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
+                pipeline.replace(Connections.COMPRESSION_ENCODER, Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
+                compressionEnabled = true;
+              }
+            }
+          } else {
+            pipeline.remove(Connections.FRAME_ENCODER);
+          }
+
+          this.plugin.inject3rdParty(player, connection, pipeline);
+          if (compressionEnabled) {
+            pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_ENABLED);
+          }
+        }
+      } else {
+        connection.close();
+        return;
       }
 
       if (this.maxSuppressPacketLength != null) {
@@ -266,23 +302,15 @@ public class LimboImpl implements Limbo {
         }
       }
 
-      RegisteredServer previousServer = null;
-      if (connection.getState() != LimboProtocol.getLimboStateRegistry()) {
-        connection.setState(LimboProtocol.getLimboStateRegistry());
-        VelocityServerConnection server = player.getConnectedServer();
-        if (server != null) {
-          server.disconnect();
-          player.setConnectedServer(null);
-          previousServer = server.getServer();
-          this.plugin.setLimboJoined(player);
-        }
-      }
-
       if (this.plugin.isLimboJoined(player)) {
-        if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
-          connection.delayedWrite(this.safeRejoinPackets);
+        if (this.shouldRejoin) {
+          if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
+            connection.delayedWrite(this.safeRejoinPackets);
+          } else {
+            connection.delayedWrite(this.fastRejoinPackets);
+          }
         } else {
-          connection.delayedWrite(this.fastRejoinPackets);
+          connection.delayedWrite(this.postJoinPackets);
         }
       } else {
         connection.delayedWrite(this.joinPackets);
@@ -395,6 +423,14 @@ public class LimboImpl implements Limbo {
   @Override
   public Limbo setGameMode(GameMode gameMode) {
     this.gameMode = gameMode.getID();
+
+    this.built = false;
+    return this;
+  }
+
+  @Override
+  public Limbo setShouldRejoin(boolean shouldRejoin) {
+    this.shouldRejoin = shouldRejoin;
 
     this.built = false;
     return this;
@@ -728,6 +764,8 @@ public class LimboImpl implements Limbo {
           .findSetter(JoinGame.class, "currentDimensionData", DimensionData.class);
       ROOT_NODE_FIELD = MethodHandles.privateLookupIn(AvailableCommands.class, MethodHandles.lookup())
           .findSetter(AvailableCommands.class, "rootNode", RootCommandNode.class);
+      GRACEFUL_DISCONNECT_FIELD = MethodHandles.privateLookupIn(VelocityServerConnection.class, MethodHandles.lookup())
+          .findSetter(VelocityServerConnection.class, "gracefulDisconnect", boolean.class);
       CHAT_TYPE_119 = CompoundBinaryTag.builder()
           .put("type", StringBinaryTag.of("minecraft:chat_type"))
           .put(

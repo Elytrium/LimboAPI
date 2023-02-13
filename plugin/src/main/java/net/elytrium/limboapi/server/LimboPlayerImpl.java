@@ -263,15 +263,17 @@ public class LimboPlayerImpl implements LimboPlayer {
   public void disconnect() {
     LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
     if (handler != null) {
-      handler.disconnected();
-
       if (this.plugin.hasLoginQueue(this.player)) {
+        handler.disconnected();
         this.plugin.getLoginQueue(this.player).next();
       } else {
         RegisteredServer server = handler.getPreviousServer();
         if (server != null) {
           this.deject();
+          handler.disconnected();
           this.sendToRegisteredServer(server);
+        } else {
+          handler.disconnected();
         }
       }
     }
@@ -281,12 +283,12 @@ public class LimboPlayerImpl implements LimboPlayer {
   public void disconnect(RegisteredServer server) {
     LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
     if (handler != null) {
-      handler.disconnected();
-
       if (this.plugin.hasLoginQueue(this.player)) {
+        handler.disconnected();
         this.plugin.setNextServer(this.player, server);
       } else {
         this.deject();
+        handler.disconnected();
         this.sendToRegisteredServer(server);
       }
     }

@@ -65,7 +65,6 @@ public class LimboProtocol {
   private static final MethodHandle REGISTER_METHOD;
   private static final MethodHandle PACKET_MAPPING_CONSTRUCTOR;
 
-  public static final String PREPARED_ENCODER = "prepared-encoder";
   public static final String READ_TIMEOUT = "limboapi-read-timeout";
 
   public static final Field VERSIONS_FIELD;
