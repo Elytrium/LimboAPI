@@ -29,6 +29,8 @@ public interface Limbo {
 
   Limbo setGameMode(GameMode gameMode);
 
+  Limbo setShouldRejoin(boolean shouldRejoin);
+
   Limbo setShouldRespawn(boolean shouldRespawn);
 
   Limbo setShouldUpdateTags(boolean shouldUpdateTags);
