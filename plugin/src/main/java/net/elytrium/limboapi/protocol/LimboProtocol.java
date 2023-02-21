@@ -19,7 +19,6 @@ package net.elytrium.limboapi.protocol;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
-import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
@@ -123,7 +122,7 @@ public class LimboProtocol {
 
     Field directionField = StateRegistry.PacketRegistry.class.getDeclaredField("direction");
     directionField.setAccessible(true);
-    directionField.set(registry, ProtocolUtils.Direction.valueOf(registryName.toUpperCase()));
+    directionField.set(registry, directionField.get(playRegistry));
 
     Field versionField = StateRegistry.PacketRegistry.ProtocolRegistry.class.getDeclaredField("version");
     versionField.setAccessible(true);
