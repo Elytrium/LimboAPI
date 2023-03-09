@@ -150,5 +150,11 @@
   "minecraft:trapped_chest": {
     "1.19": "2",
     "legacy": "2"
+  },
+  "minecraft:suspicious_sand": {
+    "1.19": "38"
+  },
+  "minecraft:decorated_pot": {
+    "1.19": "39"
   }
 }

@@ -55,6 +55,16 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
   }
 
   @Override
+  public boolean isSupportedOn(ProtocolVersion version) {
+    return this.versionIDs.containsKey(BlockEntityVersion.from(version));
+  }
+
+  @Override
+  public boolean isSupportedOn(BlockEntityVersion version) {
+    return this.versionIDs.containsKey(version);
+  }
+
+  @Override
   public String getModernID() {
     return this.modernId;
   }
@@ -130,6 +140,16 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
     @Override
     public int getID(BlockEntityVersion version) {
       return SimpleBlockEntity.this.getID(version);
+    }
+
+    @Override
+    public boolean isSupportedOn(ProtocolVersion version) {
+      return SimpleBlockEntity.this.isSupportedOn(version);
+    }
+
+    @Override
+    public boolean isSupportedOn(BlockEntityVersion version) {
+      return SimpleBlockEntity.this.isSupportedOn(version);
     }
   }
 }
