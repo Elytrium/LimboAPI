@@ -16,6 +16,10 @@ public interface VirtualBlockEntity {
 
   int getID(BlockEntityVersion version);
 
+  boolean isSupportedOn(ProtocolVersion version);
+
+  boolean isSupportedOn(BlockEntityVersion version);
+
   String getModernID();
 
   Entry getEntry(int posX, int posY, int posZ, CompoundBinaryTag nbt);
@@ -35,5 +39,9 @@ public interface VirtualBlockEntity {
     int getID(ProtocolVersion version);
 
     int getID(BlockEntityVersion version);
+
+    boolean isSupportedOn(ProtocolVersion version);
+
+    boolean isSupportedOn(BlockEntityVersion version);
   }
 }

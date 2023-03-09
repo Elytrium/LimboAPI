@@ -2847,6 +2847,10 @@
       "minecraft:warped_door",
       "minecraft:crimson_sign",
       "minecraft:warped_sign"
+    ],
+    "minecraft:smelts_to_glass": [
+      "minecraft:sand",
+      "minecraft:red_sand"
     ]
   },
   "minecraft:entity_type": {
@@ -2860,7 +2864,9 @@
     "minecraft:impact_projectiles": [],
     "minecraft:powder_snow_walkable_mobs": [],
     "minecraft:raiders": [],
-    "minecraft:skeletons": []
+    "minecraft:skeletons": [],
+    "minecraft:dismounts_underwater": [],
+    "minecraft:fall_damage_immune": []
   },
   "minecraft:fluid": {
     "minecraft:lava": [
@@ -3852,6 +3858,83 @@
       "minecraft:green_wool",
       "minecraft:red_wool",
       "minecraft:black_wool"
+    ],
+    "minecraft:axes": [
+      "minecraft:diamond_axe",
+      "minecraft:stone_axe",
+      "minecraft:golden_axe",
+      "minecraft:netherite_axe",
+      "minecraft:wooden_axe",
+      "minecraft:iron_axe"
+    ],
+    "minecraft:hoes": [
+      "minecraft:diamond_hoe",
+      "minecraft:stone_hoe",
+      "minecraft:golden_hoe",
+      "minecraft:netherite_hoe",
+      "minecraft:wooden_hoe",
+      "minecraft:iron_hoe"
+    ],
+    "minecraft:pickaxes": [
+      "minecraft:diamond_pickaxe",
+      "minecraft:stone_pickaxe",
+      "minecraft:golden_pickaxe",
+      "minecraft:netherite_pickaxe",
+      "minecraft:wooden_pickaxe",
+      "minecraft:iron_pickaxe"
+    ],
+    "minecraft:shovels": [
+      "minecraft:diamond_shovel",
+      "minecraft:stone_shovel",
+      "minecraft:golden_shovel",
+      "minecraft:netherite_shovel",
+      "minecraft:wooden_shovel",
+      "minecraft:iron_shovel"
+    ],
+    "minecraft:smelts_to_glass": [
+      "minecraft:sand",
+      "minecraft:red_sand"
+    ],
+    "minecraft:swords": [
+      "minecraft:diamond_sword",
+      "minecraft:stone_sword",
+      "minecraft:golden_sword",
+      "minecraft:netherite_sword",
+      "minecraft:wooden_sword",
+      "minecraft:iron_sword"
+    ],
+    "minecraft:tools": [
+      "minecraft:diamond_sword",
+      "minecraft:stone_sword",
+      "minecraft:golden_sword",
+      "minecraft:netherite_sword",
+      "minecraft:wooden_sword",
+      "minecraft:iron_sword",
+      "minecraft:diamond_axe",
+      "minecraft:stone_axe",
+      "minecraft:golden_axe",
+      "minecraft:netherite_axe",
+      "minecraft:wooden_axe",
+      "minecraft:iron_axe",
+      "minecraft:diamond_pickaxe",
+      "minecraft:stone_pickaxe",
+      "minecraft:golden_pickaxe",
+      "minecraft:netherite_pickaxe",
+      "minecraft:wooden_pickaxe",
+      "minecraft:iron_pickaxe",
+      "minecraft:diamond_shovel",
+      "minecraft:stone_shovel",
+      "minecraft:golden_shovel",
+      "minecraft:netherite_shovel",
+      "minecraft:wooden_shovel",
+      "minecraft:iron_shovel",
+      "minecraft:diamond_hoe",
+      "minecraft:stone_hoe",
+      "minecraft:golden_hoe",
+      "minecraft:netherite_hoe",
+      "minecraft:wooden_hoe",
+      "minecraft:iron_hoe",
+      "minecraft:trident"
     ]
   }
 }

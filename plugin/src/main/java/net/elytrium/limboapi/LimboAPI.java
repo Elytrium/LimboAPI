@@ -32,7 +32,6 @@ import com.velocitypowered.natives.compression.VelocityCompressor;
 import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
-import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
@@ -125,7 +124,7 @@ import org.slf4j.Logger;
 public class LimboAPI implements LimboFactory {
 
   private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_MAP = new HashMap<>();
-  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 761;
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 762;
 
   @MonotonicNonNull
   private static Logger LOGGER;
@@ -166,31 +165,31 @@ public class LimboAPI implements LimboFactory {
     this.nextServer = new HashMap<>();
     this.initialID = new HashMap<>();
 
-    boolean temp761VelocityUpdateFlag = InitialConnectSessionHandler.class.getDeclaredConstructors()[0].getParameterCount() != 2;
     int maximumProtocolVersionNumber = ProtocolVersion.MAXIMUM_VERSION.getProtocol();
-    if (temp761VelocityUpdateFlag || maximumProtocolVersionNumber < SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
+    if (maximumProtocolVersionNumber < SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
       LOGGER.error("Please update Velocity (https://papermc.io/downloads#Velocity). LimboAPI support: https://ely.su/discord");
       this.server.shutdown();
+      return;
     } else if (maximumProtocolVersionNumber != SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
       LOGGER.warn("Current LimboAPI version doesn't support current Velocity version (protocol version numbers: supported - {}, velocity - {})",
           SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER, maximumProtocolVersionNumber);
       LOGGER.warn("Please update LimboAPI (https://github.com/Elytrium/LimboAPI/releases). LimboAPI support: https://ely.su/discord");
-    } else {
-      LOGGER.info("Initializing Simple Virtual World system...");
-      SimpleBlock.init();
-      SimpleBlockEntity.init();
-      SimpleItem.init();
-      SimpleTagManager.init();
-      LOGGER.info("Hooking into EventManager, PlayerList/UpsertPlayerInfo and StateRegistry...");
-      try {
-        EventManagerHook.init(this);
-        LegacyPlayerListItemHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
-        UpsertPlayerInfoHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
+    }
 
-        LimboProtocol.init();
-      } catch (Throwable e) {
-        throw new ReflectionException(e);
-      }
+    LOGGER.info("Initializing Simple Virtual World system...");
+    SimpleBlock.init();
+    SimpleBlockEntity.init();
+    SimpleItem.init();
+    SimpleTagManager.init();
+    LOGGER.info("Hooking into EventManager, PlayerList/UpsertPlayerInfo and StateRegistry...");
+    try {
+      EventManagerHook.init(this);
+      LegacyPlayerListItemHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
+      UpsertPlayerInfoHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
+
+      LimboProtocol.init();
+    } catch (Throwable e) {
+      throw new ReflectionException(e);
     }
   }
 

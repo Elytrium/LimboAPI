@@ -75,7 +75,7 @@ public class PositionRotationPacket implements MinecraftPacket {
         ProtocolUtils.writeVarInt(buf, this.teleportID);
       }
 
-      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
+      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0 && protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_19_3) <= 0) {
         buf.writeBoolean(this.dismountVehicle);
       }
     }
