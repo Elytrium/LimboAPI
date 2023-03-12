@@ -520,6 +520,82 @@
     "conditional": "false",
     "facing": "north"
   },
+  "minecraft:cherry_button": {
+    "face": "wall",
+    "facing": "north",
+    "powered": "false"
+  },
+  "minecraft:cherry_door": {
+    "facing": "north",
+    "half": "lower",
+    "hinge": "left",
+    "open": "false",
+    "powered": "false"
+  },
+  "minecraft:cherry_fence": {
+    "east": "false",
+    "north": "false",
+    "south": "false",
+    "waterlogged": "false",
+    "west": "false"
+  },
+  "minecraft:cherry_fence_gate": {
+    "facing": "north",
+    "in_wall": "false",
+    "open": "false",
+    "powered": "false"
+  },
+  "minecraft:cherry_hanging_sign": {
+    "attached": "false",
+    "rotation": "0",
+    "waterlogged": "false"
+  },
+  "minecraft:cherry_leaves": {
+    "distance": "7",
+    "persistent": "false",
+    "waterlogged": "false"
+  },
+  "minecraft:cherry_log": {
+    "axis": "y"
+  },
+  "minecraft:cherry_pressure_plate": {
+    "powered": "false"
+  },
+  "minecraft:cherry_sapling": {
+    "stage": "0"
+  },
+  "minecraft:cherry_sign": {
+    "rotation": "0",
+    "waterlogged": "false"
+  },
+  "minecraft:cherry_slab": {
+    "type": "bottom",
+    "waterlogged": "false"
+  },
+  "minecraft:cherry_stairs": {
+    "facing": "north",
+    "half": "bottom",
+    "shape": "straight",
+    "waterlogged": "false"
+  },
+  "minecraft:cherry_trapdoor": {
+    "facing": "north",
+    "half": "bottom",
+    "open": "false",
+    "powered": "false",
+    "waterlogged": "false"
+  },
+  "minecraft:cherry_wall_hanging_sign": {
+    "facing": "north",
+    "waterlogged": "false"
+  },
+  "minecraft:cherry_wall_sign": {
+    "facing": "north",
+    "waterlogged": "false"
+  },
+  "minecraft:cherry_wood": {
+    "axis": "y"
+  },
   "minecraft:chest": {
     "type": "single",
     "facing": "north",
@@ -869,6 +945,10 @@
   "minecraft:dead_tube_coral_wall_fan": {
     "facing": "north",
     "waterlogged": "true"
+  },
+  "minecraft:decorated_pot": {
+    "facing": "north",
+    "waterlogged": "false"
   },
   "minecraft:deepslate": {
     "axis": "y"
@@ -1792,6 +1872,10 @@
   "minecraft:pink_glazed_terracotta": {
     "facing": "north"
   },
+  "minecraft:pink_petals": {
+    "facing": "north",
+    "flower_amount": "1"
+  },
   "minecraft:pink_shulker_box": {
     "facing": "up"
   },
@@ -2394,6 +2478,12 @@
   "minecraft:stripped_birch_wood": {
     "axis": "y"
   },
+  "minecraft:stripped_cherry_log": {
+    "axis": "y"
+  },
+  "minecraft:stripped_cherry_wood": {
+    "axis": "y"
+  },
   "minecraft:stripped_crimson_hyphae": {
     "axis": "y"
   },
@@ -2445,6 +2535,9 @@
   "minecraft:sunflower": {
     "half": "lower"
   },
+  "minecraft:suspicious_sand": {
+    "dusted": "0"
+  },
   "minecraft:sweet_berry_bush": {
     "age": "0"
   },
@@ -2459,6 +2552,9 @@
   },
   "minecraft:tnt": {
     "unstable": "false"
+  },
+  "minecraft:torchflower_crop": {
+    "age": "0"
   },
   "minecraft:trapped_chest": {
     "type": "single",
