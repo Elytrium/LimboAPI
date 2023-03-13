@@ -32,6 +32,7 @@ import com.velocitypowered.natives.compression.VelocityCompressor;
 import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
@@ -484,7 +485,11 @@ public class LimboAPI implements LimboFactory {
   }
 
   public void setLimboJoined(Player player) {
-    this.players.add(player);
+    if (!this.isLimboJoined(player)) {
+      ConnectedPlayer connectedPlayer = (ConnectedPlayer) player;
+      connectedPlayer.getPhase().onFirstJoin(connectedPlayer);
+      this.players.add(player);
+    }
   }
 
   public void unsetLimboJoined(Player player) {
