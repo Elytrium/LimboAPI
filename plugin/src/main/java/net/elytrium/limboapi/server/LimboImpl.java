@@ -54,6 +54,8 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
@@ -64,6 +66,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
@@ -90,10 +93,9 @@ import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
 import net.elytrium.limboapi.server.world.SimpleTagManager;
+import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
-import net.kyori.adventure.nbt.IntBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
-import net.kyori.adventure.nbt.StringBinaryTag;
 import net.kyori.adventure.text.Component;
 
 public class LimboImpl implements Limbo {
@@ -102,9 +104,11 @@ public class LimboImpl implements Limbo {
   private static final MethodHandle CURRENT_DIMENSION_DATA_FIELD;
   private static final MethodHandle ROOT_NODE_FIELD;
   private static final MethodHandle GRACEFUL_DISCONNECT_FIELD;
+  private static final MethodHandle ORIGINAL_REGISTRY_CONTAINER_FIELD;
 
   private static final CompoundBinaryTag CHAT_TYPE_119;
   private static final CompoundBinaryTag CHAT_TYPE_1191;
+  private static final CompoundBinaryTag DAMAGE_TYPE_1194;
 
   private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
   private final LimboAPI plugin;
@@ -151,15 +155,17 @@ public class LimboImpl implements Limbo {
   protected void refresh() {
     this.built = true;
     JoinGame legacyJoinGame = this.createLegacyJoinGamePacket();
-    JoinGame joinGame = this.createJoinGamePacket(false, CHAT_TYPE_119);
-    JoinGame joinGameModern = this.createJoinGamePacket(true, CHAT_TYPE_119);
-    JoinGame joinGame1191 = this.createJoinGamePacket(true, CHAT_TYPE_1191);
+    JoinGame joinGame = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_16);
+    JoinGame joinGameModern = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_18_2);
+    JoinGame joinGame1191 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_1);
+    JoinGame joinGame1194 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_4);
 
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_18)
         .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2, ProtocolVersion.MINECRAFT_1_19)
-        .prepare(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1);
+        .prepare(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1, ProtocolVersion.MINECRAFT_1_19_3)
+        .prepare(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4);
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
@@ -169,7 +175,9 @@ public class LimboImpl implements Limbo {
     this.createFastClientServerSwitch(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2, ProtocolVersion.MINECRAFT_1_19));
     this.createFastClientServerSwitch(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_1));
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_1, ProtocolVersion.MINECRAFT_1_19_3));
+    this.createFastClientServerSwitch(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4)
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_4));
 
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
     this.postJoinPackets = this.plugin.createPreparedPacket();
@@ -531,23 +539,23 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private DimensionData createDimensionData(Dimension dimension, boolean modern) {
+  private DimensionData createDimensionData(Dimension dimension, ProtocolVersion version) {
     return new DimensionData(
         dimension.getKey(), dimension.getModernID(), false,
         0.0F, false, false, false, true,
         false, false, false, false, 256,
-        modern ? "#minecraft:infiniburn_nether" : "minecraft:infiniburn_nether",
+        version.compareTo(ProtocolVersion.MINECRAFT_1_18_2) >= 0 ? "#minecraft:infiniburn_nether" : "minecraft:infiniburn_nether",
         null, null, 1.0, dimension.getKey(), 0, 256,
         0, 0
     );
   }
 
-  private DimensionRegistry createDimensionRegistry(boolean modern) {
+  private DimensionRegistry createDimensionRegistry(ProtocolVersion version) {
     return new DimensionRegistry(
         ImmutableSet.of(
-            this.createDimensionData(Dimension.OVERWORLD, modern),
-            this.createDimensionData(Dimension.NETHER, modern),
-            this.createDimensionData(Dimension.THE_END, modern)
+            this.createDimensionData(Dimension.OVERWORLD, version),
+            this.createDimensionData(Dimension.NETHER, version),
+            this.createDimensionData(Dimension.THE_END, version)
         ),
         ImmutableSet.of(
             Dimension.OVERWORLD.getKey(),
@@ -557,7 +565,7 @@ public class LimboImpl implements Limbo {
     );
   }
 
-  private JoinGame createJoinGamePacket(boolean modern, CompoundBinaryTag chatTypeRegistry) {
+  private JoinGame createJoinGamePacket(ProtocolVersion version) {
     Dimension dimension = this.world.getDimension();
     JoinGame joinGame = new JoinGame();
     joinGame.setEntityId(1);
@@ -581,23 +589,43 @@ public class LimboImpl implements Limbo {
     joinGame.setReducedDebugInfo(this.reducedDebugInfo);
 
     String key = dimension.getKey();
-    DimensionRegistry dimensionRegistry = this.createDimensionRegistry(modern);
+    DimensionRegistry dimensionRegistry = this.createDimensionRegistry(version);
     joinGame.setDimensionRegistry(dimensionRegistry);
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
+
+    CompoundBinaryTag.Builder registryContainer = CompoundBinaryTag.builder();
+    ListBinaryTag encodedDimensionRegistry = dimensionRegistry.encodeRegistry(version);
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) >= 0) {
+      CompoundBinaryTag.Builder dimensionRegistryEntry = CompoundBinaryTag.builder();
+      dimensionRegistryEntry.putString("type", "minecraft:dimension_type");
+      dimensionRegistryEntry.put("value", encodedDimensionRegistry);
+      registryContainer.put("minecraft:dimension_type", dimensionRegistryEntry.build());
+      registryContainer.put("minecraft:worldgen/biome", Biome.getRegistry(version));
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_19) == 0) {
+        registryContainer.put("minecraft:chat_type", CHAT_TYPE_119);
+      } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_19_1) >= 0) {
+        registryContainer.put("minecraft:chat_type", CHAT_TYPE_1191);
+      }
+
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_19_4) >= 0) {
+        registryContainer.put("minecraft:damage_type", DAMAGE_TYPE_1194);
+      }
+    } else {
+      registryContainer.put("dimension", encodedDimensionRegistry);
+    }
+
     try {
       CURRENT_DIMENSION_DATA_FIELD.invokeExact(joinGame, dimensionRegistry.getDimensionData(dimension.getKey()));
+      ORIGINAL_REGISTRY_CONTAINER_FIELD.invokeExact(joinGame, registryContainer.build());
     } catch (Throwable e) {
       throw new ReflectionException(e);
     }
-
-    joinGame.setBiomeRegistry(Biome.getRegistry());
-    joinGame.setChatTypeRegistry(chatTypeRegistry);
 
     return joinGame;
   }
 
   private JoinGame createLegacyJoinGamePacket() {
-    JoinGame joinGame = this.createJoinGamePacket(false, CHAT_TYPE_119);
+    JoinGame joinGame = this.createJoinGamePacket(ProtocolVersion.MINIMUM_VERSION);
     joinGame.setDimension(this.world.getDimension().getLegacyID());
     return joinGame;
   }
@@ -766,126 +794,21 @@ public class LimboImpl implements Limbo {
           .findSetter(AvailableCommands.class, "rootNode", RootCommandNode.class);
       GRACEFUL_DISCONNECT_FIELD = MethodHandles.privateLookupIn(VelocityServerConnection.class, MethodHandles.lookup())
           .findSetter(VelocityServerConnection.class, "gracefulDisconnect", boolean.class);
-      CHAT_TYPE_119 = CompoundBinaryTag.builder()
-          .put("type", StringBinaryTag.of("minecraft:chat_type"))
-          .put(
-              "value",
-              ListBinaryTag.builder()
-                  .add(
-                      CompoundBinaryTag.builder()
-                          .put("name", StringBinaryTag.of("minecraft:chat"))
-                          .put("id", IntBinaryTag.of(0))
-                          .put(
-                              "element",
-                              CompoundBinaryTag.builder()
-                                  .put(
-                                      "chat",
-                                      CompoundBinaryTag.builder()
-                                          .put(
-                                              "decoration",
-                                              CompoundBinaryTag.builder()
-                                                  .put("translation_key", StringBinaryTag.of("chat.type.text"))
-                                                  .put("style", CompoundBinaryTag.empty())
-                                                  .put(
-                                                      "parameters",
-                                                      ListBinaryTag.builder()
-                                                          .add(StringBinaryTag.of("sender"))
-                                                          .add(StringBinaryTag.of("content"))
-                                                          .build()
-                                                  ).build()
-                                          ).build()
-                                  )
-                                  .put(
-                                      "narration",
-                                      CompoundBinaryTag.builder()
-                                          .put("priority", StringBinaryTag.of("chat"))
-                                          .put(
-                                              "decoration",
-                                              CompoundBinaryTag.builder()
-                                                  .put("translation_key", StringBinaryTag.of("chat.type.text.narrate"))
-                                                  .put("style", CompoundBinaryTag.empty())
-                                                  .put(
-                                                      "parameters",
-                                                      ListBinaryTag.builder()
-                                                          .add(StringBinaryTag.of("sender"))
-                                                          .add(StringBinaryTag.of("content"))
-                                                          .build()
-                                                  ).build()
-                                          ).build()
-                                  ).build()
-                          ).build()
-                  )
-                  .add(
-                      CompoundBinaryTag.builder()
-                          .put("name", StringBinaryTag.of("minecraft:system"))
-                          .put("id", IntBinaryTag.of(1))
-                          .put(
-                              "element",
-                              CompoundBinaryTag.builder()
-                                  .put("chat", CompoundBinaryTag.empty())
-                                  .put(
-                                      "narration",
-                                      CompoundBinaryTag.builder()
-                                          .put("priority", StringBinaryTag.of("system"))
-                                          .build()
-                                  ).build()
-                          ).build()
-                  )
-                  .add(
-                      CompoundBinaryTag.builder()
-                          .put("name", StringBinaryTag.of("minecraft:game_info"))
-                          .put("id", IntBinaryTag.of(2))
-                          .put(
-                              "element",
-                              CompoundBinaryTag.builder()
-                                  .put("overlay", CompoundBinaryTag.empty())
-                                  .build()
-                          )
-                          .build()
-                  ).build()
-          ).build();
-
-      CHAT_TYPE_1191 = CompoundBinaryTag.builder()
-          .put("type", StringBinaryTag.of("minecraft:chat_type"))
-          .put(
-              "value",
-              ListBinaryTag.builder()
-                  .add(
-                      CompoundBinaryTag.builder()
-                          .put("name", StringBinaryTag.of("minecraft:chat"))
-                          .put("id", IntBinaryTag.of(1))
-                          .put(
-                              "element",
-                              CompoundBinaryTag.builder()
-                                  .put(
-                                      "chat",
-                                      CompoundBinaryTag.builder()
-                                          .put("translation_key", StringBinaryTag.of("chat.type.text"))
-                                          .put(
-                                              "parameters",
-                                              ListBinaryTag.builder()
-                                                  .add(StringBinaryTag.of("sender"))
-                                                  .add(StringBinaryTag.of("content"))
-                                                  .build()
-                                          ).build()
-                                  )
-                                  .put(
-                                      "narration",
-                                      CompoundBinaryTag.builder()
-                                          .put("translation_key", StringBinaryTag.of("chat.type.text.narrate"))
-                                          .put(
-                                              "parameters",
-                                              ListBinaryTag.builder()
-                                                  .add(StringBinaryTag.of("sender"))
-                                                  .add(StringBinaryTag.of("content"))
-                                                  .build()
-                                          ).build()
-                                  ).build()
-                          ).build()
-                  ).build()
-          ).build();
+      ORIGINAL_REGISTRY_CONTAINER_FIELD = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
+          .findSetter(JoinGame.class, "originalRegistryContainerTag", CompoundBinaryTag.class);
+      try (InputStream stream = LimboAPI.class.getResourceAsStream("/mapping/chat_type_1_19.nbt")) {
+        CHAT_TYPE_119 = BinaryTagIO.unlimitedReader().read(Objects.requireNonNull(stream), BinaryTagIO.Compression.GZIP);
+      }
+      try (InputStream stream = LimboAPI.class.getResourceAsStream("/mapping/chat_type_1_19_1.nbt")) {
+        CHAT_TYPE_1191 = BinaryTagIO.unlimitedReader().read(Objects.requireNonNull(stream), BinaryTagIO.Compression.GZIP);
+      }
+      try (InputStream stream = LimboAPI.class.getResourceAsStream("/mapping/damage_type_1_19_4.nbt")) {
+        DAMAGE_TYPE_1194 = BinaryTagIO.unlimitedReader().read(Objects.requireNonNull(stream), BinaryTagIO.Compression.GZIP);
+      }
     } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new ReflectionException(e);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     }
   }
 }
