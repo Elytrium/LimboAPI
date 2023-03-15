@@ -17,9 +17,9 @@
 
 package net.elytrium.limboapi.material;
 
+import com.velocitypowered.api.network.ProtocolVersion;
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.stream.Collectors;
 import net.elytrium.limboapi.api.chunk.BuiltInBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
@@ -37,7 +37,7 @@ public enum Biome implements VirtualBiome {
       "minecraft:plains",
       1,
       new Element(
-          "rain", 0.125F, 0.8F, 0.05F, 0.4F, "plains",
+          true, 0.125F, 0.8F, 0.05F, 0.4F, "plains",
           Effects.builder(7907327, 329011, 12638463, 415920)
               .moodSound(MoodSound.of(6000, 2.0, 8, "minecraft:ambient.cave"))
               .build()
@@ -48,7 +48,7 @@ public enum Biome implements VirtualBiome {
       "minecraft:swamp",
       6,
       new Element(
-          "rain", -0.2F, 0.8F, 0.1F, 0.9F, "swamp",
+          true, -0.2F, 0.8F, 0.1F, 0.9F, "swamp",
           Effects.builder(7907327, 329011, 12638463, 415920)
               .grassColorModifier("swamp")
               .foliageColor(6975545)
@@ -61,7 +61,7 @@ public enum Biome implements VirtualBiome {
       "minecraft:swamp_hills",
       134,
       new Element(
-          "rain", -0.1F, 0.8F, 0.3F, 0.9F, "swamp",
+          true, -0.1F, 0.8F, 0.3F, 0.9F, "swamp",
           Effects.builder(7907327, 329011, 12638463, 415920)
               .grassColorModifier("swamp")
               .foliageColor(6975545)
@@ -73,7 +73,7 @@ public enum Biome implements VirtualBiome {
       BuiltInBiome.NETHER_WASTES,
       "minecraft:nether_wastes",
       8,
-      new Element("none", 0.1f, 2.0f, 0.2f, 0.0f, "nether",
+      new Element(false, 0.1f, 2.0f, 0.2f, 0.0f, "nether",
           Effects.builder(7254527, 329011, 3344392, 4159204)
               .moodSound(MoodSound.of(6000, 2.0, 8, "minecraft:ambient.nether_wastes.mood"))
               .build()
@@ -83,7 +83,7 @@ public enum Biome implements VirtualBiome {
       BuiltInBiome.THE_END,
       "minecraft:the_end",
       9,
-      new Element("none", 0.1f, 0.5f, 0.2f, 0.5f, "the_end",
+      new Element(false, 0.1f, 0.5f, 0.2f, 0.5f, "the_end",
           Effects.builder(0, 10518688, 12638463, 4159204)
               .moodSound(MoodSound.of(6000, 2.0, 8, "minecraft:ambient.cave"))
               .build()
@@ -91,7 +91,6 @@ public enum Biome implements VirtualBiome {
   );
 
   private static final EnumMap<BuiltInBiome, Biome> BUILT_IN_BIOME_MAP = new EnumMap<>(BuiltInBiome.class);
-  private static final List<CompoundBinaryTag> BIOMES = Arrays.stream(Biome.values()).map(Biome::encodeBiome).collect(Collectors.toList());
 
   private final BuiltInBiome index;
   private final String name;
@@ -105,11 +104,11 @@ public enum Biome implements VirtualBiome {
     this.element = element;
   }
 
-  public CompoundBinaryTag encodeBiome() {
+  public CompoundBinaryTag encodeBiome(ProtocolVersion version) {
     return CompoundBinaryTag.builder()
         .putString("name", this.name)
         .putInt("id", this.id)
-        .put("element", this.element.encode())
+        .put("element", this.element.encode(version))
         .build();
   }
 
@@ -137,16 +136,16 @@ public enum Biome implements VirtualBiome {
     return BUILT_IN_BIOME_MAP.get(index);
   }
 
-  public static CompoundBinaryTag getRegistry() {
+  public static CompoundBinaryTag getRegistry(ProtocolVersion version) {
     return CompoundBinaryTag.builder()
         .putString("type", "minecraft:worldgen/biome")
-        .put("value", ListBinaryTag.from(BIOMES))
+        .put("value", ListBinaryTag.from(Arrays.stream(Biome.values()).map(biome -> biome.encodeBiome(version)).collect(Collectors.toList())))
         .build();
   }
 
   public static class Element {
 
-    public final String precipitation;
+    public final boolean hasPrecipitation;
     public final float depth;
     public final float temperature;
     public final float scale;
@@ -154,8 +153,8 @@ public enum Biome implements VirtualBiome {
     public final String category;
     public final Effects effects;
 
-    public Element(String precipitation, float depth, float temperature, float scale, float downfall, String category, Effects effects) {
-      this.precipitation = precipitation;
+    public Element(boolean hasPrecipitation, float depth, float temperature, float scale, float downfall, String category, Effects effects) {
+      this.hasPrecipitation = hasPrecipitation;
       this.depth = depth;
       this.temperature = temperature;
       this.scale = scale;
@@ -164,20 +163,26 @@ public enum Biome implements VirtualBiome {
       this.effects = effects;
     }
 
-    public CompoundBinaryTag encode() {
-      return CompoundBinaryTag.builder()
-          .putString("precipitation", this.precipitation)
+    public CompoundBinaryTag encode(ProtocolVersion version) {
+      CompoundBinaryTag.Builder tagBuilder = CompoundBinaryTag.builder()
           .putFloat("depth", this.depth)
           .putFloat("temperature", this.temperature)
           .putFloat("scale", this.scale)
           .putFloat("downfall", this.downfall)
           .putString("category", this.category)
-          .put("effects", this.effects.encode())
-          .build();
+          .put("effects", this.effects.encode());
+
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_19_4) < 0) {
+        tagBuilder.putString("precipitation", this.hasPrecipitation ? "rain" : "none");
+      } else {
+        tagBuilder.putBoolean("has_precipitation", this.hasPrecipitation);
+      }
+
+      return tagBuilder.build();
     }
 
-    public String getPrecipitation() {
-      return this.precipitation;
+    public boolean hasPrecipitation() {
+      return this.hasPrecipitation;
     }
 
     public float getDepth() {
@@ -207,7 +212,7 @@ public enum Biome implements VirtualBiome {
     @Override
     public String toString() {
       return "Biome.Element{"
-          + "precipitation=" + this.precipitation
+          + "hasPrecipitation=" + this.hasPrecipitation
           + ", depth=" + this.depth
           + ", temperature=" + this.temperature
           + ", scale=" + this.scale
