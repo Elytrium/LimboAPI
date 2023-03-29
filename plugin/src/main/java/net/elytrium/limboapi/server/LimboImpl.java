@@ -35,9 +35,7 @@ import com.velocitypowered.proxy.connection.ConnectionTypes;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import com.velocitypowered.proxy.connection.registry.DimensionData;
 import com.velocitypowered.proxy.connection.registry.DimensionInfo;
-import com.velocitypowered.proxy.connection.registry.DimensionRegistry;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
@@ -94,17 +92,25 @@ import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
 import net.elytrium.limboapi.server.world.SimpleTagManager;
 import net.kyori.adventure.nbt.BinaryTagIO;
+import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
 import net.kyori.adventure.text.Component;
 
 public class LimboImpl implements Limbo {
 
+  private static final ImmutableSet<String> LEVELS = ImmutableSet.of(
+      Dimension.OVERWORLD.getKey(),
+      Dimension.NETHER.getKey(),
+      Dimension.THE_END.getKey()
+  );
+
   private static final MethodHandle PARTIAL_HASHED_SEED_FIELD;
   private static final MethodHandle CURRENT_DIMENSION_DATA_FIELD;
   private static final MethodHandle ROOT_NODE_FIELD;
   private static final MethodHandle GRACEFUL_DISCONNECT_FIELD;
-  private static final MethodHandle ORIGINAL_REGISTRY_CONTAINER_FIELD;
+  private static final MethodHandle REGISTRY_FIELD;
+  private static final MethodHandle LEVEL_NAMES_FIELDS;
 
   private static final CompoundBinaryTag CHAT_TYPE_119;
   private static final CompoundBinaryTag CHAT_TYPE_1191;
@@ -543,30 +549,37 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private DimensionData createDimensionData(Dimension dimension, ProtocolVersion version) {
-    return new DimensionData(
-        dimension.getKey(), dimension.getModernID(), false,
-        0.0F, false, false, false, true,
-        false, false, false, false, 256,
-        version.compareTo(ProtocolVersion.MINECRAFT_1_18_2) >= 0 ? "#minecraft:infiniburn_nether" : "minecraft:infiniburn_nether",
-        null, null, 1.0, dimension.getKey(), 0, 256,
-        0, 0
-    );
-  }
+  private CompoundBinaryTag createDimensionData(Dimension dimension, ProtocolVersion version) {
+    CompoundBinaryTag details = CompoundBinaryTag.builder()
+        .putBoolean("natural", false)
+        .putFloat("ambient_light", 0.0F)
+        .putBoolean("shrunk", false)
+        .putBoolean("ultrawarm", false)
+        .putBoolean("has_ceiling", false)
+        .putBoolean("has_skylight", true)
+        .putBoolean("piglin_safe", false)
+        .putBoolean("bed_works", false)
+        .putBoolean("respawn_anchor_works", false)
+        .putBoolean("has_raids", false)
+        .putInt("logical_height", 256)
+        .putString("infiniburn", version.compareTo(ProtocolVersion.MINECRAFT_1_18_2) >= 0 ? "#minecraft:infiniburn_nether" : "minecraft:infiniburn_nether")
+        .putDouble("coordinate_scale", 1.0)
+        .putString("effects", dimension.getKey())
+        .putInt("min_y", 0)
+        .putInt("height", 256)
+        .putInt("monster_spawn_block_light_limit", 0)
+        .putInt("monster_spawn_light_level", 0)
+        .build();
 
-  private DimensionRegistry createDimensionRegistry(ProtocolVersion version) {
-    return new DimensionRegistry(
-        ImmutableSet.of(
-            this.createDimensionData(Dimension.OVERWORLD, version),
-            this.createDimensionData(Dimension.NETHER, version),
-            this.createDimensionData(Dimension.THE_END, version)
-        ),
-        ImmutableSet.of(
-            Dimension.OVERWORLD.getKey(),
-            Dimension.NETHER.getKey(),
-            Dimension.THE_END.getKey()
-        )
-    );
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) >= 0) {
+      return CompoundBinaryTag.builder()
+          .putString("name", dimension.getKey())
+          .putInt("id", dimension.getModernID())
+          .put("element", details)
+          .build();
+    } else {
+      return details.putString("name", dimension.getKey());
+    }
   }
 
   private JoinGame createJoinGamePacket(ProtocolVersion version) {
@@ -593,12 +606,15 @@ public class LimboImpl implements Limbo {
     joinGame.setReducedDebugInfo(this.reducedDebugInfo);
 
     String key = dimension.getKey();
-    DimensionRegistry dimensionRegistry = this.createDimensionRegistry(version);
-    joinGame.setDimensionRegistry(dimensionRegistry);
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
 
     CompoundBinaryTag.Builder registryContainer = CompoundBinaryTag.builder();
-    ListBinaryTag encodedDimensionRegistry = dimensionRegistry.encodeRegistry(version);
+    ListBinaryTag encodedDimensionRegistry = ListBinaryTag.builder(BinaryTagTypes.COMPOUND)
+        .add(this.createDimensionData(Dimension.OVERWORLD, version))
+        .add(this.createDimensionData(Dimension.NETHER, version))
+        .add(this.createDimensionData(Dimension.THE_END, version))
+        .build();
+
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) >= 0) {
       CompoundBinaryTag.Builder dimensionRegistryEntry = CompoundBinaryTag.builder();
       dimensionRegistryEntry.putString("type", "minecraft:dimension_type");
@@ -619,8 +635,9 @@ public class LimboImpl implements Limbo {
     }
 
     try {
-      CURRENT_DIMENSION_DATA_FIELD.invokeExact(joinGame, dimensionRegistry.getDimensionData(dimension.getKey()));
-      ORIGINAL_REGISTRY_CONTAINER_FIELD.invokeExact(joinGame, registryContainer.build());
+      CURRENT_DIMENSION_DATA_FIELD.invokeExact(joinGame, encodedDimensionRegistry.getCompound(dimension.getModernID()));
+      LEVEL_NAMES_FIELDS.invokeExact(joinGame, LEVELS);
+      REGISTRY_FIELD.invokeExact(joinGame, registryContainer.build());
     } catch (Throwable e) {
       throw new ReflectionException(e);
     }
@@ -793,13 +810,15 @@ public class LimboImpl implements Limbo {
       PARTIAL_HASHED_SEED_FIELD = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
           .findSetter(JoinGame.class, "partialHashedSeed", long.class);
       CURRENT_DIMENSION_DATA_FIELD = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
-          .findSetter(JoinGame.class, "currentDimensionData", DimensionData.class);
+          .findSetter(JoinGame.class, "currentDimensionData", CompoundBinaryTag.class);
       ROOT_NODE_FIELD = MethodHandles.privateLookupIn(AvailableCommands.class, MethodHandles.lookup())
           .findSetter(AvailableCommands.class, "rootNode", RootCommandNode.class);
       GRACEFUL_DISCONNECT_FIELD = MethodHandles.privateLookupIn(VelocityServerConnection.class, MethodHandles.lookup())
           .findSetter(VelocityServerConnection.class, "gracefulDisconnect", boolean.class);
-      ORIGINAL_REGISTRY_CONTAINER_FIELD = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
-          .findSetter(JoinGame.class, "originalRegistryContainerTag", CompoundBinaryTag.class);
+      REGISTRY_FIELD = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
+          .findSetter(JoinGame.class, "registry", CompoundBinaryTag.class);
+      LEVEL_NAMES_FIELDS = MethodHandles.privateLookupIn(JoinGame.class, MethodHandles.lookup())
+          .findSetter(JoinGame.class, "levelNames", ImmutableSet.class);
       try (InputStream stream = LimboAPI.class.getResourceAsStream("/mapping/chat_type_1_19.nbt")) {
         CHAT_TYPE_119 = BinaryTagIO.unlimitedReader().read(Objects.requireNonNull(stream), BinaryTagIO.Compression.GZIP);
       }
