@@ -635,7 +635,12 @@ public class LimboImpl implements Limbo {
     }
 
     try {
-      CURRENT_DIMENSION_DATA_FIELD.invokeExact(joinGame, encodedDimensionRegistry.getCompound(dimension.getModernID()));
+      CompoundBinaryTag currentDimensionData = encodedDimensionRegistry.getCompound(dimension.getModernID());
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) >= 0) {
+        currentDimensionData = currentDimensionData.getCompound("element");
+      }
+
+      CURRENT_DIMENSION_DATA_FIELD.invokeExact(joinGame, currentDimensionData);
       LEVEL_NAMES_FIELDS.invokeExact(joinGame, LEVELS);
       REGISTRY_FIELD.invokeExact(joinGame, registryContainer.build());
     } catch (Throwable e) {
