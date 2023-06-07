@@ -485,6 +485,12 @@
   "minecraft:cake": {
     "bites": "0"
   },
+  "minecraft:calibrated_sculk_sensor": {
+    "facing": "north",
+    "power": "0",
+    "sculk_sensor_phase": "inactive",
+    "waterlogged": "false"
+  },
   "minecraft:campfire": {
     "facing": "north",
     "lit": "true",
@@ -947,6 +953,7 @@
     "waterlogged": "true"
   },
   "minecraft:decorated_pot": {
+    "cracked": "false",
     "facing": "north",
     "waterlogged": "false"
   },
@@ -1898,6 +1905,13 @@
     "facing": "north",
     "short": "false"
   },
+  "minecraft:pitcher_crop": {
+    "age": "0",
+    "half": "lower"
+  },
+  "minecraft:pitcher_plant": {
+    "half": "lower"
+  },
   "minecraft:player_head": {
     "rotation": "0"
   },
@@ -2328,6 +2342,9 @@
     "type": "bottom",
     "waterlogged": "false"
   },
+  "minecraft:sniffer_egg": {
+    "hatch": "0"
+  },
   "minecraft:snow": {
     "layers": "1"
   },
@@ -2534,6 +2551,9 @@
   },
   "minecraft:sunflower": {
     "half": "lower"
+  },
+  "minecraft:suspicious_gravel": {
+    "dusted": "0"
   },
   "minecraft:suspicious_sand": {
     "dusted": "0"

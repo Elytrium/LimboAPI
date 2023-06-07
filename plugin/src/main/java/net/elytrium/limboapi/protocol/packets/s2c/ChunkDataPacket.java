@@ -176,7 +176,9 @@ public class ChunkDataPacket implements MinecraftPacket {
         }
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
           long[] mask = this.create117Mask();
-          buf.writeBoolean(true); // Trust edges.
+          if (version.compareTo(ProtocolVersion.MINECRAFT_1_20) < 0) {
+            buf.writeBoolean(true); // Trust edges.
+          }
           ProtocolUtils.writeVarInt(buf, mask.length); // Skylight mask.
           for (long m : mask) {
             buf.writeLong(m);
