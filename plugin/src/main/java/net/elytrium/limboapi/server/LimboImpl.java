@@ -115,6 +115,7 @@ public class LimboImpl implements Limbo {
   private static final CompoundBinaryTag CHAT_TYPE_119;
   private static final CompoundBinaryTag CHAT_TYPE_1191;
   private static final CompoundBinaryTag DAMAGE_TYPE_1194;
+  private static final CompoundBinaryTag DAMAGE_TYPE_120;
 
   private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
   private final LimboAPI plugin;
@@ -166,6 +167,7 @@ public class LimboImpl implements Limbo {
     JoinGame joinGameModern = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_18_2);
     JoinGame joinGame1191 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_1);
     JoinGame joinGame1194 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_4);
+    JoinGame joinGame120 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_20);
 
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
@@ -173,7 +175,8 @@ public class LimboImpl implements Limbo {
         .prepare(joinGame1162, ProtocolVersion.MINECRAFT_1_16_2, ProtocolVersion.MINECRAFT_1_18)
         .prepare(joinGameModern, ProtocolVersion.MINECRAFT_1_18_2, ProtocolVersion.MINECRAFT_1_19)
         .prepare(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1, ProtocolVersion.MINECRAFT_1_19_3)
-        .prepare(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4);
+        .prepare(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4)
+        .prepare(joinGame120, ProtocolVersion.MINECRAFT_1_20);
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
@@ -187,7 +190,9 @@ public class LimboImpl implements Limbo {
     this.createFastClientServerSwitch(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1)
         .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_1, ProtocolVersion.MINECRAFT_1_19_3));
     this.createFastClientServerSwitch(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_4));
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4));
+    this.createFastClientServerSwitch(joinGame120, ProtocolVersion.MINECRAFT_1_20)
+        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_20));
 
     this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
     this.postJoinPackets = this.plugin.createPreparedPacket();
@@ -627,8 +632,10 @@ public class LimboImpl implements Limbo {
         registryContainer.put("minecraft:chat_type", CHAT_TYPE_1191);
       }
 
-      if (version.compareTo(ProtocolVersion.MINECRAFT_1_19_4) >= 0) {
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_19_4) == 0) {
         registryContainer.put("minecraft:damage_type", DAMAGE_TYPE_1194);
+      } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_20) >= 0) {
+        registryContainer.put("minecraft:damage_type", DAMAGE_TYPE_120);
       }
     } else {
       registryContainer.put("dimension", encodedDimensionRegistry);
@@ -832,6 +839,9 @@ public class LimboImpl implements Limbo {
       }
       try (InputStream stream = LimboAPI.class.getResourceAsStream("/mapping/damage_type_1_19_4.nbt")) {
         DAMAGE_TYPE_1194 = BinaryTagIO.unlimitedReader().read(Objects.requireNonNull(stream), BinaryTagIO.Compression.GZIP);
+      }
+      try (InputStream stream = LimboAPI.class.getResourceAsStream("/mapping/damage_type_1_20.nbt")) {
+        DAMAGE_TYPE_120 = BinaryTagIO.unlimitedReader().read(Objects.requireNonNull(stream), BinaryTagIO.Compression.GZIP);
       }
     } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new ReflectionException(e);
