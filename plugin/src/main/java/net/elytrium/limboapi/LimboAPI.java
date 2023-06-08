@@ -125,7 +125,7 @@ import org.slf4j.Logger;
 public class LimboAPI implements LimboFactory {
 
   private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_MAP = new HashMap<>();
-  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 762;
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 763;
 
   @MonotonicNonNull
   private static Logger LOGGER;

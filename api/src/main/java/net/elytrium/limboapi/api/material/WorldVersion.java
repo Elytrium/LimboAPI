@@ -24,7 +24,8 @@ public enum WorldVersion {
   MINECRAFT_1_17(EnumSet.range(ProtocolVersion.MINECRAFT_1_17, ProtocolVersion.MINECRAFT_1_18_2)),
   MINECRAFT_1_19(EnumSet.range(ProtocolVersion.MINECRAFT_1_19, ProtocolVersion.MINECRAFT_1_19_1)),
   MINECRAFT_1_19_3(ProtocolVersion.MINECRAFT_1_19_3),
-  MINECRAFT_1_19_4(EnumSet.range(ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MAXIMUM_VERSION));
+  MINECRAFT_1_19_4(EnumSet.range(ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4)),
+  MINECRAFT_1_20(EnumSet.range(ProtocolVersion.MINECRAFT_1_20, ProtocolVersion.MAXIMUM_VERSION));
 
   private static final EnumMap<ProtocolVersion, WorldVersion> MC_VERSION_TO_ITEM_VERSIONS = new EnumMap<>(ProtocolVersion.class);
 
@@ -85,6 +86,9 @@ public enum WorldVersion {
       }
       case "1.19.4": {
         return MINECRAFT_1_19_4;
+      }
+      case "1.20": {
+        return MINECRAFT_1_20;
       }
       default: {
         return LEGACY;
