@@ -124,7 +124,6 @@ import org.slf4j.Logger;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
-  private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_MAP = new HashMap<>();
   private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 763;
 
   @MonotonicNonNull
@@ -435,17 +434,9 @@ public class LimboAPI implements LimboFactory {
     }
   }
 
-  private Class<?> primitiveToWrapper(Class<?> cls) {
-    if (cls.isPrimitive()) {
-      return PRIMITIVE_WRAPPER_MAP.get(cls);
-    } else {
-      return cls;
-    }
-  }
-
   @Override
   public void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings) {
-    LimboProtocol.register(direction, packetClass, packetSupplier, packetMappings);
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -568,6 +559,10 @@ public class LimboAPI implements LimboFactory {
     return this.compressionEnabled;
   }
 
+  public PreparedPacketFactory getPreparedPacketFactory() {
+    return this.preparedPacketFactory;
+  }
+
   public ProtocolVersion getPrepareMinVersion() {
     return this.minVersion;
   }
@@ -589,18 +584,6 @@ public class LimboAPI implements LimboFactory {
   @Override
   public WorldFile openWorldFile(BuiltInWorldFileType apiType, CompoundBinaryTag tag) {
     return WorldFileTypeRegistry.fromApiType(apiType, tag);
-  }
-
-  static {
-    PRIMITIVE_WRAPPER_MAP.put(Boolean.TYPE, Boolean.class);
-    PRIMITIVE_WRAPPER_MAP.put(Byte.TYPE, Byte.class);
-    PRIMITIVE_WRAPPER_MAP.put(Character.TYPE, Character.class);
-    PRIMITIVE_WRAPPER_MAP.put(Short.TYPE, Short.class);
-    PRIMITIVE_WRAPPER_MAP.put(Integer.TYPE, Integer.class);
-    PRIMITIVE_WRAPPER_MAP.put(Long.TYPE, Long.class);
-    PRIMITIVE_WRAPPER_MAP.put(Double.TYPE, Double.class);
-    PRIMITIVE_WRAPPER_MAP.put(Float.TYPE, Float.class);
-    PRIMITIVE_WRAPPER_MAP.put(Void.TYPE, Void.TYPE);
   }
 
   private static void setLogger(Logger logger) {

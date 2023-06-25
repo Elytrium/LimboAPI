@@ -10,8 +10,11 @@ package net.elytrium.limboapi.api;
 import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.proxy.Player;
+import java.util.function.Supplier;
 import net.elytrium.limboapi.api.command.LimboCommandMeta;
 import net.elytrium.limboapi.api.player.GameMode;
+import net.elytrium.limboapi.api.protocol.PacketDirection;
+import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 
 public interface Limbo {
 
@@ -46,6 +49,8 @@ public interface Limbo {
   Limbo registerCommand(LimboCommandMeta commandMeta);
 
   Limbo registerCommand(CommandMeta commandMeta, Command command);
+
+  Limbo registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings);
 
   void dispose();
 }
