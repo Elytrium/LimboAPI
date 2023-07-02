@@ -39,6 +39,7 @@ import com.velocitypowered.proxy.connection.registry.DimensionInfo;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
@@ -70,6 +71,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.fastprepare.PreparedPacketFactory;
 import net.elytrium.limboapi.LimboAPI;
@@ -81,7 +83,9 @@ import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.command.LimboCommandMeta;
 import net.elytrium.limboapi.api.player.GameMode;
+import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
+import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -143,6 +147,7 @@ public class LimboImpl implements Limbo {
   private PreparedPacket firstChunks;
   private List<PreparedPacket> delayedChunks;
   private PreparedPacket respawnPackets;
+  private StateRegistry localStateRegistry;
   private boolean shouldRespawn = true;
   private boolean shouldRejoin = true;
   private boolean shouldUpdateTags = true;
@@ -155,6 +160,7 @@ public class LimboImpl implements Limbo {
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
     this.plugin = plugin;
     this.world = world;
+    this.localStateRegistry = LimboProtocol.getLimboStateRegistry();
 
     this.refresh();
   }
@@ -240,8 +246,8 @@ public class LimboImpl implements Limbo {
 
     boolean shouldSpawnPlayerImmediately = true;
 
-    if (connection.getState() != LimboProtocol.getLimboStateRegistry()) {
-      connection.eventLoop().execute(() -> connection.setState(LimboProtocol.getLimboStateRegistry()));
+    if (connection.getState() != this.localStateRegistry) {
+      connection.eventLoop().execute(() -> connection.setState(this.localStateRegistry));
       VelocityServerConnection server = player.getConnectedServer();
       if (server != null) {
         RegisteredServer previousServer = server.getServer();
@@ -523,6 +529,17 @@ public class LimboImpl implements Limbo {
     }
 
     throw new IllegalArgumentException(command + " does not implement a registrable Command sub-interface.");
+  }
+
+  public Limbo registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings) {
+    if (this.localStateRegistry == LimboProtocol.getLimboStateRegistry()) {
+      this.localStateRegistry = LimboProtocol.createLocalStateRegistry();
+      this.plugin.getPreparedPacketFactory().addStateRegistry(this.localStateRegistry);
+    }
+
+    LimboProtocol.register(this.localStateRegistry, direction, packetClass, packetSupplier, packetMappings);
+
+    return this;
   }
 
   @Override
