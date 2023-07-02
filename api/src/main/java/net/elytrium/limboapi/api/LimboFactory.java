@@ -196,7 +196,9 @@ public interface LimboFactory {
    * @param packetClass    Packet class.
    * @param packetSupplier Packet supplier to make a new instance. (::new)
    * @param packetMappings Packet id mappings.
+   * @deprecated Use {@link Limbo#registerPacket} instead.
    */
+  @Deprecated(forRemoval = true)
   void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings);
 
   /**
