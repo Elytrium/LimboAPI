@@ -286,6 +286,7 @@ public class LimboPlayerImpl implements LimboPlayer {
       if (this.plugin.hasLoginQueue(this.player)) {
         handler.disconnected();
         this.plugin.setNextServer(this.player, server);
+        this.plugin.getLoginQueue(this.player).next();
       } else {
         this.deject();
         handler.disconnected();
