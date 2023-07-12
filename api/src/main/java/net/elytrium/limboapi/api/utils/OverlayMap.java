@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class OverlayMap<K, V> implements Map<K, V> {
 
+  protected boolean override = false;
   protected final Map<K, V> parent;
   protected final Map<K, V> overlay;
 
@@ -33,11 +34,19 @@ public abstract class OverlayMap<K, V> implements Map<K, V> {
 
   @Override
   public boolean containsKey(Object o) {
+    if (this.override) {
+      return this.overlay.containsKey(o);
+    }
+
     return this.parent.containsKey(o) || this.overlay.containsKey(o);
   }
 
   @Override
   public boolean containsValue(Object o) {
+    if (this.override) {
+      return this.overlay.containsValue(o);
+    }
+
     return this.parent.containsValue(o) || this.overlay.containsValue(o);
   }
 
@@ -70,5 +79,13 @@ public abstract class OverlayMap<K, V> implements Map<K, V> {
   @Override
   public void clear() {
     this.overlay.clear();
+  }
+
+  public boolean isOverride() {
+    return this.override;
+  }
+
+  public void setOverride(boolean override) {
+    this.override = override;
   }
 }
