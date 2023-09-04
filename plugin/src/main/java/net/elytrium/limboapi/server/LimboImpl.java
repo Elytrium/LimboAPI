@@ -810,7 +810,7 @@ public class LimboImpl implements Limbo {
     String brand = Settings.IMP.MAIN.LIMBO_SERVER_BRAND
             .replace("{default}", "LimboAPI ({version}) -> {limbo_name}")
             .replace("{version}", Settings.IMP.VERSION)
-            .replace("{limbo_name}", (this.limboName == null) ? "" : this.limboName));
+            .replace("{limbo_name}", ((this.limboName == null) ? "" : this.limboName));
     ByteBuf bufWithBrandString = Unpooled.buffer();
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       bufWithBrandString.writeCharSequence(brand, StandardCharsets.UTF_8);
