@@ -382,11 +382,11 @@ public class LimboImpl implements Limbo {
           this,
           player,
           handler,
-          connection.getSessionHandler(),
+          connection.getActiveSessionHandler(),
           previousServer,
           () -> this.limboName
       );
-      connection.setSessionHandler(sessionHandler);
+      connection.setActiveSessionHandler(connection.getState(), sessionHandler);
 
       connection.flush();
 

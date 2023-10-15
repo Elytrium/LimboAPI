@@ -130,7 +130,7 @@ public class LoginListener {
       // method (which checks mcConnection.isActive()) and to override it. :)
       InitialInboundConnection inbound = (InitialInboundConnection) DELEGATE_FIELD.invokeExact(inboundConnection);
       MinecraftConnection connection = inbound.getConnection();
-      Object handler = connection.getSessionHandler();
+      Object handler = connection.getActiveSessionHandler();
       MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
 
       // From Velocity.
@@ -224,11 +224,11 @@ public class LoginListener {
     MinecraftConnection connection = player.getConnection();
 
     connection.eventLoop().execute(() -> {
-      if (!(connection.getSessionHandler() instanceof ClientPlaySessionHandler)) {
+      if (!(connection.getActiveSessionHandler() instanceof ClientPlaySessionHandler)) {
         try {
           ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
           SPAWNED_FIELD.invokeExact(playHandler, this.plugin.isLimboJoined(player));
-          connection.setSessionHandler(playHandler);
+          connection.setActiveSessionHandler(connection.getState(), playHandler);
         } catch (Throwable e) {
           throw new ReflectionException(e);
         }
