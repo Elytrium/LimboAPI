@@ -35,7 +35,6 @@
 package net.elytrium.limboapi.injection.login;
 
 import com.velocitypowered.api.event.connection.DisconnectEvent;
-import com.velocitypowered.api.event.connection.DisconnectEvent.LoginStatus;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
@@ -252,7 +251,7 @@ public class LoginTasksQueue {
             try {
               if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
                 connection.setActiveSessionHandler(connection.getState(),
-                  (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
+                    (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
 
                 this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
                   try {
@@ -276,23 +275,23 @@ public class LoginTasksQueue {
               } else {
                 connection.write(new StartUpdate());
                 connection.setActiveSessionHandler(StateRegistry.CONFIG,
-                    new ClientConfigSessionHandler(server, this.player));
+                    new ClientConfigSessionHandler(this.server, this.player));
                 // From Velocity.
-                server.getEventManager().fire(new PostLoginEvent(this.player))
+                this.server.getEventManager().fire(new PostLoginEvent(this.player))
                     .thenCompose((ignored) -> {
-                      Optional<RegisteredServer> initialFromConfig = player.getNextServerToTry();
+                      Optional<RegisteredServer> initialFromConfig = this.player.getNextServerToTry();
                       PlayerChooseInitialServerEvent chooseEvent =
-                          new PlayerChooseInitialServerEvent(player, initialFromConfig.orElse(null));
+                          new PlayerChooseInitialServerEvent(this.player, initialFromConfig.orElse(null));
 
-                      return server.getEventManager().fire(chooseEvent).thenRunAsync(() -> {
+                      return this.server.getEventManager().fire(chooseEvent).thenRunAsync(() -> {
                         Optional<RegisteredServer> toTry = chooseEvent.getInitialServer();
                         if (toTry.isEmpty()) {
-                          player.disconnect0(
+                          this.player.disconnect0(
                               Component.translatable("velocity.error.no-available-servers", NamedTextColor.RED),
                               true);
                           return;
                         }
-                        player.createConnectionRequest(toTry.get()).fireAndForget();
+                        this.player.createConnectionRequest(toTry.get()).fireAndForget();
                       }, connection.eventLoop());
                     }).exceptionally((ex) -> {
                       logger.error("Exception while connecting {} to initial server", this.player, ex);

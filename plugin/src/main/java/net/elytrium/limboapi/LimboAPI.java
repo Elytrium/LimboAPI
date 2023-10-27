@@ -390,13 +390,13 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
-  public PreparedPacket createConfigPreparedPacket() {
-    return (PreparedPacket) this.configPreparedPacketFactory.createPreparedPacket(this.minVersion, this.maxVersion);
+  public PreparedPacket createPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion) {
+    return (PreparedPacket) this.preparedPacketFactory.createPreparedPacket(minVersion, maxVersion);
   }
 
   @Override
-  public PreparedPacket createPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion) {
-    return (PreparedPacket) this.preparedPacketFactory.createPreparedPacket(minVersion, maxVersion);
+  public PreparedPacket createConfigPreparedPacket() {
+    return (PreparedPacket) this.configPreparedPacketFactory.createPreparedPacket(this.minVersion, this.maxVersion);
   }
 
   @Override

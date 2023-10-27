@@ -239,7 +239,7 @@ public class LimboImpl implements Limbo {
 
     if (this.shouldUpdateTags) {
       this.respawnPackets.prepare(SimpleTagManager::getUpdateTagsPacket,
-        ProtocolVersion.MINECRAFT_1_13, ProtocolVersion.MINECRAFT_1_20);
+          ProtocolVersion.MINECRAFT_1_13, ProtocolVersion.MINECRAFT_1_20);
     }
 
     this.respawnPackets.build();
@@ -368,8 +368,8 @@ public class LimboImpl implements Limbo {
       }
 
       boolean joined =
-        connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0 ||
-        connection.getState() == StateRegistry.PLAY;
+          connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0
+              || connection.getState() == StateRegistry.PLAY;
 
       if (joined) {
         this.preSpawn(handlerClass, connection, player);

@@ -26,7 +26,6 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
-import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import java.awt.Graphics2D;
 import java.awt.Image;
