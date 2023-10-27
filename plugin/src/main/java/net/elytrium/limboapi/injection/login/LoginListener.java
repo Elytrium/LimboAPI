@@ -133,6 +133,10 @@ public class LoginListener {
       Object handler = connection.getActiveSessionHandler();
       MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
 
+      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+        connection.setActiveSessionHandler(StateRegistry.LOGIN, new LoginTrackHandler(connection));
+      }
+
       // From Velocity.
       if (!connection.isClosed()) {
         connection.eventLoop().execute(() -> {

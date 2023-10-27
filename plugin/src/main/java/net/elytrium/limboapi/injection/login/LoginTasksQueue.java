@@ -39,13 +39,11 @@ import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
-import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -77,7 +75,6 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.slf4j.Logger;
 
 public class LoginTasksQueue {
@@ -129,11 +126,6 @@ public class LoginTasksQueue {
     EventManagerHook eventManager = (EventManagerHook) this.server.getEventManager();
     MinecraftConnection connection = this.player.getConnection();
     Logger logger = LimboAPI.getLogger();
-
-    // As we have a login confirmation, we should queue it
-    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0 && connection.getState() == StateRegistry.LOGIN) {
-      connection.setAutoReading(false);
-    }
 
     eventManager.proceedProfile(this.player.getGameProfile());
     eventManager.fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode())).thenAcceptAsync(
@@ -209,7 +201,8 @@ public class LoginTasksQueue {
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void initialize(MinecraftConnection connection) throws Throwable {
     connection.setAssociation(this.player);
-    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0
+        || (connection.getState() != StateRegistry.LOGIN && connection.getState() != StateRegistry.CONFIG)) {
       connection.setState(StateRegistry.PLAY);
     }
 
@@ -248,58 +241,20 @@ public class LoginTasksQueue {
           this.player.disconnect0(reason.get(), true);
         } else {
           if (this.server.registerConnection(this.player)) {
-            try {
-              if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
-                connection.setActiveSessionHandler(connection.getState(),
-                    (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
-
-                this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
-                  try {
-                    MC_CONNECTION_FIELD.set(this.handler, connection);
-                    CONNECT_TO_INITIAL_SERVER_METHOD.invoke((AuthSessionHandler) this.handler, this.player);
-                  } catch (Throwable e) {
-                    throw new ReflectionException(e);
-                  }
-                });
-              } else if (connection.getState() == StateRegistry.LOGIN) {
+            if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+              ((LoginTrackHandler) connection.getActiveSessionHandler()).waitForConfirmation(() -> {
                 try {
-                  LOGIN_STATE_FIELD.set(this.handler, LOGIN_STATE_SENT);
-                  CONNECTED_PLAYER_FIELD.set(this.handler, this.player);
-                  MC_CONNECTION_FIELD.set(this.handler, connection);
-
-                  // As we are ready to process the login confirmation, continue reading
-                  connection.setAutoReading(true);
+                  this.connectToServer(logger, connection);
                 } catch (Throwable e) {
                   throw new ReflectionException(e);
                 }
-              } else {
-                connection.write(new StartUpdate());
-                connection.setActiveSessionHandler(StateRegistry.CONFIG,
-                    new ClientConfigSessionHandler(this.server, this.player));
-                // From Velocity.
-                this.server.getEventManager().fire(new PostLoginEvent(this.player))
-                    .thenCompose((ignored) -> {
-                      Optional<RegisteredServer> initialFromConfig = this.player.getNextServerToTry();
-                      PlayerChooseInitialServerEvent chooseEvent =
-                          new PlayerChooseInitialServerEvent(this.player, initialFromConfig.orElse(null));
-
-                      return this.server.getEventManager().fire(chooseEvent).thenRunAsync(() -> {
-                        Optional<RegisteredServer> toTry = chooseEvent.getInitialServer();
-                        if (toTry.isEmpty()) {
-                          this.player.disconnect0(
-                              Component.translatable("velocity.error.no-available-servers", NamedTextColor.RED),
-                              true);
-                          return;
-                        }
-                        this.player.createConnectionRequest(toTry.get()).fireAndForget();
-                      }, connection.eventLoop());
-                    }).exceptionally((ex) -> {
-                      logger.error("Exception while connecting {} to initial server", this.player, ex);
-                      return null;
-                    });
+              });
+            } else {
+              try {
+                this.connectToServer(logger, connection);
+              } catch (Throwable e) {
+                throw new ReflectionException(e);
               }
-            } catch (Throwable e) {
-              throw new ReflectionException(e);
             }
           } else {
             this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), true);
@@ -309,6 +264,29 @@ public class LoginTasksQueue {
     }, connection.eventLoop()).exceptionally(t -> {
       logger.error("Exception while completing login initialisation phase for {}", this.player, t);
       return null;
+    });
+  }
+
+  private void connectToServer(Logger logger, MinecraftConnection connection) throws Throwable {
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+      connection.setActiveSessionHandler(connection.getState(),
+          (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
+    } else {
+      if (connection.getState() == StateRegistry.PLAY) {
+        connection.write(new StartUpdate());
+      }
+
+      connection.setActiveSessionHandler(StateRegistry.CONFIG,
+          new ClientConfigSessionHandler(this.server, this.player));
+    }
+
+    this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
+      try {
+        MC_CONNECTION_FIELD.set(this.handler, connection);
+        CONNECT_TO_INITIAL_SERVER_METHOD.invoke((AuthSessionHandler) this.handler, this.player);
+      } catch (Throwable e) {
+        throw new ReflectionException(e);
+      }
     });
   }
 

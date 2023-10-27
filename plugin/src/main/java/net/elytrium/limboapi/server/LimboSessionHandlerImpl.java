@@ -25,9 +25,7 @@ import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
-import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
-import com.velocitypowered.proxy.protocol.packet.LoginAcknowledged;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerChat;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerCommand;
@@ -126,13 +124,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public void onSpawn() {
     this.callback.onSpawn(this.limbo, this.limboPlayer);
-  }
-
-  @Override
-  public boolean handle(LoginAcknowledged packet) {
-    this.player.getConnection().setState(StateRegistry.CONFIG);
-    this.player.getConnection().write(this.limbo.configPackets);
-    return true;
   }
 
   @Override

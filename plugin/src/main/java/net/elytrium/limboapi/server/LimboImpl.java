@@ -90,6 +90,7 @@ import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
+import net.elytrium.limboapi.injection.login.LoginTrackHandler;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -310,6 +311,36 @@ public class LimboImpl implements Limbo {
     }
   }
 
+  private void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
+      LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+      this.preSpawn(handlerClass, connection, player);
+    }
+
+    connection.setActiveSessionHandler(connection.getState(), sessionHandler);
+
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+      if (connection.getState() != StateRegistry.CONFIG) {
+        if (this.shouldRejoin) {
+          connection.delayedWrite(this.configTransitionPackets);
+          connection.setState(StateRegistry.CONFIG);
+          connection.delayedWrite(this.configPackets);
+        }
+      } else {
+        connection.delayedWrite(this.configPackets);
+      }
+    }
+
+    this.currentOnline.increment();
+
+    sessionHandler.onConfig(new LimboPlayerImpl(this.plugin, this, player));
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+      this.postSpawn(sessionHandler, connection, player);
+    }
+
+    connection.flush();
+  }
+
   private void spawnPlayerLocal(ConnectedPlayer player, LimboSessionHandler handler, RegisteredServer previousServer) {
     MinecraftConnection connection = player.getConnection();
     connection.eventLoop().execute(() -> {
@@ -367,24 +398,6 @@ public class LimboImpl implements Limbo {
         }
       }
 
-      boolean joined =
-          connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0
-              || connection.getState() == StateRegistry.PLAY;
-
-      if (joined) {
-        this.preSpawn(handlerClass, connection, player);
-      // If we are on the login state, let LimboSessionHandlerImpl to login properly
-      } else if (connection.getState() != StateRegistry.LOGIN && this.shouldRejoin) {
-        // Switch play to the config state, that is required
-        // by the client to send the brand and settings
-        if (connection.getState() != StateRegistry.CONFIG) {
-          connection.delayedWrite(this.configTransitionPackets);
-          connection.setState(StateRegistry.CONFIG);
-        }
-
-        connection.delayedWrite(this.configPackets);
-      }
-
       LimboSessionHandlerImpl sessionHandler = new LimboSessionHandlerImpl(
           this.plugin,
           this,
@@ -394,15 +407,13 @@ public class LimboImpl implements Limbo {
           previousServer,
           () -> this.limboName
       );
-      connection.setActiveSessionHandler(connection.getState(), sessionHandler);
 
-      connection.flush();
-
-      this.currentOnline.increment();
-
-      sessionHandler.onConfig(new LimboPlayerImpl(this.plugin, this, player));
-      if (joined) {
-        this.postSpawn(sessionHandler, connection, player);
+      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+        ((LoginTrackHandler) connection.getActiveSessionHandler()).waitForConfirmation(() -> {
+          this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
+        });
+      } else {
+        this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
       }
     });
   }
