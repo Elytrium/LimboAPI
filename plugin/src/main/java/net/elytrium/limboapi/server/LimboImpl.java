@@ -313,7 +313,8 @@ public class LimboImpl implements Limbo {
 
   private void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
       LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
-    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+    boolean callSpawn = !this.shouldRejoin;
+    if (callSpawn || connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
       this.preSpawn(handlerClass, connection, player);
     }
 
@@ -334,7 +335,7 @@ public class LimboImpl implements Limbo {
     this.currentOnline.increment();
 
     sessionHandler.onConfig(new LimboPlayerImpl(this.plugin, this, player));
-    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+    if (callSpawn || connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
       this.postSpawn(sessionHandler, connection, player);
     }
 
