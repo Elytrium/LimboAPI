@@ -241,8 +241,9 @@ public class LoginTasksQueue {
           this.player.disconnect0(reason.get(), true);
         } else {
           if (this.server.registerConnection(this.player)) {
-            if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
-              ((LoginTrackHandler) connection.getActiveSessionHandler()).waitForConfirmation(() -> {
+            if (connection.getActiveSessionHandler() instanceof LoginTrackHandler) {
+              LoginTrackHandler track = (LoginTrackHandler) connection.getActiveSessionHandler();
+              track.waitForConfirmation(() -> {
                 try {
                   this.connectToServer(logger, connection);
                 } catch (Throwable e) {

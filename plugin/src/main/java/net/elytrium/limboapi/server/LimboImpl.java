@@ -408,8 +408,9 @@ public class LimboImpl implements Limbo {
           () -> this.limboName
       );
 
-      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
-        ((LoginTrackHandler) connection.getActiveSessionHandler()).waitForConfirmation(() -> {
+      if (connection.getActiveSessionHandler() instanceof LoginTrackHandler) {
+        LoginTrackHandler track = (LoginTrackHandler) connection.getActiveSessionHandler();
+        track.waitForConfirmation(() -> {
           this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
         });
       } else {
