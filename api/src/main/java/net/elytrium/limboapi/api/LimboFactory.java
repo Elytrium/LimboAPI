@@ -180,6 +180,13 @@ public interface LimboFactory {
   PreparedPacket createPreparedPacket();
 
   /**
+   * Creates new prepared packet builder for the CONFIG state.
+   *
+   * @return new prepared packet.
+   */
+  PreparedPacket createConfigPreparedPacket();
+
+  /**
    * Creates new prepared packet builder.
    *
    * @param minVersion Minimum version to prepare.
@@ -188,6 +195,16 @@ public interface LimboFactory {
    * @return new prepared packet.
    */
   PreparedPacket createPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion);
+
+  /**
+   * Creates new prepared packet builder for the CONFIG state.
+   *
+   * @param minVersion Minimum version to prepare.
+   * @param maxVersion Maximum version to prepare.
+   *
+   * @return new prepared packet.
+   */
+  PreparedPacket createConfigPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion);
 
   /**
    * Registers self-made packet.

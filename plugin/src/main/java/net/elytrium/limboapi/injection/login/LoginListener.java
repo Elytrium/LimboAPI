@@ -195,7 +195,9 @@ public class LoginListener {
 
                 this.plugin.setInitialID(player, playerUniqueID);
 
-                connection.setState(StateRegistry.PLAY);
+                if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+                  connection.setState(StateRegistry.PLAY);
+                }
 
                 this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
                   LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());

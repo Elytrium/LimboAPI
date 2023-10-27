@@ -26,6 +26,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
+import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -302,7 +303,11 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   private void sendToRegisteredServer(RegisteredServer server) {
     this.connection.eventLoop().execute(() -> {
-      this.connection.setState(StateRegistry.PLAY);
+      if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+        this.connection.setState(StateRegistry.PLAY);
+      } else if (this.connection.getState() == StateRegistry.PLAY) {
+        this.player.switchToConfigState();
+      }
       this.player.createConnectionRequest(server).fireAndForget();
     });
   }

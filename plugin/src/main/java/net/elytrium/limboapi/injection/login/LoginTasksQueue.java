@@ -35,19 +35,23 @@
 package net.elytrium.limboapi.injection.login;
 
 import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.connection.DisconnectEvent.LoginStatus;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
+import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
+import com.velocitypowered.proxy.connection.client.ClientConfigSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
 import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
@@ -55,6 +59,7 @@ import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
+import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
@@ -73,6 +78,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.slf4j.Logger;
 
 public class LoginTasksQueue {
@@ -84,6 +90,9 @@ public class LoginTasksQueue {
   private static final Field MC_CONNECTION_FIELD;
   private static final MethodHandle CONNECT_TO_INITIAL_SERVER_METHOD;
   private static final MethodHandle PLAYER_KEY_FIELD;
+  private static final Enum LOGIN_STATE_SENT;
+  private static final Field LOGIN_STATE_FIELD;
+  private static final Field CONNECTED_PLAYER_FIELD;
 
   private final LimboAPI plugin;
   private final Object handler;
@@ -122,6 +131,11 @@ public class LoginTasksQueue {
     MinecraftConnection connection = this.player.getConnection();
     Logger logger = LimboAPI.getLogger();
 
+    // As we have a login confirmation, we should queue it
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0 && connection.getState() == StateRegistry.LOGIN) {
+      connection.setAutoReading(false);
+    }
+
     eventManager.proceedProfile(this.player.getGameProfile());
     eventManager.fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode())).thenAcceptAsync(
         gameProfile -> eventManager.fire(new SafeGameProfileRequestEvent(gameProfile.getGameProfile(), gameProfile.isOnlineMode()))
@@ -141,7 +155,7 @@ public class LoginTasksQueue {
                               .setProperties(safeGameProfile.getGameProfile().getProperties())
                       )
                   ));
-                } else {
+                } else if (connection.getState() == StateRegistry.PLAY) {
                   UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
                   playerInfoEntry.setDisplayName(Component.text(safeGameProfile.getUsername()));
                   playerInfoEntry.setProfile(safeGameProfile.getGameProfile());
@@ -196,7 +210,9 @@ public class LoginTasksQueue {
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void initialize(MinecraftConnection connection) throws Throwable {
     connection.setAssociation(this.player);
-    connection.setState(StateRegistry.PLAY);
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+      connection.setState(StateRegistry.PLAY);
+    }
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();
     this.plugin.deject3rdParty(pipeline);
@@ -234,16 +250,55 @@ public class LoginTasksQueue {
         } else {
           if (this.server.registerConnection(this.player)) {
             try {
-              connection.setActiveSessionHandler(connection.getState(),
+              if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+                connection.setActiveSessionHandler(connection.getState(),
                   (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
-              this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
+
+                this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
+                  try {
+                    MC_CONNECTION_FIELD.set(this.handler, connection);
+                    CONNECT_TO_INITIAL_SERVER_METHOD.invoke((AuthSessionHandler) this.handler, this.player);
+                  } catch (Throwable e) {
+                    throw new ReflectionException(e);
+                  }
+                });
+              } else if (connection.getState() == StateRegistry.LOGIN) {
                 try {
+                  LOGIN_STATE_FIELD.set(this.handler, LOGIN_STATE_SENT);
+                  CONNECTED_PLAYER_FIELD.set(this.handler, this.player);
                   MC_CONNECTION_FIELD.set(this.handler, connection);
-                  CONNECT_TO_INITIAL_SERVER_METHOD.invoke((AuthSessionHandler) this.handler, this.player);
+
+                  // As we are ready to process the login confirmation, continue reading
+                  connection.setAutoReading(true);
                 } catch (Throwable e) {
                   throw new ReflectionException(e);
                 }
-              });
+              } else {
+                connection.write(new StartUpdate());
+                connection.setActiveSessionHandler(StateRegistry.CONFIG,
+                    new ClientConfigSessionHandler(server, this.player));
+                // From Velocity.
+                server.getEventManager().fire(new PostLoginEvent(this.player))
+                    .thenCompose((ignored) -> {
+                      Optional<RegisteredServer> initialFromConfig = player.getNextServerToTry();
+                      PlayerChooseInitialServerEvent chooseEvent =
+                          new PlayerChooseInitialServerEvent(player, initialFromConfig.orElse(null));
+
+                      return server.getEventManager().fire(chooseEvent).thenRunAsync(() -> {
+                        Optional<RegisteredServer> toTry = chooseEvent.getInitialServer();
+                        if (toTry.isEmpty()) {
+                          player.disconnect0(
+                              Component.translatable("velocity.error.no-available-servers", NamedTextColor.RED),
+                              true);
+                          return;
+                        }
+                        player.createConnectionRequest(toTry.get()).fireAndForget();
+                      }, connection.eventLoop());
+                    }).exceptionally((ex) -> {
+                      logger.error("Exception while connecting {} to initial server", this.player, ex);
+                      return null;
+                    });
+              }
             } catch (Throwable e) {
               throw new ReflectionException(e);
             }
@@ -276,12 +331,19 @@ public class LoginTasksQueue {
       CONNECT_TO_INITIAL_SERVER_METHOD = MethodHandles.privateLookupIn(AuthSessionHandler.class, MethodHandles.lookup())
           .findVirtual(AuthSessionHandler.class, "connectToInitialServer", MethodType.methodType(CompletableFuture.class, ConnectedPlayer.class));
 
+      Class<?> stateClass = Class.forName("com.velocitypowered.proxy.connection.client.AuthSessionHandler$State");
+      LOGIN_STATE_SENT = Enum.valueOf((Class<Enum>) stateClass, "SUCCESS_SENT");
+      LOGIN_STATE_FIELD = AuthSessionHandler.class.getDeclaredField("loginState");
+      LOGIN_STATE_FIELD.setAccessible(true);
+      CONNECTED_PLAYER_FIELD = AuthSessionHandler.class.getDeclaredField("connectedPlayer");
+      CONNECTED_PLAYER_FIELD.setAccessible(true);
+
       MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
       MC_CONNECTION_FIELD.setAccessible(true);
 
       PLAYER_KEY_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findSetter(ConnectedPlayer.class, "playerKey", IdentifiedKey.class);
-    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
+    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException | ClassNotFoundException e) {
       throw new ReflectionException(e);
     }
   }

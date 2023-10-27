@@ -25,13 +25,16 @@ import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
+import com.velocitypowered.proxy.protocol.packet.LoginAcknowledged;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerChat;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerCommand;
 import com.velocitypowered.proxy.protocol.packet.chat.legacy.LegacyChat;
 import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerChat;
 import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerCommand;
+import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdate;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -66,6 +69,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final RegisteredServer previousServer;
   private final Supplier<String> limboName;
 
+  private LimboPlayer limboPlayer;
   private ScheduledFuture<?> keepAliveTask;
   private long keepAliveKey;
   private boolean keepAlivePending;
@@ -87,9 +91,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.loaded = player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_18_2) < 0;
   }
 
-  public void onSpawn(LimboPlayer player) {
+  public void onConfig(LimboPlayer player) {
     this.loaded = true;
-    this.callback.onSpawn(this.limbo, player);
+    this.limboPlayer = player;
+    this.callback.onConfig(this.limbo, player);
 
     Integer serverReadTimeout = this.limbo.getReadTimeout();
     this.keepAliveTask = player.getScheduledExecutor().scheduleAtFixedRate(() -> {
@@ -117,6 +122,27 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.keepAliveSentTime = System.currentTimeMillis();
       }
     }, 250, (serverReadTimeout == null ? this.plugin.getServer().getConfiguration().getReadTimeout() : serverReadTimeout) / 2, TimeUnit.MILLISECONDS);
+  }
+
+  public void onSpawn() {
+    this.callback.onSpawn(this.limbo, this.limboPlayer);
+  }
+
+  @Override
+  public boolean handle(LoginAcknowledged packet) {
+    this.player.getConnection().setState(StateRegistry.CONFIG);
+    this.player.getConnection().write(this.limbo.configPackets);
+    return true;
+  }
+
+  @Override
+  public boolean handle(FinishedUpdate packet) {
+    this.player.getConnection().setState(this.limbo.localStateRegistry);
+
+    this.limbo.preSpawn(this.callback.getClass(), this.player.getConnection(), this.player);
+    this.limbo.postSpawn(this, this.player.getConnection(), this.player);
+    this.player.getConnection().flush();
+    return true;
   }
 
   public boolean handle(MovePacket packet) {
