@@ -313,7 +313,7 @@ public class LimboImpl implements Limbo {
 
   private void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
       LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
-    boolean callSpawn = !this.shouldRejoin;
+    boolean callSpawn = connection.getState() != StateRegistry.CONFIG && !this.shouldRejoin;
     if (callSpawn || connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
       this.preSpawn(handlerClass, connection, player);
     }
