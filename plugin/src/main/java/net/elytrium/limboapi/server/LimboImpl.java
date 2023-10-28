@@ -39,6 +39,7 @@ import com.velocitypowered.proxy.connection.registry.DimensionInfo;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
 import com.velocitypowered.proxy.protocol.packet.JoinGame;
@@ -46,6 +47,10 @@ import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.Respawn;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
+import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdate;
+import com.velocitypowered.proxy.protocol.packet.config.RegistrySync;
+import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
+import com.velocitypowered.proxy.protocol.packet.config.TagsUpdate;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
@@ -70,6 +75,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.fastprepare.PreparedPacketFactory;
 import net.elytrium.limboapi.LimboAPI;
@@ -81,7 +87,10 @@ import net.elytrium.limboapi.api.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.chunk.VirtualWorld;
 import net.elytrium.limboapi.api.command.LimboCommandMeta;
 import net.elytrium.limboapi.api.player.GameMode;
+import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
+import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
+import net.elytrium.limboapi.injection.login.LoginTrackHandler;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -91,6 +100,7 @@ import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
 import net.elytrium.limboapi.server.world.SimpleTagManager;
+import net.elytrium.limboapi.utils.NbtUtils;
 import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -143,6 +153,9 @@ public class LimboImpl implements Limbo {
   private PreparedPacket firstChunks;
   private List<PreparedPacket> delayedChunks;
   private PreparedPacket respawnPackets;
+  protected PreparedPacket configTransitionPackets;
+  protected PreparedPacket configPackets;
+  protected StateRegistry localStateRegistry;
   private boolean shouldRespawn = true;
   private boolean shouldRejoin = true;
   private boolean shouldUpdateTags = true;
@@ -155,6 +168,7 @@ public class LimboImpl implements Limbo {
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
     this.plugin = plugin;
     this.world = world;
+    this.localStateRegistry = LimboProtocol.getLimboStateRegistry();
 
     this.refresh();
   }
@@ -202,6 +216,16 @@ public class LimboImpl implements Limbo {
     this.addPostJoin(this.safeRejoinPackets);
     this.addPostJoin(this.postJoinPackets);
 
+    this.configTransitionPackets = this.plugin.createPreparedPacket()
+      .prepare(new StartUpdate(), ProtocolVersion.MINECRAFT_1_20_2);
+
+    this.configPackets = this.plugin.createConfigPreparedPacket();
+    this.configPackets.prepare(this::createRegistrySync, ProtocolVersion.MINECRAFT_1_20_2);
+    if (this.shouldUpdateTags) {
+      this.configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
+    }
+    this.configPackets.prepare(new FinishedUpdate(), ProtocolVersion.MINECRAFT_1_20_2);
+
     this.firstChunks = this.createFirstChunks();
     this.delayedChunks = this.createDelayedChunksPackets();
     this.respawnPackets = this.plugin.createPreparedPacket()
@@ -215,10 +239,27 @@ public class LimboImpl implements Limbo {
         );
 
     if (this.shouldUpdateTags) {
-      this.respawnPackets.prepare(SimpleTagManager::getUpdateTagsPacket, ProtocolVersion.MINECRAFT_1_13);
+      this.respawnPackets.prepare(SimpleTagManager::getUpdateTagsPacket,
+          ProtocolVersion.MINECRAFT_1_13, ProtocolVersion.MINECRAFT_1_20);
     }
 
     this.respawnPackets.build();
+  }
+
+  private RegistrySync createRegistrySync(ProtocolVersion version) {
+    JoinGame join = this.createJoinGamePacket(version);
+
+    // Blame Velocity for this madness
+    ByteBuf encodedRegistry = this.plugin.getPreparedPacketFactory().getPreparedPacketAllocator().ioBuffer();
+    NbtUtils.writeCompoundTag(encodedRegistry, join.getRegistry(), version);
+
+    RegistrySync sync = new RegistrySync();
+    sync.replace(encodedRegistry);
+    return sync;
+  }
+
+  private TagsUpdate createTagsUpdate(ProtocolVersion version) {
+    return new TagsUpdate(SimpleTagManager.getUpdateTagsPacket(version).toVelocityTags());
   }
 
   private void addPostJoin(PreparedPacket packet) {
@@ -240,8 +281,10 @@ public class LimboImpl implements Limbo {
 
     boolean shouldSpawnPlayerImmediately = true;
 
-    if (connection.getState() != LimboProtocol.getLimboStateRegistry()) {
-      connection.eventLoop().execute(() -> connection.setState(LimboProtocol.getLimboStateRegistry()));
+    if (connection.getState() != this.localStateRegistry) {
+      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+        connection.eventLoop().execute(() -> connection.setState(this.localStateRegistry));
+      }
       VelocityServerConnection server = player.getConnectedServer();
       if (server != null) {
         RegisteredServer previousServer = server.getServer();
@@ -266,6 +309,37 @@ public class LimboImpl implements Limbo {
     if (shouldSpawnPlayerImmediately) {
       this.spawnPlayerLocal(player, handler, null);
     }
+  }
+
+  private void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
+      LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
+    boolean callSpawn = connection.getState() != StateRegistry.CONFIG && !this.shouldRejoin;
+    if (callSpawn || connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+      this.preSpawn(handlerClass, connection, player);
+    }
+
+    connection.setActiveSessionHandler(connection.getState(), sessionHandler);
+
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+      if (connection.getState() != StateRegistry.CONFIG) {
+        if (this.shouldRejoin) {
+          connection.delayedWrite(this.configTransitionPackets);
+          connection.setState(StateRegistry.CONFIG);
+          connection.delayedWrite(this.configPackets);
+        }
+      } else {
+        connection.delayedWrite(this.configPackets);
+      }
+    }
+
+    this.currentOnline.increment();
+
+    sessionHandler.onConfig(new LimboPlayerImpl(this.plugin, this, player));
+    if (callSpawn || connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+      this.postSpawn(sessionHandler, connection, player);
+    }
+
+    connection.flush();
   }
 
   private void spawnPlayerLocal(ConnectedPlayer player, LimboSessionHandler handler, RegisteredServer previousServer) {
@@ -325,72 +399,82 @@ public class LimboImpl implements Limbo {
         }
       }
 
-      if (this.plugin.isLimboJoined(player)) {
-        if (this.shouldRejoin) {
-          if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
-            connection.delayedWrite(this.safeRejoinPackets);
-          } else {
-            connection.delayedWrite(this.fastRejoinPackets);
-          }
-        } else {
-          connection.delayedWrite(this.postJoinPackets);
-        }
-      } else {
-        connection.delayedWrite(this.joinPackets);
-      }
-
-      MinecraftPacket playerInfoPacket;
-
-      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
-        playerInfoPacket = new LegacyPlayerListItem(
-            LegacyPlayerListItem.ADD_PLAYER,
-            List.of(
-                new LegacyPlayerListItem.Item(player.getUniqueId())
-                    .setName(player.getUsername())
-                    .setGameMode(this.gameMode)
-                    .setProperties(player.getGameProfileProperties())
-            )
-        );
-      } else {
-        UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(player.getUniqueId());
-        playerInfoEntry.setDisplayName(Component.text(player.getUsername()));
-        playerInfoEntry.setGameMode(this.gameMode);
-        playerInfoEntry.setProfile(player.getGameProfile());
-
-        playerInfoPacket = new UpsertPlayerInfo(
-            EnumSet.of(
-                UpsertPlayerInfo.Action.UPDATE_DISPLAY_NAME,
-                UpsertPlayerInfo.Action.UPDATE_GAME_MODE,
-                UpsertPlayerInfo.Action.ADD_PLAYER),
-            List.of(playerInfoEntry));
-      }
-
-      connection.delayedWrite(playerInfoPacket);
-
-      connection.delayedWrite(this.getBrandMessage(handlerClass));
-
-      this.plugin.setLimboJoined(player);
-
       LimboSessionHandlerImpl sessionHandler = new LimboSessionHandlerImpl(
           this.plugin,
           this,
           player,
           handler,
-          connection.getSessionHandler(),
+          connection.getActiveSessionHandler(),
           previousServer,
           () -> this.limboName
       );
-      connection.setSessionHandler(sessionHandler);
 
-      connection.flush();
-
-      if (this.shouldRespawn) {
-        this.respawnPlayer(player);
+      if (connection.getActiveSessionHandler() instanceof LoginTrackHandler) {
+        LoginTrackHandler track = (LoginTrackHandler) connection.getActiveSessionHandler();
+        track.waitForConfirmation(() -> {
+          this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
+        });
+      } else {
+        this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
       }
-
-      this.currentOnline.increment();
-      sessionHandler.onSpawn(new LimboPlayerImpl(this.plugin, this, player));
     });
+  }
+
+  protected void postSpawn(LimboSessionHandlerImpl sessionHandler, MinecraftConnection connection, ConnectedPlayer player) {
+    if (this.shouldRespawn) {
+      this.respawnPlayer(player);
+    }
+
+    sessionHandler.onSpawn();
+  }
+
+  protected void preSpawn(Class<? extends LimboSessionHandler> handlerClass,
+                          MinecraftConnection connection, ConnectedPlayer player) {
+    if (this.plugin.isLimboJoined(player)) {
+      if (this.shouldRejoin) {
+        if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
+          connection.delayedWrite(this.safeRejoinPackets);
+        } else {
+          connection.delayedWrite(this.fastRejoinPackets);
+        }
+      } else {
+        connection.delayedWrite(this.postJoinPackets);
+      }
+    } else {
+      connection.delayedWrite(this.joinPackets);
+    }
+
+    MinecraftPacket playerInfoPacket;
+
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
+      playerInfoPacket = new LegacyPlayerListItem(
+          LegacyPlayerListItem.ADD_PLAYER,
+          List.of(
+              new LegacyPlayerListItem.Item(player.getUniqueId())
+                  .setName(player.getUsername())
+                  .setGameMode(this.gameMode)
+                  .setProperties(player.getGameProfileProperties())
+          )
+      );
+    } else {
+      UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(player.getUniqueId());
+      playerInfoEntry.setDisplayName(Component.text(player.getUsername()));
+      playerInfoEntry.setGameMode(this.gameMode);
+      playerInfoEntry.setProfile(player.getGameProfile());
+
+      playerInfoPacket = new UpsertPlayerInfo(
+          EnumSet.of(
+              UpsertPlayerInfo.Action.UPDATE_DISPLAY_NAME,
+              UpsertPlayerInfo.Action.UPDATE_GAME_MODE,
+              UpsertPlayerInfo.Action.ADD_PLAYER),
+          List.of(playerInfoEntry));
+    }
+
+    connection.delayedWrite(playerInfoPacket);
+
+    connection.delayedWrite(this.getBrandMessage(handlerClass));
+
+    this.plugin.setLimboJoined(player);
   }
 
   @Override
@@ -523,6 +607,17 @@ public class LimboImpl implements Limbo {
     }
 
     throw new IllegalArgumentException(command + " does not implement a registrable Command sub-interface.");
+  }
+
+  public Limbo registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings) {
+    if (this.localStateRegistry == LimboProtocol.getLimboStateRegistry()) {
+      this.localStateRegistry = LimboProtocol.createLocalStateRegistry();
+      this.plugin.getPreparedPacketFactory().addStateRegistry(this.localStateRegistry);
+    }
+
+    LimboProtocol.register(this.localStateRegistry, direction, packetClass, packetSupplier, packetMappings);
+
+    return this;
   }
 
   @Override

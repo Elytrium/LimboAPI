@@ -40,6 +40,7 @@ import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.mcprotocollib.BitStorage116;
 import net.elytrium.limboapi.mcprotocollib.BitStorage19;
 import net.elytrium.limboapi.protocol.util.NetworkSection;
+import net.elytrium.limboapi.utils.NbtUtils;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
 public class ChunkDataPacket implements MinecraftPacket {
@@ -130,9 +131,9 @@ public class ChunkDataPacket implements MinecraftPacket {
     // 1.14+ heightMap.
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_16) < 0) {
-        ProtocolUtils.writeCompoundTag(buf, this.heightmap114);
+        NbtUtils.writeCompoundTag(buf, this.heightmap114, version);
       } else {
-        ProtocolUtils.writeCompoundTag(buf, this.heightmap116);
+        NbtUtils.writeCompoundTag(buf, this.heightmap116, version);
       }
     }
 
@@ -171,7 +172,7 @@ public class ChunkDataPacket implements MinecraftPacket {
               blockEntityNbt.putInt("z", blockEntityEntry.getPosZ());
             }
 
-            ProtocolUtils.writeCompoundTag(buf, blockEntityNbt);
+            NbtUtils.writeCompoundTag(buf, blockEntityNbt, version);
           }
         }
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {

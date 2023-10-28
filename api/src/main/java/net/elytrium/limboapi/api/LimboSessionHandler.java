@@ -15,6 +15,10 @@ public interface LimboSessionHandler {
 
   }
 
+  default void onConfig(Limbo server, LimboPlayer player) {
+
+  }
+
   default void onMove(double posX, double posY, double posZ) {
 
   }
@@ -40,7 +44,7 @@ public interface LimboSessionHandler {
   }
 
   /**
-   * @param packet Any velocity built-in packet or any packet registered via {@link LimboFactory#registerPacket}.
+   * @param packet Any velocity built-in packet or any packet registered via {@link Limbo#registerPacket}.
    */
   default void onGeneric(Object packet) {
 

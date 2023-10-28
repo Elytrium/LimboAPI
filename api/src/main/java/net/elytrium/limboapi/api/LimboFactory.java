@@ -190,13 +190,32 @@ public interface LimboFactory {
   PreparedPacket createPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion);
 
   /**
+   * Creates new prepared packet builder for the CONFIG state.
+   *
+   * @return new prepared packet.
+   */
+  PreparedPacket createConfigPreparedPacket();
+
+  /**
+   * Creates new prepared packet builder for the CONFIG state.
+   *
+   * @param minVersion Minimum version to prepare.
+   * @param maxVersion Maximum version to prepare.
+   *
+   * @return new prepared packet.
+   */
+  PreparedPacket createConfigPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion);
+
+  /**
    * Registers self-made packet.
    *
    * @param direction      Packet direction.
    * @param packetClass    Packet class.
    * @param packetSupplier Packet supplier to make a new instance. (::new)
    * @param packetMappings Packet id mappings.
+   * @deprecated Use {@link Limbo#registerPacket} instead.
    */
+  @Deprecated(forRemoval = true)
   void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings);
 
   /**

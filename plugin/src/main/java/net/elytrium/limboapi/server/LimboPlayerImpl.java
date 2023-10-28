@@ -261,7 +261,7 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void disconnect() {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
+    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getActiveSessionHandler();
     if (handler != null) {
       if (this.plugin.hasLoginQueue(this.player)) {
         handler.disconnected();
@@ -281,11 +281,12 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void disconnect(RegisteredServer server) {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
+    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getActiveSessionHandler();
     if (handler != null) {
       if (this.plugin.hasLoginQueue(this.player)) {
         handler.disconnected();
         this.plugin.setNextServer(this.player, server);
+        this.plugin.getLoginQueue(this.player).next();
       } else {
         this.deject();
         handler.disconnected();
@@ -301,7 +302,11 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   private void sendToRegisteredServer(RegisteredServer server) {
     this.connection.eventLoop().execute(() -> {
-      this.connection.setState(StateRegistry.PLAY);
+      if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+        this.connection.setState(StateRegistry.PLAY);
+      } else if (this.connection.getState() == StateRegistry.PLAY) {
+        this.player.switchToConfigState();
+      }
       this.player.createConnectionRequest(server).fireAndForget();
     });
   }
@@ -353,7 +358,7 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public int getPing() {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
+    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getActiveSessionHandler();
     if (handler != null) {
       return handler.getPing();
     } else {
