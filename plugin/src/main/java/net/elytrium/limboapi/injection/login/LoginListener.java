@@ -133,6 +133,10 @@ public class LoginListener {
       Object handler = connection.getActiveSessionHandler();
       MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
 
+      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+        connection.setActiveSessionHandler(StateRegistry.LOGIN, new LoginTrackHandler(connection));
+      }
+
       // From Velocity.
       if (!connection.isClosed()) {
         connection.eventLoop().execute(() -> {
@@ -195,7 +199,9 @@ public class LoginListener {
 
                 this.plugin.setInitialID(player, playerUniqueID);
 
-                connection.setState(StateRegistry.PLAY);
+                if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+                  connection.setState(StateRegistry.PLAY);
+                }
 
                 this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
                   LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());

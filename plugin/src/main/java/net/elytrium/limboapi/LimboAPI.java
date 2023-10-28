@@ -124,7 +124,7 @@ import org.slf4j.Logger;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
-  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 763;
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 764;
 
   @MonotonicNonNull
   private static Logger LOGGER;
@@ -143,6 +143,7 @@ public class LimboAPI implements LimboFactory {
   private final HashMap<Player, UUID> initialID;
 
   private PreparedPacketFactory preparedPacketFactory;
+  private PreparedPacketFactory configPreparedPacketFactory;
   private PreparedPacketFactory loginUncompressedPreparedPacketFactory;
   private PreparedPacketFactory loginPreparedPacketFactory;
   private ProtocolVersion minVersion;
@@ -212,6 +213,14 @@ public class LimboAPI implements LimboFactory {
     this.preparedPacketFactory = new PreparedPacketFactory(
         PreparedPacketImpl::new,
         LimboProtocol.getLimboStateRegistry(),
+        this.compressionEnabled,
+        level,
+        threshold,
+        Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS
+    );
+    this.configPreparedPacketFactory = new PreparedPacketFactory(
+        PreparedPacketImpl::new,
+        StateRegistry.CONFIG,
         this.compressionEnabled,
         level,
         threshold,
@@ -302,6 +311,7 @@ public class LimboAPI implements LimboFactory {
     this.compressionEnabled = threshold != -1;
 
     this.preparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold, Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
+    this.configPreparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold, Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
     this.loginPreparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold, Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
   }
 
@@ -382,6 +392,16 @@ public class LimboAPI implements LimboFactory {
   @Override
   public PreparedPacket createPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion) {
     return (PreparedPacket) this.preparedPacketFactory.createPreparedPacket(minVersion, maxVersion);
+  }
+
+  @Override
+  public PreparedPacket createConfigPreparedPacket() {
+    return (PreparedPacket) this.configPreparedPacketFactory.createPreparedPacket(this.minVersion, this.maxVersion);
+  }
+
+  @Override
+  public PreparedPacket createConfigPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion) {
+    return (PreparedPacket) this.configPreparedPacketFactory.createPreparedPacket(minVersion, maxVersion);
   }
 
   public ByteBuf encodeSingleLogin(MinecraftPacket packet, ProtocolVersion version) {

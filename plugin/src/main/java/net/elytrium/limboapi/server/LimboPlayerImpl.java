@@ -302,7 +302,11 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   private void sendToRegisteredServer(RegisteredServer server) {
     this.connection.eventLoop().execute(() -> {
-      this.connection.setState(StateRegistry.PLAY);
+      if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+        this.connection.setState(StateRegistry.PLAY);
+      } else if (this.connection.getState() == StateRegistry.PLAY) {
+        this.player.switchToConfigState();
+      }
       this.player.createConnectionRequest(server).fireAndForget();
     });
   }

@@ -48,6 +48,7 @@ import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
+import com.velocitypowered.proxy.connection.client.ClientConfigSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
 import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
@@ -55,6 +56,7 @@ import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
+import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
@@ -84,6 +86,9 @@ public class LoginTasksQueue {
   private static final Field MC_CONNECTION_FIELD;
   private static final MethodHandle CONNECT_TO_INITIAL_SERVER_METHOD;
   private static final MethodHandle PLAYER_KEY_FIELD;
+  private static final Enum LOGIN_STATE_SENT;
+  private static final Field LOGIN_STATE_FIELD;
+  private static final Field CONNECTED_PLAYER_FIELD;
 
   private final LimboAPI plugin;
   private final Object handler;
@@ -141,7 +146,7 @@ public class LoginTasksQueue {
                               .setProperties(safeGameProfile.getGameProfile().getProperties())
                       )
                   ));
-                } else {
+                } else if (connection.getState() == StateRegistry.PLAY) {
                   UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
                   playerInfoEntry.setDisplayName(Component.text(safeGameProfile.getUsername()));
                   playerInfoEntry.setProfile(safeGameProfile.getGameProfile());
@@ -196,7 +201,10 @@ public class LoginTasksQueue {
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void initialize(MinecraftConnection connection) throws Throwable {
     connection.setAssociation(this.player);
-    connection.setState(StateRegistry.PLAY);
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0
+        || (connection.getState() != StateRegistry.LOGIN && connection.getState() != StateRegistry.CONFIG)) {
+      connection.setState(StateRegistry.PLAY);
+    }
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();
     this.plugin.deject3rdParty(pipeline);
@@ -233,19 +241,21 @@ public class LoginTasksQueue {
           this.player.disconnect0(reason.get(), true);
         } else {
           if (this.server.registerConnection(this.player)) {
-            try {
-              connection.setActiveSessionHandler(connection.getState(),
-                  (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
-              this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
+            if (connection.getActiveSessionHandler() instanceof LoginTrackHandler) {
+              LoginTrackHandler track = (LoginTrackHandler) connection.getActiveSessionHandler();
+              track.waitForConfirmation(() -> {
                 try {
-                  MC_CONNECTION_FIELD.set(this.handler, connection);
-                  CONNECT_TO_INITIAL_SERVER_METHOD.invoke((AuthSessionHandler) this.handler, this.player);
+                  this.connectToServer(logger, connection);
                 } catch (Throwable e) {
                   throw new ReflectionException(e);
                 }
               });
-            } catch (Throwable e) {
-              throw new ReflectionException(e);
+            } else {
+              try {
+                this.connectToServer(logger, connection);
+              } catch (Throwable e) {
+                throw new ReflectionException(e);
+              }
             }
           } else {
             this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), true);
@@ -255,6 +265,29 @@ public class LoginTasksQueue {
     }, connection.eventLoop()).exceptionally(t -> {
       logger.error("Exception while completing login initialisation phase for {}", this.player, t);
       return null;
+    });
+  }
+
+  private void connectToServer(Logger logger, MinecraftConnection connection) throws Throwable {
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+      connection.setActiveSessionHandler(connection.getState(),
+          (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
+    } else {
+      if (connection.getState() == StateRegistry.PLAY) {
+        connection.write(new StartUpdate());
+      }
+
+      connection.setActiveSessionHandler(StateRegistry.CONFIG,
+          new ClientConfigSessionHandler(this.server, this.player));
+    }
+
+    this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
+      try {
+        MC_CONNECTION_FIELD.set(this.handler, connection);
+        CONNECT_TO_INITIAL_SERVER_METHOD.invoke((AuthSessionHandler) this.handler, this.player);
+      } catch (Throwable e) {
+        throw new ReflectionException(e);
+      }
     });
   }
 
@@ -276,12 +309,19 @@ public class LoginTasksQueue {
       CONNECT_TO_INITIAL_SERVER_METHOD = MethodHandles.privateLookupIn(AuthSessionHandler.class, MethodHandles.lookup())
           .findVirtual(AuthSessionHandler.class, "connectToInitialServer", MethodType.methodType(CompletableFuture.class, ConnectedPlayer.class));
 
+      Class<?> stateClass = Class.forName("com.velocitypowered.proxy.connection.client.AuthSessionHandler$State");
+      LOGIN_STATE_SENT = Enum.valueOf((Class<Enum>) stateClass, "SUCCESS_SENT");
+      LOGIN_STATE_FIELD = AuthSessionHandler.class.getDeclaredField("loginState");
+      LOGIN_STATE_FIELD.setAccessible(true);
+      CONNECTED_PLAYER_FIELD = AuthSessionHandler.class.getDeclaredField("connectedPlayer");
+      CONNECTED_PLAYER_FIELD.setAccessible(true);
+
       MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
       MC_CONNECTION_FIELD.setAccessible(true);
 
       PLAYER_KEY_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findSetter(ConnectedPlayer.class, "playerKey", IdentifiedKey.class);
-    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
+    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException | ClassNotFoundException e) {
       throw new ReflectionException(e);
     }
   }
