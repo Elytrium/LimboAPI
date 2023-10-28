@@ -192,6 +192,14 @@ File downloadVersionManifest(String version) {
   return output
 }
 
+File getGeneratedCache(MinecraftVersion version) {
+  File generated = new File(dataDirectory, "${version.getVersionName()}/generated")
+  return new File(generated, "reports/blocks.json").exists()
+          && new File(generated, "reports/${version >= MinecraftVersion.MINECRAFT_1_14 ? "registries" : "items"}.json").exists()
+          && new File(generated, "data/minecraft/tags").exists()
+          ? generated : null
+}
+
 static boolean validateServer(File file, String expected) {
   if (file == null || !file.exists()) {
     return false
@@ -218,6 +226,11 @@ File getServerJar(String version) {
 }
 
 File generateData(MinecraftVersion version) {
+  File cache = getGeneratedCache(version)
+  if (cache != null) {
+    return cache;
+  }
+
   File jarFile = this.getServerJar(version.getVersionName())
   File targetDir = new File(jarFile.getParentFile(), "generated")
 
