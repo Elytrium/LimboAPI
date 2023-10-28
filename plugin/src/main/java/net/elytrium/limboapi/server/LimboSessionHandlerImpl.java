@@ -329,10 +329,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   public void switchDisconnection(Runnable runnable) {
-    if (this.player.getConnection().getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
-      runnable.run();
-    } else if (this.disconnecting ^= true) {
-      this.transition.thenRun(runnable);
+    if (this.disconnecting ^= true) {
+      if (this.player.getConnection().getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+        runnable.run();
+      } else {
+        this.transition.thenRun(runnable);
+      }
     }
   }
 
