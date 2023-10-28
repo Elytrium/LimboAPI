@@ -201,6 +201,84 @@ File getGeneratedCache(MinecraftVersion version) {
           ? generated : null
 }
 
+static String getJreArchiveFilename() {
+  String os = System.getProperty("os.name").toLowerCase()
+  String arch = System.getProperty("os.arch").toLowerCase()
+  if (os.contains("win")) {
+    switch (arch) {
+      case "aarch64":
+      case "amd64":
+      case "x86_64":
+        return "OpenJDK17U-jre_x64_windows_hotspot_17.0.9_9.zip"
+      case "x86":
+        return "OpenJDK17U-jre_x86-32_windows_hotspot_17.0.9_9.zip"
+    }
+  } else if (os.contains("mac")) {
+    switch (arch) {
+      case "aarch64":
+        return "OpenJDK17U-jre_aarch64_mac_hotspot_17.0.9_9.tar.gz"
+      case "x86_64":
+        return "OpenJDK17U-jre_x64_mac_hotspot_17.0.9_9.tar.gz"
+    }
+  } else if (os.contains("nix") || os.contains("nux")) {
+    switch (arch) {
+      case "aarch64":
+        return "OpenJDK17U-jre_aarch64_linux_hotspot_17.0.9_9.tar.gz"
+      case "amd64":
+      case"x86_64":
+        return "OpenJDK17U-jre_x64_linux_hotspot_17.0.9_9.tar.gz"
+      case "arm":
+      case "arm32":
+        return "OpenJDK17U-jre_arm_linux_hotspot_17.0.9_9.tar.gz"
+    }
+  }
+
+  this.println("Couldn't determine the JRE version. Defaulting to Linux amd64.")
+  return "OpenJDK17U-jre_x64_linux_hotspot_17.0.9_9.tar.gz"
+}
+
+void downloadJre() {
+  this.println("> Downloading JRE...")
+
+  String filename = getJreArchiveFilename()
+  String url = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.9+9/" + filename
+
+  File archive = new File(dataDirectory, filename)
+  FileUtils.copyURLToFile(new URL(url), archive)
+
+  copy({
+    from(filename.endsWith(".zip") ? zipTree(archive) : tarTree(archive))
+    into(dataDirectory)
+  })
+}
+
+File getJre() {
+  for (File file : List.of(
+          new File(dataDirectory, "jdk-17.0.9+9-jre/bin/java"),
+          new File(dataDirectory, "jdk-17.0.9+9-jre/bin/java.exe"),
+          new File(dataDirectory, "jdk-17.0.9+9-jre/Contents/Home/bin/java")
+  )) {
+    if (file.exists()) {
+      return file
+    }
+  }
+
+  downloadJre()
+  return getJre()
+}
+
+File getJavaExecutable() {
+  if (Runtime.version().feature() < 17) {
+    return getJre()
+  }
+
+  if (System.getProperty("os.name").toLowerCase().contains("win")) {
+    return new File(base, "bin/java.exe")
+  } else {
+    return new File(base, "bin/java")
+  }
+}
+
 static boolean validateServer(File file, String expected) {
   if (file == null || !file.exists()) {
     return false
@@ -249,11 +327,10 @@ File generateData(MinecraftVersion version) {
   }
 
   exec {
+    File java = getJavaExecutable()
     if (System.getProperty("os.name").toLowerCase().contains("win")) {
-      File java = new File(System.getProperty("java.home"), "bin/java.exe")
       commandLine("cmd", "/c", String.format(command, java))
     } else {
-      File java = new File(System.getProperty("java.home"), "bin/java")
       commandLine("bash", "-c", String.format(command, java))
     }
 
