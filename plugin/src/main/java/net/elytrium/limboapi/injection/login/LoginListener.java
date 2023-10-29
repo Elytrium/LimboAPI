@@ -150,6 +150,9 @@ public class LoginListener {
                 this.onlineMode.contains(event.getUsername()),
                 inboundConnection.getIdentifiedKey()
             );
+            if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+              ((LoginTrackHandler) connection.getActiveSessionHandler()).setPlayer(player);
+            }
             if (this.server.canRegisterConnection(player)) {
               if (!connection.isClosed()) {
                 // Complete the Login process.
