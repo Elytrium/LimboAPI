@@ -39,6 +39,7 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +67,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final MinecraftSessionHandler originalHandler;
   private final RegisteredServer previousServer;
   private final Supplier<String> limboName;
+  private final CompletableFuture<Object> transition = new CompletableFuture<>();
 
   private LimboPlayer limboPlayer;
   private ScheduledFuture<?> keepAliveTask;
@@ -75,6 +77,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private int ping = -1;
   private int genericBytes;
   private boolean loaded;
+  private boolean disconnecting;
   //private boolean disconnected;
 
   public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player, LimboSessionHandler callback,
@@ -133,6 +136,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.limbo.preSpawn(this.callback.getClass(), this.player.getConnection(), this.player);
     this.limbo.postSpawn(this, this.player.getConnection(), this.player);
     this.player.getConnection().flush();
+    this.transition.complete(this);
     return true;
   }
 
@@ -321,6 +325,16 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       pipeline.replace(LimboProtocol.READ_TIMEOUT, Connections.READ_TIMEOUT,
           new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS)
       );
+    }
+  }
+
+  public void switchDisconnection(Runnable runnable) {
+    if (this.disconnecting ^= true) {
+      if (this.player.getConnection().getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+        runnable.run();
+      } else {
+        this.transition.thenRun(runnable);
+      }
     }
   }
 
