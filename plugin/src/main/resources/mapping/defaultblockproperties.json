@@ -200,6 +200,9 @@
     "facing": "north",
     "open": "false"
   },
+  "minecraft:barrier": {
+    "waterlogged": "false"
+  },
   "minecraft:basalt": {
     "axis": "y"
   },
@@ -686,10 +689,12 @@
     "waterlogged": "true"
   },
   "minecraft:creeper_head": {
+    "powered": "false",
     "rotation": "0"
   },
   "minecraft:creeper_wall_head": {
-    "facing": "north"
+    "facing": "north",
+    "powered": "false"
   },
   "minecraft:crimson_button": {
     "face": "wall",
@@ -1027,10 +1032,12 @@
     "triggered": "false"
   },
   "minecraft:dragon_head": {
+    "powered": "false",
     "rotation": "0"
   },
   "minecraft:dragon_wall_head": {
-    "facing": "north"
+    "facing": "north",
+    "powered": "false"
   },
   "minecraft:dropper": {
     "facing": "north",
@@ -1855,10 +1862,12 @@
     "waterlogged": "false"
   },
   "minecraft:piglin_head": {
+    "powered": "false",
     "rotation": "0"
   },
   "minecraft:piglin_wall_head": {
-    "facing": "north"
+    "facing": "north",
+    "powered": "false"
   },
   "minecraft:pink_banner": {
     "rotation": "0"
@@ -1913,10 +1922,12 @@
     "half": "lower"
   },
   "minecraft:player_head": {
+    "powered": "false",
     "rotation": "0"
   },
   "minecraft:player_wall_head": {
-    "facing": "north"
+    "facing": "north",
+    "powered": "false"
   },
   "minecraft:podzol": {
     "snowy": "false"
@@ -2290,10 +2301,12 @@
     "facing": "up"
   },
   "minecraft:skeleton_skull": {
+    "powered": "false",
     "rotation": "0"
   },
   "minecraft:skeleton_wall_skull": {
-    "facing": "north"
+    "facing": "north",
+    "powered": "false"
   },
   "minecraft:small_amethyst_bud": {
     "facing": "up",
@@ -2788,10 +2801,12 @@
     "facing": "north"
   },
   "minecraft:wither_skeleton_skull": {
+    "powered": "false",
     "rotation": "0"
   },
   "minecraft:wither_skeleton_wall_skull": {
-    "facing": "north"
+    "facing": "north",
+    "powered": "false"
   },
   "minecraft:yellow_banner": {
     "rotation": "0"
@@ -2826,9 +2841,11 @@
     "facing": "north"
   },
   "minecraft:zombie_head": {
+    "powered": "false",
     "rotation": "0"
   },
   "minecraft:zombie_wall_head": {
-    "facing": "north"
+    "facing": "north",
+    "powered": "false"
   }
 }
