@@ -261,38 +261,46 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void disconnect() {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getActiveSessionHandler();
-    if (handler != null) {
-      if (this.plugin.hasLoginQueue(this.player)) {
-        handler.disconnected();
-        this.plugin.getLoginQueue(this.player).next();
-      } else {
-        RegisteredServer server = handler.getPreviousServer();
-        if (server != null) {
-          this.deject();
-          handler.disconnected();
-          this.sendToRegisteredServer(server);
-        } else {
-          handler.disconnected();
-        }
+    this.connection.eventLoop().execute(() -> {
+      LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getActiveSessionHandler();
+      if (handler != null) {
+        handler.switchDisconnection(() -> {
+          if (this.plugin.hasLoginQueue(this.player)) {
+            handler.disconnected();
+            this.plugin.getLoginQueue(this.player).next();
+          } else {
+            RegisteredServer server = handler.getPreviousServer();
+            if (server != null) {
+              this.deject();
+              handler.disconnected();
+              this.sendToRegisteredServer(server);
+            } else {
+              handler.disconnected();
+            }
+          }
+        });
       }
-    }
+    });
   }
 
   @Override
   public void disconnect(RegisteredServer server) {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getActiveSessionHandler();
-    if (handler != null) {
-      if (this.plugin.hasLoginQueue(this.player)) {
-        handler.disconnected();
-        this.plugin.setNextServer(this.player, server);
-        this.plugin.getLoginQueue(this.player).next();
-      } else {
-        this.deject();
-        handler.disconnected();
-        this.sendToRegisteredServer(server);
+    this.connection.eventLoop().execute(() -> {
+      LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getActiveSessionHandler();
+      if (handler != null) {
+        handler.switchDisconnection(() -> {
+          if (this.plugin.hasLoginQueue(this.player)) {
+            handler.disconnected();
+            this.plugin.setNextServer(this.player, server);
+            this.plugin.getLoginQueue(this.player).next();
+          } else {
+            this.deject();
+            handler.disconnected();
+            this.sendToRegisteredServer(server);
+          }
+        });
       }
-    }
+    });
   }
 
   private void deject() {

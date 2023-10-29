@@ -25,7 +25,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.concurrent.CompletableFuture;
 
 public class LoginTrackHandler implements MinecraftSessionHandler {
-  private final CompletableFuture<Void> confirmation = new CompletableFuture<>();
+  private final CompletableFuture<Object> confirmation = new CompletableFuture<>();
   private final MinecraftConnection connection;
 
   public LoginTrackHandler(MinecraftConnection connection) {
@@ -39,7 +39,7 @@ public class LoginTrackHandler implements MinecraftSessionHandler {
   @Override
   public boolean handle(LoginAcknowledged packet) {
     this.connection.setState(StateRegistry.CONFIG);
-    this.confirmation.complete(null);
+    this.confirmation.complete(this);
     return true;
   }
 
