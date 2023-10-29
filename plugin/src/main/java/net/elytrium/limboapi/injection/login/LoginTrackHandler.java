@@ -77,38 +77,49 @@ public class LoginTrackHandler implements MinecraftSessionHandler {
 
   @Override
   public void disconnected() {
-    if (this.player != null) {
-      try {
-        TEARDOWN_METHOD.invokeExact(this.player);
-      } catch (Throwable e) {
-        throw new ReflectionException(e);
+    try {
+      if (this.player != null) {
+        try {
+          TEARDOWN_METHOD.invokeExact(this.player);
+        } catch (Throwable e) {
+          throw new ReflectionException(e);
+        }
       }
+    } finally {
+      this.releaseQueue();
     }
   }
 
   public void processQueued() {
-    ChannelHandlerContext ctx = this.connection.getChannel().pipeline().context(this.connection);
-    MinecraftSessionHandler sessionHandler = this.connection.getActiveSessionHandler();
-    if (sessionHandler != null && !sessionHandler.beforeHandle()) {
-      for (MinecraftPacket packet : this.queuedPackets) {
-        if (!this.connection.isClosed()) {
-          try {
-            if (!packet.handle(sessionHandler)) {
-              sessionHandler.handleGeneric(packet);
-            }
-          } catch (Throwable throwable) {
+    try {
+      ChannelHandlerContext ctx = this.connection.getChannel().pipeline().context(this.connection);
+      MinecraftSessionHandler sessionHandler = this.connection.getActiveSessionHandler();
+      if (sessionHandler != null && !sessionHandler.beforeHandle()) {
+        for (MinecraftPacket packet : this.queuedPackets) {
+          if (!this.connection.isClosed()) {
             try {
-              this.connection.exceptionCaught(ctx, throwable);
-            } catch (Throwable t) {
-              LimboAPI.getLogger().error("{}: exception handling exception in {}", ctx.channel().remoteAddress(), this, t);
+              if (!packet.handle(sessionHandler)) {
+                sessionHandler.handleGeneric(packet);
+              }
+            } catch (Throwable throwable) {
+              try {
+                this.connection.exceptionCaught(ctx, throwable);
+              } catch (Throwable t) {
+                LimboAPI.getLogger().error("{}: exception handling exception in {}", ctx.channel().remoteAddress(), this, t);
+              }
             }
           }
         }
-
-        ReferenceCountUtil.release(packet);
       }
+    } finally {
+      this.releaseQueue();
     }
+  }
 
+  public void releaseQueue() {
+    for (MinecraftPacket packet : this.queuedPackets) {
+      ReferenceCountUtil.release(packet);
+    }
     this.queuedPackets.clear();
   }
 
