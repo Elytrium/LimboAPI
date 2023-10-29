@@ -33,6 +33,8 @@ dependencies {
   implementation("org.bstats:bstats-velocity:$bstatsVersion")
 
   compileOnly("com.github.spotbugs:spotbugs-annotations:$spotbugsVersion")
+
+  annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:1.0.0")
 }
 
 shadowJar {
