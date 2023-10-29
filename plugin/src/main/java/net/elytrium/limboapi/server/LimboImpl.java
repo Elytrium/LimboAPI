@@ -641,6 +641,8 @@ public class LimboImpl implements Limbo {
     this.respawnPackets.release();
     this.firstChunks.release();
     this.delayedChunks.forEach(PreparedPacket::release);
+    this.configTransitionPackets.release();
+    this.configPackets.release();
   }
 
   // From Velocity.
