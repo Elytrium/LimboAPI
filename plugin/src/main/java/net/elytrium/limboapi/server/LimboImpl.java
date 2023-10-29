@@ -325,7 +325,12 @@ public class LimboImpl implements Limbo {
         if (this.shouldRejoin) {
           connection.delayedWrite(this.configTransitionPackets);
           connection.setState(StateRegistry.CONFIG);
-          connection.delayedWrite(this.configPackets);
+          // There is desync in the client then switching state too quickly
+          // as it tries to use CONFIG handler while being on the PLAY state.
+          // As a workaround, queue to ensure that packets are not concatinated
+          connection.eventLoop().schedule(() -> {
+            connection.write(this.configPackets);
+          }, 250, TimeUnit.MILLISECONDS);
         }
       } else {
         connection.delayedWrite(this.configPackets);
