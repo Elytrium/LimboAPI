@@ -124,6 +124,20 @@ enum MinecraftVersion {
   MINECRAFT_1_20(763),
   MINECRAFT_1_20_2(764)
 
+  public static final List<MinecraftVersion> WORLD_VERSIONS = List.of(
+    MINECRAFT_1_13,
+    MINECRAFT_1_13_2,
+    MINECRAFT_1_14,
+    MINECRAFT_1_15,
+    MINECRAFT_1_16,
+    MINECRAFT_1_16_2,
+    MINECRAFT_1_17,
+    MINECRAFT_1_19,
+    MINECRAFT_1_19_3,
+    MINECRAFT_1_19_4,
+    MINECRAFT_1_20
+  )
+
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
   public static final MinecraftVersion MAXIMUM_VERSION = values()[values().length - 1]
 
@@ -477,7 +491,7 @@ void generateRegistryMapping(String target, File targetDir, Map<MinecraftVersion
             return [version, entries.collectEntries({ name, id -> [name, String.valueOf(id["protocol_id"])] })]
           })
 
-  Map<String, String> modernIDs = idMap[MinecraftVersion.MAXIMUM_VERSION]
+  Map<String, String> modernIDs = Collections.max(idMap.entrySet(), Map.Entry.comparingByKey()).getValue()
 
   new File(targetDir, "${target}s.json").write(JsonOutput.prettyPrint(
           JsonOutput.toJson(modernIDs.sort({Integer.parseInt(it.getValue()) }))), "UTF-8")
@@ -504,7 +518,8 @@ void generateRegistryMapping(String target, File targetDir, Map<MinecraftVersion
 }
 
 void generateRegistryMappings(File targetDir, Map<MinecraftVersion, Object> registriesReports) {
-  this.generateRegistryMapping("item", targetDir, registriesReports)
+  this.generateRegistryMapping("item", targetDir, registriesReports
+          .findAll({ e -> MinecraftVersion.WORLD_VERSIONS.contains(e.getKey()) }))
   this.generateRegistryMapping("block", targetDir, registriesReports)
 
   this.println("> Generating blockentities mapping...")
