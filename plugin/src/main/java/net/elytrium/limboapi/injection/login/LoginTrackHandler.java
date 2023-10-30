@@ -19,21 +19,48 @@ package net.elytrium.limboapi.injection.login;
 
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LoginAcknowledged;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.internal.PlatformDependent;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import net.elytrium.commons.utils.reflection.ReflectionException;
+import net.elytrium.limboapi.LimboAPI;
 
 public class LoginTrackHandler implements MinecraftSessionHandler {
+
+  private static final MethodHandle TEARDOWN_METHOD;
+
   private final CompletableFuture<Object> confirmation = new CompletableFuture<>();
+  private final Queue<MinecraftPacket> queuedPackets = PlatformDependent.newMpscQueue();
   private final MinecraftConnection connection;
+  private ConnectedPlayer player;
 
   public LoginTrackHandler(MinecraftConnection connection) {
     this.connection = connection;
   }
 
+  public void setPlayer(ConnectedPlayer player) {
+    this.player = player;
+  }
+
   public void waitForConfirmation(Runnable runnable) {
-    this.confirmation.thenRun(runnable);
+    this.confirmation.thenRun(runnable).thenRun(this::processQueued);
+  }
+
+  @Override
+  public void handleGeneric(MinecraftPacket packet) {
+    if (this.connection.getState() == StateRegistry.CONFIG) {
+      this.queuedPackets.add(packet);
+    }
   }
 
   @Override
@@ -46,5 +73,62 @@ public class LoginTrackHandler implements MinecraftSessionHandler {
   @Override
   public void handleUnknown(ByteBuf buf) {
     this.connection.close(true);
+  }
+
+  @Override
+  public void disconnected() {
+    try {
+      if (this.player != null) {
+        try {
+          TEARDOWN_METHOD.invokeExact(this.player);
+        } catch (Throwable e) {
+          throw new ReflectionException(e);
+        }
+      }
+    } finally {
+      this.releaseQueue();
+    }
+  }
+
+  public void processQueued() {
+    try {
+      ChannelHandlerContext ctx = this.connection.getChannel().pipeline().context(this.connection);
+      MinecraftSessionHandler sessionHandler = this.connection.getActiveSessionHandler();
+      if (sessionHandler != null && !sessionHandler.beforeHandle()) {
+        for (MinecraftPacket packet : this.queuedPackets) {
+          if (!this.connection.isClosed()) {
+            try {
+              if (!packet.handle(sessionHandler)) {
+                sessionHandler.handleGeneric(packet);
+              }
+            } catch (Throwable throwable) {
+              try {
+                this.connection.exceptionCaught(ctx, throwable);
+              } catch (Throwable t) {
+                LimboAPI.getLogger().error("{}: exception handling exception in {}", ctx.channel().remoteAddress(), this, t);
+              }
+            }
+          }
+        }
+      }
+    } finally {
+      this.releaseQueue();
+    }
+  }
+
+  public void releaseQueue() {
+    for (MinecraftPacket packet : this.queuedPackets) {
+      ReferenceCountUtil.release(packet);
+    }
+    this.queuedPackets.clear();
+  }
+
+  static {
+    try {
+      TEARDOWN_METHOD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findVirtual(ConnectedPlayer.class, "teardown", MethodType.methodType(void.class));
+    } catch (NoSuchMethodException | IllegalAccessException e) {
+      throw new ReflectionException(e);
+    }
   }
 }

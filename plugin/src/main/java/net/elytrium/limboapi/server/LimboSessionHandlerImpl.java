@@ -127,6 +127,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public void onSpawn() {
     this.callback.onSpawn(this.limbo, this.limboPlayer);
+
+    // Player is spawned, so can trust that transition to the PLAY state is complete
+    this.transition.complete(this);
   }
 
   @Override
@@ -136,7 +139,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.limbo.preSpawn(this.callback.getClass(), this.player.getConnection(), this.player);
     this.limbo.postSpawn(this, this.player.getConnection(), this.player);
     this.player.getConnection().flush();
-    this.transition.complete(this);
     return true;
   }
 
