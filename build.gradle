@@ -17,6 +17,7 @@ allprojects {
 
   compileJava {
     getOptions().setEncoding("UTF-8")
+    getOptions().getRelease().set(11)
   }
 
   java {
