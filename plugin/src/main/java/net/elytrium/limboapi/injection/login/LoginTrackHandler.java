@@ -59,7 +59,7 @@ public class LoginTrackHandler implements MinecraftSessionHandler {
   @Override
   public void handleGeneric(MinecraftPacket packet) {
     if (this.connection.getState() == StateRegistry.CONFIG) {
-      this.queuedPackets.add(packet);
+      this.queuedPackets.add(ReferenceCountUtil.retain(packet));
     }
   }
 
