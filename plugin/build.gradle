@@ -559,7 +559,7 @@ static Map<String, Map<String, List<String>>> getTags(File tagDir, Map<String, S
     directoryFile.eachFileRecurse(FileType.FILES, { file ->
       List<String> values = new JsonSlurper().parse(file).values
       Path relativePath = directoryFile.toPath().relativize(file.toPath())
-      String name = FilenameUtils.removeExtension(relativePath.toString())
+      String name = FilenameUtils.removeExtension(relativePath.toString()).replace(File.pathSeparator, "/")
       typeTags.put("minecraft:" + name, values)
     })
 
