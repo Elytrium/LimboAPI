@@ -15,15 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.elytrium.limboapi.injection.login;
+package net.elytrium.limboapi.injection.login.confirmation;
 
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.packet.LoginAcknowledged;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.PlatformDependent;
@@ -35,16 +33,16 @@ import java.util.concurrent.CompletableFuture;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 
-public class LoginTrackHandler implements MinecraftSessionHandler {
+public abstract class ConfirmHandler implements MinecraftSessionHandler {
 
   private static final MethodHandle TEARDOWN_METHOD;
 
-  private final CompletableFuture<Object> confirmation = new CompletableFuture<>();
-  private final Queue<MinecraftPacket> queuedPackets = PlatformDependent.newMpscQueue();
-  private final MinecraftConnection connection;
-  private ConnectedPlayer player;
+  protected final CompletableFuture<Object> confirmation = new CompletableFuture<>();
+  protected final Queue<MinecraftPacket> queuedPackets = PlatformDependent.newMpscQueue();
+  protected final MinecraftConnection connection;
+  protected ConnectedPlayer player;
 
-  public LoginTrackHandler(MinecraftConnection connection) {
+  public ConfirmHandler(MinecraftConnection connection) {
     this.connection = connection;
   }
 
@@ -61,18 +59,6 @@ public class LoginTrackHandler implements MinecraftSessionHandler {
     if (this.connection.getState() == StateRegistry.CONFIG) {
       this.queuedPackets.add(ReferenceCountUtil.retain(packet));
     }
-  }
-
-  @Override
-  public boolean handle(LoginAcknowledged packet) {
-    this.connection.setState(StateRegistry.CONFIG);
-    this.confirmation.complete(this);
-    return true;
-  }
-
-  @Override
-  public void handleUnknown(ByteBuf buf) {
-    this.connection.close(true);
   }
 
   @Override
