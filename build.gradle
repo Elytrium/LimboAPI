@@ -19,9 +19,6 @@ allprojects() {
   compileJava() {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
-    getOptions().getRelease().set(11)
-
-    getOptions().setEncoding("UTF-8")
   }
 
   repositories() {

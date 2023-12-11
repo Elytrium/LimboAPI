@@ -5,6 +5,11 @@ plugins {
   id("maven-publish")
 }
 
+compileJava() {
+  getOptions().getRelease().set(11)
+  getOptions().setEncoding("UTF-8")
+}
+
 dependencies() {
   compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
   api("net.elytrium.commons:config:$elytriumCommonsVersion")
