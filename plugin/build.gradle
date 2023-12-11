@@ -34,12 +34,13 @@ dependencies {
 
   compileOnly("com.github.spotbugs:spotbugs-annotations:$spotbugsVersion")
 
+  annotationProcessor("net.java.dev.jna:jna-platform:5.13.0")
   annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:1.0.0")
 }
 
 shadowJar {
   getArchiveClassifier().set("")
-  setArchiveFileName("limboapi-${version}.${extension}")
+  setArchiveFileName("limboapi-${project.version}.jar")
 
   exclude("META-INF/versions/**")
   exclude("net/kyori/**")
@@ -64,7 +65,7 @@ license {
 
 tasks.register("finalize") {
   doLast {
-    file("build/libs/${this.getName()}-${this.getVersion()}.jar").delete()
+    file("build/libs/${project.name}-${project.version}.jar").delete()
   }
 }
 

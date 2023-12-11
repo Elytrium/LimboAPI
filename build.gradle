@@ -1,13 +1,14 @@
 //file:noinspection GroovyAssignabilityCheck
 
-plugins {
+plugins() {
   id("java")
+
   id("checkstyle")
-  id("com.github.spotbugs").version("5.0.7").apply(false)
+  id("com.github.spotbugs").version("5.0.14").apply(false)
   id("org.cadixdev.licenser").version("0.6.1").apply(false)
 }
 
-allprojects {
+allprojects() {
   apply(plugin: "checkstyle")
   apply(plugin: "com.github.spotbugs")
   apply(plugin: "org.cadixdev.licenser")
@@ -15,47 +16,43 @@ allprojects {
   setGroup("net.elytrium.limboapi")
   setVersion("1.1.17-SNAPSHOT")
 
-  compileJava {
-    getOptions().setEncoding("UTF-8")
+  compileJava() {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     getOptions().getRelease().set(11)
+
+    getOptions().setEncoding("UTF-8")
   }
 
-  java {
-    setSourceCompatibility(JavaVersion.VERSION_11)
-    setTargetCompatibility(JavaVersion.VERSION_11)
-  }
-
-  repositories {
+  repositories() {
     mavenCentral()
 
-    maven {
+    maven() {
       setName("elytrium-repo")
       setUrl("https://maven.elytrium.net/repo/")
     }
-    maven {
+    maven() {
       setName("papermc-repo")
       setUrl("https://papermc.io/repo/repository/maven-public/")
     }
   }
 
-  checkstyle {
-    setToolVersion("10.3")
-    setConfigFile(file("${this.getRootDir()}/config/checkstyle/checkstyle.xml"))
-    setConfigProperties("configDirectory": "${this.getRootDir()}/config/checkstyle")
-    setMaxErrors(0)
-    setMaxWarnings(0)
+  checkstyle() {
+    toolVersion = "10.12.1"
+    configFile = file("$rootDir/config/checkstyle/checkstyle.xml")
+    configProperties = ["configDirectory": "$rootDir/config/checkstyle"]
+    maxErrors = 0
+    maxWarnings = 0
   }
 
-  spotbugs {
-    setExcludeFilter(file("${this.getRootDir()}/config/spotbugs/suppressions.xml"))
-  }
+  spotbugs() {
+    excludeFilter = file("${this.getRootDir()}/config/spotbugs/suppressions.xml")
 
-  spotbugsMain {
-    reports {
-      html {
-        getRequired().set(true)
-        getOutputLocation().set(file("${this.getBuildDir()}/reports/spotbugs/main/spotbugs.html"))
-        setStylesheet("fancy-hist.xsl")
+    if (this.project != rootProject) {
+      reports.register("html") {
+        required = true
+        outputLocation.value(layout.buildDirectory.file("reports/spotbugs/main/spotbugs.html"))
+        stylesheet = "fancy-hist.xsl"
       }
     }
   }
