@@ -76,6 +76,8 @@ import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
 import net.elytrium.limboapi.injection.dummy.DummyEventPool;
+import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
+import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.injection.packet.ServerLoginSuccessHook;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -130,8 +132,12 @@ public class LoginListener {
       // method (which checks mcConnection.isActive()) and to override it. :)
       InitialInboundConnection inbound = (InitialInboundConnection) DELEGATE_FIELD.invokeExact(inboundConnection);
       MinecraftConnection connection = inbound.getConnection();
-      Object handler = connection.getSessionHandler();
+      Object handler = connection.getActiveSessionHandler();
       MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
+
+      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+        connection.setActiveSessionHandler(StateRegistry.LOGIN, new LoginConfirmHandler(connection));
+      }
 
       // From Velocity.
       if (!connection.isClosed()) {
@@ -146,6 +152,9 @@ public class LoginListener {
                 this.onlineMode.contains(event.getUsername()),
                 inboundConnection.getIdentifiedKey()
             );
+            if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+              ((ConfirmHandler) connection.getActiveSessionHandler()).setPlayer(player);
+            }
             if (this.server.canRegisterConnection(player)) {
               if (!connection.isClosed()) {
                 // Complete the Login process.
@@ -195,7 +204,9 @@ public class LoginListener {
 
                 this.plugin.setInitialID(player, playerUniqueID);
 
-                connection.setState(StateRegistry.PLAY);
+                if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+                  connection.setState(StateRegistry.PLAY);
+                }
 
                 this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
                   LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());
@@ -224,11 +235,11 @@ public class LoginListener {
     MinecraftConnection connection = player.getConnection();
 
     connection.eventLoop().execute(() -> {
-      if (!(connection.getSessionHandler() instanceof ClientPlaySessionHandler)) {
+      if (!(connection.getActiveSessionHandler() instanceof ClientPlaySessionHandler)) {
         try {
           ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
           SPAWNED_FIELD.invokeExact(playHandler, this.plugin.isLimboJoined(player));
-          connection.setSessionHandler(playHandler);
+          connection.setActiveSessionHandler(connection.getState(), playHandler);
         } catch (Throwable e) {
           throw new ReflectionException(e);
         }

@@ -1,0 +1,14 @@
+{
+  "tag_types": {
+    "blocks": "minecraft:block",
+    "entity_types": "minecraft:entity_type",
+    "fluids": "minecraft:fluid",
+    "game_events": "minecraft:game_event",
+    "items": "minecraft:item"
+  },
+  "supported_tag_types": [
+    "minecraft:block",
+    "minecraft:item",
+    "minecraft:fluid"
+  ]
+}

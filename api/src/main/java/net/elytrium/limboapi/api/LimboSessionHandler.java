@@ -15,6 +15,10 @@ public interface LimboSessionHandler {
 
   }
 
+  default void onConfig(Limbo server, LimboPlayer player) {
+
+  }
+
   default void onMove(double posX, double posY, double posZ) {
 
   }

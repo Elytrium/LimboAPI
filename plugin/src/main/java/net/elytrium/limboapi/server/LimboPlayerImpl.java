@@ -60,6 +60,7 @@ public class LimboPlayerImpl implements LimboPlayer {
   private final LimboImpl server;
   private final ConnectedPlayer player;
   private final MinecraftConnection connection;
+  private final LimboSessionHandlerImpl sessionHandler;
   private final ProtocolVersion version;
 
   private GameMode gameMode = GameMode.ADVENTURE;
@@ -70,6 +71,7 @@ public class LimboPlayerImpl implements LimboPlayer {
     this.player = player;
 
     this.connection = this.player.getConnection();
+    this.sessionHandler = (LimboSessionHandlerImpl) this.connection.getActiveSessionHandler();
     this.version = this.player.getProtocolVersion();
   }
 
@@ -261,38 +263,44 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void disconnect() {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
-    if (handler != null) {
-      if (this.plugin.hasLoginQueue(this.player)) {
-        handler.disconnected();
-        this.plugin.getLoginQueue(this.player).next();
-      } else {
-        RegisteredServer server = handler.getPreviousServer();
-        if (server != null) {
-          this.deject();
-          handler.disconnected();
-          this.sendToRegisteredServer(server);
-        } else {
-          handler.disconnected();
-        }
+    this.connection.eventLoop().execute(() -> {
+      if (this.connection.getActiveSessionHandler() == this.sessionHandler) {
+        this.sessionHandler.switchDisconnection(() -> {
+          if (this.plugin.hasLoginQueue(this.player)) {
+            this.sessionHandler.disconnected();
+            this.plugin.getLoginQueue(this.player).next();
+          } else {
+            RegisteredServer server = this.sessionHandler.getPreviousServer();
+            if (server != null) {
+              this.deject();
+              this.sessionHandler.disconnected();
+              this.sendToRegisteredServer(server);
+            } else {
+              this.sessionHandler.disconnected();
+            }
+          }
+        });
       }
-    }
+    });
   }
 
   @Override
   public void disconnect(RegisteredServer server) {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
-    if (handler != null) {
-      if (this.plugin.hasLoginQueue(this.player)) {
-        handler.disconnected();
-        this.plugin.setNextServer(this.player, server);
-        this.plugin.getLoginQueue(this.player).next();
-      } else {
-        this.deject();
-        handler.disconnected();
-        this.sendToRegisteredServer(server);
+    this.connection.eventLoop().execute(() -> {
+      if (this.connection.getActiveSessionHandler() == this.sessionHandler) {
+        this.sessionHandler.switchDisconnection(() -> {
+          if (this.plugin.hasLoginQueue(this.player)) {
+            this.sessionHandler.disconnected();
+            this.plugin.setNextServer(this.player, server);
+            this.plugin.getLoginQueue(this.player).next();
+          } else {
+            this.deject();
+            this.sessionHandler.disconnected();
+            this.sendToRegisteredServer(server);
+          }
+        });
       }
-    }
+    });
   }
 
   private void deject() {
@@ -354,7 +362,7 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public int getPing() {
-    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getSessionHandler();
+    LimboSessionHandlerImpl handler = (LimboSessionHandlerImpl) this.connection.getActiveSessionHandler();
     if (handler != null) {
       return handler.getPing();
     } else {
