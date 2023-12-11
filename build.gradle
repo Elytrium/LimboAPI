@@ -14,7 +14,7 @@ allprojects() {
   apply(plugin: "org.cadixdev.licenser")
 
   setGroup("net.elytrium.limboapi")
-  setVersion("1.1.17-SNAPSHOT")
+  setVersion("1.1.17")
 
   compileJava() {
     sourceCompatibility = JavaVersion.VERSION_17
