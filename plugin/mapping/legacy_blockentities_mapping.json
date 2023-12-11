@@ -1,205 +1,116 @@
 {
   "minecraft:banner": {
-    "1.20": "19",
-    "1.19": "19",
     "legacy": "18"
   },
   "minecraft:barrel": {
-    "1.20": "26",
-    "1.19": "26",
     "legacy": "25"
   },
   "minecraft:beacon": {
-    "1.20": "14",
-    "1.19": "14",
     "legacy": "13"
   },
   "minecraft:bed": {
-    "1.20": "24",
-    "1.19": "24",
     "legacy": "23"
   },
   "minecraft:beehive": {
-    "1.20": "33",
-    "1.19": "33",
     "legacy": "32"
   },
   "minecraft:bell": {
-    "1.20": "30",
-    "1.19": "30",
     "legacy": "29"
   },
   "minecraft:blast_furnace": {
-    "1.20": "28",
-    "1.19": "28",
     "legacy": "27"
   },
   "minecraft:brewing_stand": {
-    "1.20": "11",
-    "1.19": "11",
     "legacy": "10"
   },
-  "minecraft:brushable_block": {
-    "1.20": "39"
-  },
-  "minecraft:calibrated_sculk_sensor": {
-    "1.20": "35"
-  },
   "minecraft:campfire": {
-    "1.20": "32",
-    "1.19": "32",
     "legacy": "31"
   },
   "minecraft:chest": {
-    "1.20": "1",
-    "1.19": "1",
     "legacy": "1"
   },
   "minecraft:chiseled_bookshelf": {
-    "1.20": "38",
-    "1.19": "37",
     "legacy": "36"
   },
   "minecraft:command_block": {
-    "1.20": "22",
-    "1.19": "22",
     "legacy": "21"
   },
   "minecraft:comparator": {
-    "1.20": "18",
-    "1.19": "18",
     "legacy": "17"
   },
   "minecraft:conduit": {
-    "1.20": "25",
-    "1.19": "25",
     "legacy": "24"
   },
   "minecraft:daylight_detector": {
-    "1.20": "16",
-    "1.19": "16",
     "legacy": "15"
   },
-  "minecraft:decorated_pot": {
-    "1.20": "40",
-    "1.19": "39"
-  },
   "minecraft:dispenser": {
-    "1.20": "5",
-    "1.19": "5",
     "legacy": "5"
   },
   "minecraft:dropper": {
-    "1.20": "6",
-    "1.19": "6",
     "legacy": "6"
   },
   "minecraft:enchanting_table": {
-    "1.20": "12",
-    "1.19": "12",
     "legacy": "11"
   },
   "minecraft:end_gateway": {
-    "1.20": "21",
-    "1.19": "21",
     "legacy": "20"
   },
   "minecraft:end_portal": {
-    "1.20": "13",
-    "1.19": "13",
     "legacy": "12"
   },
   "minecraft:ender_chest": {
-    "1.20": "3",
-    "1.19": "3",
     "legacy": "3"
   },
   "minecraft:furnace": {
-    "1.20": "0",
-    "1.19": "0",
     "legacy": "0"
   },
   "minecraft:hanging_sign": {
-    "1.20": "8",
-    "1.19": "8",
     "legacy": "7"
   },
   "minecraft:hopper": {
-    "1.20": "17",
-    "1.19": "17",
     "legacy": "16"
   },
   "minecraft:jigsaw": {
-    "1.20": "31",
-    "1.19": "31",
     "legacy": "30"
   },
   "minecraft:jukebox": {
-    "1.20": "4",
-    "1.19": "4",
     "legacy": "4"
   },
   "minecraft:lectern": {
-    "1.20": "29",
-    "1.19": "29",
     "legacy": "28"
   },
   "minecraft:mob_spawner": {
-    "1.20": "9",
-    "1.19": "9",
     "legacy": "8"
   },
   "minecraft:piston": {
-    "1.20": "10",
-    "1.19": "10",
     "legacy": "9"
   },
   "minecraft:sculk_catalyst": {
-    "1.20": "36",
-    "1.19": "35",
     "legacy": "34"
   },
   "minecraft:sculk_sensor": {
-    "1.20": "34",
-    "1.19": "34",
     "legacy": "33"
   },
   "minecraft:sculk_shrieker": {
-    "1.20": "37",
-    "1.19": "36",
     "legacy": "35"
   },
   "minecraft:shulker_box": {
-    "1.20": "23",
-    "1.19": "23",
     "legacy": "22"
   },
   "minecraft:sign": {
-    "1.20": "7",
-    "1.19": "7",
     "legacy": "7"
   },
   "minecraft:skull": {
-    "1.20": "15",
-    "1.19": "15",
     "legacy": "14"
   },
   "minecraft:smoker": {
-    "1.20": "27",
-    "1.19": "27",
     "legacy": "26"
   },
   "minecraft:structure_block": {
-    "1.20": "20",
-    "1.19": "20",
     "legacy": "19"
   },
   "minecraft:trapped_chest": {
-    "1.20": "2",
-    "1.19": "2",
     "legacy": "2"
-  },
-  "minecraft:suspicious_sand": {
-    "1.19": "38"
   }
 }

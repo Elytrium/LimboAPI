@@ -5,7 +5,12 @@ plugins {
   id("maven-publish")
 }
 
-dependencies {
+compileJava() {
+  getOptions().getRelease().set(11)
+  getOptions().setEncoding("UTF-8")
+}
+
+dependencies() {
   compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
   api("net.elytrium.commons:config:$elytriumCommonsVersion")
   api("net.elytrium.commons:utils:$elytriumCommonsVersion")
@@ -14,44 +19,41 @@ dependencies {
   api("net.kyori:adventure-nbt:$adventureVersion")
 
   compileOnly("com.github.spotbugs:spotbugs-annotations:$spotbugsVersion")
+
+  annotationProcessor("net.java.dev.jna:jna-platform:5.13.0")
+  annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:1.0.0")
 }
 
-license {
+license() {
   matching(includes: ["**/mcprotocollib/**"]) {
-    setHeader(getRootProject().file("HEADER_MCPROTOCOLLIB.txt"))
+    header = rootProject.file("HEADER_MCPROTOCOLLIB.txt")
   }
 
-  setHeader(file("HEADER.txt"))
+  header = file("HEADER.txt")
 }
 
-task javadocJar(type: Jar) {
-  getArchiveClassifier().set("javadoc")
-  from(javadoc)
-}
-
-javadoc {
-  MinimalJavadocOptions options = getOptions()
+javadoc() {
   options.setEncoding("UTF-8")
-  options.setCharSet("UTF-8")
-  // Mark sources as Java 11 source compatible.
   options.setSource("11")
-  options.links("https://docs.oracle.com/en/java/javase/11/docs/api/", "https://jd.adventure.kyori.net/nbt/4.11.0/")
-
+  options.links("https://docs.oracle.com/en/java/javase/11/docs/api/")
   options.addStringOption("Xdoclint:none", "-quiet")
-
-  // Remove "undefined" from search paths when generating javadoc for a non-modular project. (JDK-8215291)
-  if (JavaVersion.current() == JavaVersion.VERSION_11) {
+  if (JavaVersion.current() >= JavaVersion.VERSION_1_9 && JavaVersion.current() < JavaVersion.VERSION_12) {
     options.addBooleanOption("-no-module-directories", true)
   }
 }
 
-task sourcesJar(type: Jar) {
-  getArchiveClassifier().set("sources")
+tasks.register("sourcesJar", Jar) {
+  archiveClassifier = "sources"
   from(sourceSets.main.getAllSource())
 }
 
-publishing {
-  repositories {
+tasks.register("javadocJar", Jar) {
+  archiveClassifier = "javadoc"
+  from(javadoc)
+}
+
+publishing() {
+  repositories() {
     maven {
       credentials {
         setUsername(System.getenv("PUBLISH_USERNAME"))
@@ -63,22 +65,20 @@ publishing {
     }
   }
 
-  publications {
-    maven(MavenPublication) {
-      from(components.java)
+  publications.create("publication", MavenPublication) {
+    from(components.java)
 
-      artifact(javadocJar)
-      artifact(sourcesJar)
-    }
+    artifact(javadocJar)
+    artifact(sourcesJar)
   }
 }
 
-artifacts {
+artifacts() {
   archives(javadocJar)
   archives(sourcesJar)
 }
 
-sourceSets.main.getJava().srcDir(
+sourceSets.main.java.srcDir(
     getTasks().register("generateTemplates", Copy) {
       task -> {
         String version = getVersion().contains("-") ? "${getVersion()} (git-${getCurrentShortRevision()})" : getVersion()
