@@ -76,6 +76,8 @@ import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
 import net.elytrium.limboapi.injection.dummy.DummyEventPool;
+import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
+import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.injection.packet.ServerLoginSuccessHook;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -134,7 +136,7 @@ public class LoginListener {
       MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
 
       if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
-        connection.setActiveSessionHandler(StateRegistry.LOGIN, new LoginTrackHandler(connection));
+        connection.setActiveSessionHandler(StateRegistry.LOGIN, new LoginConfirmHandler(connection));
       }
 
       // From Velocity.
@@ -151,7 +153,7 @@ public class LoginListener {
                 inboundConnection.getIdentifiedKey()
             );
             if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
-              ((LoginTrackHandler) connection.getActiveSessionHandler()).setPlayer(player);
+              ((ConfirmHandler) connection.getActiveSessionHandler()).setPlayer(player);
             }
             if (this.server.canRegisterConnection(player)) {
               if (!connection.isClosed()) {

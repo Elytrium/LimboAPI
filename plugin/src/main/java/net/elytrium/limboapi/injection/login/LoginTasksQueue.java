@@ -74,6 +74,8 @@ import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
+import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
+import net.elytrium.limboapi.injection.login.confirmation.TransitionConfirmHandler;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
@@ -241,21 +243,13 @@ public class LoginTasksQueue {
           this.player.disconnect0(reason.get(), true);
         } else {
           if (this.server.registerConnection(this.player)) {
-            if (connection.getActiveSessionHandler() instanceof LoginTrackHandler) {
-              LoginTrackHandler track = (LoginTrackHandler) connection.getActiveSessionHandler();
-              track.waitForConfirmation(() -> {
-                try {
-                  this.connectToServer(logger, connection);
-                } catch (Throwable e) {
-                  throw new ReflectionException(e);
-                }
+            if (connection.getActiveSessionHandler() instanceof ConfirmHandler) {
+              ConfirmHandler confirm = (ConfirmHandler) connection.getActiveSessionHandler();
+              confirm.waitForConfirmation(() -> {
+                this.connectToServer(logger, this.player, connection);
               });
             } else {
-              try {
-                this.connectToServer(logger, connection);
-              } catch (Throwable e) {
-                throw new ReflectionException(e);
-              }
+              this.connectToServer(logger, this.player, connection);
             }
           } else {
             this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), true);
@@ -268,13 +262,27 @@ public class LoginTasksQueue {
     });
   }
 
-  private void connectToServer(Logger logger, MinecraftConnection connection) throws Throwable {
+  private void connectToServer(Logger logger, ConnectedPlayer player, MinecraftConnection connection) {
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
-      connection.setActiveSessionHandler(connection.getState(),
-          (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
+      try {
+        connection.setActiveSessionHandler(connection.getState(),
+            (InitialConnectSessionHandler) INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR.invokeExact(this.player, this.server));
+      } catch (Throwable e) {
+        throw new ReflectionException(e);
+      }
     } else {
       if (connection.getState() == StateRegistry.PLAY) {
         connection.write(new StartUpdate());
+
+        TransitionConfirmHandler confirm = new TransitionConfirmHandler(connection);
+        confirm.setPlayer(player);
+
+        connection.setActiveSessionHandler(StateRegistry.PLAY, confirm);
+        confirm.waitForConfirmation(() -> {
+          this.connectToServer(logger, player, connection);
+        });
+
+        return;
       }
 
       connection.setActiveSessionHandler(StateRegistry.CONFIG,

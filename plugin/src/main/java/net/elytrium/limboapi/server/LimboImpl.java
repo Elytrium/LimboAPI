@@ -90,7 +90,7 @@ import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
-import net.elytrium.limboapi.injection.login.LoginTrackHandler;
+import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -414,9 +414,9 @@ public class LimboImpl implements Limbo {
           () -> this.limboName
       );
 
-      if (connection.getActiveSessionHandler() instanceof LoginTrackHandler) {
-        LoginTrackHandler track = (LoginTrackHandler) connection.getActiveSessionHandler();
-        track.waitForConfirmation(() -> {
+      if (connection.getActiveSessionHandler() instanceof ConfirmHandler) {
+        ConfirmHandler confirm = (ConfirmHandler) connection.getActiveSessionHandler();
+        confirm.waitForConfirmation(() -> {
           this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
         });
       } else {
