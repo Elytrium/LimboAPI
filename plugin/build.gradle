@@ -139,7 +139,7 @@ enum MinecraftVersion {
     MINECRAFT_1_19,
     MINECRAFT_1_19_3,
     MINECRAFT_1_19_4,
-    MINECRAFT_1_20_2,
+    MINECRAFT_1_20,
     MINECRAFT_1_20_3
   )
 
