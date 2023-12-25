@@ -60,7 +60,6 @@ public class SetIsObjectSet<K> implements ObjectSet<K> {
 
   @NonNull
   @Override
-  @SuppressWarnings("SuspiciousToArrayCall")
   public <T> T[] toArray(T @NonNull [] ts) {
     return this.set.toArray(ts);
   }

@@ -102,7 +102,7 @@ public class SimpleTagManager {
         }
         default: {
           defaultTagList.forEach((tagName, entryList) -> {
-            if (entryList.size() != 0) {
+            if (!entryList.isEmpty()) {
               throw new IllegalStateException("The " + tagType + " tag type is not supported yet.");
             }
 

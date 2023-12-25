@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.function.Supplier;
 import net.elytrium.limboapi.api.chunk.BuiltInBiome;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
@@ -26,10 +25,8 @@ import net.elytrium.limboapi.api.file.WorldFile;
 import net.elytrium.limboapi.api.material.Block;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
-import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
-import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
 public interface LimboFactory {
@@ -205,18 +202,6 @@ public interface LimboFactory {
    * @return new prepared packet.
    */
   PreparedPacket createConfigPreparedPacket(ProtocolVersion minVersion, ProtocolVersion maxVersion);
-
-  /**
-   * Registers self-made packet.
-   *
-   * @param direction      Packet direction.
-   * @param packetClass    Packet class.
-   * @param packetSupplier Packet supplier to make a new instance. (::new)
-   * @param packetMappings Packet id mappings.
-   * @deprecated Use {@link Limbo#registerPacket} instead.
-   */
-  @Deprecated(forRemoval = true)
-  void registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings);
 
   /**
    * Pass the player to the next Login Limbo, without spawning at current Limbo.

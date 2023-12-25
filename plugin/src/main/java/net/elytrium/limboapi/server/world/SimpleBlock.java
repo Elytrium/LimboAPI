@@ -47,6 +47,7 @@ public class SimpleBlock implements VirtualBlock {
   private static final Map<String, Short> MODERN_BLOCK_STRING_MAP = new HashMap<>();
   private static final ShortObjectHashMap<Map<WorldVersion, Short>> LEGACY_BLOCK_IDS_MAP = new ShortObjectHashMap<>();
   private static final Map<String, Map<String, String>> DEFAULT_PROPERTIES_MAP = new HashMap<>();
+  private static final Map<String, String> MODERN_ID_REMAP = new HashMap<>();
 
   public static final SimpleBlock AIR = new SimpleBlock(false, true, false, "minecraft:air", (short) 0, (short) 0);
 
@@ -126,6 +127,15 @@ public class SimpleBlock implements VirtualBlock {
         LinkedTreeMap.class
     );
     properties.forEach((key, value) -> DEFAULT_PROPERTIES_MAP.put(key, new HashMap<>(value)));
+
+    LinkedTreeMap<String, String> modernIdRemap = GSON.fromJson(
+        new InputStreamReader(
+            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/modern_id_remap.json")),
+            StandardCharsets.UTF_8
+        ),
+        LinkedTreeMap.class
+    );
+    MODERN_ID_REMAP.putAll(modernIdRemap);
   }
 
   private final boolean solid;
@@ -240,12 +250,13 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   public static VirtualBlock fromModernID(String modernID, Map<String, String> properties) {
+    modernID = remapModernID(modernID);
     return solid(modernID, transformID(modernID, properties));
   }
 
   private static short transformID(String modernID, Map<String, String> properties) {
     Map<String, String> defaultProperties = DEFAULT_PROPERTIES_MAP.get(modernID);
-    if (defaultProperties == null || defaultProperties.size() == 0) {
+    if (defaultProperties == null || defaultProperties.isEmpty()) {
       return transformID(modernID, (Set<String>) null);
     } else {
       Set<String> propertiesSet = new HashSet<>();
@@ -269,7 +280,7 @@ public class SimpleBlock implements VirtualBlock {
     }
 
     Short id;
-    if (properties == null || properties.size() == 0) {
+    if (properties == null || properties.isEmpty()) {
       id = blockInfo.get(null);
     } else {
       id = blockInfo.get(properties);
@@ -283,6 +294,16 @@ public class SimpleBlock implements VirtualBlock {
     return id;
   }
 
+  private static String remapModernID(String modernID) {
+    String strippedID = modernID.split("\\[")[0];
+    String remappedID = MODERN_ID_REMAP.get(strippedID);
+    if (remappedID != null) {
+      modernID = remappedID + modernID.substring(strippedID.length());
+    }
+
+    return modernID;
+  }
+
   @NonNull
   public static SimpleBlock solid(short id) {
     return solid(true, MODERN_BLOCK_STATE_PROTOCOL_ID_MAP.get(id), id);
@@ -290,7 +311,7 @@ public class SimpleBlock implements VirtualBlock {
 
   @NonNull
   public static SimpleBlock solid(String modernID, short id) {
-    return solid(true, modernID, id);
+    return solid(true, remapModernID(modernID), id);
   }
 
   @NonNull
@@ -300,7 +321,7 @@ public class SimpleBlock implements VirtualBlock {
 
   @NonNull
   public static SimpleBlock solid(boolean motionBlocking, String modernID, short id) {
-    return new SimpleBlock(true, false, motionBlocking, modernID, id);
+    return new SimpleBlock(true, false, motionBlocking, remapModernID(modernID), id);
   }
 
   @NonNull
@@ -310,7 +331,7 @@ public class SimpleBlock implements VirtualBlock {
 
   @NonNull
   public static SimpleBlock nonSolid(String modernID, short id) {
-    return nonSolid(true, modernID, id);
+    return nonSolid(true, remapModernID(modernID), id);
   }
 
   @NonNull
@@ -320,7 +341,7 @@ public class SimpleBlock implements VirtualBlock {
 
   @NonNull
   public static SimpleBlock nonSolid(boolean motionBlocking, String modernID, short id) {
-    return new SimpleBlock(false, false, motionBlocking, modernID, id);
+    return new SimpleBlock(false, false, motionBlocking, remapModernID(modernID), id);
   }
 
   @NonNull

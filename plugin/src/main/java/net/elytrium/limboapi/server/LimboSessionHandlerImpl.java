@@ -266,8 +266,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public void handleGeneric(MinecraftPacket packet) {
-    if (packet instanceof PluginMessage) {
-      PluginMessage pluginMessage = (PluginMessage) packet;
+    if (packet instanceof PluginMessage pluginMessage) {
       int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
       this.genericBytes += singleLength;
       if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH) {

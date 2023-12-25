@@ -6,7 +6,7 @@ plugins {
 }
 
 compileJava() {
-  getOptions().getRelease().set(11)
+  getOptions().getRelease().set(17)
   getOptions().setEncoding("UTF-8")
 }
 
@@ -19,9 +19,6 @@ dependencies() {
   api("net.kyori:adventure-nbt:$adventureVersion")
 
   compileOnly("com.github.spotbugs:spotbugs-annotations:$spotbugsVersion")
-
-  annotationProcessor("net.java.dev.jna:jna-platform:5.13.0")
-  annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:1.0.0")
 }
 
 license() {
@@ -34,7 +31,7 @@ license() {
 
 javadoc() {
   options.setEncoding("UTF-8")
-  options.setSource("11")
+  options.setSource("17")
   options.links("https://docs.oracle.com/en/java/javase/11/docs/api/")
   options.addStringOption("Xdoclint:none", "-quiet")
   if (JavaVersion.current() >= JavaVersion.VERSION_1_9 && JavaVersion.current() < JavaVersion.VERSION_12) {
@@ -56,8 +53,8 @@ publishing() {
   repositories() {
     maven {
       credentials {
-        setUsername(System.getenv("PUBLISH_USERNAME"))
-        setPassword(System.getenv("PUBLISH_PASSWORD"))
+        setUsername(System.getenv("ELYTRIUM_MAVEN_USERNAME"))
+        setPassword(System.getenv("ELYTRIUM_MAVEN_PASSWORD"))
       }
 
       setName("elytrium-repo")

@@ -1358,7 +1358,7 @@
     "1.13": "2",
     "1.13.2": "2"
   },
-  "minecraft:grass": {
+  "minecraft:short_grass": {
     "legacy": "2",
     "1.13": "76",
     "1.13.2": "76"

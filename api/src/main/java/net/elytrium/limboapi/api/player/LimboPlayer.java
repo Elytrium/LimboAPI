@@ -7,7 +7,6 @@
 
 package net.elytrium.limboapi.api.player;
 
-import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import java.awt.image.BufferedImage;
@@ -15,8 +14,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.title.Title;
 
 public interface LimboPlayer {
 
@@ -49,12 +46,6 @@ public interface LimboPlayer {
   void setGameMode(GameMode gameMode);
 
   void teleport(double posX, double posY, double posZ, float yaw, float pitch);
-
-  /**
-   * @deprecated Use {@link Player#showTitle(Title)}
-   */
-  @Deprecated
-  void sendTitle(Component title, Component subtitle, ProtocolVersion version, int fadeIn, int stay, int fadeOut);
 
   void disableFalling();
 

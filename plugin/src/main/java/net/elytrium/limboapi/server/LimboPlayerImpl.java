@@ -22,11 +22,9 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
-import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -51,8 +49,6 @@ import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.title.Title;
 
 public class LimboPlayerImpl implements LimboPlayer {
 
@@ -130,7 +126,7 @@ public class LimboPlayerImpl implements LimboPlayer {
           mapID,
           this.version.compareTo(ProtocolVersion.MINECRAFT_1_17) < 0
               ? null
-              : CompoundBinaryTag.builder().put("map", IntBinaryTag.of(mapID)).build()
+              : CompoundBinaryTag.builder().put("map", IntBinaryTag.intBinaryTag(mapID)).build()
       );
     }
 
@@ -223,34 +219,6 @@ public class LimboPlayerImpl implements LimboPlayer {
     this.writePacketAndFlush(new PositionRotationPacket(posX, posY, posZ, yaw, pitch, false, 44, true));
   }
 
-  /**
-   * @deprecated Use {@link Player#showTitle(Title)}
-   */
-  @Override
-  @Deprecated
-  public void sendTitle(Component title, Component subtitle, ProtocolVersion version, int fadeIn, int stay, int fadeOut) {
-    {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TITLE, version);
-
-      packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(title));
-      this.writePacketAndFlush(packet);
-    }
-    {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_SUBTITLE, version);
-
-      packet.setComponent(ProtocolUtils.getJsonChatSerializer(version).serialize(subtitle));
-      this.writePacketAndFlush(packet);
-    }
-    {
-      GenericTitlePacket packet = GenericTitlePacket.constructTitlePacket(GenericTitlePacket.ActionType.SET_TIMES, version);
-
-      packet.setFadeIn(fadeIn);
-      packet.setStay(stay);
-      packet.setFadeOut(fadeOut);
-      this.writePacketAndFlush(packet);
-    }
-  }
-
   @Override
   public void disableFalling() {
     this.writePacketAndFlush(new PlayerAbilitiesPacket((byte) (this.getAbilities() | AbilityFlags.FLYING | AbilityFlags.ALLOW_FLYING), 0F, 0F));
@@ -332,17 +300,11 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public byte getAbilities() {
-    switch (this.gameMode) {
-      case CREATIVE: {
-        return AbilityFlags.ALLOW_FLYING | AbilityFlags.CREATIVE_MODE | AbilityFlags.INVULNERABLE;
-      }
-      case SPECTATOR: {
-        return AbilityFlags.ALLOW_FLYING | AbilityFlags.INVULNERABLE | AbilityFlags.FLYING;
-      }
-      default: {
-        return 0;
-      }
-    }
+    return switch (this.gameMode) {
+      case CREATIVE -> AbilityFlags.ALLOW_FLYING | AbilityFlags.CREATIVE_MODE | AbilityFlags.INVULNERABLE;
+      case SPECTATOR -> AbilityFlags.ALLOW_FLYING | AbilityFlags.INVULNERABLE | AbilityFlags.FLYING;
+      default -> 0;
+    };
   }
 
   @Override
