@@ -107,6 +107,7 @@ import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
+import net.kyori.adventure.text.Component;
 
 public class LimboImpl implements Limbo {
 
@@ -466,7 +467,7 @@ public class LimboImpl implements Limbo {
       );
     } else {
       UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(player.getUniqueId());
-      playerInfoEntry.setDisplayName(new ComponentHolder(ProtocolVersion.MAXIMUM_VERSION, player.getUsername()));
+      playerInfoEntry.setDisplayName(new ComponentHolder(player.getProtocolVersion(), Component.text(player.getUsername())));
       playerInfoEntry.setGameMode(this.gameMode);
       playerInfoEntry.setProfile(player.getGameProfile());
 
