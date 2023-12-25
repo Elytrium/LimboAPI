@@ -148,7 +148,7 @@ public class LoginTasksQueue {
               ));
             } else if (connection.getState() == StateRegistry.PLAY) {
               UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
-              playerInfoEntry.setDisplayName(new ComponentHolder(ProtocolVersion.MAXIMUM_VERSION, gameProfile.getUsername()));
+              playerInfoEntry.setDisplayName(new ComponentHolder(this.player.getProtocolVersion(), Component.text(gameProfile.getUsername())));
               playerInfoEntry.setProfile(gameProfile.getGameProfile());
 
               connection.delayedWrite(new UpsertPlayerInfo(
