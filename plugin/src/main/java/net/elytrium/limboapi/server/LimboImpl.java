@@ -47,6 +47,7 @@ import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.Respawn;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
+import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdate;
 import com.velocitypowered.proxy.protocol.packet.config.RegistrySync;
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
@@ -94,6 +95,7 @@ import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
+import net.elytrium.limboapi.protocol.packets.s2c.ChangeGameStatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.ChunkDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
@@ -105,7 +107,6 @@ import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
-import net.kyori.adventure.text.Component;
 
 public class LimboImpl implements Limbo {
 
@@ -236,6 +237,9 @@ public class LimboImpl implements Limbo {
         ).prepare(
             this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()),
             ProtocolVersion.MINECRAFT_1_14
+        ).prepare(
+            this.createLevelChunksLoadStartGameState(),
+            ProtocolVersion.MINECRAFT_1_20_3
         );
 
     if (this.shouldUpdateTags) {
@@ -244,6 +248,10 @@ public class LimboImpl implements Limbo {
     }
 
     this.respawnPackets.build();
+  }
+
+  private ChangeGameStatePacket createLevelChunksLoadStartGameState() {
+    return new ChangeGameStatePacket(13, 0);
   }
 
   private RegistrySync createRegistrySync(ProtocolVersion version) {
@@ -328,9 +336,7 @@ public class LimboImpl implements Limbo {
           // There is desync in the client then switching state too quickly
           // as it tries to use CONFIG handler while being on the PLAY state.
           // As a workaround, queue to ensure that packets are not concatinated
-          connection.eventLoop().schedule(() -> {
-            connection.write(this.configPackets);
-          }, 250, TimeUnit.MILLISECONDS);
+          connection.eventLoop().schedule(() -> connection.write(this.configPackets), 250, TimeUnit.MILLISECONDS);
         }
       } else {
         connection.delayedWrite(this.configPackets);
@@ -414,11 +420,8 @@ public class LimboImpl implements Limbo {
           () -> this.limboName
       );
 
-      if (connection.getActiveSessionHandler() instanceof ConfirmHandler) {
-        ConfirmHandler confirm = (ConfirmHandler) connection.getActiveSessionHandler();
-        confirm.waitForConfirmation(() -> {
-          this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
-        });
+      if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm) {
+        confirm.waitForConfirmation(() -> this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection));
       } else {
         this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
       }
@@ -463,7 +466,7 @@ public class LimboImpl implements Limbo {
       );
     } else {
       UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(player.getUniqueId());
-      playerInfoEntry.setDisplayName(Component.text(player.getUsername()));
+      playerInfoEntry.setDisplayName(new ComponentHolder(ProtocolVersion.MAXIMUM_VERSION, player.getUsername()));
       playerInfoEntry.setGameMode(this.gameMode);
       playerInfoEntry.setProfile(player.getGameProfile());
 

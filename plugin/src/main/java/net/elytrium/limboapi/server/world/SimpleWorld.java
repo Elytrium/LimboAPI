@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.VirtualBiome;
 import net.elytrium.limboapi.api.chunk.VirtualBlock;
@@ -131,7 +130,7 @@ public class SimpleWorld implements VirtualWorld {
   public List<List<VirtualChunk>> getOrderedChunks() {
     return this.distanceChunkMap.stream()
         .map(Collections::unmodifiableList)
-        .collect(Collectors.toUnmodifiableList());
+        .toList();
   }
 
   private int getDistanceToSpawn(VirtualChunk chunk) {

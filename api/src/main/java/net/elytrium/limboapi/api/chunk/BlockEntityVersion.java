@@ -46,14 +46,10 @@ public enum BlockEntityVersion {
   }
 
   public static BlockEntityVersion parse(String from) {
-    switch (from) {
-      case "1.19": {
-        return MINECRAFT_1_19;
-      }
-      default: {
-        return LEGACY;
-      }
-    }
+    return switch (from) {
+      case "1.19" -> MINECRAFT_1_19;
+      default -> LEGACY;
+    };
   }
 
   public static BlockEntityVersion from(ProtocolVersion protocolVersion) {

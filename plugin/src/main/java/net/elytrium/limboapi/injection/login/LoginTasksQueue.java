@@ -56,6 +56,7 @@ import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
+import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.ChannelPipeline;
@@ -72,7 +73,6 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.api.event.SafeGameProfileRequestEvent;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
 import net.elytrium.limboapi.injection.login.confirmation.TransitionConfirmHandler;
@@ -88,7 +88,6 @@ public class LoginTasksQueue {
   private static final Field MC_CONNECTION_FIELD;
   private static final MethodHandle CONNECT_TO_INITIAL_SERVER_METHOD;
   private static final MethodHandle PLAYER_KEY_FIELD;
-  private static final Enum LOGIN_STATE_SENT;
   private static final Field LOGIN_STATE_FIELD;
   private static final Field CONNECTED_PLAYER_FIELD;
 
@@ -100,7 +99,7 @@ public class LoginTasksQueue {
   private final Queue<Runnable> queue;
 
   public LoginTasksQueue(LimboAPI plugin, Object handler, VelocityServer server, ConnectedPlayer player,
-      InboundConnection inbound, Queue<Runnable> queue) {
+                         InboundConnection inbound, Queue<Runnable> queue) {
     this.plugin = plugin;
     this.handler = handler;
     this.server = server;
@@ -113,7 +112,7 @@ public class LoginTasksQueue {
     MinecraftConnection connection = this.player.getConnection();
     if (connection.getChannel().isActive()) {
       EventLoop eventLoop = connection.eventLoop();
-      if (this.queue.size() == 0) {
+      if (this.queue.isEmpty()) {
         eventLoop.execute(this::finish);
       } else {
         eventLoop.execute(Objects.requireNonNull(this.queue.poll()));
@@ -131,72 +130,69 @@ public class LoginTasksQueue {
 
     eventManager.proceedProfile(this.player.getGameProfile());
     eventManager.fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode())).thenAcceptAsync(
-        gameProfile -> eventManager.fire(new SafeGameProfileRequestEvent(gameProfile.getGameProfile(), gameProfile.isOnlineMode()))
-            .thenAcceptAsync(safeGameProfile -> {
-              try {
-                if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
-                  connection.delayedWrite(new LegacyPlayerListItem(
-                      LegacyPlayerListItem.REMOVE_PLAYER,
-                      List.of(new LegacyPlayerListItem.Item(this.player.getUniqueId()))
-                  ));
+        gameProfile -> {
+          try {
+            if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
+              connection.delayedWrite(new LegacyPlayerListItem(
+                  LegacyPlayerListItem.REMOVE_PLAYER,
+                  List.of(new LegacyPlayerListItem.Item(this.player.getUniqueId()))
+              ));
 
-                  connection.delayedWrite(new LegacyPlayerListItem(
-                      LegacyPlayerListItem.ADD_PLAYER,
-                      List.of(
-                          new LegacyPlayerListItem.Item(this.player.getUniqueId())
-                              .setName(safeGameProfile.getUsername())
-                              .setProperties(safeGameProfile.getGameProfile().getProperties())
-                      )
-                  ));
-                } else if (connection.getState() == StateRegistry.PLAY) {
-                  UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
-                  playerInfoEntry.setDisplayName(Component.text(safeGameProfile.getUsername()));
-                  playerInfoEntry.setProfile(safeGameProfile.getGameProfile());
+              connection.delayedWrite(new LegacyPlayerListItem(
+                  LegacyPlayerListItem.ADD_PLAYER,
+                  List.of(
+                      new LegacyPlayerListItem.Item(this.player.getUniqueId())
+                          .setName(gameProfile.getUsername())
+                          .setProperties(gameProfile.getGameProfile().getProperties())
+                  )
+              ));
+            } else if (connection.getState() == StateRegistry.PLAY) {
+              UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
+              playerInfoEntry.setDisplayName(new ComponentHolder(ProtocolVersion.MAXIMUM_VERSION, gameProfile.getUsername()));
+              playerInfoEntry.setProfile(gameProfile.getGameProfile());
 
-                  connection.delayedWrite(new UpsertPlayerInfo(
-                      EnumSet.of(
-                          UpsertPlayerInfo.Action.UPDATE_DISPLAY_NAME,
-                          UpsertPlayerInfo.Action.ADD_PLAYER),
-                      List.of(playerInfoEntry)));
-                }
+              connection.delayedWrite(new UpsertPlayerInfo(
+                  EnumSet.of(
+                      UpsertPlayerInfo.Action.UPDATE_DISPLAY_NAME,
+                      UpsertPlayerInfo.Action.ADD_PLAYER),
+                  List.of(playerInfoEntry)));
+            }
 
-                PROFILE_FIELD.invokeExact(this.player, safeGameProfile.getGameProfile());
+            PROFILE_FIELD.invokeExact(this.player, gameProfile.getGameProfile());
 
-                // From Velocity.
-                eventManager
-                    .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) DEFAULT_PERMISSIONS_FIELD.get(null)))
-                    .thenAcceptAsync(event -> {
-                      if (!connection.isClosed()) {
-                        // Wait for permissions to load, then set the players' permission function.
-                        PermissionFunction function = event.createFunction(this.player);
-                        if (function == null) {
-                          logger.error(
-                              "A plugin permission provider {} provided an invalid permission function"
-                                  + " for player {}. This is a bug in the plugin, not in Velocity. Falling"
-                                  + " back to the default permission function.",
-                              event.getProvider().getClass().getName(),
-                              this.player.getUsername()
-                          );
-                        } else {
-                          try {
-                            SET_PERMISSION_FUNCTION_METHOD.invokeExact(this.player, function);
-                          } catch (Throwable ex) {
-                            logger.error("Exception while completing injection to {}", this.player, ex);
-                          }
-                        }
-                        try {
-                          this.initialize(connection);
-                        } catch (Throwable e) {
-                          throw new ReflectionException(e);
-                        }
+            // From Velocity.
+            eventManager
+                .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) DEFAULT_PERMISSIONS_FIELD.get(null)))
+                .thenAcceptAsync(event -> {
+                  if (!connection.isClosed()) {
+                    // Wait for permissions to load, then set the players' permission function.
+                    PermissionFunction function = event.createFunction(this.player);
+                    if (function == null) {
+                      logger.error(
+                          "A plugin permission provider {} provided an invalid permission function"
+                              + " for player {}. This is a bug in the plugin, not in Velocity. Falling"
+                              + " back to the default permission function.",
+                          event.getProvider().getClass().getName(),
+                          this.player.getUsername()
+                      );
+                    } else {
+                      try {
+                        SET_PERMISSION_FUNCTION_METHOD.invokeExact(this.player, function);
+                      } catch (Throwable ex) {
+                        logger.error("Exception while completing injection to {}", this.player, ex);
                       }
-                    }, connection.eventLoop());
-              } catch (Throwable e) {
-                logger.error("Exception while completing injection to {}", this.player, e);
-              }
-            }, connection.eventLoop()),
-        connection.eventLoop()
-    );
+                    }
+                    try {
+                      this.initialize(connection);
+                    } catch (Throwable e) {
+                      throw new ReflectionException(e);
+                    }
+                  }
+                }, connection.eventLoop());
+          } catch (Throwable e) {
+            logger.error("Exception while completing injection to {}", this.player, e);
+          }
+        }, connection.eventLoop());
   }
 
   // From Velocity.
@@ -218,8 +214,7 @@ public class LoginTasksQueue {
     if (this.player.getIdentifiedKey() != null) {
       IdentifiedKey playerKey = this.player.getIdentifiedKey();
       if (playerKey.getSignatureHolder() == null) {
-        if (playerKey instanceof IdentifiedKeyImpl) {
-          IdentifiedKeyImpl unlinkedKey = (IdentifiedKeyImpl) playerKey;
+        if (playerKey instanceof IdentifiedKeyImpl unlinkedKey) {
           // Failsafe
           if (!unlinkedKey.internalAddHolder(this.player.getUniqueId())) {
             PLAYER_KEY_FIELD.invokeExact(this.player, (IdentifiedKey) null);
@@ -243,11 +238,8 @@ public class LoginTasksQueue {
           this.player.disconnect0(reason.get(), true);
         } else {
           if (this.server.registerConnection(this.player)) {
-            if (connection.getActiveSessionHandler() instanceof ConfirmHandler) {
-              ConfirmHandler confirm = (ConfirmHandler) connection.getActiveSessionHandler();
-              confirm.waitForConfirmation(() -> {
-                this.connectToServer(logger, this.player, connection);
-              });
+            if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm) {
+              confirm.waitForConfirmation(() -> this.connectToServer(logger, this.player, connection));
             } else {
               this.connectToServer(logger, this.player, connection);
             }
@@ -278,9 +270,7 @@ public class LoginTasksQueue {
         confirm.setPlayer(player);
 
         connection.setActiveSessionHandler(StateRegistry.PLAY, confirm);
-        confirm.waitForConfirmation(() -> {
-          this.connectToServer(logger, player, connection);
-        });
+        confirm.waitForConfirmation(() -> this.connectToServer(logger, player, connection));
 
         return;
       }
@@ -317,8 +307,6 @@ public class LoginTasksQueue {
       CONNECT_TO_INITIAL_SERVER_METHOD = MethodHandles.privateLookupIn(AuthSessionHandler.class, MethodHandles.lookup())
           .findVirtual(AuthSessionHandler.class, "connectToInitialServer", MethodType.methodType(CompletableFuture.class, ConnectedPlayer.class));
 
-      Class<?> stateClass = Class.forName("com.velocitypowered.proxy.connection.client.AuthSessionHandler$State");
-      LOGIN_STATE_SENT = Enum.valueOf((Class<Enum>) stateClass, "SUCCESS_SENT");
       LOGIN_STATE_FIELD = AuthSessionHandler.class.getDeclaredField("loginState");
       LOGIN_STATE_FIELD.setAccessible(true);
       CONNECTED_PLAYER_FIELD = AuthSessionHandler.class.getDeclaredField("connectedPlayer");
@@ -329,7 +317,7 @@ public class LoginTasksQueue {
 
       PLAYER_KEY_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findSetter(ConnectedPlayer.class, "playerKey", IdentifiedKey.class);
-    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException | ClassNotFoundException e) {
+    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }
   }

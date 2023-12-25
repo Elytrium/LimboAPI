@@ -37,7 +37,7 @@ public class NbtUtils {
         throw new EncoderException("Unable to encode NBT CompoundTag", exception);
       }
     } else {
-      ProtocolUtils.writeCompoundTag(buf, tag);
+      ProtocolUtils.writeBinaryTag(buf, version, tag);
     }
   }
 }

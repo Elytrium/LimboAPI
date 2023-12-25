@@ -173,7 +173,7 @@ public class EventManagerHook extends VelocityEventManager {
       Array.set(this.handlerRegistrations, i, preEvents.get(i));
     }
 
-    this.hasHandlerRegistration = preEvents.size() != 0;
+    this.hasHandlerRegistration = !preEvents.isEmpty();
   }
 
   static {

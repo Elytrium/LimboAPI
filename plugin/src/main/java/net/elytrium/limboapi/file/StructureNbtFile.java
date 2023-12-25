@@ -65,7 +65,7 @@ public class StructureNbtFile implements WorldFile {
       world.setBlock(x, y, z, block);
 
       CompoundBinaryTag blockEntityNbt = blockMap.getCompound("nbt");
-      if (blockEntityNbt.keySet().size() != 0) {
+      if (!blockEntityNbt.keySet().isEmpty()) {
         world.setBlockEntity(x, y, z, blockEntityNbt, factory.getBlockEntity(block.getModernStringID()));
       }
     }

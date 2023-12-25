@@ -13,7 +13,7 @@ plugins() {
 }
 
 compileJava() {
-  getOptions().getRelease().set(11)
+  getOptions().getRelease().set(17)
   getOptions().setEncoding("UTF-8")
 }
 
@@ -38,9 +38,6 @@ dependencies() {
   implementation("org.bstats:bstats-velocity:$bstatsVersion")
 
   compileOnly("com.github.spotbugs:spotbugs-annotations:$spotbugsVersion")
-
-  annotationProcessor("net.java.dev.jna:jna-platform:5.13.0")
-  annotationProcessor("com.github.bsideup.jabel:jabel-javac-plugin:1.0.0")
 }
 
 shadowJar() {
@@ -128,7 +125,8 @@ enum MinecraftVersion {
   MINECRAFT_1_19_3(761),
   MINECRAFT_1_19_4(762),
   MINECRAFT_1_20(763),
-  MINECRAFT_1_20_2(764)
+  MINECRAFT_1_20_2(764),
+  MINECRAFT_1_20_3(765)
 
   public static final List<MinecraftVersion> WORLD_VERSIONS = List.of(
     MINECRAFT_1_13,
@@ -141,7 +139,8 @@ enum MinecraftVersion {
     MINECRAFT_1_19,
     MINECRAFT_1_19_3,
     MINECRAFT_1_19_4,
-    MINECRAFT_1_20
+    MINECRAFT_1_20_2,
+    MINECRAFT_1_20_3
   )
 
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
@@ -182,9 +181,9 @@ enum MinecraftVersion {
   }
 }
 
-project.ext.dataDirectory = new File(this.getBuildDir(), "minecraft")
-project.ext.manifestDir = new File(dataDirectory, "manifest.json")
-project.ext.generatedDir = new File(this.getBuildDir(), "generated/minecraft")
+project.ext.dataDirectory = new File(this.getLayout().getBuildDirectory().get().getAsFile(), "minecraft")
+project.ext.generatedDir = new File(this.getLayout().getBuildDirectory().get().getAsFile(), "generated/minecraft")
+project.ext.versionManifestFile = new File(dataDirectory, "manifest.json")
 
 sourceSets {
   main {
@@ -196,14 +195,24 @@ sourceSets {
 
 tasks.register("downloadManifest") {
   this.println("> Downloading version manifest...")
-  manifestDir.getParentFile().mkdirs()
-  FileUtils.copyURLToFile(new URL(manifestUrl), manifestDir)
+  versionManifestFile.getParentFile().mkdirs()
+  if (checkIsCacheValid(versionManifestFile)) {
+    FileUtils.copyURLToFile(new URL(manifestUrl), versionManifestFile)
+  }
 }
 
+boolean checkIsCacheValid(File file) {
+  if (file.exists() && System.currentTimeMillis() - file.lastModified() < Long.parseLong(cacheValidMillis)) {
+    println("> Found cached " + file.getName())
+    return false
+  }
+
+  return true
+}
 File downloadVersionManifest(String version) {
   this.println("> Downloading ${version} manifest...")
 
-  Object manifest = new JsonSlurper().parse(manifestDir)
+  Object manifest = new JsonSlurper().parse(versionManifestFile)
   def optional = manifest.versions.stream().filter({it.id == version}).findFirst()
   if (optional.empty()) {
     throw new RuntimeException("Couldn't find version: ${version}")
@@ -215,6 +224,7 @@ File downloadVersionManifest(String version) {
   return output
 }
 
+@SuppressWarnings('GrMethodMayBeStatic')
 File getGeneratedCache(MinecraftVersion version) {
   File generated = new File(dataDirectory, "${version.getVersionName()}/generated")
   return new File(generated, "reports/blocks.json").exists()
@@ -251,7 +261,7 @@ File getServerJar(String version) {
 File generateData(MinecraftVersion version) {
   File cache = getGeneratedCache(version)
   if (cache != null) {
-    return cache;
+    return cache
   }
 
   File jarFile = this.getServerJar(version.getVersionName())
@@ -412,68 +422,78 @@ static Map<String, Integer> getBlockMappings(Object data, Map<String, Map<String
 }
 
 void generateBlockMappings(File targetDir, Map<MinecraftVersion, Object> blockReports) {
-  this.println("> Generating default block properties...")
+  File defaultBlockPropertiesFile = new File(targetDir, "defaultblockproperties.json")
+  File blockStatesFile = new File(targetDir, "blockstates.json")
+  File blockStatesMappingFile = new File(targetDir, "blockstates_mapping.json")
+  File legacyBlocksFile = new File(targetDir, "legacyblocks.json")
 
-  Map<MinecraftVersion, Map<String, Map<String, String>>> defaultProperties =
-          blockReports.collectEntries({ version, report ->
-            [version, getDefaultProperties(report)]
-          })
+  if (checkIsCacheValid(defaultBlockPropertiesFile) || checkIsCacheValid(blockStatesFile)
+          || checkIsCacheValid(blockStatesMappingFile) || checkIsCacheValid(legacyBlocksFile)) {
+    this.println("> Generating default block properties...")
 
-  new File(targetDir, "defaultblockproperties.json").write(JsonOutput.prettyPrint(
-          JsonOutput.toJson(defaultProperties[MinecraftVersion.MAXIMUM_VERSION].sort())), "UTF-8")
+    Map<MinecraftVersion, Map<String, Map<String, String>>> defaultProperties =
+            blockReports.collectEntries({ version, report ->
+              [version, getDefaultProperties(report)]
+            })
 
-  this.println("> Generating blockstates...")
+    defaultBlockPropertiesFile.write(JsonOutput.prettyPrint(
+            JsonOutput.toJson(defaultProperties[MinecraftVersion.MAXIMUM_VERSION].sort())), "UTF-8")
 
-  Map<MinecraftVersion, Map<String, Integer>> mappings = loadLegacyMapping(
-          new File(this.getProjectDir(), "mapping/legacyblockmapping.json"))
+    this.println("> Generating blockstates...")
 
-  blockReports.forEach({ version, report ->
-    mappings.put(version, getBlockMappings(report, defaultProperties[version]))
-  })
+    Map<MinecraftVersion, Map<String, Integer>> mappings = loadLegacyMapping(
+            new File(this.getProjectDir(), "mapping/legacyblockmapping.json"))
 
-  Map<String, Integer> blocks = mappings[MinecraftVersion.MAXIMUM_VERSION]
+    blockReports.forEach({ version, report ->
+      mappings.put(version, getBlockMappings(report, defaultProperties[version]))
+    })
 
-  new File(targetDir, "blockstates.json").write(
-          JsonOutput.prettyPrint(JsonOutput.toJson(
-                  blocks.sort(Map.Entry::getValue)
-                          .collectEntries({ k, v -> [k, String.valueOf(v)] })
-          )), "UTF-8")
+    Map<String, Integer> blocks = mappings[MinecraftVersion.MAXIMUM_VERSION]
 
-  this.println("> Generating blockstates mapping...")
+    blockStatesFile.write(
+            JsonOutput.prettyPrint(JsonOutput.toJson(
+                    blocks.sort(Map.Entry::getValue)
+                            .collectEntries({ k, v -> [k, String.valueOf(v)] })
+            )), "UTF-8")
 
-  Map<MinecraftVersion, Map<String, String>> fallbackMapping = loadFallbackMapping(
-          new File(this.getProjectDir(), "mapping/fallbackdata.json"))
 
-  Map<String, Map<String, String>> blockstateMapping = new LinkedHashMap<>()
-  blocks.sort(Map.Entry::getValue)
-          .forEach({ block, modernID ->
-            Map<String, String> blockMapping = new LinkedHashMap<>()
 
-            int lastID = -1
-            for (MinecraftVersion version : MinecraftVersion.values()) {
-              int id = getBlockID(block, mappings, defaultProperties, fallbackMapping, version)
-              if (lastID != id) {
-                blockMapping.put(version.getVersionName(), String.valueOf(lastID = id))
+    this.println("> Generating blockstates mapping...")
+
+    Map<MinecraftVersion, Map<String, String>> fallbackMapping = loadFallbackMapping(
+            new File(this.getProjectDir(), "mapping/fallbackdata.json"))
+
+    Map<String, Map<String, String>> blockstateMapping = new LinkedHashMap<>()
+    blocks.sort(Map.Entry::getValue)
+            .forEach({ block, modernID ->
+              Map<String, String> blockMapping = new LinkedHashMap<>()
+
+              int lastID = -1
+              for (MinecraftVersion version : MinecraftVersion.values()) {
+                int id = getBlockID(block, mappings, defaultProperties, fallbackMapping, version)
+                if (lastID != id) {
+                  blockMapping.put(version.getVersionName(), String.valueOf(lastID = id))
+                }
               }
-            }
 
-            blockstateMapping.put(String.valueOf(modernID), blockMapping)
-          })
+              blockstateMapping.put(String.valueOf(modernID), blockMapping)
+            })
 
-  new File(targetDir, "blockstates_mapping.json").write(
-          JsonOutput.prettyPrint(JsonOutput.toJson(blockstateMapping)), "UTF-8")
+    blockStatesMappingFile.write(
+            JsonOutput.prettyPrint(JsonOutput.toJson(blockstateMapping)), "UTF-8")
 
-  this.println("> Generating legacy blocks...")
+    this.println("> Generating legacy blocks...")
 
-  Map<String, String> legacyData = new JsonSlurper().parse(
-          new File(this.getProjectDir(), "mapping/legacyblocks.json"))
+    Map<String, String> legacyData = new JsonSlurper().parse(
+            new File(this.getProjectDir(), "mapping/legacyblocks.json"))
 
-  legacyData = legacyData.collectEntries({ legacy, modern ->
-    [legacy, String.valueOf(getBlockID(modern, mappings, defaultProperties, fallbackMapping, MinecraftVersion.MAXIMUM_VERSION))]
-  })
+    legacyData = legacyData.collectEntries({ legacy, modern ->
+      [legacy, String.valueOf(getBlockID(modern, mappings, defaultProperties, fallbackMapping, MinecraftVersion.MAXIMUM_VERSION))]
+    })
 
-  new File(targetDir, "legacyblocks.json").write(
-          JsonOutput.prettyPrint(JsonOutput.toJson(legacyData)), "UTF-8")
+    legacyBlocksFile.write(
+            JsonOutput.prettyPrint(JsonOutput.toJson(legacyData)), "UTF-8")
+  }
 }
 
 static Map<String, Map<String, String>> sortRegistryMapping(Map<String, Map<String, String>> mapping) {
@@ -489,38 +509,42 @@ static Map<String, Map<String, String>> sortRegistryMapping(Map<String, Map<Stri
 }
 
 void generateRegistryMapping(String target, File targetDir, Map<MinecraftVersion, Object> registriesReports) {
-  this.println("> Generating ${target}s...")
+  File targetFile = new File(targetDir, "${target}s.json");
+  File targetMappingFile = new File(targetDir, "${target}s_mapping.json");
+  if (checkIsCacheValid(targetFile) || checkIsCacheValid(targetMappingFile)) {
+    this.println("> Generating ${target}s...")
 
-  Map<MinecraftVersion, Map<String, String>> idMap =
-          registriesReports.collectEntries({ version, registry ->
-            Object entries = registry["minecraft:${target}"].entries
-            return [version, entries.collectEntries({ name, id -> [name, String.valueOf(id["protocol_id"])] })]
-          })
+    Map<MinecraftVersion, Map<String, String>> idMap =
+            registriesReports.collectEntries({ version, registry ->
+              Object entries = registry["minecraft:${target}"].entries
+              return [version, entries.collectEntries({ name, id -> [name, String.valueOf(id["protocol_id"])] })]
+            })
 
-  Map<String, String> modernIDs = Collections.max(idMap.entrySet(), Map.Entry.comparingByKey()).getValue()
+    Map<String, String> modernIDs = Collections.max(idMap.entrySet(), Map.Entry.comparingByKey()).getValue()
 
-  new File(targetDir, "${target}s.json").write(JsonOutput.prettyPrint(
-          JsonOutput.toJson(modernIDs.sort({Integer.parseInt(it.getValue()) }))), "UTF-8")
+    targetFile.write(JsonOutput.prettyPrint(
+            JsonOutput.toJson(modernIDs.sort({Integer.parseInt(it.getValue()) }))), "UTF-8")
 
-  this.println("> Generating ${target}s mapping...")
+    this.println("> Generating ${target}s mapping...")
 
-  Map<String, Map<String, String>> mapping = new JsonSlurper()
-          .parse(new File(this.getProjectDir(), "mapping/legacy_${target}s_mapping.json"))
-          .collectEntries({ key, value -> [modernIDs[key], value] })
+    Map<String, Map<String, String>> mapping = new JsonSlurper()
+            .parse(new File(this.getProjectDir(), "mapping/legacy_${target}s_mapping.json"))
+            .collectEntries({ key, value -> [modernIDs[key], value] })
 
-  idMap.forEach({ version, ids ->
-    ids.forEach({ key, id ->
-      if (!modernIDs.containsKey(key)) {
-        return
-      }
+    idMap.forEach({ version, ids ->
+      ids.forEach({ key, id ->
+        if (!modernIDs.containsKey(key)) {
+          return
+        }
 
-      mapping.computeIfAbsent(modernIDs[key], _ -> new LinkedHashMap<>()).put(version.getVersionName(), id)
+        mapping.computeIfAbsent(modernIDs[key], _ -> new LinkedHashMap<>()).put(version.getVersionName(), id)
+      })
     })
-  })
 
-  mapping = sortRegistryMapping(mapping)
-  new File(targetDir, "${target}s_mapping.json").write(JsonOutput.prettyPrint(
-          JsonOutput.toJson(mapping.sort({ Integer.parseInt(it.getKey()) }))), "UTF-8")
+    mapping = sortRegistryMapping(mapping)
+    targetMappingFile.write(JsonOutput.prettyPrint(
+            JsonOutput.toJson(mapping.sort({ Integer.parseInt(it.getKey()) }))), "UTF-8")
+  }
 }
 
 void generateRegistryMappings(File targetDir, Map<MinecraftVersion, Object> registriesReports) {
@@ -528,26 +552,30 @@ void generateRegistryMappings(File targetDir, Map<MinecraftVersion, Object> regi
           .findAll({ e -> MinecraftVersion.WORLD_VERSIONS.contains(e.getKey()) }))
   this.generateRegistryMapping("block", targetDir, registriesReports)
 
-  this.println("> Generating blockentities mapping...")
+  File blockEntitiesMappingFile = new File(targetDir, "blockentities_mapping.json");
 
-  Map<String, Map<String, String>> blockentities = new JsonSlurper()
-          .parse(new File(this.getProjectDir(), "mapping/legacy_blockentities_mapping.json"))
+  if (checkIsCacheValid(blockEntitiesMappingFile)) {
+    this.println("> Generating blockentities mapping...")
 
-  registriesReports.forEach({ version, registries ->
-    if (version < MinecraftVersion.MINECRAFT_1_19) {
-      return
-    }
+    Map<String, Map<String, String>> blockentities = new JsonSlurper()
+            .parse(new File(this.getProjectDir(), "mapping/legacy_blockentities_mapping.json"))
 
-    registries["minecraft:block_entity_type"].entries.forEach({ key, value ->
-      int id = value.protocol_id
-      blockentities.computeIfAbsent(key, _ -> new LinkedHashMap<>())
-              .put(version.getVersionName(), String.valueOf(id))
+    registriesReports.forEach({ version, registries ->
+      if (version < MinecraftVersion.MINECRAFT_1_19) {
+        return
+      }
+
+      registries["minecraft:block_entity_type"].entries.forEach({ key, value ->
+        int id = value.protocol_id
+        blockentities.computeIfAbsent(key, _ -> new LinkedHashMap<>())
+                .put(version.getVersionName(), String.valueOf(id))
+      })
     })
-  })
 
-  blockentities = sortRegistryMapping(blockentities)
-  new File(targetDir, "blockentities_mapping.json").write(
-          JsonOutput.prettyPrint(JsonOutput.toJson(blockentities)), "UTF-8")
+    blockentities = sortRegistryMapping(blockentities)
+    blockEntitiesMappingFile.write(
+            JsonOutput.prettyPrint(JsonOutput.toJson(blockentities)), "UTF-8")
+  }
 }
 
 static Map<String, Map<String, List<String>>> getTags(File tagDir, Map<String, String> tagTypes) {
@@ -598,38 +626,41 @@ static Map<String, Map<String, List<String>>> getTags(File tagDir, Map<String, S
 }
 
 void generateTags(File targetDir, Map<MinecraftVersion, File> tagDirs) {
-  this.println("> Generating tags...")
+  File tagsFile = new File(targetDir, "tags.json");
+  if (checkIsCacheValid(tagsFile)) {
+      this.println("> Generating tags...")
 
-  Map<String, Object> tagTypes = new JsonSlurper().parse(new File(getProjectDir(), "mapping/tag_types.json"))
+      Map<String, Object> tagTypes = new JsonSlurper().parse(new File(getProjectDir(), "mapping/tag_types.json"))
 
-  Map<MinecraftVersion, Map<String, Map<String, List<String>>>> allTags =
-          tagDirs.collectEntries({ version, dir ->
-            [version, getTags(dir, tagTypes.tag_types)]
-          })
+      Map<MinecraftVersion, Map<String, Map<String, List<String>>>> allTags =
+              tagDirs.collectEntries({ version, dir ->
+                  [version, getTags(dir, tagTypes.tag_types)]
+              })
 
-  Map<String, Map<String, Set<String>>> mergedTags = new LinkedHashMap<>()
+      Map<String, Map<String, Set<String>>> mergedTags = new LinkedHashMap<>()
 
-  allTags.forEach({ version, tags ->
-    tags.forEach({ type, typeTags -> {
-      Map<String, Set<String>> mergedTypeTags = mergedTags.computeIfAbsent(type, _ -> new HashMap<>())
-      typeTags.forEach({ name, values ->
-        Set<String> mergedValues = mergedTypeTags.computeIfAbsent(name, _ -> new HashSet<>())
-        if (!tagTypes.supported_tag_types.contains(type)) {
-          return
-        }
+      allTags.forEach({ version, tags ->
+          tags.forEach({ type, typeTags -> {
+              Map<String, Set<String>> mergedTypeTags = mergedTags.computeIfAbsent(type, _ -> new HashMap<>())
+              typeTags.forEach({ name, values ->
+                  Set<String> mergedValues = mergedTypeTags.computeIfAbsent(name, _ -> new HashSet<>())
+                  if (!tagTypes.supported_tag_types.contains(type)) {
+                      return
+                  }
 
-        mergedValues.addAll(values)
+                  mergedValues.addAll(values)
+              })
+          }})
       })
-    }})
-  })
 
-  mergedTags = mergedTags.collectEntries({ type, typeTags ->
-    [type, typeTags.collectEntries({ name, values ->
-      [name, values.sort()]
-    }).sort()]
-  })
+      mergedTags = mergedTags.collectEntries({ type, typeTags ->
+          [type, typeTags.collectEntries({ name, values ->
+              [name, values.sort()]
+          }).sort()]
+      })
 
-  new File(targetDir, "tags.json").write(JsonOutput.prettyPrint(JsonOutput.toJson(mergedTags)), "UTF-8")
+      tagsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(mergedTags)), "UTF-8")
+  }
 }
 
 tasks.register("generateMappings") {

@@ -111,11 +111,9 @@ public class KickListener {
   // From Velocity.
   private void handleThen(KickedFromServerEvent event, ConnectedPlayer player, VelocityServerConnection serverConnection)
       throws Throwable {
-    if (event.getResult() instanceof KickedFromServerEvent.DisconnectPlayer) {
-      KickedFromServerEvent.DisconnectPlayer res = (KickedFromServerEvent.DisconnectPlayer) event.getResult();
+    if (event.getResult() instanceof KickedFromServerEvent.DisconnectPlayer res) {
       player.disconnect(res.getReasonComponent());
-    } else if (event.getResult() instanceof KickedFromServerEvent.RedirectPlayer) {
-      KickedFromServerEvent.RedirectPlayer res = (KickedFromServerEvent.RedirectPlayer) event.getResult();
+    } else if (event.getResult() instanceof KickedFromServerEvent.RedirectPlayer res) {
       ((ConnectionRequestBuilder) CREATE_CONNECTION_REQUEST.invokeExact(player, res.getServer(), serverConnection))
           .connect()
           .whenCompleteAsync((status, throwable) -> {
@@ -141,7 +139,7 @@ public class KickListener {
                 Component reason = status.getReasonComponent()
                     .orElse(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);
                 player.handleConnectionException(res.getServer(), Disconnect.create(reason,
-                    player.getProtocolVersion()), ((ConnectionRequestResults.Impl) status).isSafe());
+                    player.getProtocolVersion(), false), ((ConnectionRequestResults.Impl) status).isSafe());
                 break;
               case SUCCESS:
                 Component requestedMessage = res.getMessageComponent();
@@ -157,8 +155,7 @@ public class KickListener {
                 break;
             }
           }, player.getConnection().eventLoop());
-    } else if (event.getResult() instanceof KickedFromServerEvent.Notify) {
-      KickedFromServerEvent.Notify res = (KickedFromServerEvent.Notify) event.getResult();
+    } else if (event.getResult() instanceof KickedFromServerEvent.Notify res) {
       if (event.kickedDuringServerConnect() && serverConnection != null) {
         player.sendMessage(Identity.nil(), res.getMessageComponent());
       } else {
