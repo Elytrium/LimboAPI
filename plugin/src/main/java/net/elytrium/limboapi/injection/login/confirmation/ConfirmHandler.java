@@ -50,6 +50,7 @@ public abstract class ConfirmHandler implements MinecraftSessionHandler {
   protected final MinecraftConnection connection;
   protected ConnectedPlayer player;
   protected int genericBytes;
+  protected boolean disableRelease;
 
   public ConfirmHandler(MinecraftConnection connection) {
     this.connection = connection;
@@ -63,8 +64,26 @@ public abstract class ConfirmHandler implements MinecraftSessionHandler {
     return this.confirmation.isDone();
   }
 
+  public CompletableFuture<Void> thenRun(Runnable runnable) {
+    return this.confirmation.thenRun(runnable);
+  }
+
   public void waitForConfirmation(Runnable runnable) {
-    this.confirmation.thenRun(runnable).thenRun(this::processQueued);
+    this.thenRun(() -> {
+      this.disableRelease = true;
+      try {
+        runnable.run();
+      } catch (Throwable throwable) {
+        LimboAPI.getLogger().error("Failed to confirm transition for " + this.player, throwable);
+      }
+
+      try {
+        this.processQueued();
+      } catch (Throwable throwable) {
+        LimboAPI.getLogger().error("Failed to process confirmation queue for " + this.player, throwable);
+      }
+      this.disableRelease = false;
+    });
   }
 
   @Override
@@ -154,7 +173,9 @@ public abstract class ConfirmHandler implements MinecraftSessionHandler {
         }
       }
     } finally {
-      this.releaseQueue();
+      if (!this.disableRelease) {
+        this.releaseQueue();
+      }
     }
   }
 

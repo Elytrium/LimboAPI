@@ -321,10 +321,9 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
+  private void spawnPlayerConfirmed(Class<? extends LimboSessionHandler> handlerClass,
       LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
-    boolean stateSwitching = connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0;
-    if (stateSwitching) {
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
       if (connection.getState() != StateRegistry.CONFIG) {
         if (this.shouldRejoin) {
           connection.write(this.configTransitionPackets);
@@ -332,7 +331,7 @@ public class LimboImpl implements Limbo {
           // As the client can't switch state immediately due to race condition between
           // main and network threads, it should be synchronized
           new TransitionConfirmHandler(connection).trackTransition(player, () -> {
-            this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
+            this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection);
           });
 
           return; // Wait for transition
@@ -342,16 +341,26 @@ public class LimboImpl implements Limbo {
       }
     }
 
-    connection.setActiveSessionHandler(connection.getState(), sessionHandler);
-
     this.currentOnline.increment();
 
+    connection.setActiveSessionHandler(connection.getState(), sessionHandler);
     sessionHandler.onConfig(new LimboPlayerImpl(this.plugin, this, player));
-    if (!stateSwitching || (connection.getState() != StateRegistry.CONFIG && !this.shouldRejoin)) {
+
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0
+        || (connection.getState() != StateRegistry.CONFIG && !this.shouldRejoin)) {
       this.onSpawn(handlerClass, connection, player, sessionHandler);
     }
 
     connection.flush();
+  }
+
+  private void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
+      LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
+    if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm) {
+      confirm.waitForConfirmation(() -> this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection));
+    } else {
+      this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection);
+    }
   }
 
   private void spawnPlayerLocal(ConnectedPlayer player, LimboSessionHandler handler, RegisteredServer previousServer) {
@@ -421,11 +430,7 @@ public class LimboImpl implements Limbo {
           () -> this.limboName
       );
 
-      if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm && !confirm.isDone()) {
-        confirm.waitForConfirmation(() -> this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection));
-      } else {
-        this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
-      }
+      this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
     });
   }
 

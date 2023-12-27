@@ -208,15 +208,11 @@ public class LoginListener {
                   connection.setState(StateRegistry.PLAY);
                 }
 
-                this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
-                  LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());
-                  this.plugin.addLoginQueue(player, queue);
-                  this.plugin.setKickCallback(player, limboRegisterEvent.getOnKickCallback());
-                  queue.next();
-                }, connection.eventLoop()).exceptionally(t -> {
-                  LimboAPI.getLogger().error("Exception while registering LimboAPI login handlers for {}.", player, t);
-                  return null;
-                });
+                if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm) {
+                  confirm.thenRun(() -> this.callRegisterEvent(player, connection, inbound, handler));
+                } else {
+                  this.callRegisterEvent(player, connection, inbound, handler);
+                }
               }
             } else {
               player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
@@ -227,6 +223,19 @@ public class LoginListener {
         });
       }
     }
+  }
+
+  private void callRegisterEvent(ConnectedPlayer player, MinecraftConnection connection,
+                                 InitialInboundConnection inbound, Object handler) {
+    this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
+      LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());
+      this.plugin.addLoginQueue(player, queue);
+      this.plugin.setKickCallback(player, limboRegisterEvent.getOnKickCallback());
+      queue.next();
+    }, connection.eventLoop()).exceptionally(t -> {
+      LimboAPI.getLogger().error("Exception while registering LimboAPI login handlers for {}.", player, t);
+      return null;
+    });
   }
 
   @Subscribe

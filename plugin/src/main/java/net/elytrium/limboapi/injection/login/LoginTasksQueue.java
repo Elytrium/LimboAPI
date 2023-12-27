@@ -238,7 +238,7 @@ public class LoginTasksQueue {
           this.player.disconnect0(reason.get(), true);
         } else {
           if (this.server.registerConnection(this.player)) {
-            if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm && !confirm.isDone()) {
+            if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm) {
               confirm.waitForConfirmation(() -> this.connectToServer(logger, this.player, connection));
             } else {
               this.connectToServer(logger, this.player, connection);
