@@ -136,8 +136,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   public boolean handle(FinishedUpdate packet) {
     this.player.getConnection().setState(this.limbo.localStateRegistry);
 
-    this.limbo.preSpawn(this.callback.getClass(), this.player.getConnection(), this.player);
-    this.limbo.postSpawn(this, this.player.getConnection(), this.player);
+    this.limbo.onSpawn(this.callback.getClass(), this.player.getConnection(), this.player, this);
     this.player.getConnection().flush();
     return true;
   }

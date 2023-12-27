@@ -92,6 +92,7 @@ import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
 import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
+import net.elytrium.limboapi.injection.login.confirmation.TransitionConfirmHandler;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -322,33 +323,32 @@ public class LimboImpl implements Limbo {
 
   private void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
       LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
-    boolean callSpawn = connection.getState() != StateRegistry.CONFIG && !this.shouldRejoin;
-    if (callSpawn || connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
-      this.preSpawn(handlerClass, connection, player);
-    }
-
-    connection.setActiveSessionHandler(connection.getState(), sessionHandler);
-
-    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+    boolean stateSwitching = connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0;
+    if (stateSwitching) {
       if (connection.getState() != StateRegistry.CONFIG) {
         if (this.shouldRejoin) {
-          connection.delayedWrite(this.configTransitionPackets);
-          connection.setState(StateRegistry.CONFIG);
-          // There is desync in the client then switching state too quickly
-          // as it tries to use CONFIG handler while being on the PLAY state.
-          // As a workaround, queue to ensure that packets are not concatinated
-          connection.eventLoop().schedule(() -> connection.write(this.configPackets), 250, TimeUnit.MILLISECONDS);
+          connection.write(this.configTransitionPackets);
+
+          // As the client can't switch state immediately due to race condition between
+          // main and network threads, it should be synchronized
+          new TransitionConfirmHandler(connection).trackTransition(player, () -> {
+            this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
+          });
+
+          return; // Wait for transition
         }
       } else {
         connection.delayedWrite(this.configPackets);
       }
     }
 
+    connection.setActiveSessionHandler(connection.getState(), sessionHandler);
+
     this.currentOnline.increment();
 
     sessionHandler.onConfig(new LimboPlayerImpl(this.plugin, this, player));
-    if (callSpawn || connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
-      this.postSpawn(sessionHandler, connection, player);
+    if (!stateSwitching || (connection.getState() != StateRegistry.CONFIG && !this.shouldRejoin)) {
+      this.onSpawn(handlerClass, connection, player, sessionHandler);
     }
 
     connection.flush();
@@ -429,16 +429,9 @@ public class LimboImpl implements Limbo {
     });
   }
 
-  protected void postSpawn(LimboSessionHandlerImpl sessionHandler, MinecraftConnection connection, ConnectedPlayer player) {
-    if (this.shouldRespawn) {
-      this.respawnPlayer(player);
-    }
-
-    sessionHandler.onSpawn();
-  }
-
-  protected void preSpawn(Class<? extends LimboSessionHandler> handlerClass,
-                          MinecraftConnection connection, ConnectedPlayer player) {
+  protected void onSpawn(Class<? extends LimboSessionHandler> handlerClass,
+                          MinecraftConnection connection, ConnectedPlayer player,
+                          LimboSessionHandlerImpl sessionHandler) {
     if (this.plugin.isLimboJoined(player)) {
       if (this.shouldRejoin) {
         if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
@@ -484,6 +477,12 @@ public class LimboImpl implements Limbo {
     connection.delayedWrite(this.getBrandMessage(handlerClass));
 
     this.plugin.setLimboJoined(player);
+
+    if (this.shouldRespawn) {
+      this.respawnPlayer(player);
+    }
+
+    sessionHandler.onSpawn();
   }
 
   @Override

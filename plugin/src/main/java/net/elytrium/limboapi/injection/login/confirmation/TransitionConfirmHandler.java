@@ -18,6 +18,7 @@
 package net.elytrium.limboapi.injection.login.confirmation;
 
 import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdate;
 
@@ -36,5 +37,11 @@ public class TransitionConfirmHandler extends ConfirmHandler {
     }
 
     return false;
+  }
+
+  public void trackTransition(ConnectedPlayer player, Runnable runnable) {
+    this.setPlayer(player);
+    this.connection.setActiveSessionHandler(StateRegistry.PLAY, this);
+    this.waitForConfirmation(runnable);
   }
 }

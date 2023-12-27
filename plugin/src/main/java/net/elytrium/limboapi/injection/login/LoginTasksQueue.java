@@ -262,19 +262,15 @@ public class LoginTasksQueue {
       } catch (Throwable e) {
         throw new ReflectionException(e);
       }
+    } else if (connection.getState() == StateRegistry.PLAY) {
+      connection.write(new StartUpdate());
+
+      // Synchronize to make sure that nothing from PLAY state isn't received in CONFIG state
+      new TransitionConfirmHandler(connection)
+          .trackTransition(player, () -> this.connectToServer(logger, player, connection));
+
+      return; // Re-running this method due to synchronization with the client
     } else {
-      if (connection.getState() == StateRegistry.PLAY) {
-        connection.write(new StartUpdate());
-
-        TransitionConfirmHandler confirm = new TransitionConfirmHandler(connection);
-        confirm.setPlayer(player);
-
-        connection.setActiveSessionHandler(StateRegistry.PLAY, confirm);
-        confirm.waitForConfirmation(() -> this.connectToServer(logger, player, connection));
-
-        return;
-      }
-
       connection.setActiveSessionHandler(StateRegistry.CONFIG,
           new ClientConfigSessionHandler(this.server, this.player));
     }
