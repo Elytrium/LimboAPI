@@ -22,6 +22,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
+import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
@@ -49,6 +50,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveOnGroundOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MovePacket;
@@ -315,7 +317,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       return;
     }
 
-    if (!(this.originalHandler instanceof AuthSessionHandler) && !(this.originalHandler instanceof LimboSessionHandlerImpl)) {
+    if (!(this.originalHandler instanceof AuthSessionHandler)
+        && !(this.originalHandler instanceof LimboSessionHandlerImpl)
+        && !(this.originalHandler instanceof ClientPlaySessionHandler) // cause issues with server switching
+        && !(this.originalHandler instanceof ConfirmHandler)) {
       connection.eventLoop().execute(() -> connection.setActiveSessionHandler(connection.getState(), this.originalHandler));
     }
 
