@@ -423,7 +423,7 @@ public class LimboImpl implements Limbo {
           () -> this.limboName
       );
 
-      if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm) {
+      if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm && !confirm.isDone()) {
         confirm.waitForConfirmation(() -> this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection));
       } else {
         this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
