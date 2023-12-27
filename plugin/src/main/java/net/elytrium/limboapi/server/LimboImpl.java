@@ -241,9 +241,6 @@ public class LimboImpl implements Limbo {
         ).prepare(
             this.createUpdateViewPosition((int) this.world.getSpawnX(), (int) this.world.getSpawnZ()),
             ProtocolVersion.MINECRAFT_1_14
-        ).prepare(
-            this.createLevelChunksLoadStartGameState(),
-            ProtocolVersion.MINECRAFT_1_20_3
         );
 
     if (this.shouldUpdateTags) {
@@ -277,6 +274,7 @@ public class LimboImpl implements Limbo {
   private void addPostJoin(PreparedPacket packet) {
     packet.prepare(this.createAvailableCommandsPacket(), ProtocolVersion.MINECRAFT_1_13)
         .prepare(this.createDefaultSpawnPositionPacket())
+        .prepare(this.createLevelChunksLoadStartGameState(), ProtocolVersion.MINECRAFT_1_20_3)
         .prepare(this.createWorldTicksPacket())
         .prepare(this::createBrandMessage)
         .build();
