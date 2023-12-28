@@ -136,7 +136,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(FinishedUpdate packet) {
-    this.player.getConnection().setState(this.limbo.localStateRegistry);
+    this.plugin.setState(this.player.getConnection(), this.limbo.localStateRegistry);
 
     this.limbo.onSpawn(this.callback.getClass(), this.player.getConnection(), this.player, this);
     this.player.getConnection().flush();
@@ -321,7 +321,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         && !(this.originalHandler instanceof LimboSessionHandlerImpl)
         && !(this.originalHandler instanceof ClientPlaySessionHandler) // cause issues with server switching
         && !(this.originalHandler instanceof ConfirmHandler)) {
-      connection.eventLoop().execute(() -> connection.setActiveSessionHandler(connection.getState(), this.originalHandler));
+      connection.eventLoop().execute(() ->
+          this.plugin.setActiveSessionHandler(connection, connection.getState(), this.originalHandler));
     }
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();

@@ -330,7 +330,7 @@ public class LimboImpl implements Limbo {
 
           // As the client can't switch state immediately due to race condition between
           // main and network threads, it should be synchronized
-          new TransitionConfirmHandler(connection).trackTransition(player, () -> {
+          new TransitionConfirmHandler(this.plugin, connection).trackTransition(player, () -> {
             this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection);
           });
 

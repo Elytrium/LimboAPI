@@ -136,7 +136,7 @@ public class LoginListener {
       MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
 
       if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
-        connection.setActiveSessionHandler(StateRegistry.LOGIN, new LoginConfirmHandler(connection));
+        connection.setActiveSessionHandler(StateRegistry.LOGIN, new LoginConfirmHandler(this.plugin, connection));
       }
 
       // From Velocity.

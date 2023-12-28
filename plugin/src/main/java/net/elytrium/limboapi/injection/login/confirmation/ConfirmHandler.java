@@ -45,6 +45,7 @@ public abstract class ConfirmHandler implements MinecraftSessionHandler {
 
   private static final MethodHandle TEARDOWN_METHOD;
 
+  protected final LimboAPI plugin;
   protected final CompletableFuture<Object> confirmation = new CompletableFuture<>();
   protected final List<MinecraftPacket> queuedPackets = new ArrayList<>();
   protected final MinecraftConnection connection;
@@ -52,7 +53,8 @@ public abstract class ConfirmHandler implements MinecraftSessionHandler {
   protected int genericBytes;
   protected boolean disableRelease;
 
-  public ConfirmHandler(MinecraftConnection connection) {
+  public ConfirmHandler(LimboAPI plugin, MinecraftConnection connection) {
+    this.plugin = plugin;
     this.connection = connection;
   }
 

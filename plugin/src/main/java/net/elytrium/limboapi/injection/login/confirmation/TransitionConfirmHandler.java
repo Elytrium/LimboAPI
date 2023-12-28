@@ -21,17 +21,18 @@ import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdate;
+import net.elytrium.limboapi.LimboAPI;
 
 public class TransitionConfirmHandler extends ConfirmHandler {
 
-  public TransitionConfirmHandler(MinecraftConnection connection) {
-    super(connection);
+  public TransitionConfirmHandler(LimboAPI plugin, MinecraftConnection connection) {
+    super(plugin, connection);
   }
 
   @Override
   public boolean handle(FinishedUpdate packet) {
     if (this.connection.getState() == StateRegistry.PLAY) {
-      this.connection.setState(StateRegistry.CONFIG);
+      this.plugin.setState(this.connection, StateRegistry.CONFIG);
       this.confirmation.complete(this);
       return true;
     }
@@ -41,7 +42,7 @@ public class TransitionConfirmHandler extends ConfirmHandler {
 
   public void trackTransition(ConnectedPlayer player, Runnable runnable) {
     this.setPlayer(player);
-    this.connection.setActiveSessionHandler(StateRegistry.PLAY, this);
+    this.plugin.setActiveSessionHandler(this.connection, StateRegistry.PLAY, this);
     this.waitForConfirmation(runnable);
   }
 }

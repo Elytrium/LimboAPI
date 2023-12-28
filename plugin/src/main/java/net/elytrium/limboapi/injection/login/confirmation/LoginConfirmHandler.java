@@ -21,16 +21,17 @@ import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LoginAcknowledged;
 import io.netty.buffer.ByteBuf;
+import net.elytrium.limboapi.LimboAPI;
 
 public class LoginConfirmHandler extends ConfirmHandler {
 
-  public LoginConfirmHandler(MinecraftConnection connection) {
-    super(connection);
+  public LoginConfirmHandler(LimboAPI plugin, MinecraftConnection connection) {
+    super(plugin, connection);
   }
 
   @Override
   public boolean handle(LoginAcknowledged packet) {
-    this.connection.setState(StateRegistry.CONFIG);
+    this.plugin.setState(this.connection, StateRegistry.CONFIG);
     this.confirmation.complete(this);
     return true;
   }

@@ -201,7 +201,7 @@ public class LoginTasksQueue {
     connection.setAssociation(this.player);
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0
         || (connection.getState() != StateRegistry.LOGIN && connection.getState() != StateRegistry.CONFIG)) {
-      connection.setState(StateRegistry.PLAY);
+      this.plugin.setState(connection, StateRegistry.PLAY);
     }
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();
@@ -266,12 +266,12 @@ public class LoginTasksQueue {
       connection.write(new StartUpdate());
 
       // Synchronize to make sure that nothing from PLAY state isn't received in CONFIG state
-      new TransitionConfirmHandler(connection)
+      new TransitionConfirmHandler(this.plugin, connection)
           .trackTransition(player, () -> this.connectToServer(logger, player, connection));
 
       return; // Re-running this method due to synchronization with the client
     } else {
-      connection.setActiveSessionHandler(StateRegistry.CONFIG,
+      this.plugin.setActiveSessionHandler(connection, StateRegistry.CONFIG,
           new ClientConfigSessionHandler(this.server, this.player));
     }
 
