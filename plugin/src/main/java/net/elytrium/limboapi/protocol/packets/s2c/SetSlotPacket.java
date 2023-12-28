@@ -23,7 +23,6 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.api.material.VirtualItem;
-import net.elytrium.limboapi.utils.NbtUtils;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -93,7 +92,7 @@ public class SetSlotPacket implements MinecraftPacket {
           buf.writeByte(0);
         }
       } else {
-        NbtUtils.writeCompoundTag(buf, this.nbt, protocolVersion);
+        ProtocolUtils.writeBinaryTag(buf, protocolVersion, this.nbt);
       }
     }
   }

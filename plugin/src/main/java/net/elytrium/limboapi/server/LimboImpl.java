@@ -103,7 +103,6 @@ import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
 import net.elytrium.limboapi.server.world.SimpleTagManager;
-import net.elytrium.limboapi.utils.NbtUtils;
 import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -260,7 +259,7 @@ public class LimboImpl implements Limbo {
 
     // Blame Velocity for this madness
     ByteBuf encodedRegistry = this.plugin.getPreparedPacketFactory().getPreparedPacketAllocator().ioBuffer();
-    NbtUtils.writeCompoundTag(encodedRegistry, join.getRegistry(), version);
+    ProtocolUtils.writeBinaryTag(encodedRegistry, version, join.getRegistry());
 
     RegistrySync sync = new RegistrySync();
     sync.replace(encodedRegistry);
