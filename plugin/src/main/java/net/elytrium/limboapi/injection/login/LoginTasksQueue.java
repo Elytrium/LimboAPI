@@ -146,7 +146,8 @@ public class LoginTasksQueue {
                           .setProperties(gameProfile.getGameProfile().getProperties())
                   )
               ));
-            } else if (connection.getState() == StateRegistry.PLAY) {
+            } else if (connection.getState() != StateRegistry.CONFIG
+                       && connection.getState() != StateRegistry.LOGIN) {
               UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
               playerInfoEntry.setDisplayName(new ComponentHolder(this.player.getProtocolVersion(), Component.text(gameProfile.getUsername())));
               playerInfoEntry.setProfile(gameProfile.getGameProfile());
