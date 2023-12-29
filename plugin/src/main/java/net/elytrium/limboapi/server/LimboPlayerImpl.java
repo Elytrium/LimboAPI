@@ -21,6 +21,7 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.client.ClientConfigSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
@@ -277,10 +278,15 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   private void sendToRegisteredServer(RegisteredServer server) {
-    this.connection.eventLoop().execute(() -> {
-      this.connection.setState(StateRegistry.PLAY);
-      this.player.createConnectionRequest(server).fireAndForget();
-    });
+    this.connection.setState(StateRegistry.PLAY);
+
+    // Rollback CONFIG session handler to Velocity one
+    if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+      this.connection.addSessionHandler(StateRegistry.CONFIG,
+          new ClientConfigSessionHandler(this.plugin.getServer(), this.player));
+    }
+
+    this.player.createConnectionRequest(server).fireAndForget();
   }
 
   @Override
