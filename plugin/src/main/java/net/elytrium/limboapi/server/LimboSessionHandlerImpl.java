@@ -26,6 +26,7 @@ import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerChat;
@@ -34,6 +35,7 @@ import com.velocitypowered.proxy.protocol.packet.chat.legacy.LegacyChat;
 import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerChat;
 import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerCommand;
 import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdate;
+import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -50,7 +52,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.LimboSessionHandler;
 import net.elytrium.limboapi.api.player.LimboPlayer;
-import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
+import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveOnGroundOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MovePacket;
@@ -66,10 +68,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final LimboImpl limbo;
   private final ConnectedPlayer player;
   private final LimboSessionHandler callback;
+  private final StateRegistry originalState;
   private final MinecraftSessionHandler originalHandler;
   private final RegisteredServer previousServer;
   private final Supplier<String> limboName;
-  private final CompletableFuture<Object> transition = new CompletableFuture<>();
+  private final CompletableFuture<Object> playTransition = new CompletableFuture<>();
+  private final CompletableFuture<Object> configTransition = new CompletableFuture<>();
 
   private LimboPlayer limboPlayer;
   private ScheduledFuture<?> keepAliveTask;
@@ -79,15 +83,17 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private int ping = -1;
   private int genericBytes;
   private boolean loaded;
+  private boolean switching;
   private boolean disconnecting;
-  //private boolean disconnected;
 
-  public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player, LimboSessionHandler callback,
-      MinecraftSessionHandler originalHandler, RegisteredServer previousServer, Supplier<String> limboName) {
+  public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player,
+      LimboSessionHandler callback, StateRegistry originalState, MinecraftSessionHandler originalHandler,
+      RegisteredServer previousServer, Supplier<String> limboName) {
     this.plugin = plugin;
     this.limbo = limbo;
     this.player = player;
     this.callback = callback;
+    this.originalState = originalState;
     this.originalHandler = originalHandler;
     this.previousServer = previousServer;
     this.limboName = limboName;
@@ -112,7 +118,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       }
 
       if (this.keepAlivePending) {
-        connection.closeWith(this.plugin.getPackets().getTimeOut());
+        connection.closeWith(this.plugin.getPackets().getTimeOut(this.player.getConnection().getState()));
         if (Settings.IMP.MAIN.LOGGING_ENABLED) {
           LimboAPI.getLogger().warn("{} was kicked due to keepalive timeout.", this.player);
         }
@@ -131,11 +137,46 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.callback.onSpawn(this.limbo, this.limboPlayer);
 
     // Player is spawned, so can trust that transition to the PLAY state is complete
-    this.transition.complete(this);
+    this.playTransition.complete(this);
+  }
+
+  public void disconnectToConfig(Runnable runnable) {
+    if (this.configTransition.isDone()) {
+      runnable.run();
+      return;
+    }
+
+    this.release();
+
+    this.switching = true;
+    this.loaded = false;
+
+    this.player.getConnection().write(new StartUpdate());
+    this.configTransition.thenRun(this::disconnected).thenRun(runnable);
   }
 
   @Override
   public boolean handle(FinishedUpdate packet) {
+    // Switching to the CONFIG state
+    if (this.player.getConnection().getState() != StateRegistry.CONFIG) {
+      this.plugin.setActiveSessionHandler(this.player.getConnection(), StateRegistry.CONFIG, this);
+
+      if (!this.loaded && !this.disconnecting) {
+        this.limbo.spawnPlayerConfirmed(this.callback.getClass(), this, this.player, this.player.getConnection());
+      } else if (this.switching) {
+        this.switching = false;
+        this.configTransition.complete(this);
+      } else {
+        this.player.getConnection().closeWith(this.plugin.getPackets().getInvalidSwitch());
+
+        if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+          LimboAPI.getLogger().warn("{} sent an unexpected state switch confirmation.", this.player);
+        }
+      }
+
+      return true;
+    }
+
     this.plugin.setState(this.player.getConnection(), this.limbo.localStateRegistry);
 
     this.limbo.onSpawn(this.callback.getClass(), this.player.getConnection(), this.player, this);
@@ -290,15 +331,21 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
   }
 
-  @Override
-  public void disconnected() {
-    //this.disconnected = true;
+  public void release() {
     if (this.keepAliveTask != null) {
       this.keepAliveTask.cancel(true);
     }
 
-    this.limbo.onDisconnect();
-    this.callback.onDisconnect();
+    if (this.loaded) {
+      this.limbo.onDisconnect();
+      this.callback.onDisconnect();
+    }
+  }
+
+  @Override
+  public void disconnected() {
+    //this.disconnected = true;
+    this.release();
 
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
       LimboAPI.getLogger().info(
@@ -320,9 +367,15 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     if (!(this.originalHandler instanceof AuthSessionHandler)
         && !(this.originalHandler instanceof LimboSessionHandlerImpl)
         && !(this.originalHandler instanceof ClientPlaySessionHandler) // cause issues with server switching
-        && !(this.originalHandler instanceof ConfirmHandler)) {
-      connection.eventLoop().execute(() ->
-          this.plugin.setActiveSessionHandler(connection, connection.getState(), this.originalHandler));
+        && !(this.originalHandler instanceof LoginConfirmHandler)) {
+      connection.eventLoop().execute(() -> {
+        // Ensure that originalHandler is returned to the proper state
+        if (connection.getState() != this.originalState) {
+          connection.addSessionHandler(this.originalState, this.originalHandler);
+        } else {
+          this.plugin.setActiveSessionHandler(connection, connection.getState(), this.originalHandler);
+        }
+      });
     }
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();
@@ -334,13 +387,13 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
   }
 
-  public void switchDisconnection(Runnable runnable) {
+  public void disconnect(Runnable runnable) {
     if (!this.disconnecting) {
       this.disconnecting = true;
       if (this.player.getConnection().getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
         runnable.run();
       } else {
-        this.transition.thenRun(runnable);
+        this.playTransition.thenRun(runnable);
       }
     }
   }

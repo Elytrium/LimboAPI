@@ -76,7 +76,6 @@ import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
 import net.elytrium.limboapi.injection.dummy.DummyEventPool;
-import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
 import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.injection.packet.ServerLoginSuccessHook;
 import net.kyori.adventure.text.Component;
@@ -153,7 +152,7 @@ public class LoginListener {
                 inboundConnection.getIdentifiedKey()
             );
             if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
-              ((ConfirmHandler) connection.getActiveSessionHandler()).setPlayer(player);
+              ((LoginConfirmHandler) connection.getActiveSessionHandler()).setPlayer(player);
             }
             if (this.server.canRegisterConnection(player)) {
               if (!connection.isClosed()) {
@@ -204,14 +203,12 @@ public class LoginListener {
 
                 this.plugin.setInitialID(player, playerUniqueID);
 
-                if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
-                  connection.setState(StateRegistry.PLAY);
-                }
-
-                if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm) {
-                  confirm.thenRun(() -> this.callRegisterEvent(player, connection, inbound, handler));
+                if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+                  ((LoginConfirmHandler) connection.getActiveSessionHandler())
+                      .thenRun(() -> this.fireRegisterEvent(player, connection, inbound, handler));
                 } else {
-                  this.callRegisterEvent(player, connection, inbound, handler);
+                  connection.setState(StateRegistry.PLAY);
+                  this.fireRegisterEvent(player, connection, inbound, handler);
                 }
               }
             } else {
@@ -225,8 +222,8 @@ public class LoginListener {
     }
   }
 
-  private void callRegisterEvent(ConnectedPlayer player, MinecraftConnection connection,
-                                 InitialInboundConnection inbound, Object handler) {
+  private void fireRegisterEvent(ConnectedPlayer player, MinecraftConnection connection,
+      InitialInboundConnection inbound, Object handler) {
     this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
       LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());
       this.plugin.addLoginQueue(player, queue);
@@ -243,17 +240,27 @@ public class LoginListener {
     ConnectedPlayer player = (ConnectedPlayer) event.getPlayer();
     MinecraftConnection connection = player.getConnection();
 
-    connection.eventLoop().execute(() -> {
-      if (!(connection.getActiveSessionHandler() instanceof ClientPlaySessionHandler)) {
-        try {
-          ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
-          SPAWNED_FIELD.invokeExact(playHandler, this.plugin.isLimboJoined(player));
-          connection.setActiveSessionHandler(connection.getState(), playHandler);
-        } catch (Throwable e) {
-          throw new ReflectionException(e);
-        }
+    // No need to do things below as the client should be despawned by default
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+      return;
+    }
+
+    // Should never happen with default Velocity
+    if (!connection.eventLoop().inEventLoop()) {
+      connection.eventLoop().execute(() -> this.hookPlaySession(event));
+      return;
+    }
+
+    // As Velocity automatically replaces custom handlers with ClientPlaySessionHandler, do it before
+    if (!(connection.getActiveSessionHandler() instanceof ClientPlaySessionHandler)) {
+      try {
+        ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
+        SPAWNED_FIELD.invokeExact(playHandler, this.plugin.isLimboJoined(player));
+        connection.setActiveSessionHandler(connection.getState(), playHandler);
+      } catch (Throwable e) {
+        throw new ReflectionException(e);
       }
-    });
+    }
   }
 
   static {

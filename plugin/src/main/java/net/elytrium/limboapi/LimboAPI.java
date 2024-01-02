@@ -446,7 +446,7 @@ public class LimboAPI implements LimboFactory {
       StateRegistry state = connection.getState();
       if (state != StateRegistry.CONFIG && state != StateRegistry.LOGIN) {
         encoder.setFactory(this.preparedPacketFactory);
-      } else if (state == StateRegistry.CONFIG) {
+      } else {
         encoder.setFactory(this.configPreparedPacketFactory);
       }
     }

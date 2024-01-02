@@ -91,8 +91,7 @@ import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
 import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
-import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
-import net.elytrium.limboapi.injection.login.confirmation.TransitionConfirmHandler;
+import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -219,8 +218,8 @@ public class LimboImpl implements Limbo {
     this.addPostJoin(this.postJoinPackets);
 
     this.configTransitionPackets = this.plugin.createPreparedPacket()
-      .prepare(new StartUpdate(), ProtocolVersion.MINECRAFT_1_20_2)
-      .build();
+        .prepare(new StartUpdate(), ProtocolVersion.MINECRAFT_1_20_2)
+        .build();
 
     this.configPackets = this.plugin.createConfigPreparedPacket();
     this.configPackets.prepare(this::createRegistrySync, ProtocolVersion.MINECRAFT_1_20_2);
@@ -320,20 +319,16 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private void spawnPlayerConfirmed(Class<? extends LimboSessionHandler> handlerClass,
+  protected void spawnPlayerConfirmed(Class<? extends LimboSessionHandler> handlerClass,
       LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
       if (connection.getState() != StateRegistry.CONFIG) {
         if (this.shouldRejoin) {
           connection.write(this.configTransitionPackets);
 
-          // As the client can't switch state immediately due to race condition between
-          // main and network threads, it should be synchronized
-          new TransitionConfirmHandler(this.plugin, connection).trackTransition(player, () -> {
-            this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection);
-          });
-
-          return; // Wait for transition
+          // Continue state switching on the handler side
+          connection.setActiveSessionHandler(connection.getState(), sessionHandler);
+          return;
         }
       } else {
         connection.delayedWrite(this.configPackets);
@@ -351,15 +346,6 @@ public class LimboImpl implements Limbo {
     }
 
     connection.flush();
-  }
-
-  private void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
-      LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
-    if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm) {
-      confirm.waitForConfirmation(() -> this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection));
-    } else {
-      this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection);
-    }
   }
 
   private void spawnPlayerLocal(ConnectedPlayer player, LimboSessionHandler handler, RegisteredServer previousServer) {
@@ -424,12 +410,17 @@ public class LimboImpl implements Limbo {
           this,
           player,
           handler,
+          connection.getState(),
           connection.getActiveSessionHandler(),
           previousServer,
           () -> this.limboName
       );
 
-      this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
+      if (connection.getActiveSessionHandler() instanceof LoginConfirmHandler confirm) {
+        confirm.waitForConfirmation(() -> this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection));
+      } else {
+        this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection);
+      }
     });
   }
 
