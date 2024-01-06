@@ -153,7 +153,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.switching = true;
     this.loaded = false;
 
-    if (this.player.isOnlineMode()) {
+    if (this.player.isOnlineMode() && this.limbo.isShouldRejoin()) {
       // As a client sends PlayerChatSessionPacket asynchronously,
       // we should wait for it to ensure that it will not be sent
       // while switching CONFIG to PLAY state, and so didn't break the connection

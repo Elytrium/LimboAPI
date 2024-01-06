@@ -544,6 +544,10 @@ public class LimboImpl implements Limbo {
     return this;
   }
 
+  protected boolean isShouldRejoin() {
+    return this.shouldRejoin;
+  }
+
   @Override
   public Limbo setShouldRejoin(boolean shouldRejoin) {
     this.shouldRejoin = shouldRejoin;
