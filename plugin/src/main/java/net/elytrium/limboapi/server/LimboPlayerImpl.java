@@ -275,7 +275,7 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   private void sendToRegisteredServer(RegisteredServer server) {
     this.deject();
-    this.plugin.setState(this.connection, StateRegistry.PLAY);
+    this.connection.setState(StateRegistry.PLAY);
 
     if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
       this.sessionHandler.disconnectToConfig(() -> {

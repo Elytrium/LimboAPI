@@ -437,8 +437,9 @@ public class LimboAPI implements LimboFactory {
   }
 
   public void setEncoderState(MinecraftConnection connection, StateRegistry state) {
+    // As CONFIG state was added in 1.20.2, no need to track it for lower versions
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
-      return; // No need to change the state for a current version
+      return;
     }
 
     PreparedPacketEncoder encoder = connection.getChannel().pipeline().get(PreparedPacketEncoder.class);

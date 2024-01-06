@@ -263,7 +263,7 @@ public class LoginTasksQueue {
         throw new ReflectionException(e);
       }
     } else if (connection.getState() == StateRegistry.PLAY) {
-      // Synchronize to make sure that nothing from PLAY state received in CONFIG state
+      // Synchronize with the client to ensure that it will not corrupt CONFIG state with PLAY packets
       ((LimboSessionHandlerImpl) connection.getActiveSessionHandler())
           .disconnectToConfig(() -> this.connectToServer(logger, player, connection));
 

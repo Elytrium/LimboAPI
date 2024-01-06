@@ -319,23 +319,25 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  protected void spawnPlayerConfirmed(Class<? extends LimboSessionHandler> handlerClass,
+  protected void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
       LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
       if (connection.getState() != StateRegistry.CONFIG) {
         if (this.shouldRejoin) {
+          // Switch to PLAY state
           connection.write(this.configTransitionPackets);
 
-          // Continue state switching on the handler side
+          // Continue transition on the handler side
           connection.setActiveSessionHandler(connection.getState(), sessionHandler);
           return;
         }
       } else {
-        // Send configuration packets and transition to PLAY state
+        // Switch to PLAY state
         connection.delayedWrite(this.configPackets);
 
-        // As the client still send CONFIG packets but "in PLAY state at protocol level",
-        // change state to PLAY to ensure that sent packets are not corrupted
+        // Ensure that encoder will send packets from PLAY state
+        // Client is not yet switched to the PLAY state,
+        // but at packet level it's already PLAY state
         this.plugin.setEncoderState(connection, this.localStateRegistry);
       }
     }
@@ -422,16 +424,15 @@ public class LimboImpl implements Limbo {
       );
 
       if (connection.getActiveSessionHandler() instanceof LoginConfirmHandler confirm) {
-        confirm.waitForConfirmation(() -> this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection));
+        confirm.waitForConfirmation(() -> this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection));
       } else {
-        this.spawnPlayerConfirmed(handlerClass, sessionHandler, player, connection);
+        this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
       }
     });
   }
 
   protected void onSpawn(Class<? extends LimboSessionHandler> handlerClass,
-                          MinecraftConnection connection, ConnectedPlayer player,
-                          LimboSessionHandlerImpl sessionHandler) {
+      MinecraftConnection connection, ConnectedPlayer player, LimboSessionHandlerImpl sessionHandler) {
     if (this.plugin.isLimboJoined(player)) {
       if (this.shouldRejoin) {
         if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {

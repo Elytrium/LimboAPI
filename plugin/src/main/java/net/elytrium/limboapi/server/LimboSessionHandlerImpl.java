@@ -75,7 +75,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final Supplier<String> limboName;
   private final CompletableFuture<Object> playTransition = new CompletableFuture<>();
   private final CompletableFuture<Object> configTransition = new CompletableFuture<>();
-  private final CompletableFuture<Object> keyFetching = new CompletableFuture<>();
+  private final CompletableFuture<Object> chatSession = new CompletableFuture<>();
 
   private LimboPlayer limboPlayer;
   private ScheduledFuture<?> keepAliveTask;
@@ -154,8 +154,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.loaded = false;
 
     if (this.player.isOnlineMode()) {
-      // Wait for PlayerChatSessionPacket to ensure that client created a chat session and so can't break state switching
-      this.keyFetching.thenRunAsync(() -> {
+      // As a client sends PlayerChatSessionPacket asynchronously,
+      // we should wait for it to ensure that it will not be sent
+      // while switching CONFIG to PLAY state, and so didn't break the connection
+      this.chatSession.thenRunAsync(() -> {
         this.player.getConnection().write(new StartUpdate());
         this.configTransition.thenRun(this::disconnected).thenRun(runnable);
       }, this.player.getConnection().eventLoop());
@@ -167,12 +169,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(FinishedUpdate packet) {
-    // Switching to the CONFIG state
+    // Switching to CONFIG state
     if (this.player.getConnection().getState() != StateRegistry.CONFIG) {
       this.plugin.setActiveSessionHandler(this.player.getConnection(), StateRegistry.CONFIG, this);
 
       if (!this.loaded && !this.disconnecting) {
-        this.limbo.spawnPlayerConfirmed(this.callback.getClass(), this, this.player, this.player.getConnection());
+        this.limbo.spawnPlayerLocal(this.callback.getClass(), this, this.player, this.player.getConnection());
       } else if (this.switching) {
         this.switching = false;
         this.configTransition.complete(this);
@@ -318,8 +320,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public void handleGeneric(MinecraftPacket packet) {
-    if (packet instanceof PlayerChatSessionPacket chatSession) {
-      this.keyFetching.complete(this);
+    if (packet instanceof PlayerChatSessionPacket) {
+      this.chatSession.complete(this);
     }
 
     if (packet instanceof PluginMessage pluginMessage) {

@@ -240,27 +240,22 @@ public class LoginListener {
     ConnectedPlayer player = (ConnectedPlayer) event.getPlayer();
     MinecraftConnection connection = player.getConnection();
 
-    // No need to do things below as the client should be despawned by default
+    // 1.20.2+ can ignore this, as it should be despawned by default
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
       return;
     }
 
-    // Should never happen with default Velocity
-    if (!connection.eventLoop().inEventLoop()) {
-      connection.eventLoop().execute(() -> this.hookPlaySession(event));
-      return;
-    }
-
-    // As Velocity automatically replaces custom handlers with ClientPlaySessionHandler, do it before
-    if (!(connection.getActiveSessionHandler() instanceof ClientPlaySessionHandler)) {
-      try {
-        ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
-        SPAWNED_FIELD.invokeExact(playHandler, this.plugin.isLimboJoined(player));
-        connection.setActiveSessionHandler(connection.getState(), playHandler);
-      } catch (Throwable e) {
-        throw new ReflectionException(e);
+    connection.eventLoop().execute(() -> {
+      if (!(connection.getActiveSessionHandler() instanceof ClientPlaySessionHandler)) {
+        try {
+          ClientPlaySessionHandler playHandler = new ClientPlaySessionHandler(this.server, player);
+          SPAWNED_FIELD.invokeExact(playHandler, this.plugin.isLimboJoined(player));
+          connection.setActiveSessionHandler(connection.getState(), playHandler);
+        } catch (Throwable e) {
+          throw new ReflectionException(e);
+        }
       }
-    }
+    });
   }
 
   static {

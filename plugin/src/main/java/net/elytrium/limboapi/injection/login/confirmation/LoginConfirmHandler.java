@@ -76,7 +76,8 @@ public class LoginConfirmHandler implements MinecraftSessionHandler {
           try {
             this.connection.channelRead(ctx, packet);
           } catch (Throwable throwable) {
-            LimboAPI.getLogger().error("{}: exception handling exception in {}", ctx.channel().remoteAddress(), this, throwable);
+            LimboAPI.getLogger().error("{}: exception handling exception in {}", ctx.channel().remoteAddress(),
+                this.connection.getActiveSessionHandler(), throwable);
           }
         }
 
@@ -97,7 +98,6 @@ public class LoginConfirmHandler implements MinecraftSessionHandler {
   @Override
   public void handleGeneric(MinecraftPacket packet) {
     // As Velocity/LimboAPI can easly skip packets due to random delays, packets should be queued
-    // (executing events or spamming EventLoop::execute cause delays)
     if (this.connection.getState() == StateRegistry.CONFIG) {
       this.queuedPackets.add(ReferenceCountUtil.retain(packet));
     }
