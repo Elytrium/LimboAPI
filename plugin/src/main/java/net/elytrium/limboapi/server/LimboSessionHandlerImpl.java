@@ -58,6 +58,7 @@ import net.elytrium.limboapi.protocol.packets.c2s.MoveOnGroundOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MovePacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MovePositionOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveRotationOnlyPacket;
+import net.elytrium.limboapi.protocol.packets.c2s.PlayerChatSessionPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.TeleportConfirmPacket;
 
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
@@ -74,6 +75,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final Supplier<String> limboName;
   private final CompletableFuture<Object> playTransition = new CompletableFuture<>();
   private final CompletableFuture<Object> configTransition = new CompletableFuture<>();
+  private final CompletableFuture<Object> keyFetching = new CompletableFuture<>();
 
   private LimboPlayer limboPlayer;
   private ScheduledFuture<?> keepAliveTask;
@@ -151,8 +153,16 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.switching = true;
     this.loaded = false;
 
-    this.player.getConnection().write(new StartUpdate());
-    this.configTransition.thenRun(this::disconnected).thenRun(runnable);
+    if (this.player.isOnlineMode()) {
+      // Wait for PlayerChatSessionPacket to ensure that client created a chat session and so can't break state switching
+      this.keyFetching.thenRunAsync(() -> {
+        this.player.getConnection().write(new StartUpdate());
+        this.configTransition.thenRun(this::disconnected).thenRun(runnable);
+      }, this.player.getConnection().eventLoop());
+    } else {
+      this.player.getConnection().write(new StartUpdate());
+      this.configTransition.thenRun(this::disconnected).thenRun(runnable);
+    }
   }
 
   @Override
@@ -308,6 +318,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public void handleGeneric(MinecraftPacket packet) {
+    if (packet instanceof PlayerChatSessionPacket chatSession) {
+      this.keyFetching.complete(this);
+    }
+
     if (packet instanceof PluginMessage pluginMessage) {
       int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
       this.genericBytes += singleLength;
