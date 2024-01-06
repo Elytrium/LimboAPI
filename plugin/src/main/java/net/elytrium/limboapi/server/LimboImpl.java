@@ -331,7 +331,12 @@ public class LimboImpl implements Limbo {
           return;
         }
       } else {
+        // Send configuration packets and transition to PLAY state
         connection.delayedWrite(this.configPackets);
+
+        // As the client still send CONFIG packets but "in PLAY state at protocol level",
+        // change state to PLAY to ensure that sent packets are not corrupted
+        this.plugin.setEncoderState(connection, this.localStateRegistry);
       }
     }
 

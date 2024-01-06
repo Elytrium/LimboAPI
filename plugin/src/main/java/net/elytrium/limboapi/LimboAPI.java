@@ -427,23 +427,22 @@ public class LimboAPI implements LimboFactory {
 
   public void setState(MinecraftConnection connection, StateRegistry stateRegistry) {
     connection.setState(stateRegistry);
-    this.refresh3rdParty(connection);
+    this.setEncoderState(connection, stateRegistry);
   }
 
   public void setActiveSessionHandler(MinecraftConnection connection, StateRegistry stateRegistry,
                                       MinecraftSessionHandler sessionHandler) {
     connection.setActiveSessionHandler(stateRegistry, sessionHandler);
-    this.refresh3rdParty(connection);
+    this.setEncoderState(connection, stateRegistry);
   }
 
-  public void refresh3rdParty(MinecraftConnection connection) {
+  public void setEncoderState(MinecraftConnection connection, StateRegistry state) {
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
       return; // No need to change the state for a current version
     }
 
     PreparedPacketEncoder encoder = connection.getChannel().pipeline().get(PreparedPacketEncoder.class);
     if (encoder != null) {
-      StateRegistry state = connection.getState();
       if (state != StateRegistry.CONFIG && state != StateRegistry.LOGIN) {
         encoder.setFactory(this.preparedPacketFactory);
       } else {
