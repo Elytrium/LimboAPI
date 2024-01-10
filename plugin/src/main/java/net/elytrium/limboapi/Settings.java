@@ -40,6 +40,13 @@ public class Settings extends YamlConfig {
   public Serializers SERIALIZER = Serializers.LEGACY_AMPERSAND;
   public String PREFIX = "LimboAPI &6>>&f";
 
+  @Comment({
+      "Leave blank to use default value.",
+      "Only serialization symbols with LEGACY_SECTION are currently available for displaying colors:",
+      "LEGACY_SECTION - \"§c§lExample §c§9Text\"."
+  })
+  public String BRAND_NAME = "";
+
   @Create
   public MAIN MAIN;
 

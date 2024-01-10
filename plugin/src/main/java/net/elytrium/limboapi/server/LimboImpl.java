@@ -896,7 +896,7 @@ public class LimboImpl implements Limbo {
   }
 
   private PluginMessage createBrandMessage(ProtocolVersion version) {
-    String brand = "LimboAPI (" + Settings.IMP.VERSION + ") -> " + this.limboName;
+    String brand = this.getBrandName();
     ByteBuf bufWithBrandString = Unpooled.buffer();
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       bufWithBrandString.writeCharSequence(brand, StandardCharsets.UTF_8);
@@ -905,6 +905,14 @@ public class LimboImpl implements Limbo {
     }
 
     return new PluginMessage("MC|Brand", bufWithBrandString);
+  }
+
+  private String getBrandName() {
+    if (Settings.IMP.BRAND_NAME.isEmpty()) {
+      return "LimboAPI (" + Settings.IMP.VERSION + ") -> " + this.limboName;
+    } else {
+      return Settings.IMP.BRAND_NAME + "§r";
+    }
   }
 
   private PositionRotationPacket createPlayerPosAndLook(double posX, double posY, double posZ, float yaw, float pitch) {
