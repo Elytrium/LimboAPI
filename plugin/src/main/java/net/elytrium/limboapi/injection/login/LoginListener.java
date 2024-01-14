@@ -76,7 +76,6 @@ import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
 import net.elytrium.limboapi.injection.dummy.DummyEventPool;
-import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
 import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.injection.packet.ServerLoginSuccessHook;
 import net.kyori.adventure.text.Component;
@@ -136,7 +135,7 @@ public class LoginListener {
       MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
 
       if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
-        connection.setActiveSessionHandler(StateRegistry.LOGIN, new LoginConfirmHandler(connection));
+        connection.setActiveSessionHandler(StateRegistry.LOGIN, new LoginConfirmHandler(this.plugin, connection));
       }
 
       // From Velocity.
@@ -153,7 +152,7 @@ public class LoginListener {
                 inboundConnection.getIdentifiedKey()
             );
             if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
-              ((ConfirmHandler) connection.getActiveSessionHandler()).setPlayer(player);
+              ((LoginConfirmHandler) connection.getActiveSessionHandler()).setPlayer(player);
             }
             if (this.server.canRegisterConnection(player)) {
               if (!connection.isClosed()) {
@@ -204,19 +203,13 @@ public class LoginListener {
 
                 this.plugin.setInitialID(player, playerUniqueID);
 
-                if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+                if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+                  ((LoginConfirmHandler) connection.getActiveSessionHandler())
+                      .thenRun(() -> this.fireRegisterEvent(player, connection, inbound, handler));
+                } else {
                   connection.setState(StateRegistry.PLAY);
+                  this.fireRegisterEvent(player, connection, inbound, handler);
                 }
-
-                this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
-                  LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());
-                  this.plugin.addLoginQueue(player, queue);
-                  this.plugin.setKickCallback(player, limboRegisterEvent.getOnKickCallback());
-                  queue.next();
-                }, connection.eventLoop()).exceptionally(t -> {
-                  LimboAPI.getLogger().error("Exception while registering LimboAPI login handlers for {}.", player, t);
-                  return null;
-                });
               }
             } else {
               player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
@@ -229,10 +222,28 @@ public class LoginListener {
     }
   }
 
+  private void fireRegisterEvent(ConnectedPlayer player, MinecraftConnection connection,
+      InitialInboundConnection inbound, Object handler) {
+    this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
+      LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());
+      this.plugin.addLoginQueue(player, queue);
+      this.plugin.setKickCallback(player, limboRegisterEvent.getOnKickCallback());
+      queue.next();
+    }, connection.eventLoop()).exceptionally(t -> {
+      LimboAPI.getLogger().error("Exception while registering LimboAPI login handlers for {}.", player, t);
+      return null;
+    });
+  }
+
   @Subscribe
   public void hookPlaySession(ServerConnectedEvent event) {
     ConnectedPlayer player = (ConnectedPlayer) event.getPlayer();
     MinecraftConnection connection = player.getConnection();
+
+    // 1.20.2+ can ignore this, as it should be despawned by default
+    if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+      return;
+    }
 
     connection.eventLoop().execute(() -> {
       if (!(connection.getActiveSessionHandler() instanceof ClientPlaySessionHandler)) {

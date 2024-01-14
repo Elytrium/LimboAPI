@@ -21,6 +21,7 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.client.ClientConfigSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
@@ -233,15 +234,13 @@ public class LimboPlayerImpl implements LimboPlayer {
   public void disconnect() {
     this.connection.eventLoop().execute(() -> {
       if (this.connection.getActiveSessionHandler() == this.sessionHandler) {
-        this.sessionHandler.switchDisconnection(() -> {
+        this.sessionHandler.disconnect(() -> {
           if (this.plugin.hasLoginQueue(this.player)) {
             this.sessionHandler.disconnected();
             this.plugin.getLoginQueue(this.player).next();
           } else {
             RegisteredServer server = this.sessionHandler.getPreviousServer();
             if (server != null) {
-              this.deject();
-              this.sessionHandler.disconnected();
               this.sendToRegisteredServer(server);
             } else {
               this.sessionHandler.disconnected();
@@ -256,14 +255,12 @@ public class LimboPlayerImpl implements LimboPlayer {
   public void disconnect(RegisteredServer server) {
     this.connection.eventLoop().execute(() -> {
       if (this.connection.getActiveSessionHandler() == this.sessionHandler) {
-        this.sessionHandler.switchDisconnection(() -> {
+        this.sessionHandler.disconnect(() -> {
           if (this.plugin.hasLoginQueue(this.player)) {
             this.sessionHandler.disconnected();
             this.plugin.setNextServer(this.player, server);
             this.plugin.getLoginQueue(this.player).next();
           } else {
-            this.deject();
-            this.sessionHandler.disconnected();
             this.sendToRegisteredServer(server);
           }
         });
@@ -277,10 +274,20 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   private void sendToRegisteredServer(RegisteredServer server) {
-    this.connection.eventLoop().execute(() -> {
-      this.connection.setState(StateRegistry.PLAY);
+    this.deject();
+    this.connection.setState(StateRegistry.PLAY);
+
+    if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+      this.sessionHandler.disconnectToConfig(() -> {
+        // Rollback original CONFIG handler
+        this.connection.setActiveSessionHandler(StateRegistry.CONFIG,
+            new ClientConfigSessionHandler(this.plugin.getServer(), this.player));
+        this.player.createConnectionRequest(server).fireAndForget();
+      });
+    } else {
+      this.sessionHandler.disconnected();
       this.player.createConnectionRequest(server).fireAndForget();
-    });
+    }
   }
 
   @Override

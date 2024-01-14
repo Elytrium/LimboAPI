@@ -115,6 +115,7 @@ public class Settings extends YamlConfig {
 
       public String TOO_BIG_PACKET = "{PRFX}{NL}{NL}&cYour client sent too big packet!";
       public String INVALID_PING = "{PRFX}{NL}{NL}&cYour client sent invalid ping packet!";
+      public String INVALID_SWITCH = "{PRFX}{NL}{NL}&cYour client sent an unexpected state switching packet!";
       public String TIME_OUT = "{PRFX}{NL}{NL}Timed out.";
     }
   }

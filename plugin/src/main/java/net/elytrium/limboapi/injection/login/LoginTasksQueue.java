@@ -57,7 +57,6 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
 import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
-import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
@@ -74,8 +73,8 @@ import java.util.concurrent.CompletableFuture;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
-import net.elytrium.limboapi.injection.login.confirmation.ConfirmHandler;
-import net.elytrium.limboapi.injection.login.confirmation.TransitionConfirmHandler;
+import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
+import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
@@ -146,7 +145,7 @@ public class LoginTasksQueue {
                           .setProperties(gameProfile.getGameProfile().getProperties())
                   )
               ));
-            } else if (connection.getState() == StateRegistry.PLAY) {
+            } else if (connection.getState() != StateRegistry.CONFIG) {
               UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
               playerInfoEntry.setDisplayName(new ComponentHolder(this.player.getProtocolVersion(), Component.text(gameProfile.getUsername())));
               playerInfoEntry.setProfile(gameProfile.getGameProfile());
@@ -200,8 +199,8 @@ public class LoginTasksQueue {
   private void initialize(MinecraftConnection connection) throws Throwable {
     connection.setAssociation(this.player);
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0
-        || (connection.getState() != StateRegistry.LOGIN && connection.getState() != StateRegistry.CONFIG)) {
-      connection.setState(StateRegistry.PLAY);
+        || connection.getState() != StateRegistry.CONFIG) {
+      this.plugin.setState(connection, StateRegistry.PLAY);
     }
 
     ChannelPipeline pipeline = connection.getChannel().pipeline();
@@ -235,16 +234,16 @@ public class LoginTasksQueue {
       } else {
         Optional<Component> reason = event.getResult().getReasonComponent();
         if (reason.isPresent()) {
-          this.player.disconnect0(reason.get(), true);
+          this.player.disconnect0(reason.get(), false);
         } else {
           if (this.server.registerConnection(this.player)) {
-            if (connection.getActiveSessionHandler() instanceof ConfirmHandler confirm) {
+            if (connection.getActiveSessionHandler() instanceof LoginConfirmHandler confirm) {
               confirm.waitForConfirmation(() -> this.connectToServer(logger, this.player, connection));
             } else {
               this.connectToServer(logger, this.player, connection);
             }
           } else {
-            this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), true);
+            this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), false);
           }
         }
       }
@@ -254,6 +253,7 @@ public class LoginTasksQueue {
     });
   }
 
+  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void connectToServer(Logger logger, ConnectedPlayer player, MinecraftConnection connection) {
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
       try {
@@ -262,20 +262,14 @@ public class LoginTasksQueue {
       } catch (Throwable e) {
         throw new ReflectionException(e);
       }
+    } else if (connection.getState() == StateRegistry.PLAY) {
+      // Synchronize with the client to ensure that it will not corrupt CONFIG state with PLAY packets
+      ((LimboSessionHandlerImpl) connection.getActiveSessionHandler())
+          .disconnectToConfig(() -> this.connectToServer(logger, player, connection));
+
+      return; // Re-running this method due to synchronization with the client
     } else {
-      if (connection.getState() == StateRegistry.PLAY) {
-        connection.write(new StartUpdate());
-
-        TransitionConfirmHandler confirm = new TransitionConfirmHandler(connection);
-        confirm.setPlayer(player);
-
-        connection.setActiveSessionHandler(StateRegistry.PLAY, confirm);
-        confirm.waitForConfirmation(() -> this.connectToServer(logger, player, connection));
-
-        return;
-      }
-
-      connection.setActiveSessionHandler(StateRegistry.CONFIG,
+      this.plugin.setActiveSessionHandler(connection, StateRegistry.CONFIG,
           new ClientConfigSessionHandler(this.server, this.player));
     }
 
