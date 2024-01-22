@@ -17,8 +17,8 @@
 
 package net.elytrium.limboapi.injection.packet;
 
-import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
+import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccessPacket;
 import net.elytrium.fastprepare.dummy.DummyPacket;
 
-public class ServerLoginSuccessHook extends ServerLoginSuccess implements DummyPacket {
+public class ServerLoginSuccessHook extends ServerLoginSuccessPacket implements DummyPacket {
 }

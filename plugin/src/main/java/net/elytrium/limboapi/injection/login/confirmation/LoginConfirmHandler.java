@@ -22,7 +22,7 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.packet.LoginAcknowledged;
+import com.velocitypowered.proxy.protocol.packet.LoginAcknowledgedPacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.ReferenceCountUtil;
@@ -89,7 +89,7 @@ public class LoginConfirmHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(LoginAcknowledged packet) {
+  public boolean handle(LoginAcknowledgedPacket packet) {
     this.plugin.setState(this.connection, StateRegistry.CONFIG);
     this.confirmation.complete(this);
     return true;

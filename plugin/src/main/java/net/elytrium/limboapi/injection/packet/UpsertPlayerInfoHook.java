@@ -24,7 +24,7 @@ import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
+import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfoPacket;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.lang.invoke.MethodHandle;
@@ -38,7 +38,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 
 @SuppressWarnings("unchecked")
-public class UpsertPlayerInfoHook extends UpsertPlayerInfo {
+public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
 
   private static final MethodHandle SERVER_CONN_FIELD;
 
@@ -97,7 +97,7 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfo {
         var packetIDToSupplier = (IntObjectMap<Supplier<? extends MinecraftPacket>>) LimboProtocol.PACKET_ID_TO_SUPPLIER_FIELD.get(protocolRegistry);
         var packetClassToID = (Object2IntMap<Class<? extends MinecraftPacket>>) LimboProtocol.PACKET_CLASS_TO_ID_FIELD.get(protocolRegistry);
 
-        int id = packetClassToID.getInt(UpsertPlayerInfo.class);
+        int id = packetClassToID.getInt(UpsertPlayerInfoPacket.class);
         packetClassToID.put(UpsertPlayerInfoHook.class, id);
         packetIDToSupplier.put(id, () -> new UpsertPlayerInfoHook(plugin));
       } catch (ReflectiveOperationException e) {

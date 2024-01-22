@@ -57,8 +57,8 @@ import com.velocitypowered.proxy.connection.client.LoginInboundConnection;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
-import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
-import com.velocitypowered.proxy.protocol.packet.SetCompression;
+import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccessPacket;
+import com.velocitypowered.proxy.protocol.packet.SetCompressionPacket;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
@@ -161,7 +161,7 @@ public class LoginListener {
                 ChannelPipeline pipeline = connection.getChannel().pipeline();
                 boolean compressionEnabled = threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0;
                 if (compressionEnabled) {
-                  connection.write(new SetCompression(threshold));
+                  connection.write(new SetCompressionPacket(threshold));
                   this.plugin.fixDecompressor(pipeline, threshold, true);
                   pipeline.addFirst(Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
                 }
@@ -184,7 +184,7 @@ public class LoginListener {
                 successHook.setUuid(playerUniqueID);
                 connection.write(successHook);
 
-                ServerLoginSuccess success = new ServerLoginSuccess();
+                ServerLoginSuccessPacket success = new ServerLoginSuccessPacket();
                 success.setUsername(player.getUsername());
                 success.setProperties(player.getGameProfileProperties());
                 success.setUuid(playerUniqueID);

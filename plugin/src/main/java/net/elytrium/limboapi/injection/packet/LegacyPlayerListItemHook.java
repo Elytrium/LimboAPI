@@ -24,7 +24,7 @@ import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
+import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.lang.invoke.MethodHandle;
@@ -38,7 +38,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 
 @SuppressWarnings("unchecked")
-public class LegacyPlayerListItemHook extends LegacyPlayerListItem {
+public class LegacyPlayerListItemHook extends LegacyPlayerListItemPacket {
 
   private static final MethodHandle SERVER_CONN_FIELD;
 
@@ -92,7 +92,7 @@ public class LegacyPlayerListItemHook extends LegacyPlayerListItem {
         var packetIDToSupplier = (IntObjectMap<Supplier<? extends MinecraftPacket>>) LimboProtocol.PACKET_ID_TO_SUPPLIER_FIELD.get(protocolRegistry);
         var packetClassToID = (Object2IntMap<Class<? extends MinecraftPacket>>) LimboProtocol.PACKET_CLASS_TO_ID_FIELD.get(protocolRegistry);
 
-        int id = packetClassToID.getInt(LegacyPlayerListItem.class);
+        int id = packetClassToID.getInt(LegacyPlayerListItemPacket.class);
         packetClassToID.put(LegacyPlayerListItemHook.class, id);
         packetIDToSupplier.put(id, () -> new LegacyPlayerListItemHook(plugin));
       } catch (ReflectiveOperationException e) {

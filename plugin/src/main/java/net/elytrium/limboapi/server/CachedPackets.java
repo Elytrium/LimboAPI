@@ -19,7 +19,7 @@ package net.elytrium.limboapi.server;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.packet.Disconnect;
+import com.velocitypowered.proxy.protocol.packet.DisconnectPacket;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
@@ -58,8 +58,8 @@ public class CachedPackets {
     this.cached = true;
   }
 
-  private Disconnect createDisconnectPacket(String message, ProtocolVersion version) {
-    return Disconnect.create(LimboAPI.getSerializer().deserialize(message), version, false);
+  private DisconnectPacket createDisconnectPacket(String message, ProtocolVersion version) {
+    return DisconnectPacket.create(LimboAPI.getSerializer().deserialize(message), version, false);
   }
 
   public PreparedPacket getTooBigPacket() {

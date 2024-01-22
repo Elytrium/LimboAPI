@@ -54,8 +54,8 @@ import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
 import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItem;
-import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfo;
+import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
+import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfoPacket;
 import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.channel.ChannelPipeline;
@@ -132,28 +132,28 @@ public class LoginTasksQueue {
         gameProfile -> {
           try {
             if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
-              connection.delayedWrite(new LegacyPlayerListItem(
-                  LegacyPlayerListItem.REMOVE_PLAYER,
-                  List.of(new LegacyPlayerListItem.Item(this.player.getUniqueId()))
+              connection.delayedWrite(new LegacyPlayerListItemPacket(
+                  LegacyPlayerListItemPacket.REMOVE_PLAYER,
+                  List.of(new LegacyPlayerListItemPacket.Item(this.player.getUniqueId()))
               ));
 
-              connection.delayedWrite(new LegacyPlayerListItem(
-                  LegacyPlayerListItem.ADD_PLAYER,
+              connection.delayedWrite(new LegacyPlayerListItemPacket(
+                  LegacyPlayerListItemPacket.ADD_PLAYER,
                   List.of(
-                      new LegacyPlayerListItem.Item(this.player.getUniqueId())
+                      new LegacyPlayerListItemPacket.Item(this.player.getUniqueId())
                           .setName(gameProfile.getUsername())
                           .setProperties(gameProfile.getGameProfile().getProperties())
                   )
               ));
             } else if (connection.getState() != StateRegistry.CONFIG) {
-              UpsertPlayerInfo.Entry playerInfoEntry = new UpsertPlayerInfo.Entry(this.player.getUniqueId());
+              UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(this.player.getUniqueId());
               playerInfoEntry.setDisplayName(new ComponentHolder(this.player.getProtocolVersion(), Component.text(gameProfile.getUsername())));
               playerInfoEntry.setProfile(gameProfile.getGameProfile());
 
-              connection.delayedWrite(new UpsertPlayerInfo(
+              connection.delayedWrite(new UpsertPlayerInfoPacket(
                   EnumSet.of(
-                      UpsertPlayerInfo.Action.UPDATE_DISPLAY_NAME,
-                      UpsertPlayerInfo.Action.ADD_PLAYER),
+                      UpsertPlayerInfoPacket.Action.UPDATE_DISPLAY_NAME,
+                      UpsertPlayerInfoPacket.Action.ADD_PLAYER),
                   List.of(playerInfoEntry)));
             }
 

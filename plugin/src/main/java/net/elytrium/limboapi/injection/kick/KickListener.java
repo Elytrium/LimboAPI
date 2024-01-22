@@ -44,7 +44,7 @@ import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.util.ConnectionMessages;
 import com.velocitypowered.proxy.connection.util.ConnectionRequestResults;
-import com.velocitypowered.proxy.protocol.packet.Disconnect;
+import com.velocitypowered.proxy.protocol.packet.DisconnectPacket;
 import io.netty.channel.EventLoop;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -138,7 +138,7 @@ public class KickListener {
               case SERVER_DISCONNECTED:
                 Component reason = status.getReasonComponent()
                     .orElse(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);
-                player.handleConnectionException(res.getServer(), Disconnect.create(reason,
+                player.handleConnectionException(res.getServer(), DisconnectPacket.create(reason,
                     player.getProtocolVersion(), false), ((ConnectionRequestResults.Impl) status).isSafe());
                 break;
               case SUCCESS:
