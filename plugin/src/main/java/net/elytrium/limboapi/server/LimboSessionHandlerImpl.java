@@ -27,15 +27,15 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
-import com.velocitypowered.proxy.protocol.packet.KeepAlive;
-import com.velocitypowered.proxy.protocol.packet.PluginMessage;
-import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerChat;
-import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerCommand;
-import com.velocitypowered.proxy.protocol.packet.chat.legacy.LegacyChat;
-import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerChat;
-import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerCommand;
-import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdate;
-import com.velocitypowered.proxy.protocol.packet.config.StartUpdate;
+import com.velocitypowered.proxy.protocol.packet.KeepAlivePacket;
+import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
+import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerChatPacket;
+import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerCommandPacket;
+import com.velocitypowered.proxy.protocol.packet.chat.legacy.LegacyChatPacket;
+import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerChatPacket;
+import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerCommandPacket;
+import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdatePacket;
+import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -126,7 +126,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         }
       } else {
         this.keepAliveKey = ThreadLocalRandom.current().nextInt();
-        KeepAlive keepAlive = new KeepAlive();
+        KeepAlivePacket keepAlive = new KeepAlivePacket();
         keepAlive.setRandomId(this.keepAliveKey);
         connection.write(keepAlive);
         this.keepAlivePending = true;
@@ -158,17 +158,17 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       // we should wait for it to ensure that it will not be sent
       // while switching CONFIG to PLAY state, and so didn't break the connection
       this.chatSession.thenRunAsync(() -> {
-        this.player.getConnection().write(new StartUpdate());
+        this.player.getConnection().write(new StartUpdatePacket());
         this.configTransition.thenRun(this::disconnected).thenRun(runnable);
       }, this.player.getConnection().eventLoop());
     } else {
-      this.player.getConnection().write(new StartUpdate());
+      this.player.getConnection().write(new StartUpdatePacket());
       this.configTransition.thenRun(this::disconnected).thenRun(runnable);
     }
   }
 
   @Override
-  public boolean handle(FinishedUpdate packet) {
+  public boolean handle(FinishedUpdatePacket packet) {
     // Switching to CONFIG state
     if (this.player.getConnection().getState() != StateRegistry.CONFIG) {
       this.plugin.setActiveSessionHandler(this.player.getConnection(), StateRegistry.CONFIG, this);
@@ -242,7 +242,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(KeepAlive packet) {
+  public boolean handle(KeepAlivePacket packet) {
     MinecraftConnection connection = this.player.getConnection();
     if (this.keepAlivePending) {
       if (packet.getRandomId() != this.keepAliveKey) {
@@ -272,27 +272,27 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(LegacyChat packet) {
+  public boolean handle(LegacyChatPacket packet) {
     return this.handleChat(packet.getMessage());
   }
 
   @Override
-  public boolean handle(KeyedPlayerChat packet) {
+  public boolean handle(KeyedPlayerChatPacket packet) {
     return this.handleChat(packet.getMessage());
   }
 
   @Override
-  public boolean handle(KeyedPlayerCommand packet) {
+  public boolean handle(KeyedPlayerCommandPacket packet) {
     return this.handleChat("/" + packet.getCommand());
   }
 
   @Override
-  public boolean handle(SessionPlayerChat packet) {
+  public boolean handle(SessionPlayerChatPacket packet) {
     return this.handleChat(packet.getMessage());
   }
 
   @Override
-  public boolean handle(SessionPlayerCommand packet) {
+  public boolean handle(SessionPlayerCommandPacket packet) {
     return this.handleChat("/" + packet.getCommand());
   }
 
@@ -324,7 +324,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       this.chatSession.complete(this);
     }
 
-    if (packet instanceof PluginMessage pluginMessage) {
+    if (packet instanceof PluginMessagePacket pluginMessage) {
       int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
       this.genericBytes += singleLength;
       if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH) {
