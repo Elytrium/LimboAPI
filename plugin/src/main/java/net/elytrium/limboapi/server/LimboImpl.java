@@ -435,6 +435,7 @@ public class LimboImpl implements Limbo {
       MinecraftConnection connection, ConnectedPlayer player, LimboSessionHandlerImpl sessionHandler) {
     if (this.plugin.isLimboJoined(player)) {
       if (this.shouldRejoin) {
+        sessionHandler.setMitigateChatSessionDesync(true);
         if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
           connection.delayedWrite(this.safeRejoinPackets);
         } else {
@@ -444,6 +445,7 @@ public class LimboImpl implements Limbo {
         connection.delayedWrite(this.postJoinPackets);
       }
     } else {
+      sessionHandler.setMitigateChatSessionDesync(true);
       connection.delayedWrite(this.joinPackets);
     }
 
@@ -542,10 +544,6 @@ public class LimboImpl implements Limbo {
 
     this.built = false;
     return this;
-  }
-
-  protected boolean isShouldRejoin() {
-    return this.shouldRejoin;
   }
 
   @Override

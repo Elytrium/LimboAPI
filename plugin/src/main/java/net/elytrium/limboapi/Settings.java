@@ -108,6 +108,9 @@ public class Settings extends YamlConfig {
     @Comment("How many chunks we should send per tick")
     public int CHUNKS_PER_TICK = 16;
 
+    @Comment("Maximum delay for receiving ChatSession packet (for online-mode client-side race condition mitigation)")
+    public int CHAT_SESSION_PACKET_TIMEOUT = 5000;
+
     @Create
     public MESSAGES MESSAGES;
 

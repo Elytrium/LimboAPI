@@ -79,6 +79,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   private LimboPlayer limboPlayer;
   private ScheduledFuture<?> keepAliveTask;
+  private ScheduledFuture<?> chatSessionTimeoutTask;
   private long keepAliveKey;
   private boolean keepAlivePending;
   private long keepAliveSentTime;
@@ -87,6 +88,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private boolean loaded;
   private boolean switching;
   private boolean disconnecting;
+  private boolean mitigateChatSessionDesync;
 
   public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player,
       LimboSessionHandler callback, StateRegistry originalState, MinecraftSessionHandler originalHandler,
@@ -153,10 +155,14 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.switching = true;
     this.loaded = false;
 
-    if (this.player.isOnlineMode() && this.limbo.isShouldRejoin()) {
+    if (this.player.isOnlineMode() && this.mitigateChatSessionDesync) {
       // As a client sends PlayerChatSessionPacket asynchronously,
       // we should wait for it to ensure that it will not be sent
       // while switching CONFIG to PLAY state, and so didn't break the connection
+      if (!this.chatSession.isDone() && this.chatSessionTimeoutTask == null) {
+        this.chatSessionTimeoutTask = this.player.getConnection().eventLoop()
+            .schedule(() -> this.chatSession.complete(this), Settings.IMP.MAIN.CHAT_SESSION_PACKET_TIMEOUT, TimeUnit.MILLISECONDS);
+      }
       this.chatSession.thenRunAsync(() -> {
         this.player.getConnection().write(new StartUpdatePacket());
         this.configTransition.thenRun(this::disconnected).thenRun(runnable);
@@ -321,6 +327,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   @Override
   public void handleGeneric(MinecraftPacket packet) {
     if (packet instanceof PlayerChatSessionPacket) {
+      if (this.chatSessionTimeoutTask != null) {
+        this.chatSessionTimeoutTask.cancel(true);
+      }
       this.chatSession.complete(this);
     }
 
@@ -420,6 +429,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public int getPing() {
     return this.ping;
+  }
+
+  public void setMitigateChatSessionDesync(boolean mitigateChatSessionDesync) {
+    this.mitigateChatSessionDesync = mitigateChatSessionDesync;
   }
 
   static {
