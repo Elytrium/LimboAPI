@@ -39,6 +39,7 @@ import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
+import com.velocitypowered.api.event.player.PlayerClientBrandEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
@@ -89,6 +90,8 @@ public class LoginTasksQueue {
   private static final MethodHandle PLAYER_KEY_FIELD;
   private static final Field LOGIN_STATE_FIELD;
   private static final Field CONNECTED_PLAYER_FIELD;
+  private static final MethodHandle SET_CLIENT_BRAND;
+  private static final Field BRAND_CHANNEL;
 
   private final LimboAPI plugin;
   private final Object handler;
@@ -269,8 +272,28 @@ public class LoginTasksQueue {
 
       return; // Re-running this method due to synchronization with the client
     } else {
-      this.plugin.setActiveSessionHandler(connection, StateRegistry.CONFIG,
-          new ClientConfigSessionHandler(this.server, this.player));
+      ClientConfigSessionHandler configHandler = new ClientConfigSessionHandler(this.server, this.player);
+
+      // 1.20.2+ client didn't send ClientSettings and brand on state switching,
+      // so we need to use packets that was sent after LOGIN completion.
+      if (connection.getActiveSessionHandler() instanceof LimboSessionHandlerImpl sessionHandler) {
+        if (sessionHandler.getSettings() != null) {
+          this.player.setClientSettings(sessionHandler.getSettings());
+        }
+
+        // TODO: also queue non-vanilla plugin messages?
+        if (sessionHandler.getBrand() != null) {
+          try {
+            this.server.getEventManager().fireAndForget(new PlayerClientBrandEvent(this.player, sessionHandler.getBrand()));
+            SET_CLIENT_BRAND.invokeExact(this.player, sessionHandler.getBrand());
+            BRAND_CHANNEL.set(configHandler, "minecraft:brand");
+          } catch (Throwable e) {
+            throw new ReflectionException(e);
+          }
+        }
+      }
+
+      this.plugin.setActiveSessionHandler(connection, StateRegistry.CONFIG, configHandler);
     }
 
     this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
@@ -311,6 +334,12 @@ public class LoginTasksQueue {
 
       PLAYER_KEY_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findSetter(ConnectedPlayer.class, "playerKey", IdentifiedKey.class);
+
+      SET_CLIENT_BRAND = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findVirtual(ConnectedPlayer.class, "setClientBrand", MethodType.methodType(void.class, String.class));
+
+      BRAND_CHANNEL = ClientConfigSessionHandler.class.getDeclaredField("brandChannel");
+      BRAND_CHANNEL.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }

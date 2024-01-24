@@ -49,6 +49,7 @@ public class Settings extends YamlConfig {
     public boolean CHECK_FOR_UPDATES = true;
 
     public int MAX_CHAT_MESSAGE_LENGTH = 256;
+    public int MAX_BRAND_NAME_LENGTH = 64;
     public int MAX_UNKNOWN_PACKET_LENGTH = 2048;
     public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 4096;
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
