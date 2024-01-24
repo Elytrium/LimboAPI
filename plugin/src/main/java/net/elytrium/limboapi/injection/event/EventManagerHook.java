@@ -20,6 +20,7 @@ package net.elytrium.limboapi.injection.event;
 import com.google.common.collect.ListMultimap;
 import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
+import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginManager;
 import com.velocitypowered.api.util.GameProfile;
@@ -38,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
@@ -130,6 +132,15 @@ public class EventManagerHook extends VelocityEventManager {
 
         return hookFuture;
       }
+    } else if (event instanceof KickedFromServerEvent kicked) {
+      CompletableFuture<E> hookFuture = new CompletableFuture<>();
+      super.fire(kicked).thenRun(() -> {
+        Function<KickedFromServerEvent, Boolean> callback = this.plugin.getKickCallback(kicked.getPlayer());
+        if (callback == null || !callback.apply(kicked)) {
+          hookFuture.complete(event);
+        }
+      });
+      return hookFuture;
     } else {
       return null;
     }

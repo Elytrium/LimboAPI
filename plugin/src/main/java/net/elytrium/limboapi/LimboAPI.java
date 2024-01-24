@@ -82,7 +82,6 @@ import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.file.WorldFileTypeRegistry;
 import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
-import net.elytrium.limboapi.injection.kick.KickListener;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
 import net.elytrium.limboapi.injection.packet.LegacyPlayerListItemHook;
@@ -283,7 +282,6 @@ public class LimboAPI implements LimboFactory {
     VelocityEventManager eventManager = this.server.getEventManager();
     eventManager.unregisterListeners(this);
     eventManager.register(this, this.loginListener);
-    eventManager.register(this, new KickListener(this));
     eventManager.register(this, new DisconnectListener(this));
     eventManager.register(this, new ReloadListener(this));
 
