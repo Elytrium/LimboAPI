@@ -236,8 +236,12 @@ public class LimboPlayerImpl implements LimboPlayer {
       if (this.connection.getActiveSessionHandler() == this.sessionHandler) {
         this.sessionHandler.disconnect(() -> {
           if (this.plugin.hasLoginQueue(this.player)) {
-            this.sessionHandler.disconnected();
-            this.plugin.getLoginQueue(this.player).next();
+            if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+              this.sessionHandler.disconnectToConfig(() -> this.plugin.getLoginQueue(this.player).next());
+            } else {
+              this.sessionHandler.disconnected();
+              this.plugin.getLoginQueue(this.player).next();
+            }
           } else {
             RegisteredServer server = this.sessionHandler.getPreviousServer();
             if (server != null) {
@@ -257,9 +261,16 @@ public class LimboPlayerImpl implements LimboPlayer {
       if (this.connection.getActiveSessionHandler() == this.sessionHandler) {
         this.sessionHandler.disconnect(() -> {
           if (this.plugin.hasLoginQueue(this.player)) {
-            this.sessionHandler.disconnected();
-            this.plugin.setNextServer(this.player, server);
-            this.plugin.getLoginQueue(this.player).next();
+            if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+              this.sessionHandler.disconnectToConfig(() -> {
+                this.plugin.setNextServer(this.player, server);
+                this.plugin.getLoginQueue(this.player).next();
+              });
+            } else {
+              this.sessionHandler.disconnected();
+              this.plugin.setNextServer(this.player, server);
+              this.plugin.getLoginQueue(this.player).next();
+            }
           } else {
             this.sendToRegisteredServer(server);
           }
