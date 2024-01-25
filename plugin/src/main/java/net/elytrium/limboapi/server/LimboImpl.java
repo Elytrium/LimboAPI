@@ -324,7 +324,7 @@ public class LimboImpl implements Limbo {
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
       if (connection.getState() != StateRegistry.CONFIG) {
         if (this.shouldRejoin) {
-          // Switch to PLAY state
+          // Switch to CONFIG state
           connection.write(this.configTransitionPackets);
 
           // Continue transition on the handler side

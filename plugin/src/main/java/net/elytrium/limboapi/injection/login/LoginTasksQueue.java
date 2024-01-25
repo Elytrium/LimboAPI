@@ -274,8 +274,8 @@ public class LoginTasksQueue {
     } else {
       ClientConfigSessionHandler configHandler = new ClientConfigSessionHandler(this.server, this.player);
 
-      // 1.20.2+ client didn't send ClientSettings and brand on state switching,
-      // so we need to use packets that was sent after LOGIN completion.
+      // 1.20.2+ client doesn't send ClientSettings and brand while switching state,
+      // so we need to use packets that was sent during LOGIN completion.
       if (connection.getActiveSessionHandler() instanceof LimboSessionHandlerImpl sessionHandler) {
         if (sessionHandler.getSettings() != null) {
           this.player.setClientSettings(sessionHandler.getSettings());
