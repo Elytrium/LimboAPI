@@ -26,6 +26,7 @@ import com.velocitypowered.api.plugin.PluginManager;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommandManager;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -134,12 +135,12 @@ public class EventManagerHook extends VelocityEventManager {
       }
     } else if (event instanceof KickedFromServerEvent kicked) {
       CompletableFuture<E> hookFuture = new CompletableFuture<>();
-      super.fire(kicked).thenRun(() -> {
+      super.fire(kicked).thenRunAsync(() -> {
         Function<KickedFromServerEvent, Boolean> callback = this.plugin.getKickCallback(kicked.getPlayer());
         if (callback == null || !callback.apply(kicked)) {
           hookFuture.complete(event);
         }
-      });
+      }, ((ConnectedPlayer) kicked.getPlayer()).getConnection().eventLoop());
       return hookFuture;
     } else {
       return null;
