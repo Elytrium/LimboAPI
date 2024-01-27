@@ -199,7 +199,7 @@ public class LimboAPI implements LimboFactory {
     if (Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX) == YamlConfig.LoadResult.CONFIG_NOT_EXISTS) {
       LOGGER.warn("************* FIRST LAUNCH *************");
       LOGGER.warn("Thanks for installing LimboAPI!");
-      LOGGER.warn("(C) 2021 - 2023 Elytrium");
+      LOGGER.warn("(C) 2021 - 2024 Elytrium");
       LOGGER.warn("");
       LOGGER.warn("Check out our plugins here: https://ely.su/github <3");
       LOGGER.warn("Discord: https://ely.su/discord");
