@@ -52,16 +52,6 @@ public class PlayerChatSessionPacket implements MinecraftPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
-    // LimboAPI hook - discard if there is no identified key or unmatched UUID
-    if (minecraftSessionHandler instanceof ClientPlaySessionHandler playSessionHandler) {
-      try {
-        ConnectedPlayer player = (ConnectedPlayer) PLAYER_FIELD.invokeExact(playSessionHandler);
-        return player.getIdentifiedKey() == null || player.getUniqueId() != this.holderId;
-      } catch (Throwable e) {
-        throw new ReflectionException(e);
-      }
-    }
-
     return false;
   }
 
