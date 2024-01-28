@@ -34,6 +34,7 @@ import com.velocitypowered.proxy.command.registrar.SimpleCommandRegistrar;
 import com.velocitypowered.proxy.connection.ConnectionTypes;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
+import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.registry.DimensionInfo;
 import com.velocitypowered.proxy.network.Connections;
@@ -42,6 +43,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommandsPacket;
+import com.velocitypowered.proxy.protocol.packet.BossBarPacket;
 import com.velocitypowered.proxy.protocol.packet.JoinGamePacket;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
@@ -52,6 +54,7 @@ import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.RegistrySyncPacket;
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.TagsUpdatePacket;
+import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
@@ -71,6 +74,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
@@ -288,6 +292,27 @@ public class LimboImpl implements Limbo {
     MinecraftConnection connection = player.getConnection();
 
     boolean shouldSpawnPlayerImmediately = true;
+
+    // Discard information from previous server
+    if (this.plugin.isLimboJoined(player)) {
+      connection.eventLoop().execute(() -> {
+        player.getTabList().clearAll();
+        if (player.getConnection().getActiveSessionHandler() instanceof ClientPlaySessionHandler sessionHandler) {
+          for (UUID serverBossBar : sessionHandler.getServerBossBars()) {
+            player.getConnection().delayedWrite(BossBarPacket.createRemovePacket(serverBossBar, null));
+          }
+          sessionHandler.getServerBossBars().clear();
+        }
+
+        if (player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
+          player.getConnection().delayedWrite(GenericTitlePacket.constructTitlePacket(
+              GenericTitlePacket.ActionType.RESET, player.getProtocolVersion()));
+          player.clearPlayerListHeaderAndFooter();
+        }
+
+        player.getConnection().flush();
+      });
+    }
 
     if (connection.getState() != this.localStateRegistry) {
       if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
