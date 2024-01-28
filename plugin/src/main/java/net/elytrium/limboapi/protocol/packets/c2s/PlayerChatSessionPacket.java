@@ -29,6 +29,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.UUID;
 import net.elytrium.commons.utils.reflection.ReflectionException;
+import net.elytrium.limboapi.Settings;
 
 @SuppressWarnings("unused")
 public class PlayerChatSessionPacket implements MinecraftPacket {
@@ -52,6 +53,11 @@ public class PlayerChatSessionPacket implements MinecraftPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
+    // LimboAPI hook - skip server-side signature verification if enabled
+    if (minecraftSessionHandler instanceof ClientPlaySessionHandler) {
+      return Settings.IMP.MAIN.FORCE_DISABLE_MODERN_CHAT_SIGNING;
+    }
+
     return false;
   }
 

@@ -112,6 +112,9 @@ public class Settings extends YamlConfig {
     @Comment("Maximum delay for receiving ChatSession packet (for online-mode client-side race condition mitigation)")
     public int CHAT_SESSION_PACKET_TIMEOUT = 5000;
 
+    @Comment("Ability to force disable chat signing on 1.19.3+")
+    public boolean FORCE_DISABLE_MODERN_CHAT_SIGNING = true;
+
     @Create
     public MESSAGES MESSAGES;
 
