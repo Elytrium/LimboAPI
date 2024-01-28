@@ -298,15 +298,13 @@ public class LimboImpl implements Limbo {
     boolean shouldSpawnPlayerImmediately = true;
 
     // Discard information from previous server
-    if (this.plugin.isLimboJoined(player)) {
+    if (player.getConnection().getActiveSessionHandler() instanceof ClientPlaySessionHandler sessionHandler) {
       connection.eventLoop().execute(() -> {
         player.getTabList().clearAll();
-        if (player.getConnection().getActiveSessionHandler() instanceof ClientPlaySessionHandler sessionHandler) {
-          for (UUID serverBossBar : sessionHandler.getServerBossBars()) {
-            player.getConnection().delayedWrite(BossBarPacket.createRemovePacket(serverBossBar, null));
-          }
-          sessionHandler.getServerBossBars().clear();
+        for (UUID serverBossBar : sessionHandler.getServerBossBars()) {
+          player.getConnection().delayedWrite(BossBarPacket.createRemovePacket(serverBossBar, null));
         }
+        sessionHandler.getServerBossBars().clear();
 
         if (player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
           player.getConnection().delayedWrite(GenericTitlePacket.constructTitlePacket(
