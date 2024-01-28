@@ -21,20 +21,14 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
-import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.util.UUID;
-import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.Settings;
 
 @SuppressWarnings("unused")
 public class PlayerChatSessionPacket implements MinecraftPacket {
-
-  public static final MethodHandle PLAYER_FIELD;
 
   private UUID holderId;
   private IdentifiedKey playerKey;
@@ -75,15 +69,6 @@ public class PlayerChatSessionPacket implements MinecraftPacket {
 
   public void setPlayerKey(IdentifiedKey playerKey) {
     this.playerKey = playerKey;
-  }
-
-  static {
-    try {
-      PLAYER_FIELD = MethodHandles.privateLookupIn(ClientPlaySessionHandler.class, MethodHandles.lookup())
-          .findGetter(ClientPlaySessionHandler.class, "player", ConnectedPlayer.class);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new ReflectionException(e);
-    }
   }
 
 }
