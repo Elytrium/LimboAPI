@@ -296,6 +296,13 @@ public class LimboPlayerImpl implements LimboPlayer {
         this.player.createConnectionRequest(server).fireAndForget();
       });
     } else {
+      if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
+        this.connection.delayedWrite(new LegacyPlayerListItemPacket(
+            LegacyPlayerListItemPacket.REMOVE_PLAYER,
+            List.of(new LegacyPlayerListItemPacket.Item(this.player.getUniqueId()))
+        ));
+      }
+
       this.sessionHandler.disconnected();
       this.player.createConnectionRequest(server).fireAndForget();
     }
