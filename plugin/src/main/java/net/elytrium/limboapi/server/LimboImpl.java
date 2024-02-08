@@ -226,7 +226,7 @@ public class LimboImpl implements Limbo {
     this.addPostJoin(this.postJoinPackets);
 
     this.configTransitionPackets = this.plugin.createPreparedPacket()
-        .prepare(new StartUpdatePacket(), ProtocolVersion.MINECRAFT_1_20_2)
+        .prepare(StartUpdatePacket.INSTANCE, ProtocolVersion.MINECRAFT_1_20_2)
         .build();
 
     this.configPackets = this.plugin.createConfigPreparedPacket();
@@ -234,7 +234,7 @@ public class LimboImpl implements Limbo {
     if (this.shouldUpdateTags) {
       this.configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
     }
-    this.configPackets.prepare(new FinishedUpdatePacket(), ProtocolVersion.MINECRAFT_1_20_2);
+    this.configPackets.prepare(FinishedUpdatePacket.INSTANCE, ProtocolVersion.MINECRAFT_1_20_2);
     this.configPackets.build();
 
     this.firstChunks = this.createFirstChunks();

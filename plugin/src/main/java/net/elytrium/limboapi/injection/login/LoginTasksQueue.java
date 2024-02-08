@@ -44,7 +44,6 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.proxy.InboundConnection;
-import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -52,7 +51,6 @@ import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientConfigSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
-import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
@@ -87,7 +85,6 @@ public class LoginTasksQueue {
   private static final MethodHandle INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR;
   private static final Field MC_CONNECTION_FIELD;
   private static final MethodHandle CONNECT_TO_INITIAL_SERVER_METHOD;
-  private static final MethodHandle PLAYER_KEY_FIELD;
   private static final Field LOGIN_STATE_FIELD;
   private static final Field CONNECTED_PLAYER_FIELD;
   private static final MethodHandle SET_CLIENT_BRAND;
@@ -213,22 +210,6 @@ public class LoginTasksQueue {
       this.plugin.fixCompressor(pipeline, connection.getProtocolVersion());
     }
 
-    if (this.player.getIdentifiedKey() != null) {
-      IdentifiedKey playerKey = this.player.getIdentifiedKey();
-      if (playerKey.getSignatureHolder() == null) {
-        if (playerKey instanceof IdentifiedKeyImpl unlinkedKey) {
-          // Failsafe
-          if (!unlinkedKey.internalAddHolder(this.player.getUniqueId())) {
-            PLAYER_KEY_FIELD.invokeExact(this.player, (IdentifiedKey) null);
-          }
-        }
-      } else {
-        if (!Objects.equals(playerKey.getSignatureHolder(), this.player.getUniqueId())) {
-          PLAYER_KEY_FIELD.invokeExact(this.player, (IdentifiedKey) null);
-        }
-      }
-    }
-
     Logger logger = LimboAPI.getLogger();
     this.server.getEventManager().fire(new LoginEvent(this.player)).thenAcceptAsync(event -> {
       if (connection.isClosed()) {
@@ -331,9 +312,6 @@ public class LoginTasksQueue {
 
       MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
       MC_CONNECTION_FIELD.setAccessible(true);
-
-      PLAYER_KEY_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
-          .findSetter(ConnectedPlayer.class, "playerKey", IdentifiedKey.class);
 
       SET_CLIENT_BRAND = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findVirtual(ConnectedPlayer.class, "setClientBrand", MethodType.methodType(void.class, String.class));

@@ -175,11 +175,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
             .schedule(() -> this.chatSession.complete(this), Settings.IMP.MAIN.CHAT_SESSION_PACKET_TIMEOUT, TimeUnit.MILLISECONDS);
       }
       this.chatSession.thenRunAsync(() -> {
-        this.player.getConnection().write(new StartUpdatePacket());
+        this.player.getConnection().write(StartUpdatePacket.INSTANCE);
         this.configTransition.thenRun(this::disconnected).thenRun(runnable);
       }, this.player.getConnection().eventLoop());
     } else {
-      this.player.getConnection().write(new StartUpdatePacket());
+      this.player.getConnection().write(StartUpdatePacket.INSTANCE);
       this.configTransition.thenRun(this::disconnected).thenRun(runnable);
     }
   }
