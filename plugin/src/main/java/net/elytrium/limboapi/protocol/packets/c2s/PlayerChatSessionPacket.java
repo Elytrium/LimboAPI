@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2023 Elytrium
+ * Copyright (C) 2021 - 2024 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,19 +21,14 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
-import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.util.UUID;
-import net.elytrium.commons.utils.reflection.ReflectionException;
+import net.elytrium.limboapi.Settings;
 
 @SuppressWarnings("unused")
 public class PlayerChatSessionPacket implements MinecraftPacket {
-
-  public static final MethodHandle PLAYER_FIELD;
 
   private UUID holderId;
   private IdentifiedKey playerKey;
@@ -52,14 +47,9 @@ public class PlayerChatSessionPacket implements MinecraftPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler minecraftSessionHandler) {
-    // LimboAPI hook - discard if there is no identified key or unmatched UUID
-    if (minecraftSessionHandler instanceof ClientPlaySessionHandler playSessionHandler) {
-      try {
-        ConnectedPlayer player = (ConnectedPlayer) PLAYER_FIELD.invokeExact(playSessionHandler);
-        return player.getIdentifiedKey() == null || player.getUniqueId() != this.holderId;
-      } catch (Throwable e) {
-        throw new ReflectionException(e);
-      }
+    // LimboAPI hook - skip server-side signature verification if enabled
+    if (minecraftSessionHandler instanceof ClientPlaySessionHandler) {
+      return Settings.IMP.MAIN.FORCE_DISABLE_MODERN_CHAT_SIGNING;
     }
 
     return false;
@@ -79,15 +69,6 @@ public class PlayerChatSessionPacket implements MinecraftPacket {
 
   public void setPlayerKey(IdentifiedKey playerKey) {
     this.playerKey = playerKey;
-  }
-
-  static {
-    try {
-      PLAYER_FIELD = MethodHandles.privateLookupIn(ClientPlaySessionHandler.class, MethodHandles.lookup())
-          .findGetter(ClientPlaySessionHandler.class, "player", ConnectedPlayer.class);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new ReflectionException(e);
-    }
   }
 
 }

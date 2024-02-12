@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2023 Elytrium
+ * Copyright (C) 2021 - 2024 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -49,6 +49,7 @@ public class Settings extends YamlConfig {
     public boolean CHECK_FOR_UPDATES = true;
 
     public int MAX_CHAT_MESSAGE_LENGTH = 256;
+    public int MAX_BRAND_NAME_LENGTH = 64;
     public int MAX_UNKNOWN_PACKET_LENGTH = 2048;
     public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 4096;
     public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
@@ -77,7 +78,8 @@ public class Settings extends YamlConfig {
         "Available versions:",
         "1_7_2, 1_7_6, 1_8, 1_9, 1_9_1, 1_9_2, 1_9_4, 1_10, 1_11, 1_11_1, 1_12, 1_12_1, 1_12_2,",
         "1_13, 1_13_1, 1_13_2, 1_14, 1_14_1, 1_14_2, 1_14_3, 1_14_4, 1_15, 1_15_1, 1_15_2,",
-        "1_16, 1_16_1, 1_16_2, 1_16_3, 1_16_4, 1_17, 1_17_1, 1_18, 1_18_2, 1_19, 1_19_1, 1_19_3, 1_20, 1_20_2, LATEST"
+        "1_16, 1_16_1, 1_16_2, 1_16_3, 1_16_4, 1_17, 1_17_1, 1_18, 1_18_2, 1_19, 1_19_1, 1_19_3,",
+        "1_20, 1_20_2, 1_20_3, LATEST"
     })
     public String PREPARE_MIN_VERSION = "1_7_2";
     public String PREPARE_MAX_VERSION = "LATEST";
@@ -107,6 +109,12 @@ public class Settings extends YamlConfig {
 
     @Comment("How many chunks we should send per tick")
     public int CHUNKS_PER_TICK = 16;
+
+    @Comment("Maximum delay for receiving ChatSession packet (for online-mode client-side race condition mitigation)")
+    public int CHAT_SESSION_PACKET_TIMEOUT = 5000;
+
+    @Comment("Ability to force disable chat signing on 1.19.3+")
+    public boolean FORCE_DISABLE_MODERN_CHAT_SIGNING = true;
 
     @Create
     public MESSAGES MESSAGES;

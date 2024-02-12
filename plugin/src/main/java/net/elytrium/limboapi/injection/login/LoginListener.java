@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2023 Elytrium
+ * Copyright (C) 2021 - 2024 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -54,6 +54,7 @@ import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialInboundConnection;
 import com.velocitypowered.proxy.connection.client.LoginInboundConnection;
+import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
@@ -69,6 +70,7 @@ import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
@@ -142,6 +144,20 @@ public class LoginListener {
       if (!connection.isClosed()) {
         connection.eventLoop().execute(() -> {
           try {
+            IdentifiedKey playerKey = inboundConnection.getIdentifiedKey();
+            if (playerKey != null) {
+              if (playerKey.getSignatureHolder() == null) {
+                if (playerKey instanceof IdentifiedKeyImpl unlinkedKey) {
+                  // Failsafe
+                  if (!unlinkedKey.internalAddHolder(event.getGameProfile().getId())) {
+                    playerKey = null;
+                  }
+                }
+              } else if (!Objects.equals(playerKey.getSignatureHolder(), event.getGameProfile().getId())) {
+                playerKey = null;
+              }
+            }
+
             // Initiate a regular connection and move over to it.
             ConnectedPlayer player = (ConnectedPlayer) CONNECTED_PLAYER_CONSTRUCTOR.invokeExact(
                 this.server,
@@ -149,7 +165,7 @@ public class LoginListener {
                 connection,
                 inboundConnection.getVirtualHost().orElse(null),
                 this.onlineMode.contains(event.getUsername()),
-                inboundConnection.getIdentifiedKey()
+                playerKey
             );
             if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
               ((LoginConfirmHandler) connection.getActiveSessionHandler()).setPlayer(player);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2023 Elytrium
+ * Copyright (C) 2021 - 2024 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,7 +26,9 @@ import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import com.velocitypowered.proxy.protocol.packet.ClientSettingsPacket;
 import com.velocitypowered.proxy.protocol.packet.KeepAlivePacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerChatPacket;
@@ -36,6 +38,8 @@ import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerChatP
 import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerCommandPacket;
 import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
+import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
+import com.velocitypowered.proxy.util.except.QuietDecoderException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -78,7 +82,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final CompletableFuture<Object> chatSession = new CompletableFuture<>();
 
   private LimboPlayer limboPlayer;
+  private ClientSettingsPacket settings;
+  private String brand;
   private ScheduledFuture<?> keepAliveTask;
+  private ScheduledFuture<?> chatSessionTimeoutTask;
   private long keepAliveKey;
   private boolean keepAlivePending;
   private long keepAliveSentTime;
@@ -87,6 +94,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private boolean loaded;
   private boolean switching;
   private boolean disconnecting;
+  private boolean mitigateChatSessionDesync;
 
   public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player,
       LimboSessionHandler callback, StateRegistry originalState, MinecraftSessionHandler originalHandler,
@@ -100,6 +108,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.previousServer = previousServer;
     this.limboName = limboName;
     this.loaded = player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_18_2) < 0;
+
+    if (originalHandler instanceof LimboSessionHandlerImpl sessionHandler) {
+      this.settings = sessionHandler.getSettings();
+      this.brand = sessionHandler.getBrand();
+    }
   }
 
   public void onConfig(LimboPlayer player) {
@@ -153,16 +166,20 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.switching = true;
     this.loaded = false;
 
-    if (this.player.isOnlineMode() && this.limbo.isShouldRejoin()) {
+    if (this.player.isOnlineMode() && this.mitigateChatSessionDesync) {
       // As a client sends PlayerChatSessionPacket asynchronously,
       // we should wait for it to ensure that it will not be sent
       // while switching CONFIG to PLAY state, and so didn't break the connection
+      if (!this.chatSession.isDone() && this.chatSessionTimeoutTask == null) {
+        this.chatSessionTimeoutTask = this.player.getConnection().eventLoop()
+            .schedule(() -> this.chatSession.complete(this), Settings.IMP.MAIN.CHAT_SESSION_PACKET_TIMEOUT, TimeUnit.MILLISECONDS);
+      }
       this.chatSession.thenRunAsync(() -> {
-        this.player.getConnection().write(new StartUpdatePacket());
+        this.player.getConnection().write(StartUpdatePacket.INSTANCE);
         this.configTransition.thenRun(this::disconnected).thenRun(runnable);
       }, this.player.getConnection().eventLoop());
     } else {
-      this.player.getConnection().write(new StartUpdatePacket());
+      this.player.getConnection().write(StartUpdatePacket.INSTANCE);
       this.configTransition.thenRun(this::disconnected).thenRun(runnable);
     }
   }
@@ -320,11 +337,14 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public void handleGeneric(MinecraftPacket packet) {
-    if (packet instanceof PlayerChatSessionPacket) {
+    if (packet instanceof ClientSettingsPacket clientSettings) {
+      this.settings = clientSettings;
+    } else if (packet instanceof PlayerChatSessionPacket) {
+      if (this.chatSessionTimeoutTask != null) {
+        this.chatSessionTimeoutTask.cancel(true);
+      }
       this.chatSession.complete(this);
-    }
-
-    if (packet instanceof PluginMessagePacket pluginMessage) {
+    } else if (packet instanceof PluginMessagePacket pluginMessage) {
       int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
       this.genericBytes += singleLength;
       if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH) {
@@ -333,6 +353,16 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       } else if (this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
         this.kickTooBigPacket("generic (PluginMessage packet (custom payload)), multi", this.genericBytes);
         return;
+      }
+
+      if (this.player.getConnection().getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0
+          && PluginMessageUtil.isMcBrand(pluginMessage)) {
+        try {
+          this.brand = ProtocolUtils.readString(pluginMessage.content().slice(), Settings.IMP.MAIN.MAX_BRAND_NAME_LENGTH);
+        } catch (QuietDecoderException ignored) {
+          this.kickTooBigPacket("brand name", pluginMessage.content().readableBytes());
+          return;
+        }
       }
     }
 
@@ -420,6 +450,18 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public int getPing() {
     return this.ping;
+  }
+
+  public void setMitigateChatSessionDesync(boolean mitigateChatSessionDesync) {
+    this.mitigateChatSessionDesync = mitigateChatSessionDesync;
+  }
+
+  public ClientSettingsPacket getSettings() {
+    return this.settings;
+  }
+
+  public String getBrand() {
+    return this.brand;
   }
 
   static {
