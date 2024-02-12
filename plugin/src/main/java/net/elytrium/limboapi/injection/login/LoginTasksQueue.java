@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2023 Elytrium
+ * Copyright (C) 2021 - 2024 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -39,11 +39,11 @@ import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
+import com.velocitypowered.api.event.player.PlayerClientBrandEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.proxy.InboundConnection;
-import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -51,7 +51,6 @@ import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientConfigSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
-import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
@@ -86,9 +85,10 @@ public class LoginTasksQueue {
   private static final MethodHandle INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR;
   private static final Field MC_CONNECTION_FIELD;
   private static final MethodHandle CONNECT_TO_INITIAL_SERVER_METHOD;
-  private static final MethodHandle PLAYER_KEY_FIELD;
   private static final Field LOGIN_STATE_FIELD;
   private static final Field CONNECTED_PLAYER_FIELD;
+  private static final MethodHandle SET_CLIENT_BRAND;
+  private static final Field BRAND_CHANNEL;
 
   private final LimboAPI plugin;
   private final Object handler;
@@ -210,22 +210,6 @@ public class LoginTasksQueue {
       this.plugin.fixCompressor(pipeline, connection.getProtocolVersion());
     }
 
-    if (this.player.getIdentifiedKey() != null) {
-      IdentifiedKey playerKey = this.player.getIdentifiedKey();
-      if (playerKey.getSignatureHolder() == null) {
-        if (playerKey instanceof IdentifiedKeyImpl unlinkedKey) {
-          // Failsafe
-          if (!unlinkedKey.internalAddHolder(this.player.getUniqueId())) {
-            PLAYER_KEY_FIELD.invokeExact(this.player, (IdentifiedKey) null);
-          }
-        }
-      } else {
-        if (!Objects.equals(playerKey.getSignatureHolder(), this.player.getUniqueId())) {
-          PLAYER_KEY_FIELD.invokeExact(this.player, (IdentifiedKey) null);
-        }
-      }
-    }
-
     Logger logger = LimboAPI.getLogger();
     this.server.getEventManager().fire(new LoginEvent(this.player)).thenAcceptAsync(event -> {
       if (connection.isClosed()) {
@@ -269,8 +253,28 @@ public class LoginTasksQueue {
 
       return; // Re-running this method due to synchronization with the client
     } else {
-      this.plugin.setActiveSessionHandler(connection, StateRegistry.CONFIG,
-          new ClientConfigSessionHandler(this.server, this.player));
+      ClientConfigSessionHandler configHandler = new ClientConfigSessionHandler(this.server, this.player);
+
+      // 1.20.2+ client doesn't send ClientSettings and brand while switching state,
+      // so we need to use packets that was sent during LOGIN completion.
+      if (connection.getActiveSessionHandler() instanceof LimboSessionHandlerImpl sessionHandler) {
+        if (sessionHandler.getSettings() != null) {
+          this.player.setClientSettings(sessionHandler.getSettings());
+        }
+
+        // TODO: also queue non-vanilla plugin messages?
+        if (sessionHandler.getBrand() != null) {
+          try {
+            this.server.getEventManager().fireAndForget(new PlayerClientBrandEvent(this.player, sessionHandler.getBrand()));
+            SET_CLIENT_BRAND.invokeExact(this.player, sessionHandler.getBrand());
+            BRAND_CHANNEL.set(configHandler, "minecraft:brand");
+          } catch (Throwable e) {
+            throw new ReflectionException(e);
+          }
+        }
+      }
+
+      this.plugin.setActiveSessionHandler(connection, StateRegistry.CONFIG, configHandler);
     }
 
     this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
@@ -309,8 +313,11 @@ public class LoginTasksQueue {
       MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
       MC_CONNECTION_FIELD.setAccessible(true);
 
-      PLAYER_KEY_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
-          .findSetter(ConnectedPlayer.class, "playerKey", IdentifiedKey.class);
+      SET_CLIENT_BRAND = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
+          .findVirtual(ConnectedPlayer.class, "setClientBrand", MethodType.methodType(void.class, String.class));
+
+      BRAND_CHANNEL = ClientConfigSessionHandler.class.getDeclaredField("brandChannel");
+      BRAND_CHANNEL.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }
