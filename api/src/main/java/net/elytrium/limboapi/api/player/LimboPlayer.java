@@ -13,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.util.concurrent.ScheduledExecutorService;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
 public interface LimboPlayer {
@@ -42,6 +43,8 @@ public interface LimboPlayer {
   void setInventory(VirtualItem item, int slot, int count);
 
   void setInventory(int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt);
+
+  void setInventory(int slot, VirtualItem item, int count, int data, ItemComponentMap map);
 
   void setGameMode(GameMode gameMode);
 

@@ -38,6 +38,7 @@ import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
 import net.elytrium.limboapi.api.protocol.packets.data.AbilityFlags;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 import net.elytrium.limboapi.api.protocol.packets.data.MapPalette;
@@ -172,17 +173,22 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void setInventory(VirtualItem item, int count) {
-    this.writePacketAndFlush(new SetSlotPacket(0, 36, item, count, 0, null));
+    this.writePacketAndFlush(new SetSlotPacket(0, 36, item, count, 0, null, null));
   }
 
   @Override
   public void setInventory(VirtualItem item, int slot, int count) {
-    this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, 0, null));
+    this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, 0, null, null));
   }
 
   @Override
   public void setInventory(int slot, VirtualItem item, int count, int data, CompoundBinaryTag nbt) {
-    this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, data, nbt));
+    this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, data, nbt, null));
+  }
+
+  @Override
+  public void setInventory(int slot, VirtualItem item, int count, int data, ItemComponentMap map) {
+    this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, data, null, map));
   }
 
   @Override

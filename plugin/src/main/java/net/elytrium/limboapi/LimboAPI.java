@@ -78,6 +78,7 @@ import net.elytrium.limboapi.api.material.Block;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
+import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.file.WorldFileTypeRegistry;
 import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
@@ -95,6 +96,8 @@ import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.PacketFactoryImpl;
 import net.elytrium.limboapi.server.CachedPackets;
 import net.elytrium.limboapi.server.LimboImpl;
+import net.elytrium.limboapi.server.item.SimpleItemComponentManager;
+import net.elytrium.limboapi.server.item.SimpleItemComponentMap;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.SimpleBlockEntity;
 import net.elytrium.limboapi.server.world.SimpleItem;
@@ -122,7 +125,7 @@ import org.slf4j.Logger;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
-  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 765;
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 766;
 
   @MonotonicNonNull
   private static Logger LOGGER;
@@ -135,6 +138,7 @@ public class LimboAPI implements LimboFactory {
   private final Set<Player> players;
   private final CachedPackets packets;
   private final PacketFactory packetFactory;
+  private final SimpleItemComponentManager itemComponentManager = new SimpleItemComponentManager();
   private final HashMap<Player, LoginTasksQueue> loginQueue;
   private final HashMap<Player, Function<KickedFromServerEvent, Boolean>> kickCallback;
   private final HashMap<Player, RegisteredServer> nextServer;
@@ -508,6 +512,11 @@ public class LimboAPI implements LimboFactory {
   @Override
   public VirtualItem getLegacyItem(int itemLegacyID) {
     return SimpleItem.fromLegacyID(itemLegacyID);
+  }
+
+  @Override
+  public ItemComponentMap createItemComponentMap() {
+    return new SimpleItemComponentMap(this.itemComponentManager);
   }
 
   @Override

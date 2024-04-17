@@ -24,6 +24,7 @@ import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.material.WorldVersion;
+import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 import net.elytrium.limboapi.protocol.packets.s2c.ChangeGameStatePacket;
@@ -91,7 +92,12 @@ public class PacketFactoryImpl implements PacketFactory {
 
   @Override
   public Object createSetSlotPacket(int windowID, int slot, VirtualItem item, int count, int data, @Nullable CompoundBinaryTag nbt) {
-    return new SetSlotPacket(windowID, slot, item, count, data, nbt);
+    return new SetSlotPacket(windowID, slot, item, count, data, nbt, null);
+  }
+
+  @Override
+  public Object createSetSlotPacket(int windowID, int slot, VirtualItem item, int count, int data, @Nullable ItemComponentMap map) {
+    return new SetSlotPacket(windowID, slot, item, count, data, null, map);
   }
 
   @Override

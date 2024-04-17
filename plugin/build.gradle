@@ -126,7 +126,8 @@ enum MinecraftVersion {
   MINECRAFT_1_19_4(762),
   MINECRAFT_1_20(763),
   MINECRAFT_1_20_2(764),
-  MINECRAFT_1_20_3(765)
+  MINECRAFT_1_20_3(765),
+  MINECRAFT_1_20_5(766)
 
   public static final List<MinecraftVersion> WORLD_VERSIONS = List.of(
     MINECRAFT_1_13,
@@ -140,7 +141,12 @@ enum MinecraftVersion {
     MINECRAFT_1_19_3,
     MINECRAFT_1_19_4,
     MINECRAFT_1_20,
-    MINECRAFT_1_20_3
+    MINECRAFT_1_20_3,
+    MINECRAFT_1_20_5
+  )
+
+  public static final List<MinecraftVersion> COMPONENT_VERSIONS = List.of(
+    MINECRAFT_1_20_5
   )
 
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
@@ -213,7 +219,8 @@ File downloadVersionManifest(String version) {
   this.println("> Downloading ${version} manifest...")
 
   Object manifest = new JsonSlurper().parse(versionManifestFile)
-  def optional = manifest.versions.stream().filter({it.id == version}).findFirst()
+  // TODO: remove this workaround then 1.20.5 releases
+  def optional = manifest.versions.stream().filter({it.id == (version == "1.20.5" ? "1.20.5-rc1" : version)}).findFirst()
   if (optional.empty()) {
     throw new RuntimeException("Couldn't find version: ${version}")
   }
@@ -529,7 +536,13 @@ void generateRegistryMapping(String target, File targetDir, Map<MinecraftVersion
 
     Map<String, Map<String, String>> mapping = new JsonSlurper()
             .parse(new File(this.getProjectDir(), "mapping/legacy_${target}s_mapping.json"))
-            .collectEntries({ key, value -> [modernIDs[key], value] })
+            .collectEntries({ key, value -> {
+              if (modernIDs[key] == null) {
+                throw new IllegalStateException("No modern id found for $key")
+              }
+
+              return [modernIDs[key], value]
+            } })
 
     idMap.forEach({ version, ids ->
       ids.forEach({ key, id ->
@@ -551,6 +564,8 @@ void generateRegistryMappings(File targetDir, Map<MinecraftVersion, Object> regi
   this.generateRegistryMapping("item", targetDir, registriesReports
           .findAll({ e -> MinecraftVersion.WORLD_VERSIONS.contains(e.getKey()) }))
   this.generateRegistryMapping("block", targetDir, registriesReports)
+  this.generateRegistryMapping("data_component_type", targetDir, registriesReports
+          .findAll({ e -> MinecraftVersion.COMPONENT_VERSIONS.contains(e.getKey()) }))
 
   File blockEntitiesMappingFile = new File(targetDir, "blockentities_mapping.json");
 
