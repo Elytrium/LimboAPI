@@ -36,6 +36,7 @@ import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerCommandPa
 import com.velocitypowered.proxy.protocol.packet.chat.legacy.LegacyChatPacket;
 import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerChatPacket;
 import com.velocitypowered.proxy.protocol.packet.chat.session.SessionPlayerCommandPacket;
+import com.velocitypowered.proxy.protocol.packet.chat.session.UnsignedPlayerCommandPacket;
 import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
@@ -364,6 +365,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
           return;
         }
       }
+    } else if (packet instanceof UnsignedPlayerCommandPacket commandPacket) {
+      this.handleChat("/" + commandPacket.getCommand());
+      return;
     }
 
     this.callback.onGeneric(packet);
