@@ -35,6 +35,7 @@ import net.elytrium.limboapi.server.item.type.ComponentsItemComponent;
 import net.elytrium.limboapi.server.item.type.DyedColorItemComponent;
 import net.elytrium.limboapi.server.item.type.EmptyItemComponent;
 import net.elytrium.limboapi.server.item.type.EnchantmentsItemComponent;
+import net.elytrium.limboapi.server.item.type.GameProfileItemComponent;
 import net.elytrium.limboapi.server.item.type.IntItemComponent;
 import net.elytrium.limboapi.server.item.type.StringItemComponent;
 import net.elytrium.limboapi.server.item.type.StringsItemComponent;
@@ -84,9 +85,15 @@ public class SimpleItemComponentManager {
   private final Map<String, Function<ProtocolVersion, WriteableItemComponent>> factory = new HashMap<>();
 
   public SimpleItemComponentManager() {
-    // TODO: implement missing components
+    // TODO: implement missing components:
+    //  trim, intangible_projectile, food, suspicious_stew_effects, lock, tool,
+    //  can_break, writable_book_content, potion_contents, bees, banner_patterns,
+    //  pot_decorations, map_decorations, debug_stick_state, can_place_on, lodestone_tracker,
+    //  written_book_content, container_loot, container, block_state, attribute_modifiers,
+    //  bundle_contents, firework_explosion, charged_projectiles, fireworks
     this.register("minecraft:lore", version -> new ComponentsItemComponent("minecraft:lore"));
     this.register("minecraft:dyed_color", version -> new DyedColorItemComponent("minecraft:dyed_color"));
+    this.register("minecraft:profile", version -> new GameProfileItemComponent("minecraft:profile"));
 
     for (String type : new String[] { "minecraft:max_stack_size", "minecraft:max_damage",
                                       "minecraft:damage", "minecraft:rarity", "minecraft:custom_model_data",
@@ -128,10 +135,6 @@ public class SimpleItemComponentManager {
     for (String type : new String[] { "minecraft:recipes" }) {
       this.register(type, version -> new StringsItemComponent(type));
     }
-  }
-
-  public void registerVarInt(String name) {
-    this.register(name, version -> new VarIntItemComponent(name));
   }
 
   public <T> void register(String name, Function<ProtocolVersion, WriteableItemComponent> factory) {
