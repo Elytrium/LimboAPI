@@ -130,7 +130,7 @@ public class SimpleBlock implements VirtualBlock {
 
     LinkedTreeMap<String, String> modernIdRemap = GSON.fromJson(
         new InputStreamReader(
-            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/modern_id_remap.json")),
+            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/modern_block_id_remap.json")),
             StandardCharsets.UTF_8
         ),
         LinkedTreeMap.class

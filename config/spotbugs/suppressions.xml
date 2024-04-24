@@ -13,4 +13,7 @@
     <Match>
         <Bug pattern="THROWS_METHOD_THROWS_CLAUSE_THROWABLE"/>
     </Match>
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
 </FindBugsFilter>

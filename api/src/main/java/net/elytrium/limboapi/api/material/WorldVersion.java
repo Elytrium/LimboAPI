@@ -26,7 +26,8 @@ public enum WorldVersion {
   MINECRAFT_1_19_3(ProtocolVersion.MINECRAFT_1_19_3),
   MINECRAFT_1_19_4(EnumSet.range(ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_20)),
   MINECRAFT_1_20(EnumSet.range(ProtocolVersion.MINECRAFT_1_20, ProtocolVersion.MINECRAFT_1_20_2)),
-  MINECRAFT_1_20_3(EnumSet.range(ProtocolVersion.MINECRAFT_1_20_3, ProtocolVersion.MAXIMUM_VERSION));
+  MINECRAFT_1_20_3(ProtocolVersion.MINECRAFT_1_20_3),
+  MINECRAFT_1_20_5(EnumSet.range(ProtocolVersion.MINECRAFT_1_20_5, ProtocolVersion.MAXIMUM_VERSION));
 
   private static final EnumMap<ProtocolVersion, WorldVersion> MC_VERSION_TO_ITEM_VERSIONS = new EnumMap<>(ProtocolVersion.class);
 
@@ -70,6 +71,7 @@ public enum WorldVersion {
       case "1.19.4" -> MINECRAFT_1_19_4;
       case "1.20" -> MINECRAFT_1_20;
       case "1.20.3" -> MINECRAFT_1_20_3;
+      case "1.20.5" -> MINECRAFT_1_20_5;
       default -> LEGACY;
     };
   }

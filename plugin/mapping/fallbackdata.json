@@ -1,4 +1,8 @@
 {
+  "MINECRAFT_1_20_3": {
+    "minecraft:vault": "minecraft:spawner",
+    "minecraft:heavy_core": "minecraft:wither_skeleton_skull"
+  },
   "MINECRAFT_1_20_2": {
     "minecraft:short_grass": "minecraft:grass",
     "minecraft:trial_spawner": "minecraft:spawner",

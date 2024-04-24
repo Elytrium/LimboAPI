@@ -92,10 +92,26 @@ public class SimpleItem implements VirtualItem {
         LinkedTreeMap.class
     );
 
+    LinkedTreeMap<String, String> modernIdRemap = GSON.fromJson(
+        new InputStreamReader(
+            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/modern_item_id_remap.json")), StandardCharsets.UTF_8
+        ),
+        LinkedTreeMap.class
+    );
+
     modernItems.forEach((modernId, modernProtocolId) -> {
       SimpleItem simpleItem = new SimpleItem(modernId);
       itemsMapping.get(modernProtocolId).forEach((key, value) -> simpleItem.versionIDs.put(WorldVersion.parse(key), Short.parseShort(value)));
       MODERN_ID_MAP.put(modernId, simpleItem);
+
+      String remapped = modernIdRemap.get(modernId);
+      if (remapped != null) {
+        if (MODERN_ID_MAP.containsKey(remapped)) {
+          throw new IllegalStateException("Remapped id " + remapped + " (from " + modernId + ") already exists");
+        }
+
+        MODERN_ID_MAP.put(remapped, simpleItem);
+      }
     });
 
     legacyItems.forEach((legacyProtocolId, modernId) -> LEGACY_ID_MAP.put(Integer.parseInt(legacyProtocolId), MODERN_ID_MAP.get(modernId)));
