@@ -61,6 +61,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import it.unimi.dsi.fastutil.Pair;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
@@ -106,6 +107,7 @@ import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
 import net.elytrium.limboapi.server.world.SimpleTagManager;
+import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -188,6 +190,7 @@ public class LimboImpl implements Limbo {
     JoinGamePacket joinGame1191 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_1);
     JoinGamePacket joinGame1194 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_4);
     JoinGamePacket joinGame120 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_20);
+    JoinGamePacket joinGame1205 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_20_5);
 
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
@@ -197,7 +200,8 @@ public class LimboImpl implements Limbo {
         .prepare(joinGame119, ProtocolVersion.MINECRAFT_1_19, ProtocolVersion.MINECRAFT_1_19)
         .prepare(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1, ProtocolVersion.MINECRAFT_1_19_3)
         .prepare(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4)
-        .prepare(joinGame120, ProtocolVersion.MINECRAFT_1_20);
+        .prepare(joinGame120, ProtocolVersion.MINECRAFT_1_20, ProtocolVersion.MINECRAFT_1_20_3)
+        .prepare(joinGame1205, ProtocolVersion.MINECRAFT_1_20_5);
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
@@ -230,7 +234,8 @@ public class LimboImpl implements Limbo {
         .build();
 
     this.configPackets = this.plugin.createConfigPreparedPacket();
-    this.configPackets.prepare(this::createRegistrySync, ProtocolVersion.MINECRAFT_1_20_2);
+    this.configPackets.prepare(this::createRegistrySyncLegacy, ProtocolVersion.MINECRAFT_1_20_2, ProtocolVersion.MINECRAFT_1_20_3);
+    this.createRegistrySyncModern(this.configPackets, ProtocolVersion.MINECRAFT_1_20_5);
     if (this.shouldUpdateTags) {
       this.configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
     }
@@ -261,7 +266,7 @@ public class LimboImpl implements Limbo {
     return new ChangeGameStatePacket(13, 0);
   }
 
-  private RegistrySyncPacket createRegistrySync(ProtocolVersion version) {
+  private RegistrySyncPacket createRegistrySyncLegacy(ProtocolVersion version) {
     JoinGamePacket join = this.createJoinGamePacket(version);
 
     // Blame Velocity for this madness
@@ -271,6 +276,47 @@ public class LimboImpl implements Limbo {
     RegistrySyncPacket sync = new RegistrySyncPacket();
     sync.replace(encodedRegistry);
     return sync;
+  }
+
+  private void createRegistrySyncModern(PreparedPacket packet, ProtocolVersion initialVersion) {
+    JoinGamePacket join = this.createJoinGamePacket(initialVersion);
+
+    // Blame Velocity for this madness
+    CompoundBinaryTag registryTag = join.getRegistry();
+    for (String key : registryTag.keySet()) {
+      CompoundBinaryTag entry = registryTag.getCompound(key);
+
+      String type = entry.getString("type");
+      ListBinaryTag values = entry.getList("value", BinaryTagTypes.COMPOUND);
+
+      List<Pair<String, BinaryTag>> tags = new ArrayList<>();
+
+      // TODO: handle ids?
+      // TODO: does optifine still breaks then "there is no specific biome"?
+      for (BinaryTag elementTag : values) {
+        CompoundBinaryTag element = (CompoundBinaryTag) elementTag;
+        tags.add(Pair.of(element.getString("name"), element.getCompound("element")));
+      }
+
+      packet.prepare(version -> {
+        ByteBuf registry = this.plugin.getPreparedPacketFactory().getPreparedPacketAllocator().ioBuffer();
+
+        ProtocolUtils.writeString(registry, type);
+        ProtocolUtils.writeVarInt(registry, tags.size());
+        for (Pair<String, BinaryTag> tag : tags) {
+          ProtocolUtils.writeString(registry, tag.left());
+
+          registry.writeBoolean(tag.right() != null);
+          if (tag.right() != null) {
+            ProtocolUtils.writeBinaryTag(registry, version, tag.right());
+          }
+        }
+
+        RegistrySyncPacket sync = new RegistrySyncPacket();
+        sync.replace(registry);
+        return sync;
+      }, initialVersion);
+    }
   }
 
   private TagsUpdatePacket createTagsUpdate(ProtocolVersion version) {
@@ -746,7 +792,7 @@ public class LimboImpl implements Limbo {
     joinGame.setReducedDebugInfo(this.reducedDebugInfo);
 
     String key = dimension.getKey();
-    joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false));
+    joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false, version));
 
     CompoundBinaryTag.Builder registryContainer = CompoundBinaryTag.builder();
     ListBinaryTag encodedDimensionRegistry = ListBinaryTag.builder(BinaryTagTypes.COMPOUND)

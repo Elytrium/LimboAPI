@@ -14,6 +14,7 @@ import net.elytrium.limboapi.api.chunk.Dimension;
 import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.material.WorldVersion;
+import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
 import net.elytrium.limboapi.api.protocol.packets.data.AbilityFlags;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -47,6 +48,8 @@ public interface PacketFactory {
   Object createSetExperiencePacket(float expBar, int level, int totalExp);
 
   Object createSetSlotPacket(int windowID, int slot, VirtualItem item, int count, int data, @Nullable CompoundBinaryTag nbt);
+
+  Object createSetSlotPacket(int windowID, int slot, VirtualItem item, int count, int data, @Nullable ItemComponentMap map);
 
   Object createTimeUpdatePacket(long worldAge, long timeOfDay);
 

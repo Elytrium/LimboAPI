@@ -23,6 +23,7 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -35,14 +36,18 @@ public class SetSlotPacket implements MinecraftPacket {
   private final int data;
   @Nullable
   private final CompoundBinaryTag nbt;
+  @Nullable
+  private final ItemComponentMap map;
 
-  public SetSlotPacket(int windowID, int slot, VirtualItem item, int count, int data, @Nullable CompoundBinaryTag nbt) {
+  public SetSlotPacket(int windowID, int slot, VirtualItem item, int count, int data,
+      @Nullable CompoundBinaryTag nbt, @Nullable ItemComponentMap map) {
     this.windowID = windowID;
     this.slot = slot;
     this.item = item;
     this.count = count;
     this.data = data;
     this.nbt = nbt;
+    this.map = map;
   }
 
   public SetSlotPacket() {
@@ -56,6 +61,35 @@ public class SetSlotPacket implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_20_5) >= 0) {
+      this.encodeModern(buf, direction, protocolVersion);
+    } else {
+      this.encodeLegacy(buf, direction, protocolVersion);
+    }
+  }
+
+  public void encodeModern(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    buf.writeByte(this.windowID);
+    ProtocolUtils.writeVarInt(buf, 0);
+    buf.writeShort(this.slot);
+
+    int id = this.item.getID(protocolVersion);
+    if (id == 0) {
+      ProtocolUtils.writeVarInt(buf, 0);
+    } else {
+      ProtocolUtils.writeVarInt(buf, this.count);
+      ProtocolUtils.writeVarInt(buf, id);
+
+      if (this.map != null) {
+        this.map.write(protocolVersion, buf);
+      } else {
+        ProtocolUtils.writeVarInt(buf, 0);
+        ProtocolUtils.writeVarInt(buf, 0);
+      }
+    }
+  }
+
+  public void encodeLegacy(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     buf.writeByte(this.windowID);
 
     if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17_1) >= 0) {

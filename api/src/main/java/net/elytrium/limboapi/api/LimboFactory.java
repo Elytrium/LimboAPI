@@ -26,6 +26,7 @@ import net.elytrium.limboapi.api.material.Block;
 import net.elytrium.limboapi.api.material.Item;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
+import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
 import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 
@@ -236,6 +237,13 @@ public interface LimboFactory {
    * @return new virtual item.
    */
   VirtualItem getLegacyItem(int itemLegacyID);
+
+  /**
+   * Creates new item component map.
+   *
+   * @return new item component map
+   */
+  ItemComponentMap createItemComponentMap();
 
   VirtualBlockEntity getBlockEntity(String entityID);
 

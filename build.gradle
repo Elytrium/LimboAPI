@@ -4,7 +4,7 @@ plugins() {
   id("java")
 
   id("checkstyle")
-  id("com.github.spotbugs").version("5.0.14").apply(false)
+  id("com.github.spotbugs").version("6.0.12").apply(false)
   id("org.cadixdev.licenser").version("0.6.1").apply(false)
 }
 
