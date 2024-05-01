@@ -68,6 +68,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -289,21 +290,35 @@ public class LimboImpl implements Limbo {
       String type = entry.getString("type");
       ListBinaryTag values = entry.getList("value", BinaryTagTypes.COMPOUND);
 
-      List<Pair<String, BinaryTag>> tags = new ArrayList<>();
+      Pair<String, BinaryTag> emptyTag = null;
+      Pair<String, BinaryTag>[] tags = new Pair[0];
 
-      // TODO: handle ids?
-      // TODO: does optifine still breaks then "there is no specific biome"?
       for (BinaryTag elementTag : values) {
         CompoundBinaryTag element = (CompoundBinaryTag) elementTag;
-        tags.add(Pair.of(element.getString("name"), element.getCompound("element")));
+        int id = element.getInt("id");
+        if (id >= tags.length) {
+          tags = Arrays.copyOf(tags, id + 1);
+        }
+
+        tags[id] = Pair.of(element.getString("name"), element.getCompound("element"));
+        if (emptyTag == null) {
+          emptyTag = tags[id];
+        }
       }
 
+      for (int i = 0; i < tags.length; i++) {
+        if (tags[i] == null) {
+          tags[i] = emptyTag;
+        }
+      }
+
+      Pair<String, BinaryTag>[] patchedTags = tags;
       packet.prepare(version -> {
         ByteBuf registry = this.plugin.getPreparedPacketFactory().getPreparedPacketAllocator().ioBuffer();
 
         ProtocolUtils.writeString(registry, type);
-        ProtocolUtils.writeVarInt(registry, tags.size());
-        for (Pair<String, BinaryTag> tag : tags) {
+        ProtocolUtils.writeVarInt(registry, patchedTags.length);
+        for (Pair<String, BinaryTag> tag : patchedTags) {
           ProtocolUtils.writeString(registry, tag.left());
 
           registry.writeBoolean(tag.right() != null);
