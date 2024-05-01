@@ -539,18 +539,19 @@ public class LimboImpl implements Limbo {
 
     MinecraftPacket playerInfoPacket;
 
+    UUID uuid = this.plugin.getInitialID(player);
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
       playerInfoPacket = new LegacyPlayerListItemPacket(
           LegacyPlayerListItemPacket.ADD_PLAYER,
           List.of(
-              new LegacyPlayerListItemPacket.Item(player.getUniqueId())
+              new LegacyPlayerListItemPacket.Item(uuid)
                   .setName(player.getUsername())
                   .setGameMode(this.gameMode)
                   .setProperties(player.getGameProfileProperties())
           )
       );
     } else {
-      UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(player.getUniqueId());
+      UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(uuid);
       playerInfoEntry.setDisplayName(new ComponentHolder(player.getProtocolVersion(), Component.text(player.getUsername())));
       playerInfoEntry.setGameMode(this.gameMode);
       playerInfoEntry.setProfile(player.getGameProfile());

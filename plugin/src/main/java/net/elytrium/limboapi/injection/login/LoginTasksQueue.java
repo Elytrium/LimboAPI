@@ -68,6 +68,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
@@ -131,22 +132,23 @@ public class LoginTasksQueue {
     eventManager.fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode())).thenAcceptAsync(
         gameProfile -> {
           try {
+            UUID uuid = this.plugin.getInitialID(this.player);
             if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
               connection.delayedWrite(new LegacyPlayerListItemPacket(
                   LegacyPlayerListItemPacket.REMOVE_PLAYER,
-                  List.of(new LegacyPlayerListItemPacket.Item(this.player.getUniqueId()))
+                  List.of(new LegacyPlayerListItemPacket.Item(uuid))
               ));
 
               connection.delayedWrite(new LegacyPlayerListItemPacket(
                   LegacyPlayerListItemPacket.ADD_PLAYER,
                   List.of(
-                      new LegacyPlayerListItemPacket.Item(this.player.getUniqueId())
+                      new LegacyPlayerListItemPacket.Item(uuid)
                           .setName(gameProfile.getUsername())
                           .setProperties(gameProfile.getGameProfile().getProperties())
                   )
               ));
             } else if (connection.getState() != StateRegistry.CONFIG) {
-              UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(this.player.getUniqueId());
+              UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(uuid);
               playerInfoEntry.setDisplayName(new ComponentHolder(this.player.getProtocolVersion(), Component.text(gameProfile.getUsername())));
               playerInfoEntry.setProfile(gameProfile.getGameProfile());
 

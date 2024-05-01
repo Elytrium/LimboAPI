@@ -31,6 +31,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
@@ -200,16 +201,17 @@ public class LimboPlayerImpl implements LimboPlayer {
       int id = this.gameMode.getID();
       this.sendAbilities();
       if (!is17) {
+        UUID uuid = this.plugin.getInitialID(this.player);
         if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
           this.writePacket(
               new LegacyPlayerListItemPacket(LegacyPlayerListItemPacket.UPDATE_GAMEMODE,
                   List.of(
-                      new LegacyPlayerListItemPacket.Item(this.player.getUniqueId()).setGameMode(id)
+                      new LegacyPlayerListItemPacket.Item(uuid).setGameMode(id)
                   )
               )
           );
         } else {
-          UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(this.player.getUniqueId());
+          UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(uuid);
           playerInfoEntry.setGameMode(id);
 
           this.writePacket(new UpsertPlayerInfoPacket(EnumSet.of(UpsertPlayerInfoPacket.Action.UPDATE_GAME_MODE), List.of(playerInfoEntry)));
@@ -305,7 +307,7 @@ public class LimboPlayerImpl implements LimboPlayer {
       if (this.connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) <= 0) {
         this.connection.delayedWrite(new LegacyPlayerListItemPacket(
             LegacyPlayerListItemPacket.REMOVE_PLAYER,
-            List.of(new LegacyPlayerListItemPacket.Item(this.player.getUniqueId()))
+            List.of(new LegacyPlayerListItemPacket.Item(this.plugin.getInitialID(this.player)))
         ));
       }
 
