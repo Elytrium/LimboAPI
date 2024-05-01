@@ -191,7 +191,6 @@ public class LimboImpl implements Limbo {
     JoinGamePacket joinGame1191 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_1);
     JoinGamePacket joinGame1194 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_4);
     JoinGamePacket joinGame120 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_20);
-    JoinGamePacket joinGame1205 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_20_5);
 
     this.joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
@@ -201,8 +200,7 @@ public class LimboImpl implements Limbo {
         .prepare(joinGame119, ProtocolVersion.MINECRAFT_1_19, ProtocolVersion.MINECRAFT_1_19)
         .prepare(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1, ProtocolVersion.MINECRAFT_1_19_3)
         .prepare(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4)
-        .prepare(joinGame120, ProtocolVersion.MINECRAFT_1_20, ProtocolVersion.MINECRAFT_1_20_3)
-        .prepare(joinGame1205, ProtocolVersion.MINECRAFT_1_20_5);
+        .prepare(joinGame120, ProtocolVersion.MINECRAFT_1_20);
 
     this.fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
