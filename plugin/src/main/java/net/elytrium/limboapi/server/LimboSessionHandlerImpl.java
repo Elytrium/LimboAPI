@@ -113,10 +113,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     if (originalHandler instanceof LimboSessionHandlerImpl sessionHandler) {
       this.settings = sessionHandler.getSettings();
       this.brand = sessionHandler.getBrand();
-      this.keepAliveKey = sessionHandler.keepAliveKey;
-      this.keepAlivePending = sessionHandler.keepAlivePending;
-      this.keepAliveSentTime = sessionHandler.keepAliveSentTime;
-      this.ping = sessionHandler.ping;
     }
   }
 
@@ -138,6 +134,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         if (Settings.IMP.MAIN.LOGGING_ENABLED) {
           LimboAPI.getLogger().warn("{} was kicked due to keepalive timeout.", this.player);
         }
+      } else if (this.keepAliveSentTime == 0 && this.originalHandler instanceof LimboSessionHandlerImpl sessionHandler) {
+        this.keepAliveKey = sessionHandler.keepAliveKey;
+        this.keepAlivePending = sessionHandler.keepAlivePending;
+        this.keepAliveSentTime = sessionHandler.keepAliveSentTime;
+        this.ping = sessionHandler.ping;
       } else {
         this.keepAliveKey = ThreadLocalRandom.current().nextInt();
         KeepAlivePacket keepAlive = new KeepAlivePacket();
@@ -146,7 +147,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.keepAlivePending = true;
         this.keepAliveSentTime = System.currentTimeMillis();
       }
-    }, 250, (serverReadTimeout == null ? this.plugin.getServer().getConfiguration().getReadTimeout() / 2 : serverReadTimeout), TimeUnit.MILLISECONDS);
+    }, 250, (serverReadTimeout == null ? this.plugin.getServer().getConfiguration().getReadTimeout() : serverReadTimeout), TimeUnit.MILLISECONDS);
   }
 
   public void onSpawn() {
@@ -272,11 +273,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       } else {
         this.keepAlivePending = false;
         int currentPing = (int) (System.currentTimeMillis() - this.keepAliveSentTime);
-        if (this.ping == -1) {
-          this.ping = currentPing;
-        } else {
-          this.ping = (this.ping * 3 + currentPing) / 4;
-        }
+        this.ping = this.ping == -1 ? currentPing : (this.ping * 3 + currentPing) / 4;
         return true;
       }
     } else {
