@@ -18,6 +18,7 @@
 package net.elytrium.limboapi.injection.packet;
 
 import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.backend.BackendPlaySessionHandler;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
@@ -65,7 +66,11 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
             fixedEntry.setGameMode(item.getGameMode());
             fixedEntry.setLatency(item.getLatency());
             fixedEntry.setDisplayName(item.getDisplayName());
-            fixedEntry.setProfile(item.getProfile());
+            if (item.getProfile() != null && item.getProfile().getId().equals(player.getUniqueId())) {
+              fixedEntry.setProfile(new GameProfile(initialID, item.getProfile().getName(), item.getProfile().getProperties()));
+            } else {
+              fixedEntry.setProfile(item.getProfile());
+            }
             fixedEntry.setListed(item.isListed());
             fixedEntry.setChatSession(item.getChatSession());
 
