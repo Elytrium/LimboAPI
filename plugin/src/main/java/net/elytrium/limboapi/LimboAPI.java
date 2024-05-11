@@ -90,6 +90,7 @@ import net.elytrium.limboapi.injection.packet.LimboCompressDecoder;
 import net.elytrium.limboapi.injection.packet.MinecraftDiscardCompressDecoder;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
+import net.elytrium.limboapi.injection.packet.RemovePlayerInfoHook;
 import net.elytrium.limboapi.injection.packet.UpsertPlayerInfoHook;
 import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
@@ -189,6 +190,7 @@ public class LimboAPI implements LimboFactory {
       EventManagerHook.init(this);
       LegacyPlayerListItemHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
       UpsertPlayerInfoHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
+      RemovePlayerInfoHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
 
       LimboProtocol.init();
     } catch (Throwable e) {
