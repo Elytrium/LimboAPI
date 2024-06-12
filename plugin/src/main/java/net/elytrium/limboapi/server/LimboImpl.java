@@ -75,6 +75,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -113,6 +114,7 @@ import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
+import net.kyori.adventure.nbt.StringBinaryTag;
 import net.kyori.adventure.text.Component;
 
 public class LimboImpl implements Limbo {
@@ -234,7 +236,8 @@ public class LimboImpl implements Limbo {
 
     this.configPackets = this.plugin.createConfigPreparedPacket();
     this.configPackets.prepare(this::createRegistrySyncLegacy, ProtocolVersion.MINECRAFT_1_20_2, ProtocolVersion.MINECRAFT_1_20_3);
-    this.createRegistrySyncModern(this.configPackets, ProtocolVersion.MINECRAFT_1_20_5);
+    this.createRegistrySyncModern(this.configPackets, ProtocolVersion.MINECRAFT_1_20_5, ProtocolVersion.MINECRAFT_1_20_5);
+    this.createRegistrySyncModern(this.configPackets, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MAXIMUM_VERSION);
     if (this.shouldUpdateTags) {
       this.configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
     }
@@ -268,7 +271,6 @@ public class LimboImpl implements Limbo {
   private RegistrySyncPacket createRegistrySyncLegacy(ProtocolVersion version) {
     JoinGamePacket join = this.createJoinGamePacket(version);
 
-    // Blame Velocity for this madness
     ByteBuf encodedRegistry = this.plugin.getPreparedPacketFactory().getPreparedPacketAllocator().ioBuffer();
     ProtocolUtils.writeBinaryTag(encodedRegistry, version, join.getRegistry());
 
@@ -277,10 +279,9 @@ public class LimboImpl implements Limbo {
     return sync;
   }
 
-  private void createRegistrySyncModern(PreparedPacket packet, ProtocolVersion initialVersion) {
-    JoinGamePacket join = this.createJoinGamePacket(initialVersion);
+  private void createRegistrySyncModern(PreparedPacket packet, ProtocolVersion from, ProtocolVersion to) {
+    JoinGamePacket join = this.createJoinGamePacket(from);
 
-    // Blame Velocity for this madness
     CompoundBinaryTag registryTag = join.getRegistry();
     for (String key : registryTag.keySet()) {
       CompoundBinaryTag entry = registryTag.getCompound(key);
@@ -328,7 +329,7 @@ public class LimboImpl implements Limbo {
         RegistrySyncPacket sync = new RegistrySyncPacket();
         sync.replace(registry);
         return sync;
-      }, initialVersion);
+      }, from, to);
     }
   }
 
@@ -749,6 +750,27 @@ public class LimboImpl implements Limbo {
     }
   }
 
+  private CompoundBinaryTag createRegistry(String registryName, Map<String, CompoundBinaryTag> tags) {
+    int id = 0;
+
+    ListBinaryTag.Builder<CompoundBinaryTag> builder = ListBinaryTag.builder(BinaryTagTypes.COMPOUND);
+    for (Entry<String, CompoundBinaryTag> tag : tags.entrySet()) {
+      builder.add(CompoundBinaryTag.builder()
+          .putString("name", tag.getKey())
+          .putInt("id", id++)
+          .put("element", tag.getValue())
+          .build());
+    }
+
+    return this.createRegistry(registryName, builder.build());
+  }
+
+  private CompoundBinaryTag createRegistry(String registryName, ListBinaryTag tags) {
+    return CompoundBinaryTag.builder()
+        .putString("type", registryName)
+        .put("value", tags).build();
+  }
+
   private CompoundBinaryTag createDimensionData(Dimension dimension, ProtocolVersion version) {
     CompoundBinaryTag details = CompoundBinaryTag.builder()
         .putBoolean("natural", false)
@@ -829,8 +851,48 @@ public class LimboImpl implements Limbo {
 
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_19_4) == 0) {
         registryContainer.put("minecraft:damage_type", DAMAGE_TYPE_1194);
-      } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_20) >= 0) {
+      } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_20_5) <= 0) {
         registryContainer.put("minecraft:damage_type", DAMAGE_TYPE_120);
+      } else {
+        // TODO: 1.21 damage types
+        CompoundBinaryTag.Builder builder = CompoundBinaryTag.builder();
+        ListBinaryTag values = DAMAGE_TYPE_120.getList("value");
+
+        ListBinaryTag.Builder<CompoundBinaryTag> tags = ListBinaryTag.builder(BinaryTagTypes.COMPOUND);
+        for (BinaryTag tag : values) {
+          tags.add((CompoundBinaryTag) tag);
+        }
+
+        CompoundBinaryTag.Builder campfileType = CompoundBinaryTag.builder()
+            .putString("name", "minecraft:campfire")
+            .putInt("id", values.size())
+            .put("element", values.getCompound(0).getCompound("element"));
+
+        tags.add(campfileType.build());
+
+        registryContainer.put("minecraft:damage_type", this.createRegistry("minecraft:damage_type", tags.build()));
+      }
+
+      if (version.compareTo(ProtocolVersion.MINECRAFT_1_21) >= 0) {
+        // TODO: API
+        CompoundBinaryTag.Builder paintingVariant = CompoundBinaryTag.builder()
+            .putInt("width", 1)
+            .putInt("height", 1)
+            .putString("asset_id", "minecraft:alban");
+
+        registryContainer.put("minecraft:painting_variant", this.createRegistry("minecraft:painting_variant",
+            Map.of("minecraft:alban", paintingVariant.build())));
+
+        CompoundBinaryTag.Builder wolfVariant = CompoundBinaryTag.builder()
+            .putString("wild_texture", "minecraft:entity/wolf/wolf_ashen")
+            .putString("tame_texture", "minecraft:entity/wolf/wolf_ashen_tame")
+            .putString("angry_texture", "minecraft:entity/wolf/wolf_ashen_angry")
+            .put("biomes", ListBinaryTag.builder()
+                .add(StringBinaryTag.stringBinaryTag("minecraft:plains")).build()
+            );
+
+        registryContainer.put("minecraft:wolf_variant", this.createRegistry("minecraft:wolf_variant",
+            Map.of("minecraft:ashen", wolfVariant.build())));
       }
     } else {
       registryContainer.put("dimension", encodedDimensionRegistry);
