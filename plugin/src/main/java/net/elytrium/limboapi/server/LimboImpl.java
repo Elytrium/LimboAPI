@@ -849,12 +849,10 @@ public class LimboImpl implements Limbo {
         registryContainer.put("minecraft:chat_type", CHAT_TYPE_1191);
       }
 
+      // TODO: Generate mappings for damage_type registry
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_19_4) == 0) {
         registryContainer.put("minecraft:damage_type", DAMAGE_TYPE_1194);
-      } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_20_5) <= 0) {
-        registryContainer.put("minecraft:damage_type", DAMAGE_TYPE_120);
-      } else {
-        // TODO: 1.21 damage types
+      } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_21) >= 0) {
         CompoundBinaryTag.Builder builder = CompoundBinaryTag.builder();
         ListBinaryTag values = DAMAGE_TYPE_120.getList("value");
 
@@ -871,8 +869,11 @@ public class LimboImpl implements Limbo {
         tags.add(campfileType.build());
 
         registryContainer.put("minecraft:damage_type", this.createRegistry("minecraft:damage_type", tags.build()));
+      } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_20) >= 0) {
+        registryContainer.put("minecraft:damage_type", DAMAGE_TYPE_120);
       }
 
+      // TODO: Generate mappings for painting_variant and wolf_variant registries
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_21) >= 0) {
         // TODO: API
         CompoundBinaryTag.Builder paintingVariant = CompoundBinaryTag.builder()
