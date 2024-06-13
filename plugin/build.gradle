@@ -143,8 +143,7 @@ enum MinecraftVersion {
     MINECRAFT_1_19_4,
     MINECRAFT_1_20,
     MINECRAFT_1_20_3,
-    MINECRAFT_1_20_5,
-    MINECRAFT_1_21
+    MINECRAFT_1_20_5
   )
 
   public static final List<MinecraftVersion> COMPONENT_VERSIONS = List.of(
