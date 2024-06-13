@@ -32,10 +32,6 @@ allprojects() {
       setName("papermc-repo")
       setUrl("https://papermc.io/repo/repository/maven-public/")
     }
-    maven() {
-      setName("sonatype-snapshots-repo")
-      setUrl("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-    }
   }
 
   checkstyle() {

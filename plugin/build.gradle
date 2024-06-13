@@ -127,7 +127,8 @@ enum MinecraftVersion {
   MINECRAFT_1_20(763),
   MINECRAFT_1_20_2(764),
   MINECRAFT_1_20_3(765),
-  MINECRAFT_1_20_5(766)
+  MINECRAFT_1_20_5(766),
+  MINECRAFT_1_21(767)
 
   public static final List<MinecraftVersion> WORLD_VERSIONS = List.of(
     MINECRAFT_1_13,
@@ -146,7 +147,8 @@ enum MinecraftVersion {
   )
 
   public static final List<MinecraftVersion> COMPONENT_VERSIONS = List.of(
-    MINECRAFT_1_20_5
+    MINECRAFT_1_20_5,
+    MINECRAFT_1_21
   )
 
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
