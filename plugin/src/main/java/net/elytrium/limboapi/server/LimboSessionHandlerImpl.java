@@ -89,6 +89,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private ScheduledFuture<?> chatSessionTimeoutTask;
   private long keepAliveKey;
   private boolean keepAlivePending;
+  private int keepAlivesSkipped;
   private long keepAliveSentTime;
   private int ping = -1;
   private int genericBytes;
@@ -122,6 +123,13 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.callback.onConfig(this.limbo, player);
 
     Integer serverReadTimeout = this.limbo.getReadTimeout();
+    if (serverReadTimeout == null) {
+      serverReadTimeout = this.plugin.getServer().getConfiguration().getReadTimeout();
+    }
+
+    // We should always send multiple keepalives inside a single timeout to not trigger Netty read timeout.
+    serverReadTimeout /= 2;
+
     this.keepAliveTask = player.getScheduledExecutor().scheduleAtFixedRate(() -> {
       MinecraftConnection connection = this.player.getConnection();
       if (connection.isClosed()) {
@@ -130,13 +138,16 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       }
 
       if (this.keepAlivePending) {
-        connection.closeWith(this.plugin.getPackets().getTimeOut(this.player.getConnection().getState()));
-        if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-          LimboAPI.getLogger().warn("{} was kicked due to keepalive timeout.", this.player);
+        if (++this.keepAlivesSkipped == 2) {
+          connection.closeWith(this.plugin.getPackets().getTimeOut(this.player.getConnection().getState()));
+          if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+            LimboAPI.getLogger().warn("{} was kicked due to keepalive timeout.", this.player);
+          }
         }
       } else if (this.keepAliveSentTime == 0 && this.originalHandler instanceof LimboSessionHandlerImpl sessionHandler) {
         this.keepAliveKey = sessionHandler.keepAliveKey;
         this.keepAlivePending = sessionHandler.keepAlivePending;
+        this.keepAlivesSkipped = sessionHandler.keepAlivesSkipped;
         this.keepAliveSentTime = sessionHandler.keepAliveSentTime;
         this.ping = sessionHandler.ping;
       } else {
@@ -145,9 +156,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         keepAlive.setRandomId(this.keepAliveKey);
         connection.write(keepAlive);
         this.keepAlivePending = true;
+        this.keepAlivesSkipped = 0;
         this.keepAliveSentTime = System.currentTimeMillis();
       }
-    }, 250, (serverReadTimeout == null ? this.plugin.getServer().getConfiguration().getReadTimeout() : serverReadTimeout), TimeUnit.MILLISECONDS);
+    }, 250, serverReadTimeout, TimeUnit.MILLISECONDS);
   }
 
   public void onSpawn() {
@@ -272,6 +284,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         return false;
       } else {
         this.keepAlivePending = false;
+        this.keepAlivesSkipped = 0;
         int currentPing = (int) (System.currentTimeMillis() - this.keepAliveSentTime);
         this.ping = this.ping == -1 ? currentPing : (this.ping * 3 + currentPing) / 4;
         return true;
