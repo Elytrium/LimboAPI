@@ -34,10 +34,7 @@
 
 package net.elytrium.limboapi.injection.login;
 
-import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
-import com.velocitypowered.api.event.connection.DisconnectEvent;
-import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
@@ -68,8 +65,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import net.elytrium.commons.utils.reflection.ReflectionException;
@@ -92,21 +87,12 @@ public class LoginListener {
   private static final MethodHandle CONNECTED_PLAYER_CONSTRUCTOR;
   private static final MethodHandle SPAWNED_FIELD;
 
-  private final List<String> onlineMode = new ArrayList<>();
   private final LimboAPI plugin;
   private final VelocityServer server;
 
   public LoginListener(LimboAPI plugin, VelocityServer server) {
     this.plugin = plugin;
     this.server = server;
-  }
-
-  @Subscribe(order = PostOrder.LAST)
-  public void hookPreLogin(PreLoginEvent event) {
-    PreLoginEvent.PreLoginComponentResult result = event.getResult();
-    if (!result.isForceOfflineMode() && (this.server.getConfiguration().isOnlineMode() || result.isOnlineModeAllowed())) {
-      this.onlineMode.add(event.getUsername());
-    }
   }
 
   @Subscribe
@@ -116,11 +102,6 @@ public class LoginListener {
     }
 
     this.plugin.setLimboJoined(event.getPlayer());
-  }
-
-  @Subscribe
-  public void onDisconnect(DisconnectEvent event) {
-    this.onlineMode.remove(event.getPlayer().getUsername());
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -178,7 +159,7 @@ public class LoginListener {
               event.getGameProfile(),
               connection,
               inboundConnection.getVirtualHost().orElse(null),
-              this.onlineMode.contains(event.getUsername()),
+              event.isOnlineMode(),
               playerKey
           );
           if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
