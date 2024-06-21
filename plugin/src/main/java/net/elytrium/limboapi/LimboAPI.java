@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.elytrium.commons.config.YamlConfig;
 import net.elytrium.commons.kyori.serialization.Serializer;
@@ -133,6 +134,8 @@ public class LimboAPI implements LimboFactory {
   @MonotonicNonNull
   private static Serializer SERIALIZER;
 
+  public static final ConcurrentHashMap<Player, UUID> INITIAL_ID = new ConcurrentHashMap<>();
+
   private final VelocityServer server;
   private final Metrics.Factory metricsFactory;
   private final File configFile;
@@ -143,7 +146,6 @@ public class LimboAPI implements LimboFactory {
   private final HashMap<Player, LoginTasksQueue> loginQueue;
   private final HashMap<Player, Function<KickedFromServerEvent, Boolean>> kickCallback;
   private final HashMap<Player, RegisteredServer> nextServer;
-  private final HashMap<Player, UUID> initialID;
 
   private PreparedPacketFactory preparedPacketFactory;
   private PreparedPacketFactory configPreparedPacketFactory;
@@ -167,7 +169,6 @@ public class LimboAPI implements LimboFactory {
     this.loginQueue = new HashMap<>();
     this.kickCallback = new HashMap<>();
     this.nextServer = new HashMap<>();
-    this.initialID = new HashMap<>();
 
     int maximumProtocolVersionNumber = ProtocolVersion.MAXIMUM_VERSION.getProtocol();
     if (maximumProtocolVersionNumber < SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
@@ -600,15 +601,15 @@ public class LimboAPI implements LimboFactory {
   }
 
   public void setInitialID(Player player, UUID nextServer) {
-    this.initialID.put(player, nextServer);
+    INITIAL_ID.put(player, nextServer);
   }
 
   public void removeInitialID(Player player) {
-    this.initialID.remove(player);
+    INITIAL_ID.remove(player);
   }
 
   public UUID getInitialID(Player player) {
-    return this.initialID.get(player);
+    return INITIAL_ID.get(player);
   }
 
   public LoginListener getLoginListener() {

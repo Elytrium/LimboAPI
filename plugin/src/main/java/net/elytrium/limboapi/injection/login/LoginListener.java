@@ -75,17 +75,23 @@ import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
 import net.elytrium.limboapi.injection.dummy.DummyEventPool;
 import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.injection.packet.ServerLoginSuccessHook;
+import net.elytrium.limboapi.injection.tablist.RewritingKeyedVelocityTabList;
+import net.elytrium.limboapi.injection.tablist.RewritingVelocityTabList;
+import net.elytrium.limboapi.injection.tablist.RewritingVelocityTabListLegacy;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import sun.misc.Unsafe;
 
 public class LoginListener {
 
   private static final ClosedMinecraftConnection CLOSED_MINECRAFT_CONNECTION;
 
+  private static final Unsafe UNSAFE;
   private static final MethodHandle DELEGATE_FIELD;
   private static final Field MC_CONNECTION_FIELD;
   private static final MethodHandle CONNECTED_PLAYER_CONSTRUCTOR;
   private static final MethodHandle SPAWNED_FIELD;
+  private static final Field TABLIST_FIELD;
 
   private final LimboAPI plugin;
   private final VelocityServer server;
@@ -162,6 +168,16 @@ public class LoginListener {
               event.isOnlineMode(),
               playerKey
           );
+
+          long fieldOffset = UNSAFE.objectFieldOffset(TABLIST_FIELD);
+          if (connection.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_19_3)) {
+            UNSAFE.putObject(player, fieldOffset, new RewritingVelocityTabList(player));
+          } else if (connection.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
+            UNSAFE.putObject(player, fieldOffset, new RewritingKeyedVelocityTabList(player, this.server));
+          } else {
+            UNSAFE.putObject(player, fieldOffset, new RewritingVelocityTabListLegacy(player, this.server));
+          }
+
           if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
             loginHandler.setPlayer(player);
           }
@@ -292,6 +308,13 @@ public class LoginListener {
 
       SPAWNED_FIELD = MethodHandles.privateLookupIn(ClientPlaySessionHandler.class, MethodHandles.lookup())
           .findSetter(ClientPlaySessionHandler.class, "spawned", boolean.class);
+
+      Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+      unsafeField.setAccessible(true);
+      UNSAFE = (Unsafe) unsafeField.get(null);
+
+      TABLIST_FIELD = ConnectedPlayer.class.getDeclaredField("tabList");
+      TABLIST_FIELD.setAccessible(true);
     } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
       throw new ReflectionException(e);
     }
