@@ -154,26 +154,12 @@ enum MinecraftVersion {
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
   public static final MinecraftVersion MAXIMUM_VERSION = values()[values().length - 1]
 
-  private static final Map<Integer, MinecraftVersion> PVN_MAP = new HashMap<>()
-
-  static {
-    int pvn = MINIMUM_VERSION.getProtocolVersion()
-
-    for (MinecraftVersion version : values()) {
-      for (; pvn <= version.getProtocolVersion(); pvn++) {
-        PVN_MAP.put(pvn, version)
-      }
-    }
-  }
-
-  static MinecraftVersion fromPVN(int pvn) {
-    return PVN_MAP.getOrDefault(pvn)
-  }
-
   static MinecraftVersion fromVersionName(String name) {
     return valueOf("MINECRAFT_" + name.replace('.', '_'))
   }
 
+  // Cache version name to reduce memory usage in general
+  final String versionName = this.toString().substring(10).replace('_', '.')
   final int protocolVersion
 
   MinecraftVersion(int protocolVersion) {
@@ -185,7 +171,7 @@ enum MinecraftVersion {
   }
 
   String getVersionName() {
-    return this.toString().substring(10).replace('_', '.')
+    return this.versionName
   }
 }
 
