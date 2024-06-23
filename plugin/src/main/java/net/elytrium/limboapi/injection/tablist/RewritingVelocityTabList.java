@@ -18,15 +18,43 @@
 package net.elytrium.limboapi.injection.tablist;
 
 import com.velocitypowered.api.proxy.player.TabListEntry;
+import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.tablist.KeyedVelocityTabListEntry;
 import com.velocitypowered.proxy.tablist.VelocityTabList;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 public class RewritingVelocityTabList extends VelocityTabList implements RewritingTabList {
 
+  private static final MethodHandle MH_entries;
+
+  static {
+    try {
+      MH_entries = MethodHandles.privateLookupIn(VelocityTabList.class, MethodHandles.lookup())
+          .findGetter(VelocityTabList.class, "entries", Map.class);
+    } catch (Throwable throwable) {
+      throw new ExceptionInInitializerError(throwable);
+    }
+  }
+
+  // To keep compatibility with other plugins that use internal fields
+  private final ConnectedPlayer player;
+  private final MinecraftConnection connection;
+  private final Map<UUID, KeyedVelocityTabListEntry> entries;
+
   public RewritingVelocityTabList(ConnectedPlayer player) {
     super(player);
+    try {
+      this.player = player;
+      this.connection = player.getConnection();
+      this.entries = (Map<UUID, KeyedVelocityTabListEntry>) MH_entries.invokeExact((VelocityTabList) this);
+    } catch (Throwable e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @Override
