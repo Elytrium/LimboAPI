@@ -184,6 +184,8 @@ public class LimboImpl implements Limbo {
   }
 
   protected void refresh() {
+    this.localDispose();
+
     this.built = true;
     JoinGamePacket legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGamePacket joinGame = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_16);
@@ -729,6 +731,10 @@ public class LimboImpl implements Limbo {
   }
 
   private void localDispose() {
+    if (this.joinPackets == null) {
+      return;
+    }
+
     this.joinPackets.release();
     this.fastRejoinPackets.release();
     this.safeRejoinPackets.release();
