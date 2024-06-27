@@ -485,6 +485,8 @@ public class LimboImpl implements Limbo {
           this.plugin.inject3rdParty(player, connection, pipeline);
           if (compressionEnabled) {
             pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_ENABLED);
+          } else {
+            pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_DISABLED);
           }
         }
       } else {

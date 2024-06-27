@@ -197,6 +197,8 @@ public class LoginListener {
               this.plugin.inject3rdParty(player, connection, pipeline);
               if (compressionEnabled) {
                 pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_ENABLED);
+              } else {
+                pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_DISABLED);
               }
 
               VelocityConfiguration configuration = this.server.getConfiguration();
