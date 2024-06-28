@@ -38,6 +38,7 @@ import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
+import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
 import com.velocitypowered.proxy.protocol.netty.MinecraftCompressDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
@@ -480,6 +481,7 @@ public class LimboAPI implements LimboFactory {
     ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
     if (compressionHandler == null) {
       pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE);
+      pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_DISABLED);
     } else {
       int level = this.server.getConfiguration().getCompressionLevel();
       int compressionThreshold = this.server.getConfiguration().getCompressionThreshold();
@@ -492,6 +494,8 @@ public class LimboAPI implements LimboFactory {
         MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(compressionThreshold, compressor);
         pipeline.replace(Connections.COMPRESSION_DECODER, Connections.COMPRESSION_DECODER, decoder);
       }
+
+      pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_ENABLED);
     }
   }
 
