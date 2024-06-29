@@ -136,8 +136,13 @@ public class EventManagerHook extends VelocityEventManager {
     } else if (event instanceof KickedFromServerEvent kicked) {
       CompletableFuture<E> hookFuture = new CompletableFuture<>();
       super.fire(kicked).thenRunAsync(() -> {
-        Function<KickedFromServerEvent, Boolean> callback = this.plugin.getKickCallback(kicked.getPlayer());
-        if (callback == null || !callback.apply(kicked)) {
+        try {
+          Function<KickedFromServerEvent, Boolean> callback = this.plugin.getKickCallback(kicked.getPlayer());
+          if (callback == null || !callback.apply(kicked)) {
+            hookFuture.complete(event);
+          }
+        } catch (Throwable throwable) {
+          LimboAPI.getLogger().error("Failed to handle KickCallback, ignoring its result", throwable);
           hookFuture.complete(event);
         }
       }, ((ConnectedPlayer) kicked.getPlayer()).getConnection().eventLoop());
