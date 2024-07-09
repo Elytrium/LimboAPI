@@ -68,6 +68,7 @@ import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.UUID;
 import net.elytrium.commons.utils.reflection.ReflectionException;
+import net.elytrium.fastprepare.handler.PreparedPacketEncoder;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
@@ -219,11 +220,11 @@ public class LoginListener {
               success.setUuid(playerUniqueID);
 
               ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
-              if (compressionHandler != null) {
+              if (compressionHandler != null && !pipeline.get(PreparedPacketEncoder.class).isSendUncompressed()) {
                 connection.write(this.plugin.encodeSingleLogin(success, connection.getProtocolVersion()));
               } else {
                 ChannelHandler frameHandler = pipeline.get(Connections.FRAME_ENCODER);
-                if (frameHandler != null) {
+                if (compressionHandler == null && frameHandler != null) {
                   pipeline.remove(frameHandler);
                 }
 
