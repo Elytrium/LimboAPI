@@ -184,8 +184,6 @@ public class LimboImpl implements Limbo {
   }
 
   protected void refresh() {
-    this.localDispose();
-
     this.built = true;
     JoinGamePacket legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGamePacket joinGame = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_16);
@@ -351,7 +349,17 @@ public class LimboImpl implements Limbo {
   @Override
   public void spawnPlayer(Player apiPlayer, LimboSessionHandler handler) {
     if (!this.built) {
-      this.refresh();
+      List<PreparedPacket> packets = this.takeSnapshot();
+      try {
+        this.refresh();
+      } finally {
+        List<PreparedPacket> changed = this.takeSnapshot();
+        for (PreparedPacket packet : packets) {
+          if (packet != null && !changed.contains(packet)) {
+            packet.release();
+          }
+        }
+      }
     }
 
     ConnectedPlayer player = (ConnectedPlayer) apiPlayer;
@@ -730,19 +738,29 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private void localDispose() {
-    if (this.joinPackets == null) {
-      return;
-    }
+  private List<PreparedPacket> takeSnapshot() {
+    List<PreparedPacket> packets = new ArrayList<>();
 
-    this.joinPackets.release();
-    this.fastRejoinPackets.release();
-    this.safeRejoinPackets.release();
-    this.respawnPackets.release();
-    this.firstChunks.release();
-    this.delayedChunks.forEach(PreparedPacket::release);
-    this.configTransitionPackets.release();
-    this.configPackets.release();
+    packets.add(this.joinPackets);
+    packets.add(this.fastRejoinPackets);
+    packets.add(this.safeRejoinPackets);
+    packets.add(this.respawnPackets);
+    packets.add(this.firstChunks);
+    if (this.delayedChunks != null) {
+      packets.addAll(this.delayedChunks);
+    }
+    packets.add(this.configTransitionPackets);
+    packets.add(this.configPackets);
+
+    return packets;
+  }
+
+  private void localDispose() {
+    this.takeSnapshot().forEach(packet -> {
+      if (packet != null) {
+        packet.release();
+      }
+    });
   }
 
   // From Velocity.
