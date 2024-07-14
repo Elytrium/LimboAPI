@@ -9,7 +9,7 @@ buildscript() {
 
 plugins() {
   id("java")
-  id("com.github.johnrengelman.shadow").version("7.1.2")
+  id("io.github.goooler.shadow").version("8.1.8")
 }
 
 compileJava() {

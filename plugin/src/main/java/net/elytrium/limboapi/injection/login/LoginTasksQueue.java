@@ -34,6 +34,7 @@
 
 package net.elytrium.limboapi.injection.login;
 
+import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
@@ -72,7 +73,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 import net.kyori.adventure.text.Component;
@@ -120,15 +120,14 @@ public class LoginTasksQueue {
     }
   }
 
-  @SuppressWarnings("deprecation")
   private void finish() {
     this.plugin.removeLoginQueue(this.player);
 
-    EventManagerHook eventManager = (EventManagerHook) this.server.getEventManager();
+    EventManager eventManager = this.server.getEventManager();
     MinecraftConnection connection = this.player.getConnection();
     Logger logger = LimboAPI.getLogger();
 
-    eventManager.proceedProfile(this.player.getGameProfile());
+    this.plugin.getEventManagerHook().proceedProfile(this.player.getGameProfile());
     eventManager.fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode())).thenAcceptAsync(
         gameProfile -> {
           try {

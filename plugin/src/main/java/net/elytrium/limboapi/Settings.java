@@ -87,9 +87,6 @@ public class Settings extends YamlConfig {
     @Comment("Helpful if you want some plugins proceed before LimboAPI. For example, it is needed to Floodgate to replace UUID.")
     public List<String> PRE_LIMBO_PROFILE_REQUEST_PLUGINS = List.of("floodgate", "geyser");
 
-    @Comment("Regenerates listeners that need to proceed before LimboAPI on each EventManager#register call.")
-    public boolean AUTO_REGENERATE_LISTENERS = false;
-
     @Comment("Should reduced debug info be enabled (reduced information in F3) if there is no preference for Limbo")
     public boolean REDUCED_DEBUG_INFO = false;
 

@@ -155,6 +155,7 @@ public class LimboAPI implements LimboFactory {
   private ProtocolVersion maxVersion;
   private LoginListener loginListener;
   private boolean compressionEnabled;
+  private EventManagerHook eventManagerHook;
 
   @Inject
   public LimboAPI(Logger logger, ProxyServer server, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
@@ -186,9 +187,8 @@ public class LimboAPI implements LimboFactory {
     SimpleBlockEntity.init();
     SimpleItem.init();
     SimpleTagManager.init();
-    LOGGER.info("Hooking into EventManager, PlayerList/UpsertPlayerInfo and StateRegistry...");
+    LOGGER.info("Hooking into PlayerList/UpsertPlayerInfo and StateRegistry...");
     try {
-      EventManagerHook.init(this);
       LegacyPlayerListItemHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
       UpsertPlayerInfoHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
       RemovePlayerInfoHook.init(this, LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
@@ -268,7 +268,7 @@ public class LimboAPI implements LimboFactory {
 
   @Subscribe(order = PostOrder.LAST)
   public void postProxyInitialization(ProxyInitializeEvent event) throws IllegalAccessException {
-    ((EventManagerHook) this.server.getEventManager()).reloadHandlers();
+    this.eventManagerHook.reloadHandlers();
   }
 
   @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "LEGACY_AMPERSAND can't be null in velocity.")
@@ -286,9 +286,11 @@ public class LimboAPI implements LimboFactory {
     this.reloadVersion();
     this.packets.createPackets();
     this.loginListener = new LoginListener(this, this.server);
+    this.eventManagerHook = new EventManagerHook(this, this.server.getEventManager());
     VelocityEventManager eventManager = this.server.getEventManager();
     eventManager.unregisterListeners(this);
     eventManager.register(this, this.loginListener);
+    eventManager.register(this, this.eventManagerHook);
     eventManager.register(this, new DisconnectListener(this));
     eventManager.register(this, new ReloadListener(this));
 
@@ -630,6 +632,10 @@ public class LimboAPI implements LimboFactory {
 
   public ProtocolVersion getPrepareMaxVersion() {
     return this.maxVersion;
+  }
+
+  public EventManagerHook getEventManagerHook() {
+    return this.eventManagerHook;
   }
 
   @Override

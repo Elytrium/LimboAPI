@@ -18,15 +18,13 @@
 package net.elytrium.limboapi.injection.event;
 
 import com.google.common.collect.ListMultimap;
-import com.velocitypowered.api.event.EventManager;
+import com.velocitypowered.api.event.EventTask;
+import com.velocitypowered.api.event.PostOrder;
+import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.plugin.PluginContainer;
-import com.velocitypowered.api.plugin.PluginManager;
 import com.velocitypowered.api.util.GameProfile;
-import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommandManager;
-import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -46,110 +44,84 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 
 @SuppressWarnings("unchecked")
-public class EventManagerHook extends VelocityEventManager {
+public class EventManagerHook {
 
   private static final Field HANDLERS_BY_TYPE_FIELD;
-  private static final Field HANDLERS_CACHE_FIELD;
-  private static final Field HANDLER_ADAPTERS_FIELD;
-  private static final Field EVENT_TYPE_TRACKER_FIELD;
-  private static final Field VELOCITY_SERVER_EVENT_MANAGER_FIELD;
   private static final Class<?> HANDLER_REGISTRATION_CLASS;
-  private static final Field UNTARGETED_METHOD_HANDLERS_FIELD;
   private static final MethodHandle PLUGIN_FIELD;
-  private static final Field VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD;
   private static final MethodHandle FIRE_METHOD;
+  private static final MethodHandle FUTURE_FIELD;
 
   private final Set<GameProfile> proceededProfiles = new HashSet<>();
   private final LimboAPI plugin;
+  private final VelocityEventManager eventManager;
 
   private Object handlerRegistrations;
   private boolean hasHandlerRegistration;
 
-  private EventManagerHook(PluginManager pluginManager, LimboAPI plugin) {
-    super(pluginManager);
-
+  public EventManagerHook(LimboAPI plugin, VelocityEventManager eventManager) {
     this.plugin = plugin;
+    this.eventManager = eventManager;
   }
 
-  @Override
-  public void register(Object plugin, Object listener) {
-    super.register(plugin, listener);
-
-    if (Settings.IMP.MAIN != null && Settings.IMP.MAIN.AUTO_REGENERATE_LISTENERS) {
-      try {
-        this.reloadHandlers();
-      } catch (IllegalAccessException e) {
-        throw new ReflectionException(e);
-      }
-    }
-  }
-
-  @Override
-  public void fireAndForget(Object event) {
-    Object toReply = this.proxyHook(event);
-    if (toReply == null) {
-      super.fireAndForget(event);
-    }
-  }
-
-  @Override
-  public <E> CompletableFuture<E> fire(E event) {
-    CompletableFuture<E> toReply = this.proxyHook(event);
-    if (toReply == null) {
-      return super.fire(event);
-    } else {
-      return toReply;
-    }
-  }
-
-  private <E> CompletableFuture<E> proxyHook(E event) {
-    if (event instanceof GameProfileRequestEvent) {
-      GameProfile originalProfile = ((GameProfileRequestEvent) event).getGameProfile();
-      if (this.proceededProfiles.remove(originalProfile)) {
-        return null;
-      } else {
-        CompletableFuture<E> fireFuture = new CompletableFuture<>();
-        CompletableFuture<E> hookFuture = new CompletableFuture<>();
-        fireFuture.thenAccept(modifiedEvent -> {
-          try {
-            GameProfileRequestEvent requestEvent = (GameProfileRequestEvent) modifiedEvent;
-            this.plugin.getLoginListener().hookLoginSession(requestEvent);
-            hookFuture.complete(modifiedEvent);
-          } catch (Throwable e) {
-            throw new ReflectionException(e);
-          }
-        });
-
-        if (this.hasHandlerRegistration) {
-          try {
-            FIRE_METHOD.invoke(this, fireFuture, event, 0, false, this.handlerRegistrations);
-          } catch (Throwable e) {
-            fireFuture.complete(event);
-            throw new ReflectionException(e);
-          }
-        } else {
-          fireFuture.complete(event);
-        }
-
-        return hookFuture;
-      }
-    } else if (event instanceof KickedFromServerEvent kicked) {
-      CompletableFuture<E> hookFuture = new CompletableFuture<>();
-      super.fire(kicked).thenRunAsync(() -> {
-        try {
-          Function<KickedFromServerEvent, Boolean> callback = this.plugin.getKickCallback(kicked.getPlayer());
-          if (callback == null || !callback.apply(kicked)) {
-            hookFuture.complete(event);
-          }
-        } catch (Throwable throwable) {
-          LimboAPI.getLogger().error("Failed to handle KickCallback, ignoring its result", throwable);
-          hookFuture.complete(event);
-        }
-      }, ((ConnectedPlayer) kicked.getPlayer()).getConnection().eventLoop());
-      return hookFuture;
-    } else {
+  @Subscribe(order = PostOrder.FIRST)
+  public EventTask onGameProfileRequest(GameProfileRequestEvent event) {
+    GameProfile originalProfile = event.getGameProfile();
+    if (this.proceededProfiles.remove(originalProfile)) {
       return null;
+    } else {
+      CompletableFuture<GameProfileRequestEvent> fireFuture = new CompletableFuture<>();
+      CompletableFuture<GameProfileRequestEvent> hookFuture = new CompletableFuture<>();
+      fireFuture.thenAccept(modifiedEvent -> {
+        try {
+          this.plugin.getLoginListener().hookLoginSession(modifiedEvent);
+          hookFuture.complete(modifiedEvent);
+        } catch (Throwable e) {
+          throw new ReflectionException(e);
+        }
+      });
+
+      if (this.hasHandlerRegistration) {
+        try {
+          FIRE_METHOD.invoke(this.eventManager, fireFuture, event, 0, false, this.handlerRegistrations);
+        } catch (Throwable e) {
+          fireFuture.complete(event);
+          throw new ReflectionException(e);
+        }
+      } else {
+        fireFuture.complete(event);
+      }
+
+      // ignoring other subscribers by directly completing the future
+      return EventTask.withContinuation(continuation -> hookFuture.whenComplete((result, cause) -> {
+        try {
+          CompletableFuture<GameProfileRequestEvent> future = (CompletableFuture<GameProfileRequestEvent>) FUTURE_FIELD.invokeExact(continuation);
+          if (future != null) {
+            future.complete(result);
+          }
+        } catch (Throwable e) {
+          throw new ReflectionException(e);
+        }
+      }));
     }
+  }
+
+  @Subscribe(order = PostOrder.LAST)
+  public EventTask onKickedFromServer(KickedFromServerEvent event) {
+    CompletableFuture<KickedFromServerEvent> hookFuture = new CompletableFuture<>();
+    try {
+      Function<KickedFromServerEvent, Boolean> callback = this.plugin.getKickCallback(event.getPlayer());
+      if (callback == null || !callback.apply(event)) {
+        hookFuture.complete(event);
+      }
+    } catch (Throwable throwable) {
+      LimboAPI.getLogger().error("Failed to handle KickCallback, ignoring its result", throwable);
+      hookFuture.complete(event);
+    }
+
+    // if kick callback is null and no exception occurred, hookFuture won't be ever finished, and
+    // the event chain would be broken, that is what we need.
+    return EventTask.resumeWhenComplete(hookFuture);
   }
 
   public void proceedProfile(GameProfile profile) {
@@ -158,7 +130,7 @@ public class EventManagerHook extends VelocityEventManager {
 
   @SuppressWarnings("rawtypes")
   public void reloadHandlers() throws IllegalAccessException {
-    ListMultimap<Class<?>, ?> handlersMap = (ListMultimap<Class<?>, ?>) HANDLERS_BY_TYPE_FIELD.get(this);
+    ListMultimap<Class<?>, ?> handlersMap = (ListMultimap<Class<?>, ?>) HANDLERS_BY_TYPE_FIELD.get(this.eventManager);
     List disabledHandlers = handlersMap.get(GameProfileRequestEvent.class);
     List preEvents = new ArrayList<>();
     List newHandlers = new ArrayList<>(disabledHandlers);
@@ -198,27 +170,13 @@ public class EventManagerHook extends VelocityEventManager {
       HANDLERS_BY_TYPE_FIELD = VelocityEventManager.class.getDeclaredField("handlersByType");
       HANDLERS_BY_TYPE_FIELD.setAccessible(true);
 
-      HANDLERS_CACHE_FIELD = VelocityEventManager.class.getDeclaredField("handlersCache");
-      HANDLERS_CACHE_FIELD.setAccessible(true);
-
-      HANDLER_ADAPTERS_FIELD = VelocityEventManager.class.getDeclaredField("handlerAdapters");
-      HANDLER_ADAPTERS_FIELD.setAccessible(true);
-
-      VELOCITY_SERVER_EVENT_MANAGER_FIELD = VelocityServer.class.getDeclaredField("eventManager");
-      VELOCITY_SERVER_EVENT_MANAGER_FIELD.setAccessible(true);
-
-      UNTARGETED_METHOD_HANDLERS_FIELD = VelocityEventManager.class.getDeclaredField("untargetedMethodHandlers");
-      UNTARGETED_METHOD_HANDLERS_FIELD.setAccessible(true);
-
-      EVENT_TYPE_TRACKER_FIELD = VelocityEventManager.class.getDeclaredField("eventTypeTracker");
-      EVENT_TYPE_TRACKER_FIELD.setAccessible(true);
-
       HANDLER_REGISTRATION_CLASS = Class.forName("com.velocitypowered.proxy.event.VelocityEventManager$HandlerRegistration");
       PLUGIN_FIELD = MethodHandles.privateLookupIn(HANDLER_REGISTRATION_CLASS, MethodHandles.lookup())
           .findGetter(HANDLER_REGISTRATION_CLASS, "plugin", PluginContainer.class);
 
-      VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD = VelocityCommandManager.class.getDeclaredField("eventManager");
-      VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD.setAccessible(true);
+      Class<?> continuationTaskClass = Class.forName("com.velocitypowered.proxy.event.VelocityEventManager$ContinuationTask");
+      FUTURE_FIELD = MethodHandles.privateLookupIn(continuationTaskClass, MethodHandles.lookup())
+          .findGetter(continuationTaskClass, "future", CompletableFuture.class);
 
       // The desired 5-argument fire method is private, and its 5th argument is the array of the private class,
       // so we can't pass it into the Class#getDeclaredMethod(Class...) method.
@@ -239,21 +197,5 @@ public class EventManagerHook extends VelocityEventManager {
     } catch (NoSuchFieldException | ClassNotFoundException | IllegalAccessException | NoSuchMethodException e) {
       throw new ReflectionException(e);
     }
-  }
-
-  public static void init(LimboAPI plugin) throws ReflectiveOperationException, InterruptedException {
-    VelocityServer server = plugin.getServer();
-    EventManager newEventManager = new EventManagerHook(server.getPluginManager(), plugin);
-    VelocityEventManager oldEventManager = server.getEventManager();
-    HANDLERS_BY_TYPE_FIELD.set(newEventManager, HANDLERS_BY_TYPE_FIELD.get(oldEventManager));
-    HANDLERS_CACHE_FIELD.set(newEventManager, HANDLERS_CACHE_FIELD.get(oldEventManager));
-    UNTARGETED_METHOD_HANDLERS_FIELD.set(newEventManager, UNTARGETED_METHOD_HANDLERS_FIELD.get(oldEventManager));
-    HANDLER_ADAPTERS_FIELD.set(newEventManager, HANDLER_ADAPTERS_FIELD.get(oldEventManager));
-    EVENT_TYPE_TRACKER_FIELD.set(newEventManager, EVENT_TYPE_TRACKER_FIELD.get(oldEventManager));
-
-    VELOCITY_SERVER_EVENT_MANAGER_FIELD.set(server, newEventManager);
-    VELOCITY_COMMAND_MANAGER_EVENT_MANAGER_FIELD.set(server.getCommandManager(), newEventManager);
-
-    oldEventManager.shutdown();
   }
 }
