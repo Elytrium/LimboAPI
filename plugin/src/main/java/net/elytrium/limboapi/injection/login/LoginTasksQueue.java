@@ -71,25 +71,25 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
+import net.elytrium.limboapi.utils.LambdaUtil;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
 public class LoginTasksQueue {
 
   private static final MethodHandle PROFILE_FIELD;
-  private static final Field DEFAULT_PERMISSIONS_FIELD;
+  private static final PermissionProvider DEFAULT_PERMISSIONS;
   private static final MethodHandle SET_PERMISSION_FUNCTION_METHOD;
   private static final MethodHandle INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR;
-  private static final Field MC_CONNECTION_FIELD;
+  private static final BiConsumer<Object, MinecraftConnection> MC_CONNECTION_SETTER;
   private static final MethodHandle CONNECT_TO_INITIAL_SERVER_METHOD;
-  private static final Field LOGIN_STATE_FIELD;
-  private static final Field CONNECTED_PLAYER_FIELD;
   private static final MethodHandle SET_CLIENT_BRAND;
-  private static final Field BRAND_CHANNEL;
+  private static final BiConsumer<ClientConfigSessionHandler, String> BRAND_CHANNEL_SETTER;
 
   private final LimboAPI plugin;
   private final Object handler;
@@ -162,7 +162,7 @@ public class LoginTasksQueue {
 
             // From Velocity.
             eventManager
-                .fire(new PermissionsSetupEvent(this.player, (PermissionProvider) DEFAULT_PERMISSIONS_FIELD.get(null)))
+                .fire(new PermissionsSetupEvent(this.player, DEFAULT_PERMISSIONS))
                 .thenAcceptAsync(event -> {
                   if (!connection.isClosed()) {
                     // Wait for permissions to load, then set the players' permission function.
@@ -268,7 +268,7 @@ public class LoginTasksQueue {
           try {
             this.server.getEventManager().fireAndForget(new PlayerClientBrandEvent(this.player, sessionHandler.getBrand()));
             SET_CLIENT_BRAND.invokeExact(this.player, sessionHandler.getBrand());
-            BRAND_CHANNEL.set(configHandler, "minecraft:brand");
+            BRAND_CHANNEL_SETTER.accept(configHandler, "minecraft:brand");
           } catch (Throwable e) {
             throw new ReflectionException(e);
           }
@@ -280,7 +280,7 @@ public class LoginTasksQueue {
 
     this.server.getEventManager().fire(new PostLoginEvent(this.player)).thenAccept(postLoginEvent -> {
       try {
-        MC_CONNECTION_FIELD.set(this.handler, connection);
+        MC_CONNECTION_SETTER.accept(this.handler, connection);
         CONNECT_TO_INITIAL_SERVER_METHOD.invoke((AuthSessionHandler) this.handler, this.player);
       } catch (Throwable e) {
         throw new ReflectionException(e);
@@ -293,8 +293,9 @@ public class LoginTasksQueue {
       PROFILE_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findSetter(ConnectedPlayer.class, "profile", GameProfile.class);
 
-      DEFAULT_PERMISSIONS_FIELD = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
-      DEFAULT_PERMISSIONS_FIELD.setAccessible(true);
+      Field defaultPermissionsField = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
+      defaultPermissionsField.setAccessible(true);
+      DEFAULT_PERMISSIONS = (PermissionProvider) defaultPermissionsField.get(null);
 
       SET_PERMISSION_FUNCTION_METHOD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findVirtual(ConnectedPlayer.class, "setPermissionFunction", MethodType.methodType(void.class, PermissionFunction.class));
@@ -306,20 +307,17 @@ public class LoginTasksQueue {
       CONNECT_TO_INITIAL_SERVER_METHOD = MethodHandles.privateLookupIn(AuthSessionHandler.class, MethodHandles.lookup())
           .findVirtual(AuthSessionHandler.class, "connectToInitialServer", MethodType.methodType(CompletableFuture.class, ConnectedPlayer.class));
 
-      LOGIN_STATE_FIELD = AuthSessionHandler.class.getDeclaredField("loginState");
-      LOGIN_STATE_FIELD.setAccessible(true);
-      CONNECTED_PLAYER_FIELD = AuthSessionHandler.class.getDeclaredField("connectedPlayer");
-      CONNECTED_PLAYER_FIELD.setAccessible(true);
-
-      MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
-      MC_CONNECTION_FIELD.setAccessible(true);
+      Field mcConnectionField = AuthSessionHandler.class.getDeclaredField("mcConnection");
+      mcConnectionField.setAccessible(true);
+      MC_CONNECTION_SETTER = LambdaUtil.setterOf(mcConnectionField);
 
       SET_CLIENT_BRAND = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findVirtual(ConnectedPlayer.class, "setClientBrand", MethodType.methodType(void.class, String.class));
 
-      BRAND_CHANNEL = ClientConfigSessionHandler.class.getDeclaredField("brandChannel");
-      BRAND_CHANNEL.setAccessible(true);
-    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
+      Field brandChannelField = ClientConfigSessionHandler.class.getDeclaredField("brandChannel");
+      brandChannelField.setAccessible(true);
+      BRAND_CHANNEL_SETTER = LambdaUtil.setterOf(brandChannelField);
+    } catch (Throwable e) {
       throw new ReflectionException(e);
     }
   }

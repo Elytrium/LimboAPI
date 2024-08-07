@@ -26,15 +26,18 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import net.elytrium.limboapi.utils.LambdaUtil;
 
 public class RewritingVelocityTabList extends VelocityTabList implements RewritingTabList {
 
-  private static final Field ENTRIES;
+  private static final Function<VelocityTabList, Map<UUID, VelocityTabListEntry>> ENTRIES_GETTER;
 
   static {
     try {
-      ENTRIES = VelocityTabList.class.getDeclaredField("entries");
-      ENTRIES.setAccessible(true);
+      Field field = VelocityTabList.class.getDeclaredField("entries");
+      field.setAccessible(true);
+      ENTRIES_GETTER = LambdaUtil.getterOf(field);
     } catch (Throwable throwable) {
       throw new ExceptionInInitializerError(throwable);
     }
@@ -50,7 +53,7 @@ public class RewritingVelocityTabList extends VelocityTabList implements Rewriti
     try {
       this.player = player;
       this.connection = player.getConnection();
-      this.entries = (Map<UUID, VelocityTabListEntry>) ENTRIES.get(this);
+      this.entries = ENTRIES_GETTER.apply(this);
     } catch (Throwable e) {
       throw new IllegalStateException(e);
     }

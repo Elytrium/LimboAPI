@@ -40,6 +40,7 @@ import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
+import com.velocitypowered.api.proxy.player.TabList;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
 import com.velocitypowered.proxy.VelocityServer;
@@ -67,6 +68,7 @@ import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
@@ -78,20 +80,19 @@ import net.elytrium.limboapi.injection.packet.ServerLoginSuccessHook;
 import net.elytrium.limboapi.injection.tablist.RewritingKeyedVelocityTabList;
 import net.elytrium.limboapi.injection.tablist.RewritingVelocityTabList;
 import net.elytrium.limboapi.injection.tablist.RewritingVelocityTabListLegacy;
+import net.elytrium.limboapi.utils.LambdaUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import sun.misc.Unsafe;
 
 public class LoginListener {
 
   private static final ClosedMinecraftConnection CLOSED_MINECRAFT_CONNECTION;
 
-  private static final Unsafe UNSAFE;
   private static final MethodHandle DELEGATE_FIELD;
-  private static final Field MC_CONNECTION_FIELD;
+  private static final BiConsumer<Object, MinecraftConnection> MC_CONNECTION_SETTER;
   private static final MethodHandle CONNECTED_PLAYER_CONSTRUCTOR;
   private static final MethodHandle SPAWNED_FIELD;
-  private static final Field TABLIST_FIELD;
+  private static final BiConsumer<ConnectedPlayer, TabList> TAB_LIST_SETTER;
 
   private final LimboAPI plugin;
   private final VelocityServer server;
@@ -134,7 +135,7 @@ public class LoginListener {
       }
 
       Object handler = connection.getActiveSessionHandler();
-      MC_CONNECTION_FIELD.set(handler, CLOSED_MINECRAFT_CONNECTION);
+      MC_CONNECTION_SETTER.accept(handler, CLOSED_MINECRAFT_CONNECTION);
 
       LoginConfirmHandler loginHandler = null;
       if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
@@ -169,13 +170,12 @@ public class LoginListener {
               playerKey
           );
 
-          long fieldOffset = UNSAFE.objectFieldOffset(TABLIST_FIELD);
           if (connection.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_19_3)) {
-            UNSAFE.putObject(player, fieldOffset, new RewritingVelocityTabList(player));
+            TAB_LIST_SETTER.accept(player, new RewritingVelocityTabList(player));
           } else if (connection.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
-            UNSAFE.putObject(player, fieldOffset, new RewritingKeyedVelocityTabList(player, this.server));
+            TAB_LIST_SETTER.accept(player, new RewritingKeyedVelocityTabList(player, this.server));
           } else {
-            UNSAFE.putObject(player, fieldOffset, new RewritingVelocityTabListLegacy(player, this.server));
+            TAB_LIST_SETTER.accept(player, new RewritingVelocityTabListLegacy(player, this.server));
           }
 
           if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
@@ -303,19 +303,17 @@ public class LoginListener {
       DELEGATE_FIELD = MethodHandles.privateLookupIn(LoginInboundConnection.class, MethodHandles.lookup())
           .findGetter(LoginInboundConnection.class, "delegate", InitialInboundConnection.class);
 
-      MC_CONNECTION_FIELD = AuthSessionHandler.class.getDeclaredField("mcConnection");
-      MC_CONNECTION_FIELD.setAccessible(true);
+      Field mcConnectionField = AuthSessionHandler.class.getDeclaredField("mcConnection");
+      mcConnectionField.setAccessible(true);
+      MC_CONNECTION_SETTER = LambdaUtil.setterOf(mcConnectionField);
 
       SPAWNED_FIELD = MethodHandles.privateLookupIn(ClientPlaySessionHandler.class, MethodHandles.lookup())
           .findSetter(ClientPlaySessionHandler.class, "spawned", boolean.class);
 
-      Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
-      unsafeField.setAccessible(true);
-      UNSAFE = (Unsafe) unsafeField.get(null);
-
-      TABLIST_FIELD = ConnectedPlayer.class.getDeclaredField("tabList");
-      TABLIST_FIELD.setAccessible(true);
-    } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException e) {
+      Field tabListField = ConnectedPlayer.class.getDeclaredField("tabList");
+      tabListField.setAccessible(true);
+      TAB_LIST_SETTER = LambdaUtil.setterOf(tabListField);
+    } catch (Throwable e) {
       throw new ReflectionException(e);
     }
   }
