@@ -70,6 +70,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import net.elytrium.commons.utils.reflection.ReflectionException;
+import net.elytrium.fastprepare.handler.PreparedPacketEncoder;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
@@ -197,6 +198,8 @@ public class LoginListener {
               this.plugin.inject3rdParty(player, connection, pipeline);
               if (compressionEnabled) {
                 pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_ENABLED);
+              } else {
+                pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_DISABLED);
               }
 
               VelocityConfiguration configuration = this.server.getConfiguration();
@@ -217,11 +220,11 @@ public class LoginListener {
               success.setUuid(playerUniqueID);
 
               ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
-              if (compressionHandler != null) {
+              if (compressionHandler != null && !pipeline.get(PreparedPacketEncoder.class).isSendUncompressed()) {
                 connection.write(this.plugin.encodeSingleLogin(success, connection.getProtocolVersion()));
               } else {
                 ChannelHandler frameHandler = pipeline.get(Connections.FRAME_ENCODER);
-                if (frameHandler != null) {
+                if (compressionHandler == null && frameHandler != null) {
                   pipeline.remove(frameHandler);
                 }
 
