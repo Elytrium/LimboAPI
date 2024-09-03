@@ -87,6 +87,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private String brand;
   private ScheduledFuture<?> keepAliveTask;
   private ScheduledFuture<?> chatSessionTimeoutTask;
+  private ScheduledFuture<?> respawnTask;
   private long keepAliveKey;
   private boolean keepAlivePending;
   private int keepAlivesSkipped;
@@ -396,6 +397,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       this.keepAliveTask.cancel(true);
     }
 
+    if (this.respawnTask != null) {
+      this.respawnTask.cancel(true);
+    }
+
     if (this.loaded) {
       this.limbo.onDisconnect();
       this.callback.onDisconnect();
@@ -468,6 +473,14 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public void setMitigateChatSessionDesync(boolean mitigateChatSessionDesync) {
     this.mitigateChatSessionDesync = mitigateChatSessionDesync;
+  }
+
+  public void setRespawnTask(ScheduledFuture<?> respawnTask) {
+    if (this.respawnTask != null) {
+      this.respawnTask.cancel(true);
+    }
+
+    this.respawnTask = respawnTask;
   }
 
   public ClientSettingsPacket getSettings() {

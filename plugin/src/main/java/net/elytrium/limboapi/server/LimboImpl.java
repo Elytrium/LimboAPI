@@ -78,8 +78,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -144,6 +146,7 @@ public class LimboImpl implements Limbo {
   private final LongAdder currentOnline = new LongAdder();
   private final RootCommandNode<CommandSource> commandNode = new RootCommandNode<>();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final List<PreparedPacket> queuedToRelease = new ArrayList<>();
   private final List<CommandRegistrar<?>> registrars = ImmutableList.of(
       new BrigadierCommandRegistrar(this.commandNode, this.lock.writeLock()),
       new SimpleCommandRegistrar(this.commandNode, this.lock.writeLock()),
@@ -172,7 +175,7 @@ public class LimboImpl implements Limbo {
   private boolean reducedDebugInfo = Settings.IMP.MAIN.REDUCED_DEBUG_INFO;
   private int viewDistance = Settings.IMP.MAIN.VIEW_DISTANCE;
   private int simulationDistance = Settings.IMP.MAIN.SIMULATION_DISTANCE;
-  private boolean built = true;
+  private volatile boolean built = true;
   private boolean disposeScheduled = false;
 
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
@@ -184,7 +187,6 @@ public class LimboImpl implements Limbo {
   }
 
   protected void refresh() {
-    this.built = true;
     JoinGamePacket legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGamePacket joinGame = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_16);
     JoinGamePacket joinGame1162 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_16_2);
@@ -194,7 +196,7 @@ public class LimboImpl implements Limbo {
     JoinGamePacket joinGame1194 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_4);
     JoinGamePacket joinGame120 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_20);
 
-    this.joinPackets = this.plugin.createPreparedPacket()
+    final PreparedPacket joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
         .prepare(joinGame, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_16_1)
         .prepare(joinGame1162, ProtocolVersion.MINECRAFT_1_16_2, ProtocolVersion.MINECRAFT_1_18)
@@ -204,49 +206,46 @@ public class LimboImpl implements Limbo {
         .prepare(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4)
         .prepare(joinGame120, ProtocolVersion.MINECRAFT_1_20);
 
-    this.fastRejoinPackets = this.plugin.createPreparedPacket();
+    PreparedPacket fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2));
     this.createFastClientServerSwitch(joinGame, ProtocolVersion.MINECRAFT_1_16)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_16_1));
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16, ProtocolVersion.MINECRAFT_1_16_1));
     this.createFastClientServerSwitch(joinGame1162, ProtocolVersion.MINECRAFT_1_16_2)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16_2, ProtocolVersion.MINECRAFT_1_18));
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_16_2, ProtocolVersion.MINECRAFT_1_18));
     this.createFastClientServerSwitch(joinGame1182, ProtocolVersion.MINECRAFT_1_18_2)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2, ProtocolVersion.MINECRAFT_1_18_2));
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_18_2, ProtocolVersion.MINECRAFT_1_18_2));
     this.createFastClientServerSwitch(joinGame119, ProtocolVersion.MINECRAFT_1_19)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19, ProtocolVersion.MINECRAFT_1_19));
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19, ProtocolVersion.MINECRAFT_1_19));
     this.createFastClientServerSwitch(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_1, ProtocolVersion.MINECRAFT_1_19_3));
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_1, ProtocolVersion.MINECRAFT_1_19_3));
     this.createFastClientServerSwitch(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4));
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4));
     this.createFastClientServerSwitch(joinGame120, ProtocolVersion.MINECRAFT_1_20)
-        .forEach(minecraftPacket -> this.fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_20));
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_20));
 
-    this.safeRejoinPackets = this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame));
-    this.postJoinPackets = this.plugin.createPreparedPacket();
-
-    this.addPostJoin(this.joinPackets);
-    this.addPostJoin(this.fastRejoinPackets);
-    this.addPostJoin(this.safeRejoinPackets);
-    this.addPostJoin(this.postJoinPackets);
+    this.joinPackets = this.addPostJoin(joinPackets);
+    this.fastRejoinPackets = this.addPostJoin(fastRejoinPackets);
+    this.safeRejoinPackets = this.addPostJoin(this.plugin.createPreparedPacket().prepare(this.createSafeClientServerSwitch(legacyJoinGame)));
+    this.postJoinPackets = this.addPostJoin(this.plugin.createPreparedPacket());
 
     this.configTransitionPackets = this.plugin.createPreparedPacket()
         .prepare(StartUpdatePacket.INSTANCE, ProtocolVersion.MINECRAFT_1_20_2)
         .build();
 
-    this.configPackets = this.plugin.createConfigPreparedPacket();
-    this.configPackets.prepare(this::createRegistrySyncLegacy, ProtocolVersion.MINECRAFT_1_20_2, ProtocolVersion.MINECRAFT_1_20_3);
-    this.createRegistrySyncModern(this.configPackets, ProtocolVersion.MINECRAFT_1_20_5, ProtocolVersion.MINECRAFT_1_20_5);
-    this.createRegistrySyncModern(this.configPackets, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MAXIMUM_VERSION);
+    PreparedPacket configPackets = this.plugin.createConfigPreparedPacket();
+    configPackets.prepare(this::createRegistrySyncLegacy, ProtocolVersion.MINECRAFT_1_20_2, ProtocolVersion.MINECRAFT_1_20_3);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_20_5, ProtocolVersion.MINECRAFT_1_20_5);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MAXIMUM_VERSION);
     if (this.shouldUpdateTags) {
-      this.configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
+      configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
     }
-    this.configPackets.prepare(FinishedUpdatePacket.INSTANCE, ProtocolVersion.MINECRAFT_1_20_2);
-    this.configPackets.build();
+    configPackets.prepare(FinishedUpdatePacket.INSTANCE, ProtocolVersion.MINECRAFT_1_20_2);
+    this.configPackets = configPackets.build();
 
     this.firstChunks = this.createFirstChunks();
     this.delayedChunks = this.createDelayedChunksPackets();
-    this.respawnPackets = this.plugin.createPreparedPacket()
+    PreparedPacket respawnPackets = this.plugin.createPreparedPacket()
         .prepare(
             this.createPlayerPosAndLook(
                 this.world.getSpawnX(), this.world.getSpawnY(), this.world.getSpawnZ(), this.world.getYaw(), this.world.getPitch()
@@ -257,11 +256,12 @@ public class LimboImpl implements Limbo {
         );
 
     if (this.shouldUpdateTags) {
-      this.respawnPackets.prepare(SimpleTagManager::getUpdateTagsPacket,
+      respawnPackets.prepare(SimpleTagManager::getUpdateTagsPacket,
           ProtocolVersion.MINECRAFT_1_13, ProtocolVersion.MINECRAFT_1_20);
     }
 
-    this.respawnPackets.build();
+    this.respawnPackets = respawnPackets.build();
+    this.built = true;
   }
 
   private ChangeGameStatePacket createLevelChunksLoadStartGameState() {
@@ -337,8 +337,8 @@ public class LimboImpl implements Limbo {
     return new TagsUpdatePacket(SimpleTagManager.getUpdateTagsPacket(version).toVelocityTags());
   }
 
-  private void addPostJoin(PreparedPacket packet) {
-    packet.prepare(this.createAvailableCommandsPacket(), ProtocolVersion.MINECRAFT_1_13)
+  private PreparedPacket addPostJoin(PreparedPacket packet) {
+    return packet.prepare(this.createAvailableCommandsPacket(), ProtocolVersion.MINECRAFT_1_13)
         .prepare(this.createDefaultSpawnPositionPacket())
         .prepare(this.createLevelChunksLoadStartGameState(), ProtocolVersion.MINECRAFT_1_20_3)
         .prepare(this.createWorldTicksPacket())
@@ -349,14 +349,18 @@ public class LimboImpl implements Limbo {
   @Override
   public void spawnPlayer(Player apiPlayer, LimboSessionHandler handler) {
     if (!this.built) {
-      List<PreparedPacket> packets = this.takeSnapshot();
-      try {
-        this.refresh();
-      } finally {
-        List<PreparedPacket> changed = this.takeSnapshot();
-        for (PreparedPacket packet : packets) {
-          if (packet != null && !changed.contains(packet)) {
-            packet.release();
+      synchronized (this) {
+        if (!this.built) {
+          List<PreparedPacket> packets = this.takeSnapshot();
+          try {
+            this.refresh();
+          } finally {
+            List<PreparedPacket> changed = this.takeSnapshot();
+            for (PreparedPacket packet : packets) {
+              if (!changed.contains(packet)) {
+                this.queuedToRelease.add(packet);
+              }
+            }
           }
         }
       }
@@ -439,8 +443,6 @@ public class LimboImpl implements Limbo {
       }
     }
 
-    this.currentOnline.increment();
-
     connection.setActiveSessionHandler(connection.getState(), sessionHandler);
     sessionHandler.onConfig(new LimboPlayerImpl(this.plugin, this, player));
 
@@ -521,8 +523,12 @@ public class LimboImpl implements Limbo {
       );
 
       if (connection.getActiveSessionHandler() instanceof LoginConfirmHandler confirm) {
-        confirm.waitForConfirmation(() -> this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection));
+        confirm.waitForConfirmation(() -> {
+          this.currentOnline.increment();
+          this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
+        });
       } else {
+        this.currentOnline.increment();
         this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
       }
     });
@@ -595,9 +601,30 @@ public class LimboImpl implements Limbo {
       connection.write(this.firstChunks);
     }
 
-    int packetIndex = 0;
-    for (PreparedPacket chunk : this.delayedChunks) {
-      connection.eventLoop().schedule(() -> connection.write(chunk), (++packetIndex) * 50L, TimeUnit.MILLISECONDS);
+    if (!this.delayedChunks.isEmpty()) {
+      AtomicReference<ScheduledFuture<?>> task = new AtomicReference<>();
+      task.set(connection.eventLoop().scheduleAtFixedRate(new Runnable() {
+
+        private final List<PreparedPacket> chunksSnapshot = LimboImpl.this.delayedChunks;
+        private int index;
+
+        @Override
+        public void run() {
+          if (connection.isClosed()) {
+            task.get().cancel(false);
+            return;
+          }
+
+          connection.write(this.chunksSnapshot.get(this.index));
+          if (++this.index >= this.chunksSnapshot.size()) {
+            task.get().cancel(false);
+          }
+        }
+      }, 50, 50, TimeUnit.MILLISECONDS));
+
+      if (connection.getActiveSessionHandler() instanceof LimboSessionHandlerImpl sessionHandler) {
+        sessionHandler.setRespawnTask(task.get());
+      }
     }
   }
 
@@ -608,6 +635,20 @@ public class LimboImpl implements Limbo {
 
   public void onDisconnect() {
     this.currentOnline.decrement();
+
+    if (!this.queuedToRelease.isEmpty() && this.currentOnline.sum() == 0) {
+      synchronized (this) {
+        PreparedPacket[] packets = this.queuedToRelease.toArray(new PreparedPacket[0]);
+        this.queuedToRelease.clear();
+
+        // Wait some time to ensure that queued packets is really unused
+        this.plugin.getServer().getScheduler().buildTask(this.plugin, () -> {
+          for (PreparedPacket packet : packets) {
+            packet.release();
+          }
+        }).delay(10, TimeUnit.SECONDS).schedule();
+      }
+    }
 
     if (this.disposeScheduled && this.currentOnline.sum() == 0) {
       this.localDispose();
@@ -741,26 +782,36 @@ public class LimboImpl implements Limbo {
   private List<PreparedPacket> takeSnapshot() {
     List<PreparedPacket> packets = new ArrayList<>();
 
-    packets.add(this.joinPackets);
-    packets.add(this.fastRejoinPackets);
-    packets.add(this.safeRejoinPackets);
-    packets.add(this.respawnPackets);
-    packets.add(this.firstChunks);
+    if (this.joinPackets != null) {
+      packets.add(this.joinPackets);
+    }
+    if (this.fastRejoinPackets != null) {
+      packets.add(this.fastRejoinPackets);
+    }
+    if (this.safeRejoinPackets != null) {
+      packets.add(this.safeRejoinPackets);
+    }
+    if (this.respawnPackets != null) {
+      packets.add(this.respawnPackets);
+    }
+    if (this.firstChunks != null) {
+      packets.add(this.firstChunks);
+    }
     if (this.delayedChunks != null) {
       packets.addAll(this.delayedChunks);
     }
-    packets.add(this.configTransitionPackets);
-    packets.add(this.configPackets);
+    if (this.configTransitionPackets != null) {
+      packets.add(this.configTransitionPackets);
+    }
+    if (this.configPackets != null) {
+      packets.add(this.configPackets);
+    }
 
     return packets;
   }
 
   private void localDispose() {
-    this.takeSnapshot().forEach(packet -> {
-      if (packet != null) {
-        packet.release();
-      }
-    });
+    this.takeSnapshot().forEach(PreparedPacket::release);
   }
 
   // From Velocity.
