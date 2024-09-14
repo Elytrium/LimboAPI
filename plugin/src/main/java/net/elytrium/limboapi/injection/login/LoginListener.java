@@ -43,6 +43,8 @@ import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.proxy.player.TabList;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
+import com.velocitypowered.natives.compression.VelocityCompressor;
+import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
@@ -56,6 +58,7 @@ import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
+import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccessPacket;
 import com.velocitypowered.proxy.protocol.packet.SetCompressionPacket;
 import io.netty.channel.ChannelHandler;
@@ -71,6 +74,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.event.LoginLimboRegisterEvent;
 import net.elytrium.limboapi.injection.dummy.ClosedChannel;
 import net.elytrium.limboapi.injection.dummy.ClosedMinecraftConnection;
@@ -190,13 +194,26 @@ public class LoginListener {
               if (compressionEnabled) {
                 connection.write(new SetCompressionPacket(threshold));
                 this.plugin.fixDecompressor(pipeline, threshold, true);
-                pipeline.addFirst(Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
+                if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+                  pipeline.addFirst(Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
+                } else {
+                  int level = this.server.getConfiguration().getCompressionLevel();
+                  VelocityCompressor compressor = Natives.compress.get().create(level);
+                  pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER,
+                      new MinecraftCompressorAndLengthEncoder(threshold, compressor));
+                  pipeline.remove(Connections.FRAME_ENCODER);
+                }
               }
-              pipeline.remove(Connections.FRAME_ENCODER);
+
+              if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+                pipeline.remove(Connections.FRAME_ENCODER);
+              }
 
               this.plugin.inject3rdParty(player, connection, pipeline);
               if (compressionEnabled) {
                 pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_ENABLED);
+              } else {
+                pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_DISABLED);
               }
 
               VelocityConfiguration configuration = this.server.getConfiguration();
@@ -205,27 +222,31 @@ public class LoginListener {
                 playerUniqueID = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
               }
 
-              ServerLoginSuccessHook successHook = new ServerLoginSuccessHook();
-              successHook.setUsername(player.getUsername());
-              successHook.setProperties(player.getGameProfileProperties());
-              successHook.setUuid(playerUniqueID);
-              connection.write(successHook);
-
               ServerLoginSuccessPacket success = new ServerLoginSuccessPacket();
               success.setUsername(player.getUsername());
               success.setProperties(player.getGameProfileProperties());
               success.setUuid(playerUniqueID);
 
-              ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
-              if (compressionHandler != null) {
-                connection.write(this.plugin.encodeSingleLogin(success, connection.getProtocolVersion()));
+              if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+                connection.write(success);
               } else {
-                ChannelHandler frameHandler = pipeline.get(Connections.FRAME_ENCODER);
-                if (frameHandler != null) {
-                  pipeline.remove(frameHandler);
-                }
+                ServerLoginSuccessHook successHook = new ServerLoginSuccessHook();
+                successHook.setUsername(player.getUsername());
+                successHook.setProperties(player.getGameProfileProperties());
+                successHook.setUuid(playerUniqueID);
+                connection.write(successHook);
 
-                connection.write(this.plugin.encodeSingleLoginUncompressed(success, connection.getProtocolVersion()));
+                ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
+                if (compressionHandler != null) {
+                  connection.write(this.plugin.encodeSingleLogin(success, connection.getProtocolVersion()));
+                } else {
+                  ChannelHandler frameHandler = pipeline.get(Connections.FRAME_ENCODER);
+                  if (frameHandler != null) {
+                    pipeline.remove(frameHandler);
+                  }
+
+                  connection.write(this.plugin.encodeSingleLoginUncompressed(success, connection.getProtocolVersion()));
+                }
               }
 
               this.plugin.setInitialID(player, playerUniqueID);

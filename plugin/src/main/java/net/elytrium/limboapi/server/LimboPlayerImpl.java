@@ -288,8 +288,8 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   private void deject() {
-    this.plugin.fixCompressor(this.connection.getChannel().pipeline(), this.version);
     this.plugin.deject3rdParty(this.connection.getChannel().pipeline());
+    this.plugin.fixCompressor(this.connection.getChannel().pipeline(), this.version);
   }
 
   private void sendToRegisteredServer(RegisteredServer server) {

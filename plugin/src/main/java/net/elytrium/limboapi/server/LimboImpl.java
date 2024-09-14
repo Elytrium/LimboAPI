@@ -422,28 +422,26 @@ public class LimboImpl implements Limbo {
 
   protected void spawnPlayerLocal(Class<? extends LimboSessionHandler> handlerClass,
       LimboSessionHandlerImpl sessionHandler, ConnectedPlayer player, MinecraftConnection connection) {
+    if (!connection.eventLoop().inEventLoop()) {
+      connection.eventLoop().execute(() -> this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection));
+      return;
+    }
+
+    connection.setActiveSessionHandler(connection.getState(), sessionHandler);
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
       if (connection.getState() != StateRegistry.CONFIG) {
         if (this.shouldRejoin) {
           // Switch to CONFIG state
           connection.write(this.configTransitionPackets);
-
-          // Continue transition on the handler side
-          connection.setActiveSessionHandler(connection.getState(), sessionHandler);
-          return;
+          return; // Continue transition on the handler side
         }
       } else {
         // Switch to PLAY state
         connection.delayedWrite(this.configPackets);
-
-        // Ensure that encoder will send packets from PLAY state
-        // Client is not yet switched to the PLAY state,
-        // but at packet level it's already PLAY state
         this.plugin.setEncoderState(connection, this.localStateRegistry);
       }
     }
 
-    connection.setActiveSessionHandler(connection.getState(), sessionHandler);
     sessionHandler.onConfig(new LimboPlayerImpl(this.plugin, this, player));
 
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0
@@ -481,22 +479,29 @@ public class LimboImpl implements Limbo {
         if (pipeline.get(PreparedPacketFactory.PREPARED_ENCODER) == null) {
           if (this.plugin.isCompressionEnabled() && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0) {
             if (pipeline.get(Connections.FRAME_ENCODER) != null) {
-              pipeline.remove(Connections.FRAME_ENCODER);
+              if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+                pipeline.remove(Connections.FRAME_ENCODER);
+              }
             } else {
               ChannelHandler minecraftCompressDecoder = pipeline.remove(Connections.COMPRESSION_DECODER);
               if (minecraftCompressDecoder != null) {
                 this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
-                pipeline.replace(Connections.COMPRESSION_ENCODER, Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
+                if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+                  pipeline.replace(Connections.COMPRESSION_ENCODER, Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
+                }
+
                 compressionEnabled = true;
               }
             }
-          } else {
+          } else if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
             pipeline.remove(Connections.FRAME_ENCODER);
           }
 
           this.plugin.inject3rdParty(player, connection, pipeline);
           if (compressionEnabled) {
             pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_ENABLED);
+          } else {
+            pipeline.fireUserEventTriggered(VelocityConnectionEvent.COMPRESSION_DISABLED);
           }
         }
       } else {

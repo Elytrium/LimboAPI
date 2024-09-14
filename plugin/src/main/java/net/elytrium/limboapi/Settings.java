@@ -69,6 +69,14 @@ public class Settings extends YamlConfig {
         "Enable it if you have a plugin installed that bypasses compression (e.g. Geyser)"
     })
     public boolean SAVE_UNCOMPRESSED_PACKETS = true;
+    @Comment({
+        "WARNING: do not change when proxy is running, it will break exsiting connections",
+        "LimboAPI will be running in compatibility mode, allowing other plugins to",
+        "intercept or modify packets sent by it, but will reduce performance in some cases.",
+        "Enable if you are using plugins that modify packets. (e.g. ViaVersion, Raknetify or PacketEvents)",
+        "Require 'save-uncompressed-packets: true' to work properly"
+    })
+    public boolean COMPATIBILITY_MODE = false;
 
     @Comment("Logging for connect and disconnect messages.")
     public boolean LOGGING_ENABLED = true;

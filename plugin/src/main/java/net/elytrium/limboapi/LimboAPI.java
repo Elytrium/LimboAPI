@@ -40,6 +40,7 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftCompressDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
+import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
@@ -222,7 +223,8 @@ public class LimboAPI implements LimboFactory {
         level,
         threshold,
         Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS,
-        true
+        true,
+        Settings.IMP.MAIN.COMPATIBILITY_MODE
     );
     this.configPreparedPacketFactory = new PreparedPacketFactory(
         PreparedPacketImpl::new,
@@ -231,7 +233,8 @@ public class LimboAPI implements LimboFactory {
         level,
         threshold,
         Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS,
-        true
+        true,
+        Settings.IMP.MAIN.COMPATIBILITY_MODE
     );
     this.loginUncompressedPreparedPacketFactory = new PreparedPacketFactory(
         PreparedPacketImpl::new,
@@ -240,7 +243,8 @@ public class LimboAPI implements LimboFactory {
         level,
         threshold,
         false,
-        true
+        true,
+        Settings.IMP.MAIN.COMPATIBILITY_MODE
     );
     this.loginPreparedPacketFactory = new PreparedPacketFactory(
         PreparedPacketImpl::new,
@@ -249,7 +253,8 @@ public class LimboAPI implements LimboFactory {
         level,
         threshold,
         Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS,
-        true
+        true,
+        Settings.IMP.MAIN.COMPATIBILITY_MODE
     );
     this.reloadPreparedPacketFactory();
     this.reload();
@@ -320,9 +325,12 @@ public class LimboAPI implements LimboFactory {
     int threshold = this.server.getConfiguration().getCompressionThreshold();
     this.compressionEnabled = threshold != -1;
 
-    this.preparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold, Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
-    this.configPreparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold, Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
-    this.loginPreparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold, Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS);
+    this.preparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold,
+        Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS, Settings.IMP.MAIN.COMPATIBILITY_MODE);
+    this.configPreparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold,
+        Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS, Settings.IMP.MAIN.COMPATIBILITY_MODE);
+    this.loginPreparedPacketFactory.updateCompressor(this.compressionEnabled, level, threshold,
+        Settings.IMP.MAIN.SAVE_UNCOMPRESSED_PACKETS, Settings.IMP.MAIN.COMPATIBILITY_MODE);
   }
 
   @Override
@@ -449,6 +457,13 @@ public class LimboAPI implements LimboFactory {
       return;
     }
 
+    if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+      MinecraftEncoder encoder = connection.getChannel().pipeline().get(MinecraftEncoder.class);
+      if (encoder != null) {
+        encoder.setState(state);
+      }
+    }
+
     PreparedPacketEncoder encoder = connection.getChannel().pipeline().get(PreparedPacketEncoder.class);
     if (encoder != null) {
       if (state != StateRegistry.CONFIG && state != StateRegistry.LOGIN) {
@@ -481,18 +496,24 @@ public class LimboAPI implements LimboFactory {
   public void fixCompressor(ChannelPipeline pipeline, ProtocolVersion version) {
     ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
     if (compressionHandler == null) {
-      pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE);
+      if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+        pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE);
+      }
     } else {
       int level = this.server.getConfiguration().getCompressionLevel();
       int compressionThreshold = this.server.getConfiguration().getCompressionThreshold();
       VelocityCompressor compressor = Natives.compress.get().create(level);
-      MinecraftCompressorAndLengthEncoder encoder = new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor);
-      pipeline.remove(compressionHandler);
-      pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER, encoder);
+      if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+        MinecraftCompressorAndLengthEncoder encoder = new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor);
+        pipeline.remove(compressionHandler);
+        pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER, encoder);
+      }
 
       if (pipeline.get(Connections.COMPRESSION_DECODER) instanceof LimboCompressDecoder) {
         MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(compressionThreshold, compressor);
         pipeline.replace(Connections.COMPRESSION_DECODER, Connections.COMPRESSION_DECODER, decoder);
+      } else if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+        compressor.close();
       }
     }
   }
