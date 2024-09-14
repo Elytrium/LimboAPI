@@ -490,7 +490,11 @@ public class LimboAPI implements LimboFactory {
       decoder = new MinecraftLimitedCompressDecoder(threshold, compressor);
     }
 
-    pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.COMPRESSION_DECODER, decoder);
+    if (Settings.IMP.MAIN.COMPATIBILITY_MODE && pipeline.context(Connections.COMPRESSION_DECODER) != null) {
+      pipeline.replace(Connections.COMPRESSION_DECODER, Connections.COMPRESSION_DECODER, decoder);
+    } else {
+      pipeline.addBefore(Connections.MINECRAFT_DECODER, Connections.COMPRESSION_DECODER, decoder);
+    }
   }
 
   public void fixCompressor(ChannelPipeline pipeline, ProtocolVersion version) {

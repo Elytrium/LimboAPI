@@ -482,14 +482,15 @@ public class LimboImpl implements Limbo {
               if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
                 pipeline.remove(Connections.FRAME_ENCODER);
               }
+            } else if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
+              if (pipeline.context(Connections.COMPRESSION_DECODER) != null) {
+                this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
+              }
             } else {
               ChannelHandler minecraftCompressDecoder = pipeline.remove(Connections.COMPRESSION_DECODER);
               if (minecraftCompressDecoder != null) {
                 this.plugin.fixDecompressor(pipeline, this.plugin.getServer().getConfiguration().getCompressionThreshold(), false);
-                if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
-                  pipeline.replace(Connections.COMPRESSION_ENCODER, Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
-                }
-
+                pipeline.replace(Connections.COMPRESSION_ENCODER, Connections.COMPRESSION_ENCODER, new ChannelOutboundHandlerAdapter());
                 compressionEnabled = true;
               }
             }
