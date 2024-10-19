@@ -25,7 +25,7 @@ dependencies() {
   implementation("net.elytrium.commons:kyori:$elytriumCommonsVersion")
 
   implementation("net.elytrium:fastprepare:$fastPrepareVersion")
-  compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
+  compileOnly("com.velocitypowered:velocity-api:$velocityApiVersion")
   annotationProcessor("com.velocitypowered:velocity-api:$velocityVersion")
   compileOnly("com.velocitypowered:velocity-proxy:$velocityVersion") // From Elytrium Repo.
   compileOnly("com.velocitypowered:velocity-native:$velocityVersion")

@@ -39,6 +39,7 @@ import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.proxy.player.TabList;
 import com.velocitypowered.api.util.GameProfile;
@@ -170,6 +171,7 @@ public class LoginListener {
               event.getGameProfile(),
               connection,
               inboundConnection.getVirtualHost().orElse(null),
+              ((InboundConnection) inboundConnection).getRawVirtualHost().orElse(null),
               event.isOnlineMode(),
               playerKey
           );
@@ -316,6 +318,7 @@ public class LoginListener {
                   GameProfile.class,
                   MinecraftConnection.class,
                   InetSocketAddress.class,
+                  String.class,
                   boolean.class,
                   IdentifiedKey.class
               )
