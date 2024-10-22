@@ -195,6 +195,8 @@ public class LimboImpl implements Limbo {
     JoinGamePacket joinGame1191 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_1);
     JoinGamePacket joinGame1194 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_19_4);
     JoinGamePacket joinGame120 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_20);
+    JoinGamePacket joinGame121 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_21);
+    JoinGamePacket joinGame1212 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_21_2);
 
     final PreparedPacket joinPackets = this.plugin.createPreparedPacket()
         .prepare(legacyJoinGame, ProtocolVersion.MINIMUM_VERSION, ProtocolVersion.MINECRAFT_1_15_2)
@@ -204,7 +206,9 @@ public class LimboImpl implements Limbo {
         .prepare(joinGame119, ProtocolVersion.MINECRAFT_1_19, ProtocolVersion.MINECRAFT_1_19)
         .prepare(joinGame1191, ProtocolVersion.MINECRAFT_1_19_1, ProtocolVersion.MINECRAFT_1_19_3)
         .prepare(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4)
-        .prepare(joinGame120, ProtocolVersion.MINECRAFT_1_20);
+        .prepare(joinGame120, ProtocolVersion.MINECRAFT_1_20, ProtocolVersion.MINECRAFT_1_20_5)
+        .prepare(joinGame121, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MINECRAFT_1_21)
+        .prepare(joinGame1212, ProtocolVersion.MINECRAFT_1_21_2);
 
     PreparedPacket fastRejoinPackets = this.plugin.createPreparedPacket();
     this.createFastClientServerSwitch(legacyJoinGame, ProtocolVersion.MINECRAFT_1_7_2)
@@ -222,7 +226,11 @@ public class LimboImpl implements Limbo {
     this.createFastClientServerSwitch(joinGame1194, ProtocolVersion.MINECRAFT_1_19_4)
         .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_19_4));
     this.createFastClientServerSwitch(joinGame120, ProtocolVersion.MINECRAFT_1_20)
-        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_20));
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_20, ProtocolVersion.MINECRAFT_1_20_5));
+    this.createFastClientServerSwitch(joinGame121, ProtocolVersion.MINECRAFT_1_21)
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MINECRAFT_1_21));
+    this.createFastClientServerSwitch(joinGame1212, ProtocolVersion.MINECRAFT_1_21_2)
+        .forEach(minecraftPacket -> fastRejoinPackets.prepare(minecraftPacket, ProtocolVersion.MINECRAFT_1_21_2));
 
     this.joinPackets = this.addPostJoin(joinPackets);
     this.fastRejoinPackets = this.addPostJoin(fastRejoinPackets);
@@ -236,7 +244,8 @@ public class LimboImpl implements Limbo {
     PreparedPacket configPackets = this.plugin.createConfigPreparedPacket();
     configPackets.prepare(this::createRegistrySyncLegacy, ProtocolVersion.MINECRAFT_1_20_2, ProtocolVersion.MINECRAFT_1_20_3);
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_20_5, ProtocolVersion.MINECRAFT_1_20_5);
-    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MAXIMUM_VERSION);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MINECRAFT_1_21);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_2, ProtocolVersion.MAXIMUM_VERSION);
     if (this.shouldUpdateTags) {
       configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
     }
@@ -307,7 +316,7 @@ public class LimboImpl implements Limbo {
 
       for (int i = 0; i < tags.length; i++) {
         if (tags[i] == null) {
-          tags[i] = emptyTag;
+          tags[i] = Pair.of("limboapi_padding_" + i, emptyTag.value());
         }
       }
 
@@ -544,7 +553,7 @@ public class LimboImpl implements Limbo {
       MinecraftConnection connection, ConnectedPlayer player, LimboSessionHandlerImpl sessionHandler) {
     if (this.plugin.isLimboJoined(player)) {
       if (this.shouldRejoin) {
-        sessionHandler.setMitigateChatSessionDesync(true);
+        sessionHandler.setJoinGameTriggered(true);
         if (connection.getType() == ConnectionTypes.LEGACY_FORGE) {
           connection.delayedWrite(this.safeRejoinPackets);
         } else {
@@ -554,7 +563,7 @@ public class LimboImpl implements Limbo {
         connection.delayedWrite(this.postJoinPackets);
       }
     } else {
-      sessionHandler.setMitigateChatSessionDesync(true);
+      sessionHandler.setJoinGameTriggered(true);
       connection.delayedWrite(this.joinPackets);
     }
 
@@ -942,12 +951,22 @@ public class LimboImpl implements Limbo {
           tags.add((CompoundBinaryTag) tag);
         }
 
-        CompoundBinaryTag.Builder campfileType = CompoundBinaryTag.builder()
-            .putString("name", "minecraft:campfire")
-            .putInt("id", values.size())
-            .put("element", values.getCompound(0).getCompound("element"));
+        String[] types;
+        if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_2) >= 0) {
+          types = new String[] { "minecraft:campfire", "minecraft:ender_pearl", "minecraft:mace_smash" };
+        } else {
+          types = new String[] { "minecraft:campfire" };
+        }
 
-        tags.add(campfileType.build());
+        int id = values.size();
+        for (String name : types) {
+          CompoundBinaryTag.Builder type = CompoundBinaryTag.builder()
+              .putString("name", name)
+              .putInt("id", id++)
+              .put("element", values.getCompound(0).getCompound("element"));
+
+          tags.add(type.build());
+        }
 
         registryContainer.put("minecraft:damage_type", this.createRegistry("minecraft:damage_type", tags.build()));
       } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_20) >= 0) {

@@ -23,7 +23,8 @@ public enum BlockEntityVersion {
   MINECRAFT_1_20_2(EnumSet.of(ProtocolVersion.MINECRAFT_1_20_2)),
   MINECRAFT_1_20_3(EnumSet.of(ProtocolVersion.MINECRAFT_1_20_3)),
   MINECRAFT_1_20_5(EnumSet.of(ProtocolVersion.MINECRAFT_1_20_5)),
-  MINECRAFT_1_21(EnumSet.of(ProtocolVersion.MINECRAFT_1_21));
+  MINECRAFT_1_21(EnumSet.of(ProtocolVersion.MINECRAFT_1_21)),
+  MINECRAFT_1_21_2(EnumSet.of(ProtocolVersion.MINECRAFT_1_21_2));
 
   private static final EnumMap<ProtocolVersion, BlockEntityVersion> MC_VERSION_TO_ITEM_VERSIONS = new EnumMap<>(ProtocolVersion.class);
 
@@ -64,6 +65,7 @@ public enum BlockEntityVersion {
       case "1.20.3" -> MINECRAFT_1_20_3;
       case "1.20.5" -> MINECRAFT_1_20_5;
       case "1.21" -> MINECRAFT_1_21;
+      case "1.21.2" -> MINECRAFT_1_21_2;
       default -> LEGACY;
     };
   }

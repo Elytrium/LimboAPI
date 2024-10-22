@@ -59,7 +59,34 @@ public class PositionRotationPacket implements MinecraftPacket {
     throw new IllegalStateException();
   }
 
+  @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_21_2)) {
+      this.encodeModern(buf, protocolVersion);
+    } else {
+      this.encodeLegacy(buf, protocolVersion);
+    }
+  }
+
+  public void encodeModern(ByteBuf buf, ProtocolVersion protocolVersion) {
+    ProtocolUtils.writeVarInt(buf, this.teleportID);
+
+    buf.writeDouble(this.posX);
+    buf.writeDouble(this.posY);
+    buf.writeDouble(this.posZ);
+
+    // velocity
+    buf.writeDouble(0);
+    buf.writeDouble(0);
+    buf.writeDouble(0);
+
+    buf.writeFloat(this.yaw);
+    buf.writeFloat(this.pitch);
+
+    buf.writeInt(0); // not relative
+  }
+
+  public void encodeLegacy(ByteBuf buf, ProtocolVersion protocolVersion) {
     buf.writeDouble(this.posX);
     buf.writeDouble(this.posY);
     buf.writeDouble(this.posZ);

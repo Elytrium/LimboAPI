@@ -24,6 +24,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.api.material.VirtualItem;
 import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
+import net.elytrium.limboapi.utils.ProtocolTools;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -69,7 +70,7 @@ public class SetSlotPacket implements MinecraftPacket {
   }
 
   public void encodeModern(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    buf.writeByte(this.windowID);
+    ProtocolTools.writeContainerId(buf, protocolVersion, this.windowID);
     ProtocolUtils.writeVarInt(buf, 0);
     buf.writeShort(this.slot);
 

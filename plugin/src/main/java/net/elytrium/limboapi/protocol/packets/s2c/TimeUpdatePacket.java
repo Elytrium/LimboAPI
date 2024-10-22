@@ -46,6 +46,10 @@ public class TimeUpdatePacket implements MinecraftPacket {
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     buf.writeLong(this.worldAge);
     buf.writeLong(this.timeOfDay);
+
+    if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_21_2)) {
+      buf.writeBoolean(false); // no ticking
+    }
   }
 
   @Override
