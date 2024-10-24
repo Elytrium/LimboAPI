@@ -30,6 +30,7 @@ public class MovePositionOnlyPacket implements MinecraftPacket {
   private double posY;
   private double posZ;
   private boolean onGround;
+  private boolean collideHorizontally;
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
@@ -39,7 +40,14 @@ public class MovePositionOnlyPacket implements MinecraftPacket {
     }
     this.posY = buf.readDouble();
     this.posZ = buf.readDouble();
-    this.onGround = buf.readBoolean();
+
+    if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_21_2)) {
+      this.onGround = buf.readBoolean();
+    } else {
+      int flags = buf.readUnsignedByte();
+      this.onGround = (flags & 1) != 0;
+      this.collideHorizontally = (flags & 2) != 0;
+    }
   }
 
   @Override
@@ -73,6 +81,7 @@ public class MovePositionOnlyPacket implements MinecraftPacket {
         + ", posY=" + this.posY
         + ", posZ=" + this.posZ
         + ", onGround=" + this.onGround
+        + ", collideHorizontally=" + this.collideHorizontally
         + "}";
   }
 
@@ -90,5 +99,9 @@ public class MovePositionOnlyPacket implements MinecraftPacket {
 
   public boolean isOnGround() {
     return this.onGround;
+  }
+
+  public boolean isCollideHorizontally() {
+    return this.collideHorizontally;
   }
 }

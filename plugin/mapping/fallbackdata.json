@@ -1,4 +1,30 @@
 {
+  "MINECRAFT_1_21": {
+    "minecraft:pale_oak_wood": "minecraft:birch_wood",
+    "minecraft:pale_oak_planks": "minecraft:birch_planks",
+    "minecraft:pale_oak_sapling": "minecraft:birch_sapling",
+    "minecraft:pale_oak_log": "minecraft:birch_log",
+    "minecraft:stripped_pale_oak_log": "minecraft:stripped_birch_log",
+    "minecraft:stripped_pale_oak_wood": "minecraft:stripped_birch_wood",
+    "minecraft:pale_oak_leaves": "minecraft:birch_leaves",
+    "minecraft:creaking_heart": "minecraft:oak_wood",
+    "minecraft:pale_oak_sign": "minecraft:birch_sign",
+    "minecraft:pale_oak_wall_sign": "minecraft:birch_wall_sign",
+    "minecraft:pale_oak_hanging_sign": "minecraft:birch_hanging_sign",
+    "minecraft:pale_oak_wall_hanging_sign": "minecraft:birch_wall_hanging_sign",
+    "minecraft:pale_oak_pressure_plate": "minecraft:birch_pressure_plate",
+    "minecraft:pale_oak_trapdoor": "minecraft:birch_trapdoor",
+    "minecraft:potted_pale_oak_sapling": "minecraft:potted_birch_sapling",
+    "minecraft:pale_oak_button": "minecraft:birch_button",
+    "minecraft:pale_oak_stairs": "minecraft:birch_stairs",
+    "minecraft:pale_oak_slab": "minecraft:birch_slab",
+    "minecraft:pale_oak_fence_gate": "minecraft:birch_fence_gate",
+    "minecraft:pale_oak_fence": "minecraft:birch_fence",
+    "minecraft:pale_oak_door": "minecraft:birch_door",
+    "minecraft:pale_moss_block": "minecraft:moss_block",
+    "minecraft:pale_hanging_moss": "minecraft:hanging_roots",
+    "minecraft:pale_moss_carpet": "minecraft:moss_carpet"
+  },
   "MINECRAFT_1_20_3": {
     "minecraft:vault": "minecraft:spawner",
     "minecraft:heavy_core": "minecraft:wither_skeleton_skull"

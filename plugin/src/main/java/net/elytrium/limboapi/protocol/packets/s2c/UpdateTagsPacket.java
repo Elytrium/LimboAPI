@@ -22,7 +22,7 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,9 +40,9 @@ public class UpdateTagsPacket implements MinecraftPacket {
   }
 
   public Map<String, Map<String, int[]>> toVelocityTags() {
-    Map<String, Map<String, int[]>> newTags = new HashMap<>();
+    Map<String, Map<String, int[]>> newTags = new LinkedHashMap<>();
     for (Entry<String, Map<String, List<Integer>>> entry : this.tags.entrySet()) {
-      Map<String, int[]> tagRegistry = new HashMap<>();
+      Map<String, int[]> tagRegistry = new LinkedHashMap<>();
 
       for (Entry<String, List<Integer>> tagEntry : entry.getValue().entrySet()) {
         tagRegistry.put(tagEntry.getKey(),

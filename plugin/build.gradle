@@ -25,7 +25,7 @@ dependencies() {
   implementation("net.elytrium.commons:kyori:$elytriumCommonsVersion")
 
   implementation("net.elytrium:fastprepare:$fastPrepareVersion")
-  compileOnly("com.velocitypowered:velocity-api:$velocityApiVersion")
+  compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
   annotationProcessor("com.velocitypowered:velocity-api:$velocityVersion")
   compileOnly("com.velocitypowered:velocity-proxy:$velocityVersion") // From Elytrium Repo.
   compileOnly("com.velocitypowered:velocity-native:$velocityVersion")
@@ -128,7 +128,8 @@ enum MinecraftVersion {
   MINECRAFT_1_20_2(764),
   MINECRAFT_1_20_3(765),
   MINECRAFT_1_20_5(766),
-  MINECRAFT_1_21(767)
+  MINECRAFT_1_21(767),
+  MINECRAFT_1_21_2(768)
 
   public static final List<MinecraftVersion> WORLD_VERSIONS = List.of(
     MINECRAFT_1_13,
@@ -143,12 +144,8 @@ enum MinecraftVersion {
     MINECRAFT_1_19_4,
     MINECRAFT_1_20,
     MINECRAFT_1_20_3,
-    MINECRAFT_1_20_5
-  )
-
-  public static final List<MinecraftVersion> COMPONENT_VERSIONS = List.of(
     MINECRAFT_1_20_5,
-    MINECRAFT_1_21
+    MINECRAFT_1_21_2
   )
 
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
@@ -552,7 +549,7 @@ void generateRegistryMappings(File targetDir, Map<MinecraftVersion, Object> regi
           .findAll({ e -> MinecraftVersion.WORLD_VERSIONS.contains(e.getKey()) }))
   this.generateRegistryMapping("block", targetDir, registriesReports)
   this.generateRegistryMapping("data_component_type", targetDir, registriesReports
-          .findAll({ e -> MinecraftVersion.COMPONENT_VERSIONS.contains(e.getKey()) }))
+          .findAll({ e -> e.getKey() >= MinecraftVersion.MINECRAFT_1_20_5 }))
 
   File blockEntitiesMappingFile = new File(targetDir, "blockentities_mapping.json");
 

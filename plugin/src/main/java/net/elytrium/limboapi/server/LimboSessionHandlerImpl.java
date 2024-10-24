@@ -97,7 +97,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private boolean loaded;
   private boolean switching;
   private boolean disconnecting;
-  private boolean mitigateChatSessionDesync;
+  private boolean joinGameTriggered;
 
   public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player,
       LimboSessionHandler callback, StateRegistry originalState, MinecraftSessionHandler originalHandler,
@@ -181,10 +181,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.switching = true;
     this.loaded = false;
 
-    if (this.player.isOnlineMode() && this.mitigateChatSessionDesync) {
-      // As a client sends PlayerChatSessionPacket asynchronously,
-      // we should wait for it to ensure that it will not be sent
-      // while switching CONFIG to PLAY state, and so didn't break the connection
+    if (this.player.isOnlineMode() && this.player.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_21_2) && this.joinGameTriggered) {
+      // There is a race condition in the client then it reconnects too quickly (https://bugs.mojang.com/browse/MC-272506)
       if (!this.chatSession.isDone() && this.chatSessionTimeoutTask == null) {
         this.chatSessionTimeoutTask = this.player.getConnection().eventLoop()
             .schedule(() -> this.chatSession.complete(this), Settings.IMP.MAIN.CHAT_SESSION_PACKET_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -471,8 +469,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     return this.ping;
   }
 
-  public void setMitigateChatSessionDesync(boolean mitigateChatSessionDesync) {
-    this.mitigateChatSessionDesync = mitigateChatSessionDesync;
+  public void setJoinGameTriggered(boolean joinGameTriggered) {
+    this.joinGameTriggered = joinGameTriggered;
   }
 
   public void setRespawnTask(ScheduledFuture<?> respawnTask) {

@@ -27,10 +27,17 @@ import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 public class MoveOnGroundOnlyPacket implements MinecraftPacket {
 
   private boolean onGround;
+  private boolean collideHorizontally;
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    this.onGround = buf.readBoolean();
+    if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_21_2)) {
+      this.onGround = buf.readBoolean();
+    } else {
+      int flags = buf.readUnsignedByte();
+      this.onGround = (flags & 1) != 0;
+      this.collideHorizontally = (flags & 2) != 0;
+    }
   }
 
   @Override
@@ -61,10 +68,15 @@ public class MoveOnGroundOnlyPacket implements MinecraftPacket {
   public String toString() {
     return "Player{"
         + "onGround=" + this.onGround
+        + ", collideHorizontally=" + this.collideHorizontally
         + "}";
   }
 
   public boolean isOnGround() {
     return this.onGround;
+  }
+
+  public boolean isCollideHorizontally() {
+    return this.collideHorizontally;
   }
 }
