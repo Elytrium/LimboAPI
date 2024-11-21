@@ -29,6 +29,7 @@ import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 import net.elytrium.limboapi.protocol.packets.s2c.ChangeGameStatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.ChunkDataPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.ChunkUnloadPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.MapDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.PlayerAbilitiesPacket;
@@ -57,6 +58,11 @@ public class PacketFactoryImpl implements PacketFactory {
   @Override
   public Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, Dimension dimension) {
     return new ChunkDataPacket(chunkSnapshot, dimension.hasLegacySkyLight(), dimension.getMaxSections());
+  }
+
+  @Override
+  public Object createChunkUnloadPacket(int posX, int posZ) {
+    return new ChunkUnloadPacket(posX, posZ);
   }
 
   @Override

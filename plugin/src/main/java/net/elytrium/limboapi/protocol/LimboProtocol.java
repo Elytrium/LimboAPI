@@ -47,6 +47,7 @@ import net.elytrium.limboapi.protocol.packets.c2s.PlayerChatSessionPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.TeleportConfirmPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.ChangeGameStatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.ChunkDataPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.ChunkUnloadPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.MapDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.PlayerAbilitiesPacket;
@@ -214,6 +215,25 @@ public class LimboProtocol {
         createMapping(0x25, ProtocolVersion.MINECRAFT_1_20_2, true),
         createMapping(0x27, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x28, ProtocolVersion.MINECRAFT_1_21_2, true)
+    );
+    register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
+        ChunkUnloadPacket.class, ChunkUnloadPacket::new,
+        // on <=1.8, there is no ChunkUnload; its role is handled by specially encoded ChunkData, so the id will be the same as for ChunkData
+        createMapping(0x21, ProtocolVersion.MINECRAFT_1_7_2, true),
+        createMapping(0x1D, ProtocolVersion.MINECRAFT_1_9, true),
+        createMapping(0x1F, ProtocolVersion.MINECRAFT_1_13, true),
+        createMapping(0x1D, ProtocolVersion.MINECRAFT_1_14, true),
+        createMapping(0x1E, ProtocolVersion.MINECRAFT_1_15, true),
+        createMapping(0x1D, ProtocolVersion.MINECRAFT_1_16, true),
+        createMapping(0x1C, ProtocolVersion.MINECRAFT_1_16_2, true),
+        createMapping(0x1D, ProtocolVersion.MINECRAFT_1_17, true),
+        createMapping(0x1A, ProtocolVersion.MINECRAFT_1_19, true),
+        createMapping(0x1C, ProtocolVersion.MINECRAFT_1_19_1, true),
+        createMapping(0x1B, ProtocolVersion.MINECRAFT_1_19_3, true),
+        createMapping(0x1E, ProtocolVersion.MINECRAFT_1_19_4, true),
+        createMapping(0x1F, ProtocolVersion.MINECRAFT_1_20_2, true),
+        createMapping(0x21, ProtocolVersion.MINECRAFT_1_20_5, true),
+        createMapping(0x22, ProtocolVersion.MINECRAFT_1_21_2, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         DefaultSpawnPositionPacket.class, DefaultSpawnPositionPacket::new,

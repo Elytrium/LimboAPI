@@ -28,6 +28,8 @@ public interface PacketFactory {
 
   Object createChunkDataPacket(ChunkSnapshot chunkSnapshot, Dimension dimension);
 
+  Object createChunkUnloadPacket(int posX, int posZ);
+
   Object createDefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle);
 
   Object createMapDataPacket(int mapID, byte scale, MapData mapData);
