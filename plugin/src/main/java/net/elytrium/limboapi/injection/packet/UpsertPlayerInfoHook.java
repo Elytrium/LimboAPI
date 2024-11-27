@@ -66,13 +66,13 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
 
   private static Entry createFixedEntry(UUID initialId, Entry item, ConnectedPlayer player) {
     Entry fixedEntry = new Entry(initialId);
-    fixedEntry.setDisplayName(item.getDisplayName());
-    fixedEntry.setGameMode(item.getGameMode());
-    fixedEntry.setLatency(item.getLatency());
-    fixedEntry.setDisplayName(item.getDisplayName());
     GameProfile profile = item.getProfile();
     fixedEntry.setProfile(profile == null || !profile.getId().equals(player.getUniqueId()) ? profile : new GameProfile(initialId, profile.getName(), profile.getProperties()));
     fixedEntry.setListed(item.isListed());
+    fixedEntry.setLatency(item.getLatency());
+    fixedEntry.setGameMode(item.getGameMode());
+    fixedEntry.setDisplayName(item.getDisplayName());
+    fixedEntry.setListOrder(item.getListOrder());
     fixedEntry.setChatSession(item.getChatSession());
     return fixedEntry;
   }

@@ -188,12 +188,11 @@ File generateData(MinecraftVersion version) {
   targetDir.deleteDir()
 
   this.javaexec() {
+    classpath(jarFile)
     if (version >= MinecraftVersion.MINECRAFT_1_18) {
       jvmArgs("-DbundlerMainClass=net.minecraft.data.Main")
-      setMainClass("-jar")
-      args(jarFile.getAbsolutePath())
+      setMainClass("net.minecraft.bundler.Main")
     } else {
-      classpath(jarFile.getAbsolutePath())
       setMainClass("net.minecraft.data.Main")
     }
 

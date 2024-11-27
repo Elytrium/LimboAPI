@@ -34,15 +34,15 @@ public interface RewritingTabList {
       return entry;
     }
 
-    TabListEntry.Builder builder = TabListEntry.builder();
-    builder.tabList(entry.getTabList());
-    builder.profile(new GameProfile(this.rewriteUuid(profileId), profile.getName(), profile.getProperties()));
-    builder.listed(entry.isListed());
-    builder.latency(entry.getLatency());
-    builder.gameMode(entry.getGameMode());
-    entry.getDisplayNameComponent().ifPresent(builder::displayName);
-    builder.chatSession(entry.getChatSession());
-    return builder.build();
+    return TabListEntry.builder()
+        .tabList(entry.getTabList())
+        .profile(new GameProfile(this.rewriteUuid(profileId), profile.getName(), profile.getProperties()))
+        .chatSession(entry.getChatSession())
+        .latency(entry.getLatency())
+        .gameMode(entry.getGameMode())
+        .listed(entry.isListed())
+        .listOrder(entry.getListOrder())
+        .build();
   }
 
   default UUID rewriteUuid(UUID uuid) {
