@@ -34,8 +34,7 @@ public interface RewritingTabList {
 
     TabListEntry.Builder builder = TabListEntry.builder();
     builder.tabList(entry.getTabList());
-    builder.profile(new GameProfile(this.rewriteUuid(entry.getProfile().getId()),
-        entry.getProfile().getName(), entry.getProfile().getProperties()));
+    builder.profile(new GameProfile(this.rewriteUuid(entry.getProfile().getId()), entry.getProfile().getName(), entry.getProfile().getProperties()));
     builder.listed(entry.isListed());
     builder.latency(entry.getLatency());
     builder.gameMode(entry.getGameMode());
@@ -47,7 +46,12 @@ public interface RewritingTabList {
 
   default UUID rewriteUuid(UUID uuid) {
     if (this.getPlayer().getUniqueId().equals(uuid)) {
-      return LimboAPI.INITIAL_ID.getOrDefault(this.getPlayer(), uuid);
+      UUID clientUniqueId = LimboAPI.getClientUniqueId(this.getPlayer());
+      if (clientUniqueId == null) {
+        return uuid;
+      }
+
+      return clientUniqueId;
     }
 
     return uuid;

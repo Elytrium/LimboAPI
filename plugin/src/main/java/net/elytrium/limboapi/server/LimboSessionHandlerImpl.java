@@ -45,13 +45,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
@@ -63,12 +61,13 @@ import net.elytrium.limboapi.protocol.packets.c2s.MoveOnGroundOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MovePacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MovePositionOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveRotationOnlyPacket;
-import net.elytrium.limboapi.protocol.packets.c2s.PlayerChatSessionPacket;
-import net.elytrium.limboapi.protocol.packets.c2s.TeleportConfirmPacket;
+import net.elytrium.limboapi.protocol.packets.c2s.ChatSessionUpdatePacket;
+import net.elytrium.limboapi.protocol.packets.c2s.AcceptTeleportationPacket;
+import net.elytrium.limboapi.utils.Reflection;
 
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
-  private static final MethodHandle TEARDOWN_METHOD;
+  public static final MethodHandle TEARDOWN_METHOD = Reflection.findVirtualVoid(ConnectedPlayer.class, "teardown");
 
   private final LimboAPI plugin;
   private final LimboImpl limbo;
@@ -77,7 +76,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private final StateRegistry originalState;
   private final MinecraftSessionHandler originalHandler;
   private final RegisteredServer previousServer;
-  private final Supplier<String> limboName;
   private final CompletableFuture<Object> playTransition = new CompletableFuture<>();
   private final CompletableFuture<Object> configTransition = new CompletableFuture<>();
   private final CompletableFuture<Object> chatSession = new CompletableFuture<>();
@@ -93,7 +91,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private int keepAlivesSkipped;
   private long keepAliveSentTime;
   private int ping = -1;
-  private int genericBytes;
+  private int cumulativeBytes;
   private boolean loaded;
   private boolean switching;
   private boolean disconnecting;
@@ -101,7 +99,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player,
       LimboSessionHandler callback, StateRegistry originalState, MinecraftSessionHandler originalHandler,
-      RegisteredServer previousServer, Supplier<String> limboName) {
+      RegisteredServer previousServer) {
     this.plugin = plugin;
     this.limbo = limbo;
     this.player = player;
@@ -109,12 +107,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.originalState = originalState;
     this.originalHandler = originalHandler;
     this.previousServer = previousServer;
-    this.limboName = limboName;
-    this.loaded = player.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_18_2) < 0;
+    this.loaded = player.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_18_2);
 
     if (originalHandler instanceof LimboSessionHandlerImpl sessionHandler) {
       this.settings = sessionHandler.getSettings();
       this.brand = sessionHandler.getBrand();
+      this.ping = sessionHandler.ping;
     }
   }
 
@@ -123,10 +121,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.limboPlayer = player;
     this.callback.onConfig(this.limbo, player);
 
-    Integer serverReadTimeout = this.limbo.getReadTimeout();
-    if (serverReadTimeout == null) {
-      serverReadTimeout = this.plugin.getServer().getConfiguration().getReadTimeout();
-    }
+    int serverReadTimeout = Objects.requireNonNullElseGet(this.limbo.getReadTimeout(), () -> this.plugin.getServer().getConfiguration().getReadTimeout());
 
     // We should always send multiple keepalives inside a single timeout to not trigger Netty read timeout.
     serverReadTimeout /= 2;
@@ -150,7 +145,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.keepAlivePending = sessionHandler.keepAlivePending;
         this.keepAlivesSkipped = sessionHandler.keepAlivesSkipped;
         this.keepAliveSentTime = sessionHandler.keepAliveSentTime;
-        this.ping = sessionHandler.ping;
       } else {
         this.keepAliveKey = ThreadLocalRandom.current().nextInt();
         KeepAlivePacket keepAlive = new KeepAlivePacket();
@@ -160,7 +154,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.keepAlivesSkipped = 0;
         this.keepAliveSentTime = System.currentTimeMillis();
       }
-    }, 250, serverReadTimeout, TimeUnit.MILLISECONDS);
+    }, this.originalHandler instanceof LimboSessionHandlerImpl ? 0 : 250, serverReadTimeout, TimeUnit.MILLISECONDS);
   }
 
   public void onSpawn() {
@@ -229,9 +223,14 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   public boolean handle(MovePacket packet) {
     if (this.loaded) {
       this.callback.onGround(packet.isOnGround());
-      this.callback.onMove(packet.getX(), packet.getY(), packet.getZ());
-      this.callback.onMove(packet.getX(), packet.getY(), packet.getZ(), packet.getYaw(), packet.getPitch());
-      this.callback.onRotate(packet.getYaw(), packet.getPitch());
+      double posX = packet.getX();
+      double posY = packet.getY();
+      double posZ = packet.getZ();
+      float yaw = packet.getYaw();
+      float pitch = packet.getPitch();
+      this.callback.onMove(posX, posY, posZ, yaw, pitch);
+      this.callback.onMove(posX, posY, posZ);
+      this.callback.onRotate(yaw, pitch);
     }
 
     return true;
@@ -263,9 +262,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     return true;
   }
 
-  public boolean handle(TeleportConfirmPacket packet) {
+  public boolean handle(AcceptTeleportationPacket packet) {
     if (this.loaded) {
-      this.callback.onTeleport(packet.getTeleportID());
+      this.callback.onTeleport(packet.getId());
     }
 
     return true;
@@ -280,6 +279,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         if (Settings.IMP.MAIN.LOGGING_ENABLED) {
           LimboAPI.getLogger().warn("{} sent an invalid keepalive.", this.player);
         }
+
         return false;
       } else {
         this.keepAlivePending = false;
@@ -290,10 +290,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       }
     } else {
       connection.closeWith(this.plugin.getPackets().getInvalidPing());
-
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
         LimboAPI.getLogger().warn("{} sent an unexpected keepalive.", this.player);
       }
+
       return false;
     }
   }
@@ -337,11 +337,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   @Override
   public void handleUnknown(ByteBuf packet) {
     int readableBytes = packet.readableBytes();
-    this.genericBytes += readableBytes;
+    this.cumulativeBytes += readableBytes;
     if (readableBytes > Settings.IMP.MAIN.MAX_UNKNOWN_PACKET_LENGTH) {
       this.kickTooBigPacket("unknown", readableBytes);
-    } else if (this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
-      this.kickTooBigPacket("unknown, multi", this.genericBytes);
+    } else if (this.cumulativeBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
+      this.kickTooBigPacket("unknown, multi", this.cumulativeBytes);
     }
   }
 
@@ -349,24 +349,23 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   public void handleGeneric(MinecraftPacket packet) {
     if (packet instanceof ClientSettingsPacket clientSettings) {
       this.settings = clientSettings;
-    } else if (packet instanceof PlayerChatSessionPacket) {
+    } else if (packet instanceof ChatSessionUpdatePacket) {
       if (this.chatSessionTimeoutTask != null) {
         this.chatSessionTimeoutTask.cancel(true);
       }
       this.chatSession.complete(this);
     } else if (packet instanceof PluginMessagePacket pluginMessage) {
       int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
-      this.genericBytes += singleLength;
+      this.cumulativeBytes += singleLength;
       if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH) {
         this.kickTooBigPacket("generic (PluginMessage packet (custom payload)), single", singleLength);
         return;
-      } else if (this.genericBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
-        this.kickTooBigPacket("generic (PluginMessage packet (custom payload)), multi", this.genericBytes);
+      } else if (this.cumulativeBytes > Settings.IMP.MAIN.MAX_MULTI_GENERIC_PACKET_LENGTH) {
+        this.kickTooBigPacket("generic (PluginMessage packet (custom payload)), multi", this.cumulativeBytes);
         return;
       }
 
-      if (this.player.getConnection().getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0
-          && PluginMessageUtil.isMcBrand(pluginMessage)) {
+      if (this.player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_2) && PluginMessageUtil.isMcBrand(pluginMessage)) {
         try {
           this.brand = ProtocolUtils.readString(pluginMessage.content().slice(), Settings.IMP.MAIN.MAX_BRAND_NAME_LENGTH);
         } catch (QuietDecoderException ignored) {
@@ -384,7 +383,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   private void kickTooBigPacket(String type, int length) {
     this.player.getConnection().closeWith(this.plugin.getPackets().getTooBigPacket());
-
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
       LimboAPI.getLogger().warn("{} sent too big packet. (type: {}, length: {})", this.player, type, length);
     }
@@ -411,17 +409,15 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.release();
 
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-      LimboAPI.getLogger().info(
-          "{} ({}) has disconnected from the {} Limbo", this.player.getUsername(), this.player.getRemoteAddress(), this.limboName.get()
-      );
+      LimboAPI.getLogger().info("{} ({}) has disconnected from the {} Limbo", this.player.getUsername(), this.player.getRemoteAddress(), this.limbo.getName());
     }
 
     MinecraftConnection connection = this.player.getConnection();
     if (connection.isClosed()) {
       try {
         TEARDOWN_METHOD.invokeExact(this.player);
-      } catch (Throwable e) {
-        throw new ReflectionException(e);
+      } catch (Throwable t) {
+        throw new ReflectionException(t);
       }
 
       return;
@@ -444,16 +440,14 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     ChannelPipeline pipeline = connection.getChannel().pipeline();
 
     if (pipeline.get(LimboProtocol.READ_TIMEOUT) != null) {
-      pipeline.replace(LimboProtocol.READ_TIMEOUT, Connections.READ_TIMEOUT,
-          new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS)
-      );
+      pipeline.replace(LimboProtocol.READ_TIMEOUT, Connections.READ_TIMEOUT, new ReadTimeoutHandler(this.plugin.getServer().getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS));
     }
   }
 
   public void disconnect(Runnable runnable) {
     if (!this.disconnecting) {
       this.disconnecting = true;
-      if (this.player.getConnection().getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
+      if (this.player.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
         runnable.run();
       } else {
         this.playTransition.thenRun(runnable);
@@ -487,14 +481,5 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public String getBrand() {
     return this.brand;
-  }
-
-  static {
-    try {
-      TEARDOWN_METHOD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
-          .findVirtual(ConnectedPlayer.class, "teardown", MethodType.methodType(void.class));
-    } catch (NoSuchMethodException | IllegalAccessException e) {
-      throw new ReflectionException(e);
-    }
   }
 }

@@ -1,0 +1,26 @@
+name: Publish to Modrinth
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  publish:
+    if: github.repository_owner == 'LimboAPI'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4.1.4
+      - name: Setup Java
+        uses: actions/setup-java@v4.2.1
+        with:
+          distribution: temurin
+          java-version: 17
+          check-latest: true
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.3.2
+      - name: Publish
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: ./gradlew build modrinth
