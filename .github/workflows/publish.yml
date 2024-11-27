@@ -14,7 +14,9 @@ jobs:
       - name: Cache Minecraft reports
         uses: actions/cache@v4.1.2
         with:
-          path: plugin/build/minecraft/*/ # Cache only the directories
+          path: |
+            plugin/build/minecraft/*/
+            plugin/build/generated/minecraft/mappings
           key: minecraft-${{ hashFiles('gradle.properties') }} # Cache key based on gradle.properties because of gameVersions property
       - name: Setup Java
         uses: actions/setup-java@v4.5.0

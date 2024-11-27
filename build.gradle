@@ -1,14 +1,14 @@
 plugins() {
   id("java")
 
-  id("org.ajoberstar.grgit").version("5.2.2")
-
+  id("org.ajoberstar.grgit").version("5.3.0")
   /*
-  id("com.diffplug.spotless").version("6.25.0").apply(false)
-  id("com.github.spotbugs").version("6.0.19").apply(false)
-  */
 
-  id("io.github.goooler.shadow").version("8.1.8")
+  id("com.diffplug.spotless").version("6.25.0").apply(false)
+  id("com.github.spotbugs").version("6.0.26").apply(false)
+
+  */
+  id("com.gradleup.shadow").version("8.3.5")
 }
 
 this.group = "net.elytrium"
@@ -20,13 +20,13 @@ if (this.version.endsWith("-SNAPSHOT")) {
 
 subprojects() {
   apply(plugin: "java-library")
-
   /*
+
   apply(plugin: "com.diffplug.spotless")
   apply(plugin: "checkstyle")
   apply(plugin: "com.github.spotbugs")
-  */
 
+  */
   tasks.withType(JavaCompile).configureEach() {
     options.setEncoding("UTF-8")
   }
@@ -61,7 +61,7 @@ subprojects() {
   }
 
   checkstyle() {
-    toolVersion = "10.17.0"
+    toolVersion = "10.20.1"
 
     configFile = rootProject.file(".config/checkstyle/checkstyle.xml")
     maxErrors = 0
