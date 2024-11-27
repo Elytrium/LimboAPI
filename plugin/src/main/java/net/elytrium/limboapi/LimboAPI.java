@@ -266,7 +266,7 @@ public class LimboAPI implements LimboFactory {
           LOGGER.error("****************************************");
         }
       } catch (Exception e) {
-        LimboAPI.LOGGER.warn("Failed to check for updates:", e);
+        LimboAPI.LOGGER.warn("Failed to check for updates", e);
       }
     }
   }

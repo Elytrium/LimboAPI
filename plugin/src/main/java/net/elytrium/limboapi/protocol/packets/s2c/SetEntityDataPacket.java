@@ -55,7 +55,7 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
   private int id;
   private Collection<EntityDataValue<?>> packedItems;
 
-  private ByteBuf decodeBuf; // TODO remove after proper tests
+  private ByteBuf buf; // TODO remove after proper tests
 
   public SetEntityDataPacket(int id, Collection<EntityDataValue<?>> packedItems) { // TODO Short2ObjectArrayMap
     this.id = id;
@@ -68,6 +68,7 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    int readerIndex = buf.readerIndex();
     try {
       boolean v1_7_x = version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6);
       if (v1_7_x || version == ProtocolVersion.MINECRAFT_1_8) {
@@ -93,16 +94,16 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
         }
       }
     } catch (Throwable t) {
-      this.decodeBuf = buf.retainedDuplicate().readerIndex(0);
-      LimboAPI.getLogger().error("Failed to read SetEntityDataPacket (direction={}, version={}, data={})", direction, version, Base64.getEncoder().encodeToString(ByteBufUtil.getBytes(this.decodeBuf)), t);
+      this.buf = buf.retainedDuplicate().readerIndex(readerIndex);
+      LimboAPI.getLogger().error("Failed to read SetEntityDataPacket (direction={}, version={}, data=\"{}\")", direction, version, Base64.getEncoder().encodeToString(ByteBufUtil.getBytes(this.buf)), t);
       buf.readerIndex(buf.writerIndex());
     }
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    if (this.decodeBuf != null) {
-      buf.writeBytes(this.decodeBuf);
+    if (this.buf != null) {
+      buf.writeBytes(this.buf);
       return;
     }
 
@@ -113,7 +114,6 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
       } else {
         ProtocolUtils.writeVarInt(buf, this.id);
       }
-
       if (this.packedItems != null) {
         this.packedItems.forEach(dataValue -> {
           Object value = dataValue.value();
@@ -125,7 +125,6 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
       buf.writeByte(SetEntityDataPacket.EOF_MARKER_LEGACY);
     } else {
       ProtocolUtils.writeVarInt(buf, this.id);
-
       if (this.packedItems != null) {
         this.packedItems.forEach(dataValue -> {
           buf.writeByte(dataValue.id());
@@ -143,18 +142,19 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
+    this.retain();
     return false; // forward it to the player
   }
 
   @Override
   public int refCnt() {
-    return this.decodeBuf == null ? -1 : this.decodeBuf.refCnt();
+    return this.buf == null ? -1 : this.buf.refCnt();
   }
 
   @Override
   public ReferenceCounted retain() {
-    if (this.decodeBuf != null) {
-      this.decodeBuf.retain();
+    if (this.buf != null) {
+      this.buf.retain();
     }
 
     return this;
@@ -162,8 +162,8 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public ReferenceCounted retain(int increment) {
-    if (this.decodeBuf != null) {
-      this.decodeBuf.retain(increment);
+    if (this.buf != null) {
+      this.buf.retain(increment);
     }
 
     return this;
@@ -171,8 +171,8 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public ReferenceCounted touch() {
-    if (this.decodeBuf != null) {
-      this.decodeBuf.touch();
+    if (this.buf != null) {
+      this.buf.touch();
     }
 
     return this;
@@ -180,8 +180,8 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public ReferenceCounted touch(Object hint) {
-    if (this.decodeBuf != null) {
-      this.decodeBuf.touch(hint);
+    if (this.buf != null) {
+      this.buf.touch(hint);
     }
 
     return this;
@@ -189,12 +189,138 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public boolean release() {
-    return this.decodeBuf != null && this.decodeBuf.release();
+    return this.buf != null && this.buf.release();
   }
 
   @Override
   public boolean release(int decrement) {
-    return this.decodeBuf != null && this.decodeBuf.release(decrement);
+    return this.buf != null && this.buf.release(decrement);
+  }
+
+  private static EntityDataValue<Object> read(ByteBuf buf, ProtocolVersion version, int id, int type) {
+    //System.out.println("read " + id + " as " + type);
+    return new EntityDataValue<>(id, version.noLessThan(ProtocolVersion.MINECRAFT_1_19_3) ? switch (type) {
+      // >=1.19.3
+      case 0 -> buf.readByte();
+      case 1 -> ProtocolUtils.readVarInt(buf);
+      case 2 -> SetEntityDataPacket.readVarLong(buf);
+      case 3 -> buf.readFloat();
+      case 4 -> ProtocolUtils.readString(buf, Short.MAX_VALUE);
+      case 5 -> version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3) ? SetEntityDataPacket.readNBTComponent(buf, version) : SetEntityDataPacket.readComponent(buf, version);
+      case 6 -> version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3) ? SetEntityDataPacket.readOptionalNBTComponent(buf, version) : SetEntityDataPacket.readOptionalComponent(buf, version);
+      case 7 -> LimboProtocolUtils.readItemStack(buf, version);
+      case 8 -> buf.readBoolean();
+      case 9 -> SetEntityDataPacket.readRotations(buf);
+      case 10 -> LimboProtocolUtils.readBlockPos(buf, version);
+      case 11 -> SetEntityDataPacket.readOptionalBlockPos(buf, version);
+      case 12 -> SetEntityDataPacket.readDirection(buf);
+      case 13 -> SetEntityDataPacket.readOptionalUUID(buf);
+      default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_19_4) ? switch (type) {
+        // >=1.19.4
+        case 14 -> SetEntityDataPacket.readBlockState(buf);
+        case 15 -> SetEntityDataPacket.readOptionalBlockState(buf);
+        case 16 -> LimboProtocolUtils.readCompoundTag(buf, version);
+        case 17 -> SetEntityDataPacket.readParticle(buf, version);
+        default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_20_5) ? switch (type) {
+          // >=1.20.5
+          case 18 -> SetEntityDataPacket.readParticles(buf, version);
+          case 19 -> SetEntityDataPacket.readVillagerData(buf);
+          case 20 -> SetEntityDataPacket.readOptionalUnsignedInt(buf);
+          case 21 -> SetEntityDataPacket.readPose(buf, version);
+          case 22 -> SetEntityDataPacket.readCatVariant(buf);
+          case 23 -> SetEntityDataPacket.readWolfVariant(buf);
+          case 24 -> SetEntityDataPacket.readFrogVariant(buf);
+          case 25 -> SetEntityDataPacket.readOptionalGlobalPos(buf, version);
+          case 26 -> SetEntityDataPacket.readPaintingVariant(buf);
+          case 27 -> SetEntityDataPacket.readSnifferState(buf);
+          case 28 -> SetEntityDataPacket.readArmadilloState(buf);
+          case 29 -> SetEntityDataPacket.readVector3(buf);
+          case 30 -> SetEntityDataPacket.readQuaternion(buf);
+          default -> SetEntityDataPacket.fail(type);
+        } : switch (type) {
+          // >=1.19.4
+          case 18 -> SetEntityDataPacket.readVillagerData(buf);
+          case 19 -> SetEntityDataPacket.readOptionalUnsignedInt(buf);
+          case 20 -> SetEntityDataPacket.readPose(buf, version);
+          case 21 -> SetEntityDataPacket.readCatVariant(buf);
+          case 22 -> SetEntityDataPacket.readFrogVariant(buf);
+          case 23 -> SetEntityDataPacket.readOptionalGlobalPos(buf, version);
+          case 24 -> SetEntityDataPacket.readPaintingVariant(buf);
+          case 25 -> SetEntityDataPacket.readSnifferState(buf);
+          case 26 -> SetEntityDataPacket.readVector3(buf);
+          case 27 -> SetEntityDataPacket.readQuaternion(buf);
+          default -> SetEntityDataPacket.fail(type);
+        };
+      } : switch (type) {
+        // >=1.19.3
+        case 14 -> SetEntityDataPacket.readOptionalBlockState(buf);
+        case 15 -> LimboProtocolUtils.readCompoundTag(buf, version);
+        case 16 -> SetEntityDataPacket.readParticle(buf, version);
+        case 17 -> SetEntityDataPacket.readVillagerData(buf);
+        case 18 -> SetEntityDataPacket.readOptionalUnsignedInt(buf);
+        case 19 -> SetEntityDataPacket.readPose(buf, version);
+        case 20 -> SetEntityDataPacket.readCatVariant(buf);
+        case 21 -> SetEntityDataPacket.readFrogVariant(buf);
+        case 22 -> SetEntityDataPacket.readOptionalGlobalPos(buf, version);
+        case 23 -> SetEntityDataPacket.readPaintingVariant(buf);
+        default -> SetEntityDataPacket.fail(type);
+      };
+    } : version.noLessThan(ProtocolVersion.MINECRAFT_1_9) ? switch (type) {
+      case 0 -> buf.readByte();
+      case 1 -> ProtocolUtils.readVarInt(buf);
+      case 2 -> buf.readFloat();
+      case 3 -> ProtocolUtils.readString(buf, Short.MAX_VALUE);
+      case 4 -> SetEntityDataPacket.readComponent(buf, version);
+      default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_13) ? switch (type) {
+        // >=1.13
+        case 5 -> SetEntityDataPacket.readOptionalComponent(buf, version);
+        case 6 -> LimboProtocolUtils.readItemStack(buf, version);
+        case 7 -> buf.readBoolean();
+        case 8 -> SetEntityDataPacket.readRotations(buf);
+        case 9 -> LimboProtocolUtils.readBlockPos(buf, version);
+        case 10 -> SetEntityDataPacket.readOptionalBlockPos(buf, version);
+        case 11 -> SetEntityDataPacket.readDirection(buf);
+        case 12 -> SetEntityDataPacket.readOptionalUUID(buf);
+        case 13 -> SetEntityDataPacket.readOptionalBlockState(buf);
+        case 14 -> LimboProtocolUtils.readCompoundTag(buf, version);
+        case 15 -> SetEntityDataPacket.readParticle(buf, version);
+        default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_14) ? switch (type) {
+          // >=1.14
+          case 16 -> SetEntityDataPacket.readVillagerData(buf);
+          case 17 -> SetEntityDataPacket.readOptionalUnsignedInt(buf);
+          case 18 -> SetEntityDataPacket.readPose(buf, version);
+          default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_19) ? switch (type) {
+            // >=1.19
+            case 19 -> SetEntityDataPacket.readCatVariant(buf);
+            case 20 -> SetEntityDataPacket.readFrogVariant(buf);
+            case 21 -> SetEntityDataPacket.readOptionalGlobalPos(buf, version);
+            case 22 -> SetEntityDataPacket.readPaintingVariant(buf);
+            default -> SetEntityDataPacket.fail(type);
+          } : SetEntityDataPacket.fail(type);
+        } : SetEntityDataPacket.fail(type);
+      } : switch (type) {
+        // >=1.9
+        case 5 -> LimboProtocolUtils.readItemStack(buf, version);
+        case 6 -> buf.readBoolean();
+        case 7 -> SetEntityDataPacket.readRotations(buf);
+        case 8 -> LimboProtocolUtils.readBlockPos(buf, version);
+        case 9 -> SetEntityDataPacket.readOptionalBlockPos(buf, version);
+        case 10 -> SetEntityDataPacket.readDirection(buf);
+        case 11 -> SetEntityDataPacket.readOptionalUUID(buf);
+        case 12 -> SetEntityDataPacket.readOptionalBlockState(buf);
+        default -> type == 13 && version.noLessThan(ProtocolVersion.MINECRAFT_1_12) ? LimboProtocolUtils.readCompoundTag(buf, version) : SetEntityDataPacket.fail(type);
+      };
+    } : switch (type) {
+      // [1.7.2 - 1.8.9]
+      case 0 -> buf.readByte();
+      case 1 -> buf.readShort();
+      case 2 -> buf.readInt();
+      case 3 -> buf.readFloat();
+      case 4 -> ProtocolUtils.readString(buf, Short.MAX_VALUE);
+      case 5 -> LimboProtocolUtils.readItemStack(buf, version);
+      case 6 -> LimboProtocolUtils.readBlockPos(buf, version);
+      default -> type == 7 && version == ProtocolVersion.MINECRAFT_1_8 ? SetEntityDataPacket.readRotations(buf) : SetEntityDataPacket.fail(type);
+    });
   }
 
   private static <T> int type(ProtocolVersion version, T value) {
@@ -494,132 +620,6 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
     } else {
       SetEntityDataPacket.fail(value);
     }
-  }
-
-  private static EntityDataValue<Object> read(ByteBuf buf, ProtocolVersion version, int id, int type) {
-    //System.out.println("read " + id + " as " + type);
-    return new EntityDataValue<>(id, version.noLessThan(ProtocolVersion.MINECRAFT_1_19_3) ? switch (type) {
-      // >=1.19.3
-      case 0 -> buf.readByte();
-      case 1 -> ProtocolUtils.readVarInt(buf);
-      case 2 -> SetEntityDataPacket.readVarLong(buf);
-      case 3 -> buf.readFloat();
-      case 4 -> ProtocolUtils.readString(buf, Short.MAX_VALUE);
-      case 5 -> version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3) ? SetEntityDataPacket.readNBTComponent(buf, version) : SetEntityDataPacket.readComponent(buf, version);
-      case 6 -> version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3) ? SetEntityDataPacket.readOptionalNBTComponent(buf, version) : SetEntityDataPacket.readOptionalComponent(buf, version);
-      case 7 -> LimboProtocolUtils.readItemStack(buf, version);
-      case 8 -> buf.readBoolean();
-      case 9 -> SetEntityDataPacket.readRotations(buf);
-      case 10 -> LimboProtocolUtils.readBlockPos(buf, version);
-      case 11 -> SetEntityDataPacket.readOptionalBlockPos(buf, version);
-      case 12 -> SetEntityDataPacket.readDirection(buf);
-      case 13 -> SetEntityDataPacket.readOptionalUUID(buf);
-      default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_19_4) ? switch (type) {
-        // >=1.19.4
-        case 14 -> SetEntityDataPacket.readBlockState(buf);
-        case 15 -> SetEntityDataPacket.readOptionalBlockState(buf);
-        case 16 -> LimboProtocolUtils.readCompoundTag(buf, version);
-        case 17 -> SetEntityDataPacket.readParticle(buf, version);
-        default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_20_5) ? switch (type) {
-          // >=1.20.5
-          case 18 -> SetEntityDataPacket.readParticles(buf, version);
-          case 19 -> SetEntityDataPacket.readVillagerData(buf);
-          case 20 -> SetEntityDataPacket.readOptionalUnsignedInt(buf);
-          case 21 -> SetEntityDataPacket.readPose(buf, version);
-          case 22 -> SetEntityDataPacket.readCatVariant(buf);
-          case 23 -> SetEntityDataPacket.readWolfVariant(buf);
-          case 24 -> SetEntityDataPacket.readFrogVariant(buf);
-          case 25 -> SetEntityDataPacket.readOptionalGlobalPos(buf, version);
-          case 26 -> SetEntityDataPacket.readPaintingVariant(buf);
-          case 27 -> SetEntityDataPacket.readSnifferState(buf);
-          case 28 -> SetEntityDataPacket.readArmadilloState(buf);
-          case 29 -> SetEntityDataPacket.readVector3(buf);
-          case 30 -> SetEntityDataPacket.readQuaternion(buf);
-          default -> SetEntityDataPacket.fail(type);
-        } : switch (type) {
-          // >=1.19.4
-          case 18 -> SetEntityDataPacket.readVillagerData(buf);
-          case 19 -> SetEntityDataPacket.readOptionalUnsignedInt(buf);
-          case 20 -> SetEntityDataPacket.readPose(buf, version);
-          case 21 -> SetEntityDataPacket.readCatVariant(buf);
-          case 22 -> SetEntityDataPacket.readFrogVariant(buf);
-          case 23 -> SetEntityDataPacket.readOptionalGlobalPos(buf, version);
-          case 24 -> SetEntityDataPacket.readPaintingVariant(buf);
-          case 25 -> SetEntityDataPacket.readSnifferState(buf);
-          case 26 -> SetEntityDataPacket.readVector3(buf);
-          case 27 -> SetEntityDataPacket.readQuaternion(buf);
-          default -> SetEntityDataPacket.fail(type);
-        };
-      } : switch (type) {
-        // >=1.19.3
-        case 14 -> SetEntityDataPacket.readOptionalBlockState(buf);
-        case 15 -> LimboProtocolUtils.readCompoundTag(buf, version);
-        case 16 -> SetEntityDataPacket.readParticle(buf, version);
-        case 17 -> SetEntityDataPacket.readVillagerData(buf);
-        case 18 -> SetEntityDataPacket.readOptionalUnsignedInt(buf);
-        case 19 -> SetEntityDataPacket.readPose(buf, version);
-        case 20 -> SetEntityDataPacket.readCatVariant(buf);
-        case 21 -> SetEntityDataPacket.readFrogVariant(buf);
-        case 22 -> SetEntityDataPacket.readOptionalGlobalPos(buf, version);
-        case 23 -> SetEntityDataPacket.readPaintingVariant(buf);
-        default -> SetEntityDataPacket.fail(type);
-      };
-    } : version.noLessThan(ProtocolVersion.MINECRAFT_1_9) ? switch (type) {
-      case 0 -> buf.readByte();
-      case 1 -> ProtocolUtils.readVarInt(buf);
-      case 2 -> buf.readFloat();
-      case 3 -> ProtocolUtils.readString(buf, Short.MAX_VALUE);
-      case 4 -> SetEntityDataPacket.readComponent(buf, version);
-      default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_13) ? switch (type) {
-        // >=1.13
-        case 5 -> SetEntityDataPacket.readOptionalComponent(buf, version);
-        case 6 -> LimboProtocolUtils.readItemStack(buf, version);
-        case 7 -> buf.readBoolean();
-        case 8 -> SetEntityDataPacket.readRotations(buf);
-        case 9 -> LimboProtocolUtils.readBlockPos(buf, version);
-        case 10 -> SetEntityDataPacket.readOptionalBlockPos(buf, version);
-        case 11 -> SetEntityDataPacket.readDirection(buf);
-        case 12 -> SetEntityDataPacket.readOptionalUUID(buf);
-        case 13 -> SetEntityDataPacket.readOptionalBlockState(buf);
-        case 14 -> LimboProtocolUtils.readCompoundTag(buf, version);
-        case 15 -> SetEntityDataPacket.readParticle(buf, version);
-        default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_14) ? switch (type) {
-          // >=1.14
-          case 16 -> SetEntityDataPacket.readVillagerData(buf);
-          case 17 -> SetEntityDataPacket.readOptionalUnsignedInt(buf);
-          case 18 -> SetEntityDataPacket.readPose(buf, version);
-          default -> version.noLessThan(ProtocolVersion.MINECRAFT_1_19) ? switch (type) {
-            // >=1.19
-            case 19 -> SetEntityDataPacket.readCatVariant(buf);
-            case 20 -> SetEntityDataPacket.readFrogVariant(buf);
-            case 21 -> SetEntityDataPacket.readOptionalGlobalPos(buf, version);
-            case 22 -> SetEntityDataPacket.readPaintingVariant(buf);
-            default -> SetEntityDataPacket.fail(type);
-          } : SetEntityDataPacket.fail(type);
-        } : SetEntityDataPacket.fail(type);
-      } : switch (type) {
-        // >=1.9
-        case 5 -> LimboProtocolUtils.readItemStack(buf, version);
-        case 6 -> buf.readBoolean();
-        case 7 -> SetEntityDataPacket.readRotations(buf);
-        case 8 -> LimboProtocolUtils.readBlockPos(buf, version);
-        case 9 -> SetEntityDataPacket.readOptionalBlockPos(buf, version);
-        case 10 -> SetEntityDataPacket.readDirection(buf);
-        case 11 -> SetEntityDataPacket.readOptionalUUID(buf);
-        case 12 -> SetEntityDataPacket.readOptionalBlockState(buf);
-        default -> type == 13 && version.noLessThan(ProtocolVersion.MINECRAFT_1_12) ? LimboProtocolUtils.readCompoundTag(buf, version) : SetEntityDataPacket.fail(type);
-      };
-    } : switch (type) {
-      // [1.7.2 - 1.8.9]
-      case 0 -> buf.readByte();
-      case 1 -> buf.readShort();
-      case 2 -> buf.readInt();
-      case 3 -> buf.readFloat();
-      case 4 -> ProtocolUtils.readString(buf, Short.MAX_VALUE);
-      case 5 -> LimboProtocolUtils.readItemStack(buf, version);
-      case 6 -> LimboProtocolUtils.readBlockPos(buf, version);
-      default -> type == 7 && version == ProtocolVersion.MINECRAFT_1_8 ? SetEntityDataPacket.readRotations(buf) : SetEntityDataPacket.fail(type);
-    });
   }
 
   private static int fail(Object value) {

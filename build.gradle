@@ -3,8 +3,10 @@ plugins() {
 
   id("org.ajoberstar.grgit").version("5.2.2")
 
+  /*
   id("com.diffplug.spotless").version("6.25.0").apply(false)
   id("com.github.spotbugs").version("6.0.19").apply(false)
+  */
 
   id("io.github.goooler.shadow").version("8.1.8")
 }
@@ -19,9 +21,11 @@ if (this.version.endsWith("-SNAPSHOT")) {
 subprojects() {
   apply(plugin: "java-library")
 
-  //apply(plugin: "com.diffplug.spotless")
+  /*
+  apply(plugin: "com.diffplug.spotless")
   apply(plugin: "checkstyle")
   apply(plugin: "com.github.spotbugs")
+  */
 
   tasks.withType(JavaCompile).configureEach() {
     options.setEncoding("UTF-8")
@@ -48,12 +52,13 @@ subprojects() {
       url = "https://repo.papermc.io/repository/maven-public/"
     }
   }
+  /*
 
-  //spotless() {
-  //  java() {
-  //    licenseHeaderFile(rootProject.file("HEADER.txt"))
-  //  }
-  //}
+  spotless() {
+    java() {
+      licenseHeaderFile(rootProject.file("HEADER.txt"))
+    }
+  }
 
   checkstyle() {
     toolVersion = "10.17.0"
@@ -73,6 +78,7 @@ subprojects() {
       }
     }
   }
+  */
 }
 
 gradle.projectsEvaluated() {
