@@ -1,6 +1,6 @@
 name: Java CI with Gradle
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   build:
@@ -9,18 +9,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4.1.4
+        uses: actions/checkout@v4.2.2
+      - name: Cache Minecraft reports
+        uses: actions/cache@v4.1.2
+        with:
+          path: plugin/build/minecraft/*/ # Cache only the directories
+          key: minecraft-${{ hashFiles('gradle.properties') }} # Cache key based on gradle.properties because of gameVersions property
       - name: Setup Java
-        uses: actions/setup-java@v4.2.1
+        uses: actions/setup-java@v4.5.0
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
+          check-latest: true
+          cache: gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3.3.2
       - name: Build with Gradle
         run: ./gradlew build
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4.3.3
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: LimboAPI
           path: "build/libs/limboapi-*.jar"
