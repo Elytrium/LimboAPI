@@ -21,10 +21,10 @@ import com.google.gson.internal.LinkedTreeMap;
 import com.velocitypowered.api.network.ProtocolVersion;
 import io.netty.util.collection.ShortObjectHashMap;
 import io.netty.util.collection.ShortObjectMap;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -96,14 +96,16 @@ public record SimpleBlock(String modernId, short blockId, short blockStateId, bo
     LinkedTreeMap<String, Number> blockStates = JsonParser.parse(LimboAPI.class.getResourceAsStream("/mappings/block_states.json"));
     MODERN_BLOCK_STATE_PROTOCOL_ID_MAP = new ShortObjectHashMap<>(blockStates.size());
     MODERN_BLOCK_STATE_STRING_MAP = new HashMap<>(blockStates.size());
-    blockStates.forEach((key, number) -> {
+    blockStates.forEach((blockState, number) -> {
       short value = number.shortValue();
-      SimpleBlock.MODERN_BLOCK_STATE_PROTOCOL_ID_MAP.put(value, key);
-      int index = key.indexOf('[');
+      SimpleBlock.MODERN_BLOCK_STATE_PROTOCOL_ID_MAP.put(value, blockState);
+      int index = blockState.indexOf('[');
       if (index == -1) {
-        SimpleBlock.MODERN_BLOCK_STATE_STRING_MAP.computeIfAbsent(key, k -> new HashMap<>()).put(null, value);
+        SimpleBlock.MODERN_BLOCK_STATE_STRING_MAP.computeIfAbsent(blockState, key -> new HashMap<>()).put(null, value);
       } else {
-        SimpleBlock.MODERN_BLOCK_STATE_STRING_MAP.computeIfAbsent(key.substring(0, index), k -> new HashMap<>()).put(new HashSet<>(List.of(key.substring(index + 1, key.length() - 1).split(","))), value);
+        HashSet<String> params = new HashSet<>();
+        Collections.addAll(params, blockState.substring(index + 1, blockState.length() - 1).split(","));
+        SimpleBlock.MODERN_BLOCK_STATE_STRING_MAP.computeIfAbsent(blockState.substring(0, index), key -> new HashMap<>()).put(params, value);
       }
     });
 
@@ -125,7 +127,7 @@ public record SimpleBlock(String modernId, short blockId, short blockStateId, bo
       Short id = null;
       for (ProtocolVersion version : ProtocolVersion.SUPPORTED_VERSIONS) {
         id = versions.getOrDefault(Integer.toString(version.getProtocol()), id).shortValue();
-        SimpleBlock.MODERN_BLOCK_STATE_IDS_MAP.computeIfAbsent(version, k -> new ShortObjectHashMap<>()).put(Short.parseShort(modernId), id);
+        SimpleBlock.MODERN_BLOCK_STATE_IDS_MAP.computeIfAbsent(version, key -> new ShortObjectHashMap<>()).put(Short.parseShort(modernId), id);
       }
     });
 

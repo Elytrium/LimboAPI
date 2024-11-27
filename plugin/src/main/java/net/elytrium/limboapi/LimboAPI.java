@@ -307,7 +307,7 @@ public class LimboAPI implements LimboFactory {
     this.minVersion = ProtocolVersion.valueOf("MINECRAFT_" + Settings.IMP.MAIN.PREPARE_MIN_VERSION);
     if (ProtocolVersion.MAXIMUM_VERSION.greaterThan(this.maxVersion) || ProtocolVersion.MINIMUM_VERSION.lessThan(this.minVersion)) {
       LOGGER.warn(
-          "Currently working only with {} - {} versions, modify the plugins/limboapi/config.yml file if you want the plugin to work with other versions.",
+          "Currently working only with {} - {} versions, modify the plugins/limboapi/config.yml file if you want the plugin to work with other versions",
           this.minVersion.getVersionIntroducedIn(), this.maxVersion.getMostRecentSupportedVersion()
       );
     }

@@ -36,7 +36,7 @@ public enum Biome implements VirtualBiome {
       1,
       new Element(
           true, 0.125F, 0.8F, 0.05F, 0.4F, "plains",
-          Element.Effects.builder(7907327, 329011, 12638463, 415920)
+          Element.Effects.builder(0x78A7FF, 0x050533, 0xC0D8FF, 0x3F76E4)
               .moodSound(new Element.Effects.MoodSound(6000, 2.0, 8, "minecraft:ambient.cave"))
               .build()
       )
@@ -47,9 +47,9 @@ public enum Biome implements VirtualBiome {
       6,
       new Element(
           true, -0.2F, 0.8F, 0.1F, 0.9F, "swamp",
-          Element.Effects.builder(7907327, 329011, 12638463, 415920)
+          Element.Effects.builder(0x78A7FF, 0x232317, 0xC0D8FF, 0x617B64)
+              .foliageColor(0x6A7039)
               .grassColorModifier("swamp")
-              .foliageColor(6975545)
               .moodSound(new Element.Effects.MoodSound(6000, 2.0, 8, "minecraft:ambient.cave"))
               .build()
       )
@@ -60,9 +60,9 @@ public enum Biome implements VirtualBiome {
       134,
       new Element(
           true, -0.1F, 0.8F, 0.3F, 0.9F, "swamp",
-          Element.Effects.builder(7907327, 329011, 12638463, 415920)
+          Element.Effects.builder(0x78A7FF, 0x232317, 0xC0D8FF, 0x617B64)
+              .foliageColor(0x6A7039)
               .grassColorModifier("swamp")
-              .foliageColor(6975545)
               .moodSound(new Element.Effects.MoodSound(6000, 2.0, 8, "minecraft:ambient.cave"))
               .build()
       )
@@ -72,8 +72,8 @@ public enum Biome implements VirtualBiome {
       "minecraft:nether_wastes",
       8,
       new Element(
-          false, 0.1f, 2.0f, 0.2f, 0.0f, "nether",
-          Element.Effects.builder(7254527, 329011, 3344392, 4159204)
+          false, 0.1F, 2.0F, 0.2F, 0.0F, "nether",
+          Element.Effects.builder(0x6EB1FF, 0x050533, 0x330808, 0x3F76E4)
               .moodSound(new Element.Effects.MoodSound(6000, 2.0, 8, "minecraft:ambient.nether_wastes.mood"))
               .build()
       )
@@ -83,14 +83,15 @@ public enum Biome implements VirtualBiome {
       "minecraft:the_end",
       9,
       new Element(
-          false, 0.1f, 0.5f, 0.2f, 0.5f, "the_end",
-          Element.Effects.builder(0, 10518688, 12638463, 4159204)
+          false, 0.1F, 0.5F, 0.2F, 0.5F, "the_end",
+          Element.Effects.builder(0x000000, 0x050533, 0xA080A0, 0x3F76E4)
               .moodSound(new Element.Effects.MoodSound(6000, 2.0, 8, "minecraft:ambient.cave"))
               .build()
       )
   );
 
   public static final Biome[] VALUES = Biome.values();
+
   private static final EnumMap<BuiltInBiome, Biome> BUILT_IN_BIOME_MAP = new EnumMap<>(BuiltInBiome.class);
 
   private final BuiltInBiome index;
@@ -256,11 +257,6 @@ public enum Biome implements VirtualBiome {
 
       public record Particle(float probability, Effects.Particle.@NonNull ParticleOptions options) {
 
-        public Particle(float probability, @NonNull ParticleOptions options) {
-          this.probability = probability;
-          this.options = options;
-        }
-
         public CompoundBinaryTag encode() {
           return CompoundBinaryTag.builder()
               .putFloat("probability", this.probability)
@@ -268,7 +264,7 @@ public enum Biome implements VirtualBiome {
               .build();
         }
 
-        public record ParticleOptions(@NonNull String type) {
+        public record ParticleOptions(@NonNull String type) { // TODO native particles api + option to add particle data
 
           public CompoundBinaryTag encode() {
             return CompoundBinaryTag.builder()

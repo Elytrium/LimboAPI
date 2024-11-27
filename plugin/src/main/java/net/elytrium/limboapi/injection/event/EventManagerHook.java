@@ -111,8 +111,8 @@ public class EventManagerHook {
       if (callback == null || !callback.apply(event)) {
         hookFuture.complete(event);
       }
-    } catch (Throwable throwable) {
-      LimboAPI.getLogger().error("Failed to handle KickCallback, ignoring its result", throwable);
+    } catch (Throwable t) {
+      LimboAPI.getLogger().error("Failed to handle KickCallback, ignoring its result", t);
       hookFuture.complete(event);
     }
 

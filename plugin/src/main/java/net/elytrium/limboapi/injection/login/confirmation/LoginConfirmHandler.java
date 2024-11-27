@@ -62,8 +62,8 @@ public class LoginConfirmHandler implements MinecraftSessionHandler {
     this.thenRun(() -> {
       try {
         runnable.run();
-      } catch (Throwable throwable) {
-        LimboAPI.getLogger().error("Failed to confirm transition for " + this.player, throwable);
+      } catch (Throwable t) {
+        LimboAPI.getLogger().error("Failed to confirm transition for {}", this.player, t);
       }
 
       try {
@@ -71,14 +71,14 @@ public class LoginConfirmHandler implements MinecraftSessionHandler {
         for (MinecraftPacket packet : this.queuedPackets) {
           try {
             this.connection.channelRead(ctx, packet);
-          } catch (Throwable throwable) {
-            LimboAPI.getLogger().error("{}: exception handling exception in {}", ctx.channel().remoteAddress(), this.connection.getActiveSessionHandler(), throwable);
+          } catch (Throwable t) {
+            LimboAPI.getLogger().error("{}: exception handling exception in {}", ctx.channel().remoteAddress(), this.connection.getActiveSessionHandler(), t);
           }
         }
 
         this.queuedPackets.clear();
-      } catch (Throwable throwable) {
-        LimboAPI.getLogger().error("Failed to process packet queue for {}", this.player, throwable);
+      } catch (Throwable t) {
+        LimboAPI.getLogger().error("Failed to process packet queue for {}", this.player, t);
       }
     });
   }

@@ -277,7 +277,7 @@ public class LoginTasksQueue {
       Field defaultPermissionsField = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
       defaultPermissionsField.setAccessible(true);
       DEFAULT_PERMISSIONS = (PermissionProvider) defaultPermissionsField.get(null);
-    } catch (Exception t) {
+    } catch (NoSuchFieldException | IllegalAccessException t) {
       throw new ReflectionException(t);
     }
   }

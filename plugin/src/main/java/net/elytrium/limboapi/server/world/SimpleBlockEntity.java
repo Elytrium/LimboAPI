@@ -298,8 +298,6 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
 
   public class Entry implements VirtualBlockEntity.Entry {
 
-    private static final StringBinaryTag EMPTY = StringBinaryTag.stringBinaryTag("");
-
     private static boolean warned;
 
     private final VirtualChunk chunk;
@@ -552,11 +550,10 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
               if (version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6)) {
                 String itemId = this.nbt.getString("Item");
                 if (!itemId.isEmpty()) {
-                  nbt.remove("Item");
                   try {
                     nbt.putInt("Item", Item.valueOf(itemId.substring(10).toUpperCase(Locale.ROOT)).getLegacyId());
                   } catch (IllegalArgumentException e) {
-                    //e.printStackTrace();
+                    nbt.putInt("Item", SimpleItem.fromModernId(itemId).itemId(WorldVersion.LEGACY));
                   }
                 }
               }
@@ -586,7 +583,11 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
           CompoundBinaryTag.Builder propertiesTag = CompoundBinaryTag.builder();
           for (BinaryTag propertyTag : list) {
             if (propertyTag instanceof CompoundBinaryTag property) {
-              BinaryTag value = Objects.requireNonNullElse(property.get("value"), Entry.EMPTY);
+              BinaryTag value = property.get("value");
+              if (value == null) {
+                value = StringBinaryTag.stringBinaryTag("");
+              }
+
               BinaryTag signature = property.get("signature");
               propertiesTag.put(property.getString("name", ""), ListBinaryTag.listBinaryTag(BinaryTagTypes.COMPOUND, List.of(CompoundBinaryTag.from(
                   signature instanceof StringBinaryTag ? Map.of("Value", value, "Signature", signature) : Map.of("Value", value)

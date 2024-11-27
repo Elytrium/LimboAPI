@@ -39,6 +39,7 @@ import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
@@ -101,11 +102,12 @@ public class LoginListener {
 
   @Subscribe
   public void hookInitialServer(PlayerChooseInitialServerEvent event) {
-    if (this.plugin.hasNextServer(event.getPlayer())) {
-      event.setInitialServer(this.plugin.getNextServer(event.getPlayer()));
+    Player player = event.getPlayer();
+    if (this.plugin.hasNextServer(player)) {
+      event.setInitialServer(this.plugin.getNextServer(player));
     }
 
-    this.plugin.setLimboJoined(event.getPlayer());
+    this.plugin.setLimboJoined(player);
   }
 
   @SuppressWarnings("ConstantConditions")

@@ -561,7 +561,7 @@ public class LimboProtocolUtils {
           : LimboProtocolUtils.emptyItemStack(allowEmpty);
     } else {
       short material = buf.readShort();
-      return material > 0
+      return material >= 0
           ? new ItemStack(material, buf.readByte(), buf.readShort(), LimboProtocolUtils.readCompoundTagOrNull(buf, version))
           : LimboProtocolUtils.emptyItemStack(allowEmpty);
     }

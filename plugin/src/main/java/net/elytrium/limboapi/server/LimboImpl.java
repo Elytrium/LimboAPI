@@ -422,7 +422,7 @@ public class LimboImpl implements Limbo {
 
     connection.setActiveSessionHandler(connection.getState(), sessionHandler);
     ProtocolVersion version = connection.getProtocolVersion();
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
+    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
       if (connection.getState() != StateRegistry.CONFIG) {
         if (this.shouldRejoin) {
           // Switch to CONFIG state
@@ -719,7 +719,7 @@ public class LimboImpl implements Limbo {
       }
     }
 
-    throw new IllegalArgumentException(command + " does not implement a registrable Command sub-interface.");
+    throw new IllegalArgumentException(command + " does not implement a registrable Command sub-interface");
   }
 
   public Limbo registerPacket(PacketDirection direction, Class<?> packetClass, Supplier<?> packetSupplier, PacketMapping[] packetMappings) {
@@ -888,10 +888,7 @@ public class LimboImpl implements Limbo {
   private static CompoundBinaryTag createRegistry(ProtocolVersion version, ListBinaryTag dimensionRegistry) {
     CompoundBinaryTag.Builder registry = CompoundBinaryTag.builder();
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16_2)) {
-      CompoundBinaryTag.Builder dimensionRegistryEntry = CompoundBinaryTag.builder();
-      dimensionRegistryEntry.putString("type", "minecraft:dimension_type");
-      dimensionRegistryEntry.put("value", dimensionRegistry);
-      registry.put("minecraft:dimension_type", dimensionRegistryEntry.build());
+      registry.put("minecraft:dimension_type", CompoundBinaryTag.builder().putString("type", "minecraft:dimension_type").put("value", dimensionRegistry).build());
       registry.put("minecraft:worldgen/biome", Biome.getRegistry(version));
       if (version == ProtocolVersion.MINECRAFT_1_19) {
         registry.put("minecraft:chat_type", CHAT_TYPE_119);
@@ -902,7 +899,7 @@ public class LimboImpl implements Limbo {
       // TODO: Generate mappings for damage_type registry
       if (version == ProtocolVersion.MINECRAFT_1_19_4) {
         registry.put("minecraft:damage_type", DAMAGE_TYPE_1194);
-      } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_21) >= 0) {
+      } else if (version.noLessThan(ProtocolVersion.MINECRAFT_1_21)) {
         ListBinaryTag values = DAMAGE_TYPE_120.getList("value");
 
         ListBinaryTag.Builder<CompoundBinaryTag> tags = ListBinaryTag.builder(BinaryTagTypes.COMPOUND);
@@ -911,7 +908,7 @@ public class LimboImpl implements Limbo {
         }
 
         int id = values.size();
-        for (String name : version.compareTo(ProtocolVersion.MINECRAFT_1_21_2) >= 0
+        for (String name : version.noLessThan(ProtocolVersion.MINECRAFT_1_21_2)
             ? new String[] {"minecraft:campfire", "minecraft:ender_pearl", "minecraft:mace_smash"}
             : new String[] {"minecraft:campfire"}) {
           tags.add(CompoundBinaryTag.builder()

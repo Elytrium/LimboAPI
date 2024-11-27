@@ -28,30 +28,28 @@ public interface RewritingTabList {
   Player getPlayer();
 
   default TabListEntry rewriteEntry(TabListEntry entry) {
-    if (entry == null || entry.getProfile() == null || !this.getPlayer().getUniqueId().equals(entry.getProfile().getId())) {
+    GameProfile profile;
+    UUID profileId;
+    if (entry == null || (profile = entry.getProfile()) == null || !this.getPlayer().getUniqueId().equals(profileId = profile.getId())) {
       return entry;
     }
 
     TabListEntry.Builder builder = TabListEntry.builder();
     builder.tabList(entry.getTabList());
-    builder.profile(new GameProfile(this.rewriteUuid(entry.getProfile().getId()), entry.getProfile().getName(), entry.getProfile().getProperties()));
+    builder.profile(new GameProfile(this.rewriteUuid(profileId), profile.getName(), profile.getProperties()));
     builder.listed(entry.isListed());
     builder.latency(entry.getLatency());
     builder.gameMode(entry.getGameMode());
     entry.getDisplayNameComponent().ifPresent(builder::displayName);
     builder.chatSession(entry.getChatSession());
-
     return builder.build();
   }
 
   default UUID rewriteUuid(UUID uuid) {
-    if (this.getPlayer().getUniqueId().equals(uuid)) {
-      UUID clientUniqueId = LimboAPI.getClientUniqueId(this.getPlayer());
-      if (clientUniqueId == null) {
-        return uuid;
-      }
-
-      return clientUniqueId;
+    Player player = this.getPlayer();
+    if (player.getUniqueId().equals(uuid)) {
+      UUID clientUniqueId = LimboAPI.getClientUniqueId(player);
+      return clientUniqueId == null ? uuid : clientUniqueId;
     }
 
     return uuid;

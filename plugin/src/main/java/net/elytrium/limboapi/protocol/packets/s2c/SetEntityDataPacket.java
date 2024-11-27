@@ -23,8 +23,11 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.handler.codec.DecoderException;
+import io.netty.util.ReferenceCounted;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.OptionalInt;
 import net.elytrium.limboapi.LimboAPI;
@@ -44,13 +47,15 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 /**
  * @see SetEntityDataPacket#writeOptionalUUID(ByteBuf, EntityDataValue.OptionalUUID)
  */
-public class SetEntityDataPacket implements MinecraftPacket { // TODO check for uuid in nbts
+public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { // TODO check for uuid in nbts
 
   public static final int EOF_MARKER_LEGACY = Byte.MAX_VALUE;
   public static final int EOF_MARKER = -Byte.MIN_VALUE + Byte.MAX_VALUE;
 
   private int id;
   private Collection<EntityDataValue<?>> packedItems;
+
+  private ByteBuf decodeBuf; // TODO remove after proper tests
 
   public SetEntityDataPacket(int id, Collection<EntityDataValue<?>> packedItems) { // TODO Short2ObjectArrayMap
     this.id = id;
@@ -63,33 +68,44 @@ public class SetEntityDataPacket implements MinecraftPacket { // TODO check for 
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    boolean v1_7_x = version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6);
-    if (v1_7_x || version == ProtocolVersion.MINECRAFT_1_8) {
-      this.id = v1_7_x ? buf.readInt() : ProtocolUtils.readVarInt(buf);
-      byte index;
-      while ((index = buf.readByte()) != SetEntityDataPacket.EOF_MARKER_LEGACY) {
-        if (this.packedItems == null) {
-          this.packedItems = new ArrayList<>();
-        }
+    try {
+      boolean v1_7_x = version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6);
+      if (v1_7_x || version == ProtocolVersion.MINECRAFT_1_8) {
+        this.id = v1_7_x ? buf.readInt() : ProtocolUtils.readVarInt(buf);
+        byte index;
+        while ((index = buf.readByte()) != SetEntityDataPacket.EOF_MARKER_LEGACY) {
+          if (this.packedItems == null) {
+            this.packedItems = new ArrayList<>();
+          }
 
-        this.packedItems.add(SetEntityDataPacket.read(buf, version, index & 0b00011111, (index & 0b11100000) >> 5));
-      }
-      //System.out.println(this.packedItems);
-    } else {
-      this.id = ProtocolUtils.readVarInt(buf);
-      short id;
-      while ((id = buf.readUnsignedByte()) != SetEntityDataPacket.EOF_MARKER) {
-        if (this.packedItems == null) {
-          this.packedItems = new ArrayList<>();
+          this.packedItems.add(SetEntityDataPacket.read(buf, version, index & 0b00011111, (index & 0b11100000) >> 5));
         }
+        //System.out.println(this.packedItems);
+      } else {
+        this.id = ProtocolUtils.readVarInt(buf);
+        short id;
+        while ((id = buf.readUnsignedByte()) != SetEntityDataPacket.EOF_MARKER) {
+          if (this.packedItems == null) {
+            this.packedItems = new ArrayList<>();
+          }
 
-        this.packedItems.add(SetEntityDataPacket.read(buf, version, id, ProtocolUtils.readVarInt(buf)));
+          this.packedItems.add(SetEntityDataPacket.read(buf, version, id, ProtocolUtils.readVarInt(buf)));
+        }
       }
+    } catch (Throwable t) {
+      this.decodeBuf = buf.retainedDuplicate().readerIndex(0);
+      LimboAPI.getLogger().error("Failed to read SetEntityDataPacket (direction={}, version={}, data={})", direction, version, Base64.getEncoder().encodeToString(ByteBufUtil.getBytes(this.decodeBuf)), t);
+      buf.readerIndex(buf.writerIndex());
     }
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    if (this.decodeBuf != null) {
+      buf.writeBytes(this.decodeBuf);
+      return;
+    }
+
     boolean v1_7_x = protocolVersion.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6);
     if (v1_7_x || protocolVersion == ProtocolVersion.MINECRAFT_1_8) {
       if (v1_7_x) {
@@ -128,6 +144,57 @@ public class SetEntityDataPacket implements MinecraftPacket { // TODO check for 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     return false; // forward it to the player
+  }
+
+  @Override
+  public int refCnt() {
+    return this.decodeBuf == null ? -1 : this.decodeBuf.refCnt();
+  }
+
+  @Override
+  public ReferenceCounted retain() {
+    if (this.decodeBuf != null) {
+      this.decodeBuf.retain();
+    }
+
+    return this;
+  }
+
+  @Override
+  public ReferenceCounted retain(int increment) {
+    if (this.decodeBuf != null) {
+      this.decodeBuf.retain(increment);
+    }
+
+    return this;
+  }
+
+  @Override
+  public ReferenceCounted touch() {
+    if (this.decodeBuf != null) {
+      this.decodeBuf.touch();
+    }
+
+    return this;
+  }
+
+  @Override
+  public ReferenceCounted touch(Object hint) {
+    if (this.decodeBuf != null) {
+      this.decodeBuf.touch(hint);
+    }
+
+    return this;
+  }
+
+  @Override
+  public boolean release() {
+    return this.decodeBuf != null && this.decodeBuf.release();
+  }
+
+  @Override
+  public boolean release(int decrement) {
+    return this.decodeBuf != null && this.decodeBuf.release(decrement);
   }
 
   private static <T> int type(ProtocolVersion version, T value) {

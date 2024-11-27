@@ -56,7 +56,7 @@ public interface PacketFactory {
   }
 
   /**
-   * Prepares a complete chunk that includes various packets depending on the Minecraft version:
+   * Prepares a complete chunk that includes various packets depending on the protocol version:
    * <ul>
    *   <li>{@link #createLightUpdatePacket(ChunkSnapshot, boolean) Light Update Packet} - for versions [1.14-1.17.1]</li>
    *   <li>{@link #createBlockEntityDataPacket(VirtualBlockEntity.Entry) Block Entity Data Packet} - for versions [1.7.2-1.9.2]</li>

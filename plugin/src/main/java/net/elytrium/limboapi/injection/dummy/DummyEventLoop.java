@@ -70,7 +70,7 @@ public class DummyEventLoop implements EventLoop {
   }
 
   @Override
-  public <V> Future<V> newFailedFuture(Throwable throwable) {
+  public <V> Future<V> newFailedFuture(Throwable t) {
     return null;
   }
 

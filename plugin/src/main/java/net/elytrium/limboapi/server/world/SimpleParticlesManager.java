@@ -20,7 +20,7 @@ public class SimpleParticlesManager {
       Particle particle = Particle.valueOf(modernId.substring(10/*"minecraft:".length()*/).toUpperCase(Locale.US));
       versions.forEach((version, id) -> SimpleParticlesManager.PROTOCOL_2_PARTICLE.computeIfAbsent(
           ProtocolVersion.getProtocolVersion(Integer.parseInt(version)),
-          k -> new HashMap<>(versions.size())
+          key -> new HashMap<>(versions.size())
       ).put(id.intValue(), particle));
     });
   }
