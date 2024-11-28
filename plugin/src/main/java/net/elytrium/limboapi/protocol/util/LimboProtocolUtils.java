@@ -559,6 +559,11 @@ public class LimboProtocolUtils {
       return buf.readBoolean()
           ? new ItemStack(ProtocolUtils.readVarInt(buf), buf.readByte(), LimboProtocolUtils.readCompoundTagOrNull(buf, version))
           : LimboProtocolUtils.emptyItemStack(allowEmpty);
+    } else if (version.noLessThan(ProtocolVersion.MINECRAFT_1_13)) {
+      short material = buf.readShort();
+      return material >= 0
+          ? new ItemStack(material, buf.readByte(), LimboProtocolUtils.readCompoundTagOrNull(buf, version))
+          : LimboProtocolUtils.emptyItemStack(allowEmpty);
     } else {
       short material = buf.readShort();
       return material >= 0

@@ -383,7 +383,7 @@ public class ChunkDataPacket implements MinecraftPacket {
     }
   }
 
-  // In <=1.12.2 are still block entities, while on higher versions it's just blockstates
+  // In <=1.12.2 flower pots are still block entities, while on higher versions it's just blockstates
   public static List<VirtualBlockEntity.Entry> getAdditionalFlowerPots(ChunkSnapshot chunk) {
     List<VirtualBlockEntity.Entry> flowerPots = null;
     VirtualBlockEntity flowerPot = null;

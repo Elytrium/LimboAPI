@@ -38,6 +38,7 @@ public interface RewritingTabList {
         .tabList(entry.getTabList())
         .profile(new GameProfile(this.rewriteUuid(profileId), profile.getName(), profile.getProperties()))
         .chatSession(entry.getChatSession())
+        .displayName(entry.getDisplayNameComponent().orElse(null))
         .latency(entry.getLatency())
         .gameMode(entry.getGameMode())
         .listed(entry.isListed())
