@@ -58,12 +58,13 @@ public class LoginConfirmHandler implements MinecraftSessionHandler {
     return this.confirmation.thenRun(runnable);
   }
 
+  @SuppressWarnings("UnnecessaryCallToStringValueOf")
   public void waitForConfirmation(Runnable runnable) {
     this.thenRun(() -> {
       try {
         runnable.run();
       } catch (Throwable t) {
-        LimboAPI.getLogger().error("Failed to confirm transition for {}", this.player, t);
+        LimboAPI.getLogger().error("Failed to confirm transition for {}", this.player.toString(), t);
       }
 
       try {
@@ -72,13 +73,13 @@ public class LoginConfirmHandler implements MinecraftSessionHandler {
           try {
             this.connection.channelRead(ctx, packet);
           } catch (Throwable t) {
-            LimboAPI.getLogger().error("{}: exception handling exception in {}", ctx.channel().remoteAddress(), this.connection.getActiveSessionHandler(), t);
+            LimboAPI.getLogger().error("{}: failed to handle packet {} for handler {}", this.player.toString(), packet.toString(), String.valueOf(this.connection.getActiveSessionHandler()), t);
           }
         }
 
         this.queuedPackets.clear();
       } catch (Throwable t) {
-        LimboAPI.getLogger().error("Failed to process packet queue for {}", this.player, t);
+        LimboAPI.getLogger().error("Failed to process packet queue for {}", this.player.toString(), t);
       }
     });
   }

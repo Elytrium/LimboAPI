@@ -116,6 +116,7 @@ public class LoginTasksQueue {
     }
   }
 
+  @SuppressWarnings("UnnecessaryToStringCall")
   private void finish() {
     this.plugin.removeLoginQueue(this.player);
 
@@ -161,7 +162,7 @@ public class LoginTasksQueue {
               try {
                 SET_PERMISSION_FUNCTION_METHOD.invokeExact(this.player, function);
               } catch (Throwable t) {
-                logger.error("Exception while completing injection to {}", this.player, t);
+                logger.error("Exception while completing injection to {}", this.player.toString(), t);
               }
             }
 
@@ -173,12 +174,13 @@ public class LoginTasksQueue {
           }
         }, connection.eventLoop());
       } catch (Throwable t) {
-        logger.error("Exception while completing injection to {}", this.player, t);
+        logger.error("Exception while completing injection to {}", this.player.toString(), t);
       }
     }, connection.eventLoop());
   }
 
   // From Velocity
+  @SuppressWarnings("UnnecessaryToStringCall")
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void initialize(MinecraftConnection connection) {
     connection.setAssociation(this.player);
@@ -203,25 +205,23 @@ public class LoginTasksQueue {
         Optional<Component> reason = event.getResult().getReasonComponent();
         if (reason.isPresent()) {
           this.player.disconnect0(reason.get(), false);
-        } else {
-          if (this.server.registerConnection(this.player)) {
-            if (connection.getActiveSessionHandler() instanceof LoginConfirmHandler confirm) {
-              confirm.waitForConfirmation(() -> this.connectToServer(connection));
-            } else {
-              this.connectToServer(connection);
-            }
+        } else if (this.server.registerConnection(this.player)) {
+          if (connection.getActiveSessionHandler() instanceof LoginConfirmHandler confirm) {
+            confirm.waitForConfirmation(() -> this.connectToServer(connection));
           } else {
-            this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), false);
+            this.connectToServer(connection);
           }
+        } else {
+          this.player.disconnect0(Component.translatable("velocity.error.already-connected-proxy"), false);
         }
       }
     }, connection.eventLoop()).exceptionally(t -> {
-      logger.error("Exception while completing login initialisation phase for {}", this.player, t);
+      logger.error("Exception while completing login initialisation phase for {}", this.player.toString(), t);
       return null;
     });
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"DataFlowIssue", "unchecked", "UnnecessaryToStringCall"})
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void connectToServer(MinecraftConnection connection) {
     if (connection.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
@@ -267,7 +267,7 @@ public class LoginTasksQueue {
         throw new ReflectionException(t);
       }
     }).exceptionally(t -> {
-      LimboAPI.getLogger().error("Exception while connecting {} to initial server", this.player, t);
+      LimboAPI.getLogger().error("Exception while connecting {} to initial server", this.player.toString(), t);
       return null;
     });
   }

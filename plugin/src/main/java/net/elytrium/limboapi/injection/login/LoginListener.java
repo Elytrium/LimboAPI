@@ -269,7 +269,7 @@ public class LoginListener {
       this.plugin.setKickCallback(player, limboRegisterEvent.getOnKickCallback());
       queue.next();
     }, connection.eventLoop()).exceptionally(t -> {
-      LimboAPI.getLogger().error("Exception while registering LimboAPI login handlers for {}.", player, t);
+      LimboAPI.getLogger().error("Exception while registering LimboAPI login handlers for {}", player.toString(), t);
       return null;
     });
   }

@@ -445,6 +445,7 @@ public class LimboImpl implements Limbo {
     connection.flush();
   }
 
+  @SuppressWarnings("UnnecessaryToStringCall")
   private void spawnPlayerLocal(ConnectedPlayer player, LimboSessionHandler handler, RegisteredServer previousServer) {
     MinecraftConnection connection = player.getConnection();
     connection.eventLoop().execute(() -> {
@@ -457,7 +458,7 @@ public class LimboImpl implements Limbo {
       }
 
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-        LimboAPI.getLogger().info("{} ({}) has connected to the {} Limbo", player.getUsername(), player.getRemoteAddress(), this.limboName);
+        LimboAPI.getLogger().info("{} has connected to the {} Limbo", player.toString(), this.limboName);
       }
 
       // With an abnormally large number of connections from the same nickname,

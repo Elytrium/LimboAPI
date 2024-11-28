@@ -116,6 +116,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
   }
 
+  @SuppressWarnings("UnnecessaryToStringCall")
   public void onConfig(LimboPlayer player) {
     this.loaded = true;
     this.limboPlayer = player;
@@ -123,7 +124,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
     int serverReadTimeout = Objects.requireNonNullElseGet(this.limbo.getReadTimeout(), () -> this.plugin.getServer().getConfiguration().getReadTimeout());
 
-    // We should always send multiple keepalives inside a single timeout to not trigger Netty read timeout.
+    // We should always send multiple keepalives inside a single timeout to not trigger Netty read timeout
     serverReadTimeout /= 2;
 
     this.keepAliveTask = player.getScheduledExecutor().scheduleAtFixedRate(() -> {
@@ -135,9 +136,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
       if (this.keepAlivePending) {
         if (++this.keepAlivesSkipped == 2) {
-          connection.closeWith(this.plugin.getPackets().getTimeOut(this.player.getConnection().getState()));
+          connection.closeWith(this.plugin.getPackets().getTimeOut(connection.getState()));
           if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-            LimboAPI.getLogger().warn("{} was kicked due to keepalive timeout.", this.player);
+            LimboAPI.getLogger().warn("{} was kicked due to keepalive timeout", this.player.toString());
           }
         }
       } else if (this.keepAliveSentTime == 0 && this.originalHandler instanceof LimboSessionHandlerImpl sessionHandler) {
@@ -192,6 +193,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   @Override
+  @SuppressWarnings("UnnecessaryToStringCall")
   public boolean handle(FinishedUpdatePacket packet) {
     // Switching to CONFIG state
     if (this.player.getConnection().getState() != StateRegistry.CONFIG) {
@@ -206,7 +208,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.player.getConnection().closeWith(this.plugin.getPackets().getInvalidSwitch());
 
         if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-          LimboAPI.getLogger().warn("{} sent an unexpected state switch confirmation.", this.player);
+          LimboAPI.getLogger().warn("{} sent an unexpected state switch confirmation", this.player.toString());
         }
       }
 
@@ -271,13 +273,14 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   }
 
   @Override
+  @SuppressWarnings("UnnecessaryToStringCall")
   public boolean handle(KeepAlivePacket packet) {
     MinecraftConnection connection = this.player.getConnection();
     if (this.keepAlivePending) {
       if (packet.getRandomId() != this.keepAliveKey) {
         connection.closeWith(this.plugin.getPackets().getInvalidPing());
         if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-          LimboAPI.getLogger().warn("{} sent an invalid keepalive.", this.player);
+          LimboAPI.getLogger().warn("{} sent an invalid keepalive", this.player.toString());
         }
 
         return false;
@@ -291,7 +294,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     } else {
       connection.closeWith(this.plugin.getPackets().getInvalidPing());
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-        LimboAPI.getLogger().warn("{} sent an unexpected keepalive.", this.player);
+        LimboAPI.getLogger().warn("{} sent an unexpected keepalive", this.player.toString());
       }
 
       return false;
@@ -381,10 +384,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.callback.onGeneric(packet);
   }
 
+  @SuppressWarnings("UnnecessaryToStringCall")
   private void kickTooBigPacket(String type, int length) {
     this.player.getConnection().closeWith(this.plugin.getPackets().getTooBigPacket());
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-      LimboAPI.getLogger().warn("{} sent too big packet. (type: {}, length: {})", this.player, type, length);
+      LimboAPI.getLogger().warn("{} sent too big packet (type: {}, length: {})", this.player.toString(), type, length);
     }
   }
 
@@ -409,7 +413,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.release();
 
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-      LimboAPI.getLogger().info("{} ({}) has disconnected from the {} Limbo", this.player.getUsername(), this.player.getRemoteAddress(), this.limbo.getName());
+      LimboAPI.getLogger().info("{} has disconnected from the {} Limbo", this.player.toString(), this.limbo.getName());
     }
 
     MinecraftConnection connection = this.player.getConnection();

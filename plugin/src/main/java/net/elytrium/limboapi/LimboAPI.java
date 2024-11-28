@@ -179,8 +179,10 @@ public class LimboAPI implements LimboFactory {
       this.server.shutdown();
       return;
     } else if (maximumProtocolVersionNumber != SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
-      LOGGER.warn("Current LimboAPI version doesn't support current Velocity version (protocol version numbers: supported - {}, velocity - {})",
-          SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER, maximumProtocolVersionNumber);
+      LOGGER.warn(
+          "Current LimboAPI version doesn't support current Velocity version (protocol version numbers: supported - {}, velocity - {})",
+          SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER, maximumProtocolVersionNumber
+      );
       LOGGER.warn("Please update LimboAPI (https://github.com/Elytrium/LimboAPI/releases). LimboAPI support: https://ely.su/discord");
     }
 
