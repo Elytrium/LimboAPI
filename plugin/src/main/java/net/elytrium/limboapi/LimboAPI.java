@@ -128,7 +128,7 @@ import org.slf4j.Logger;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
-  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 768;
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 769;
 
   @MonotonicNonNull
   private static Logger LOGGER;
