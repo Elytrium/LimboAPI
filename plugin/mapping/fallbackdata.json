@@ -1,4 +1,17 @@
 {
+  "MINECRAFT_1_21_2": {
+    "minecraft:resin_clump": "minecraft:glow_lichen",
+    "minecraft:resin_block": "minecraft:cut_copper",
+    "minecraft:resin_bricks": "minecraft:bricks",
+    "minecraft:resin_brick_stairs": "minecraft:brick_stairs",
+    "minecraft:resin_brick_slab": "minecraft:brick_slab",
+    "minecraft:resin_brick_wall": "minecraft:brick_wall",
+    "minecraft:chiseled_resin_bricks": "minecraft:chiseled_copper",
+    "minecraft:open_eyeblossom": "minecraft:torchflower",
+    "minecraft:closed_eyeblossom": "minecraft:cornflower",
+    "minecraft:potted_open_eyeblossom": "minecraft:potted_torchflower",
+    "minecraft:potted_closed_eyeblossom": "minecraft:potted_cornflower"
+  },
   "MINECRAFT_1_21": {
     "minecraft:pale_oak_wood": "minecraft:birch_wood",
     "minecraft:pale_oak_planks": "minecraft:birch_planks",
