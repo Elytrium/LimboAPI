@@ -41,6 +41,7 @@ public interface RewritingTabList {
     builder.gameMode(entry.getGameMode());
     entry.getDisplayNameComponent().ifPresent(builder::displayName);
     builder.chatSession(entry.getChatSession());
+    builder.listOrder(entry.getListOrder());
 
     return builder.build();
   }

@@ -72,6 +72,7 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
               fixedEntry.setProfile(item.getProfile());
             }
             fixedEntry.setListed(item.isListed());
+            fixedEntry.setListOrder(item.getListOrder());
             fixedEntry.setChatSession(item.getChatSession());
 
             items.set(i, fixedEntry);
