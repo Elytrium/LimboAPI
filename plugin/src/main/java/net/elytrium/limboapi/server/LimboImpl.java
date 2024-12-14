@@ -400,9 +400,6 @@ public class LimboImpl implements Limbo {
     }
 
     if (connection.getState() != this.localStateRegistry) {
-      if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
-        connection.eventLoop().execute(() -> connection.setState(this.localStateRegistry));
-      }
       VelocityServerConnection server = player.getConnectedServer();
       if (server != null) {
         RegisteredServer previousServer = server.getServer();
@@ -551,6 +548,7 @@ public class LimboImpl implements Limbo {
 
   protected void onSpawn(Class<? extends LimboSessionHandler> handlerClass,
       MinecraftConnection connection, ConnectedPlayer player, LimboSessionHandlerImpl sessionHandler) {
+    this.plugin.setState(connection, this.localStateRegistry);
     if (this.plugin.isLimboJoined(player)) {
       if (this.shouldRejoin) {
         sessionHandler.setJoinGameTriggered(true);

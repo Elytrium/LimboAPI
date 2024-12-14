@@ -219,8 +219,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       return true;
     }
 
-    this.plugin.setState(this.player.getConnection(), this.limbo.localStateRegistry);
-
     this.limbo.onSpawn(this.callback.getClass(), this.player.getConnection(), this.player, this);
     this.player.getConnection().flush();
     return true;
