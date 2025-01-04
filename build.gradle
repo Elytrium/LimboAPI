@@ -30,7 +30,7 @@ allprojects() {
     }
     maven() {
       setName("papermc-repo")
-      setUrl("https://papermc.io/repo/repository/maven-public/")
+      setUrl("https://repo.papermc.io/repository/maven-public/")
     }
   }
 
