@@ -38,7 +38,6 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
-import com.velocitypowered.api.network.HandshakeIntent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
@@ -120,13 +119,10 @@ public class LoginListener {
   @SuppressWarnings("ConstantConditions")
   public void hookLoginSession(GameProfileRequestEvent event) throws Throwable {
     LoginInboundConnection inboundConnection = (LoginInboundConnection) event.getConnection();
-    // In some cases, e.g. if the player logged out or was kicked right before the
-    // GameProfileRequestEvent hook,
-    // the connection will be broken (possibly by GC) and we can't get it from the
-    // delegate field.
+    // In some cases, e.g. if the player logged out or was kicked right before the GameProfileRequestEvent hook,
+    // the connection will be broken (possibly by GC) and we can't get it from the delegate field.
     if (LoginInboundConnection.class.isAssignableFrom(inboundConnection.getClass())) {
-      // Changing mcConnection to the closed one. For what? To break the
-      // "initializePlayer"
+      // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
       // method (which checks mcConnection.isActive()) and to override it. :)
       InitialInboundConnection inbound = (InitialInboundConnection) DELEGATE_FIELD.invokeExact(inboundConnection);
       MinecraftConnection connection = inbound.getConnection();
@@ -177,8 +173,8 @@ public class LoginListener {
               inboundConnection.getVirtualHost().orElse(null),
               ((InboundConnection) inboundConnection).getRawVirtualHost().orElse(null),
               event.isOnlineMode(),
-              ((InboundConnection) inbound).getHandshakeIntent(),
-              playerKey);
+              playerKey
+          );
 
           if (connection.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_19_3)) {
             TAB_LIST_SETTER.accept(player, new RewritingVelocityTabList(player));
@@ -196,8 +192,7 @@ public class LoginListener {
               // Complete the Login process.
               int threshold = this.server.getConfiguration().getCompressionThreshold();
               ChannelPipeline pipeline = connection.getChannel().pipeline();
-              boolean compressionEnabled = threshold >= 0
-                  && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0;
+              boolean compressionEnabled = threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0;
               if (compressionEnabled) {
                 connection.write(new SetCompressionPacket(threshold));
                 this.plugin.fixDecompressor(pipeline, threshold, true);
@@ -266,8 +261,7 @@ public class LoginListener {
               }
             }
           } else {
-            player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED),
-                true);
+            player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
           }
         } catch (Throwable e) {
           throw new ReflectionException(e);
@@ -279,8 +273,7 @@ public class LoginListener {
   private void fireRegisterEvent(ConnectedPlayer player, MinecraftConnection connection,
       InitialInboundConnection inbound, Object handler) {
     this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
-      LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound,
-          limboRegisterEvent.getOnJoinCallbacks());
+      LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());
       this.plugin.addLoginQueue(player, queue);
       this.plugin.setKickCallback(player, limboRegisterEvent.getOnKickCallback());
       queue.next();
@@ -327,8 +320,9 @@ public class LoginListener {
                   InetSocketAddress.class,
                   String.class,
                   boolean.class,
-                  HandshakeIntent.class,
-                  IdentifiedKey.class));
+                  IdentifiedKey.class
+              )
+          );
 
       DELEGATE_FIELD = MethodHandles.privateLookupIn(LoginInboundConnection.class, MethodHandles.lookup())
           .findGetter(LoginInboundConnection.class, "delegate", InitialInboundConnection.class);
