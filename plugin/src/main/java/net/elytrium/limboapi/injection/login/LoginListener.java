@@ -38,6 +38,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.network.HandshakeIntent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
@@ -173,6 +174,7 @@ public class LoginListener {
               inboundConnection.getVirtualHost().orElse(null),
               ((InboundConnection) inboundConnection).getRawVirtualHost().orElse(null),
               event.isOnlineMode(),
+              ((InboundConnection) inboundConnection).getHandshakeIntent(),
               playerKey
           );
 
@@ -320,6 +322,7 @@ public class LoginListener {
                   InetSocketAddress.class,
                   String.class,
                   boolean.class,
+                  HandshakeIntent.class,
                   IdentifiedKey.class
               )
           );
