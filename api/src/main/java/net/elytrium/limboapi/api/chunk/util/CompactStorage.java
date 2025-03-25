@@ -19,7 +19,12 @@ public interface CompactStorage {
 
   int getBitsPerEntry();
 
-  int getDataLength();
+  @Deprecated(forRemoval = true)
+  default int getDataLength() {
+    return this.getDataLength(ProtocolVersion.MINIMUM_VERSION);
+  }
+
+  int getDataLength(ProtocolVersion version);
 
   long[] getData();
 

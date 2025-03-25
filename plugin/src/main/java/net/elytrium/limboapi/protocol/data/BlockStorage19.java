@@ -144,7 +144,7 @@ public class BlockStorage19 implements BlockStorage {
       }
     }
 
-    return length + this.storage.getDataLength();
+    return length + this.storage.getDataLength(version);
   }
 
   @Override

@@ -150,7 +150,16 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   public SimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernID, short blockStateID) {
-    this(solid, air, motionBlocking, modernID, blockStateID, MODERN_BLOCK_STRING_MAP.get(modernID.split("\\[")[0]));
+    this(solid, air, motionBlocking, modernID, blockStateID, findId(modernID));
+  }
+
+  private static short findId(String modernID) {
+    Short modernId = MODERN_BLOCK_STRING_MAP.get(modernID.split("\\[")[0]);
+    if (modernId == null) {
+      throw new IllegalStateException("unable to find integer id from modern id: " + modernID);
+    }
+
+    return modernId;
   }
 
   public SimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernID, short blockStateID, short blockID) {
