@@ -349,7 +349,8 @@ public class LimboProtocol {
         createMapping(0x13, ProtocolVersion.MINECRAFT_1_19, true),
         createMapping(0x12, ProtocolVersion.MINECRAFT_1_19_3, true),
         createMapping(0x14, ProtocolVersion.MINECRAFT_1_19_4, true),
-        createMapping(0x15, ProtocolVersion.MINECRAFT_1_20_2, true)
+        createMapping(0x15, ProtocolVersion.MINECRAFT_1_20_2, true),
+        createMapping(0x14, ProtocolVersion.MINECRAFT_1_21_5, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         TimeUpdatePacket.class, TimeUpdatePacket::new,
