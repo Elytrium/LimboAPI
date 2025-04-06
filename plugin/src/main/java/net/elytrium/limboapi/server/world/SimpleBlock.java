@@ -154,12 +154,13 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   private static short findId(String modernID) {
-    Short modernId = MODERN_BLOCK_STRING_MAP.get(modernID.split("\\[")[0]);
-    if (modernId == null) {
-      throw new IllegalStateException("unable to find integer id from modern id: " + modernID);
+    String block = modernID.split("\\[")[0];
+    Short id = MODERN_BLOCK_STRING_MAP.get(block);
+    if (id == null) {
+      throw new IllegalStateException("failed to find local id for specific block: " + block);
     }
 
-    return modernId;
+    return id;
   }
 
   public SimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernID, short blockStateID, short blockID) {

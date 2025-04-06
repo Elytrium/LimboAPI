@@ -148,7 +148,7 @@ public class SimpleItemComponentManager {
   public int getId(String name, ProtocolVersion version) {
     Object2IntMap<String> ids = ID.get(version);
     if (ids == null) {
-      throw new IllegalArgumentException("LimboAPI item components do not support this protocol version: " + version);
+      throw new IllegalArgumentException("unsupported version: " + version);
     }
 
     if (!ids.containsKey(name)) {
