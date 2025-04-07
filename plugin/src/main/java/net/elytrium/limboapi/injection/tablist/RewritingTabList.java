@@ -42,6 +42,7 @@ public interface RewritingTabList {
     entry.getDisplayNameComponent().ifPresent(builder::displayName);
     builder.chatSession(entry.getChatSession());
     builder.listOrder(entry.getListOrder());
+    builder.showHat(entry.isShowHat());
 
     return builder.build();
   }
