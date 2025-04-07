@@ -125,7 +125,9 @@ public class BitStorage116 implements CompactStorage {
   public void write(Object byteBufObject, ProtocolVersion version) {
     Preconditions.checkArgument(byteBufObject instanceof ByteBuf);
     ByteBuf buf = (ByteBuf) byteBufObject;
-    ProtocolUtils.writeVarInt(buf, this.data.length);
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_5) < 0) {
+      ProtocolUtils.writeVarInt(buf, this.data.length);
+    }
     for (long l : this.data) {
       buf.writeLong(l);
     }
@@ -137,7 +139,11 @@ public class BitStorage116 implements CompactStorage {
   }
 
   @Override
-  public int getDataLength() {
+  public int getDataLength(ProtocolVersion version) {
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_5) >= 0) {
+      return this.data.length * 8;
+    }
+
     return ProtocolUtils.varIntBytes(this.data.length) + this.data.length * 8;
   }
 

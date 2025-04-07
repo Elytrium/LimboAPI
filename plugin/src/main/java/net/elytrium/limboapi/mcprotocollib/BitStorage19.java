@@ -107,7 +107,7 @@ public class BitStorage19 implements CompactStorage {
   }
 
   @Override
-  public int getDataLength() {
+  public int getDataLength(ProtocolVersion version) {
     return ProtocolUtils.varIntBytes(this.data.length) + this.data.length * 8;
   }
 

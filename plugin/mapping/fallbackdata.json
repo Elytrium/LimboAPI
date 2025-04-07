@@ -1,4 +1,15 @@
 {
+  "MINECRAFT_1_21_4": {
+    "minecraft:wildflowers": "minecraft:glow_lichen",
+    "minecraft:leaf_litter": "minecraft:glow_lichen",
+    "minecraft:test_block": "minecraft:structure_block",
+    "minecraft:test_instance_block": "minecraft:structure_block",
+    "minecraft:bush": "minecraft:short_grass",
+    "minecraft:firefly_bush": "minecraft:short_grass",
+    "minecraft:short_dry_grass": "minecraft:short_grass",
+    "minecraft:tall_dry_grass": "minecraft:short_grass",
+    "minecraft:cactus_flower": "minecraft:brain_coral_fan"
+  },
   "MINECRAFT_1_21_2": {
     "minecraft:resin_clump": "minecraft:glow_lichen",
     "minecraft:resin_block": "minecraft:cut_copper",

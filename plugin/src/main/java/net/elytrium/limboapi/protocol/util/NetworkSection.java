@@ -63,7 +63,7 @@ public class NetworkSection {
       dataLength += 2; // Block count short.
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
-      dataLength += this.ensure118BiomeCreated(version).getDataLength();
+      dataLength += this.ensure118BiomeCreated(version).getDataLength(version);
     }
 
     return dataLength;

@@ -150,7 +150,17 @@ public class SimpleBlock implements VirtualBlock {
   }
 
   public SimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernID, short blockStateID) {
-    this(solid, air, motionBlocking, modernID, blockStateID, MODERN_BLOCK_STRING_MAP.get(modernID.split("\\[")[0]));
+    this(solid, air, motionBlocking, modernID, blockStateID, findId(modernID));
+  }
+
+  private static short findId(String modernID) {
+    String block = modernID.split("\\[")[0];
+    Short id = MODERN_BLOCK_STRING_MAP.get(block);
+    if (id == null) {
+      throw new IllegalStateException("failed to find local id for specific block: " + block);
+    }
+
+    return id;
   }
 
   public SimpleBlock(boolean solid, boolean air, boolean motionBlocking, String modernID, short blockStateID, short blockID) {

@@ -147,6 +147,10 @@ public class SimpleItemComponentManager {
 
   public int getId(String name, ProtocolVersion version) {
     Object2IntMap<String> ids = ID.get(version);
+    if (ids == null) {
+      throw new IllegalArgumentException("unsupported version: " + version);
+    }
+
     if (!ids.containsKey(name)) {
       throw new IllegalStateException("component not found: " + name);
     }
