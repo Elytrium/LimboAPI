@@ -11,7 +11,9 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
+import net.elytrium.limboapi.api.utils.EnumUniverse;
 
 public enum WorldVersion {
   LEGACY(EnumSet.range(ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_12_2)),
@@ -30,9 +32,11 @@ public enum WorldVersion {
   MINECRAFT_1_20_5(EnumSet.range(ProtocolVersion.MINECRAFT_1_20_5, ProtocolVersion.MINECRAFT_1_21)),
   MINECRAFT_1_21_2(ProtocolVersion.MINECRAFT_1_21_2),
   MINECRAFT_1_21_4(ProtocolVersion.MINECRAFT_1_21_4),
-  MINECRAFT_1_21_5(EnumSet.range(ProtocolVersion.MINECRAFT_1_21_5, ProtocolVersion.MAXIMUM_VERSION));
+  MINECRAFT_1_21_5(ProtocolVersion.MINECRAFT_1_21_5),
+  MINECRAFT_1_21_6(EnumSet.range(ProtocolVersion.MINECRAFT_1_21_6, ProtocolVersion.MAXIMUM_VERSION));
 
   private static final EnumMap<ProtocolVersion, WorldVersion> MC_VERSION_TO_ITEM_VERSIONS = new EnumMap<>(ProtocolVersion.class);
+  private static final Map<String, WorldVersion> KEY_LOOKUP = Map.copyOf(EnumUniverse.createProtocolLookup(values()));
 
   private final Set<ProtocolVersion> versions;
 
@@ -61,25 +65,7 @@ public enum WorldVersion {
   }
 
   public static WorldVersion parse(String from) {
-    return switch (from) {
-      case "1.13" -> MINECRAFT_1_13;
-      case "1.13.2" -> MINECRAFT_1_13_2;
-      case "1.14" -> MINECRAFT_1_14;
-      case "1.15" -> MINECRAFT_1_15;
-      case "1.16" -> MINECRAFT_1_16;
-      case "1.16.2" -> MINECRAFT_1_16_2;
-      case "1.17" -> MINECRAFT_1_17;
-      case "1.19" -> MINECRAFT_1_19;
-      case "1.19.3" -> MINECRAFT_1_19_3;
-      case "1.19.4" -> MINECRAFT_1_19_4;
-      case "1.20" -> MINECRAFT_1_20;
-      case "1.20.3" -> MINECRAFT_1_20_3;
-      case "1.20.5" -> MINECRAFT_1_20_5;
-      case "1.21.2" -> MINECRAFT_1_21_2;
-      case "1.21.4" -> MINECRAFT_1_21_4;
-      case "1.21.5" -> MINECRAFT_1_21_5;
-      default -> LEGACY;
-    };
+    return KEY_LOOKUP.getOrDefault(from, LEGACY);
   }
 
   public static WorldVersion from(ProtocolVersion protocolVersion) {

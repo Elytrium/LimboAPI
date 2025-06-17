@@ -1,4 +1,7 @@
 {
+  "MINECRAFT_1_21_5": {
+    "minecraft:dried_ghast": "minecraft:chorus_plant"
+  },
   "MINECRAFT_1_21_4": {
     "minecraft:wildflowers": "minecraft:glow_lichen",
     "minecraft:leaf_litter": "minecraft:glow_lichen",
