@@ -24,8 +24,10 @@ import com.velocitypowered.proxy.connection.backend.BackendPlaySessionHandler;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfoPacket;
+import io.netty.buffer.ByteBuf;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.lang.invoke.MethodHandle;
@@ -37,12 +39,23 @@ import java.util.function.Supplier;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.protocol.LimboProtocol;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("unchecked")
-public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
+public class UpsertPlayerInfoHook implements MinecraftPacket {
 
   private static final MethodHandle SERVER_CONN_FIELD;
 
+  static {
+    try {
+      SERVER_CONN_FIELD = MethodHandles.privateLookupIn(BackendPlaySessionHandler.class, MethodHandles.lookup())
+          .findGetter(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new ReflectionException(e);
+    }
+  }
+
+  private final UpsertPlayerInfoPacket delegate = new UpsertPlayerInfoPacket();
   private final LimboAPI plugin;
 
   private UpsertPlayerInfoHook(LimboAPI plugin) {
@@ -51,29 +64,17 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    if (handler instanceof BackendPlaySessionHandler) {
+    if (handler instanceof BackendPlaySessionHandler backend) {
       try {
-        ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.invokeExact((BackendPlaySessionHandler) handler)).getPlayer();
+        ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.invokeExact(backend)).getPlayer();
         UUID initialID = this.plugin.getInitialID(player);
-        List<Entry> items = this.getEntries();
+        List<UpsertPlayerInfoPacket.Entry> items = this.delegate.getEntries();
 
         for (int i = 0; i < items.size(); ++i) {
-          Entry item = items.get(i);
+          UpsertPlayerInfoPacket.Entry item = items.get(i);
 
           if (player.getUniqueId().equals(item.getProfileId())) {
-            Entry fixedEntry = new Entry(initialID);
-            fixedEntry.setDisplayName(item.getDisplayName());
-            fixedEntry.setGameMode(item.getGameMode());
-            fixedEntry.setLatency(item.getLatency());
-            fixedEntry.setDisplayName(item.getDisplayName());
-            if (item.getProfile() != null && item.getProfile().getId().equals(player.getUniqueId())) {
-              fixedEntry.setProfile(new GameProfile(initialID, item.getProfile().getName(), item.getProfile().getProperties()));
-            } else {
-              fixedEntry.setProfile(item.getProfile());
-            }
-            fixedEntry.setListed(item.isListed());
-            fixedEntry.setListOrder(item.getListOrder());
-            fixedEntry.setChatSession(item.getChatSession());
+            UpsertPlayerInfoPacket.Entry fixedEntry = getFixedEntry(initialID, item, player);
 
             items.set(i, fixedEntry);
           }
@@ -83,16 +84,35 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
       }
     }
 
-    return super.handle(handler);
+    return this.delegate.handle(handler);
   }
 
-  static {
-    try {
-      SERVER_CONN_FIELD = MethodHandles.privateLookupIn(BackendPlaySessionHandler.class, MethodHandles.lookup())
-          .findGetter(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new ReflectionException(e);
+  private static UpsertPlayerInfoPacket.@NotNull Entry getFixedEntry(UUID initialID, UpsertPlayerInfoPacket.Entry item, ConnectedPlayer player) {
+    UpsertPlayerInfoPacket.Entry fixedEntry = new UpsertPlayerInfoPacket.Entry(initialID);
+    fixedEntry.setDisplayName(item.getDisplayName());
+    fixedEntry.setGameMode(item.getGameMode());
+    fixedEntry.setLatency(item.getLatency());
+    fixedEntry.setListed(item.isListed());
+    fixedEntry.setListOrder(item.getListOrder());
+    fixedEntry.setChatSession(item.getChatSession());
+
+    if (item.getProfile() != null && item.getProfile().getId().equals(player.getUniqueId())) {
+      fixedEntry.setProfile(new GameProfile(initialID, item.getProfile().getName(), item.getProfile().getProperties()));
+    } else {
+      fixedEntry.setProfile(item.getProfile());
     }
+
+    return fixedEntry;
+  }
+
+  @Override
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    this.delegate.encode(buf, direction, version);
+  }
+
+  @Override
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    this.delegate.decode(buf, direction, version);
   }
 
   public static void init(LimboAPI plugin, StateRegistry.PacketRegistry registry) throws ReflectiveOperationException {

@@ -23,12 +23,15 @@ import com.velocitypowered.proxy.connection.backend.BackendPlaySessionHandler;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.RemovePlayerInfoPacket;
+import io.netty.buffer.ByteBuf;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,10 +41,20 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 
 @SuppressWarnings("unchecked")
-public class RemovePlayerInfoHook extends RemovePlayerInfoPacket {
+public class RemovePlayerInfoHook implements MinecraftPacket {
 
   private static final MethodHandle SERVER_CONN_FIELD;
 
+  static {
+    try {
+      SERVER_CONN_FIELD = MethodHandles.privateLookupIn(BackendPlaySessionHandler.class, MethodHandles.lookup())
+          .findGetter(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new ReflectionException(e);
+    }
+  }
+
+  private final RemovePlayerInfoPacket delegate = new RemovePlayerInfoPacket();
   private final LimboAPI plugin;
 
   private RemovePlayerInfoHook(LimboAPI plugin) {
@@ -50,11 +63,14 @@ public class RemovePlayerInfoHook extends RemovePlayerInfoPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    if (handler instanceof BackendPlaySessionHandler) {
+    if (handler instanceof BackendPlaySessionHandler backend) {
       try {
-        ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.invokeExact((BackendPlaySessionHandler) handler)).getPlayer();
+        ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.invokeExact(backend)).getPlayer();
         UUID initialID = this.plugin.getInitialID(player);
-        if (this.getProfilesToRemove() instanceof List<UUID> uuids) {
+
+        Collection<UUID> profiles = this.delegate.getProfilesToRemove();
+        if (profiles instanceof List<?> profileList) {
+          List<UUID> uuids = (List<UUID>) profileList;
           for (int i = 0; i < uuids.size(); i++) {
             if (player.getUniqueId().equals(uuids.get(i))) {
               uuids.set(i, initialID);
@@ -66,16 +82,17 @@ public class RemovePlayerInfoHook extends RemovePlayerInfoPacket {
       }
     }
 
-    return super.handle(handler);
+    return this.delegate.handle(handler);
   }
 
-  static {
-    try {
-      SERVER_CONN_FIELD = MethodHandles.privateLookupIn(BackendPlaySessionHandler.class, MethodHandles.lookup())
-          .findGetter(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new ReflectionException(e);
-    }
+  @Override
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    this.delegate.encode(buf, direction, version);
+  }
+
+  @Override
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    this.delegate.decode(buf, direction, version);
   }
 
   public static void init(LimboAPI plugin, StateRegistry.PacketRegistry registry) throws ReflectiveOperationException {

@@ -23,8 +23,10 @@ import com.velocitypowered.proxy.connection.backend.BackendPlaySessionHandler;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
+import io.netty.buffer.ByteBuf;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.lang.invoke.MethodHandle;
@@ -38,11 +40,21 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 
 @SuppressWarnings("unchecked")
-public class LegacyPlayerListItemHook extends LegacyPlayerListItemPacket {
+public class LegacyPlayerListItemHook implements MinecraftPacket {
 
   private static final MethodHandle SERVER_CONN_FIELD;
 
+  static {
+    try {
+      SERVER_CONN_FIELD = MethodHandles.privateLookupIn(BackendPlaySessionHandler.class, MethodHandles.lookup())
+          .findGetter(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new ReflectionException(e);
+    }
+  }
+
   private final LimboAPI plugin;
+  private final LegacyPlayerListItemPacket delegate = new LegacyPlayerListItemPacket();
 
   private LegacyPlayerListItemHook(LimboAPI plugin) {
     this.plugin = plugin;
@@ -50,16 +62,16 @@ public class LegacyPlayerListItemHook extends LegacyPlayerListItemPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    if (handler instanceof BackendPlaySessionHandler) {
-      List<Item> items = this.getItems();
+    if (handler instanceof BackendPlaySessionHandler backend) {
+      List<LegacyPlayerListItemPacket.Item> items = this.delegate.getItems();
       for (int i = 0; i < items.size(); ++i) {
         try {
-          Item item = items.get(i);
-          ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.invokeExact((BackendPlaySessionHandler) handler)).getPlayer();
+          LegacyPlayerListItemPacket.Item item = items.get(i);
+          ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.invokeExact(backend)).getPlayer();
           UUID initialID = this.plugin.getInitialID(player);
 
           if (player.getUniqueId().equals(item.getUuid())) {
-            items.set(i, new Item(initialID)
+            items.set(i, new LegacyPlayerListItemPacket.Item(initialID)
                 .setDisplayName(item.getDisplayName())
                 .setGameMode(item.getGameMode())
                 .setLatency(item.getLatency())
@@ -72,16 +84,17 @@ public class LegacyPlayerListItemHook extends LegacyPlayerListItemPacket {
       }
     }
 
-    return super.handle(handler);
+    return this.delegate.handle(handler);
   }
 
-  static {
-    try {
-      SERVER_CONN_FIELD = MethodHandles.privateLookupIn(BackendPlaySessionHandler.class, MethodHandles.lookup())
-          .findGetter(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new ReflectionException(e);
-    }
+  @Override
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    this.delegate.encode(buf, direction, version);
+  }
+
+  @Override
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    this.delegate.decode(buf, direction, version);
   }
 
   public static void init(LimboAPI plugin, StateRegistry.PacketRegistry registry) throws ReflectiveOperationException {
