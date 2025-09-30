@@ -1089,7 +1089,8 @@ public class LimboImpl implements Limbo {
   }
 
   private DefaultSpawnPositionPacket createDefaultSpawnPositionPacket() {
-    return new DefaultSpawnPositionPacket((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F);
+    return new DefaultSpawnPositionPacket(this.world.getDimension().getKey(),
+        (int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F, 0.0f);
   }
 
   private TimeUpdatePacket createWorldTicksPacket() {

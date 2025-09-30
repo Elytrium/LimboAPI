@@ -30,7 +30,8 @@ public enum BlockEntityVersion {
   MINECRAFT_1_21_4(EnumSet.of(ProtocolVersion.MINECRAFT_1_21_4)),
   MINECRAFT_1_21_5(EnumSet.of(ProtocolVersion.MINECRAFT_1_21_5)),
   MINECRAFT_1_21_6(EnumSet.of(ProtocolVersion.MINECRAFT_1_21_6)),
-  MINECRAFT_1_21_7(EnumSet.of(ProtocolVersion.MINECRAFT_1_21_7));
+  MINECRAFT_1_21_7(EnumSet.of(ProtocolVersion.MINECRAFT_1_21_7)),
+  MINECRAFT_1_21_9(EnumSet.of(ProtocolVersion.MINECRAFT_1_21_9));
 
   private static final EnumMap<ProtocolVersion, BlockEntityVersion> MC_VERSION_TO_ITEM_VERSIONS = new EnumMap<>(ProtocolVersion.class);
   private static final Map<String, BlockEntityVersion> KEY_LOOKUP = Map.copyOf(EnumUniverse.createProtocolLookup(values()));
