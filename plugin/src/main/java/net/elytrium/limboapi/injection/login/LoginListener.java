@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -38,6 +38,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.network.HandshakeIntent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
@@ -87,7 +88,7 @@ public class LoginListener {
   static final MethodHandle MC_CONNECTION_SETTER = Reflection.findSetter(AuthSessionHandler.class, "mcConnection", MinecraftConnection.class);
   private static final MethodHandle CONNECTED_PLAYER_CONSTRUCTOR = Reflection.findConstructor(
       ConnectedPlayer.class,
-      VelocityServer.class, GameProfile.class, MinecraftConnection.class, InetSocketAddress.class, String.class, boolean.class, IdentifiedKey.class
+      VelocityServer.class, GameProfile.class, MinecraftConnection.class, InetSocketAddress.class, String.class, boolean.class, HandshakeIntent.class, IdentifiedKey.class
   );
   private static final MethodHandle TAB_LIST_SETTER = Reflection.findSetter(ConnectedPlayer.class, "tabList", InternalTabList.class);
   private static final MethodHandle SPAWNED_FIELD = Reflection.findSetter(ClientPlaySessionHandler.class, "spawned", boolean.class);
@@ -168,6 +169,7 @@ public class LoginListener {
               inboundConnection.getVirtualHost().orElse(null),
               inboundConnection.getRawVirtualHost().orElse(null),
               event.isOnlineMode(),
+              inboundConnection.getHandshakeIntent(),
               playerKey
           );
 

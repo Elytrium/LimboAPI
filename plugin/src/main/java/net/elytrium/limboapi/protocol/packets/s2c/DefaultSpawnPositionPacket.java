@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,7 +24,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import net.elytrium.limboapi.protocol.util.LimboProtocolUtils;
 
-public record DefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle) implements MinecraftPacket {
+public record DefaultSpawnPositionPacket(String dimension, int posX, int posY, int posZ, float yaw, float pitch) implements MinecraftPacket {
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * The LimboAPI (excluding the LimboAPI plugin) is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -102,6 +102,8 @@ public interface PacketFactory {
   Object createChunkUnloadPacket(int posX, int posZ);
 
   Object createDefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle);
+
+  Object createDefaultSpawnPositionPacket(String dimension, int posX, int posY, int posZ, float yaw, float pitch);
 
   Object createMapDataPacket(int mapId, byte scale, MapData mapData);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -241,7 +241,8 @@ public class LimboImpl implements Limbo {
     configPackets.prepare(this::createRegistrySyncLegacy, ProtocolVersion.MINECRAFT_1_20_2, ProtocolVersion.MINECRAFT_1_20_3);
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_20_5, ProtocolVersion.MINECRAFT_1_20_5);
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MINECRAFT_1_21);
-    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_2, ProtocolVersion.MAXIMUM_VERSION);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_2, ProtocolVersion.MINECRAFT_1_21_4);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_5, ProtocolVersion.MAXIMUM_VERSION);
     if (this.shouldUpdateTags) {
       configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
     }
@@ -386,9 +387,6 @@ public class LimboImpl implements Limbo {
     }
 
     if (connection.getState() != this.localStateRegistry) {
-      if (connection.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
-        connection.eventLoop().execute(() -> connection.setState(this.localStateRegistry));
-      }
       VelocityServerConnection server = player.getConnectedServer();
       if (server != null) {
         RegisteredServer previousServer = server.getServer();
@@ -517,6 +515,7 @@ public class LimboImpl implements Limbo {
   }
 
   protected void onSpawn(Class<? extends LimboSessionHandler> handlerClass, MinecraftConnection connection, ConnectedPlayer player, LimboSessionHandlerImpl sessionHandler) {
+    this.plugin.setState(connection, this.localStateRegistry);
     if (this.plugin.isLimboJoined(player)) {
       if (this.shouldRejoin) {
         sessionHandler.setJoinGameTriggered(true);
@@ -810,7 +809,7 @@ public class LimboImpl implements Limbo {
   }
 
   private static CompoundBinaryTag createDimensionData(Dimension dimension, ProtocolVersion version) {
-    CompoundBinaryTag details = CompoundBinaryTag.builder()
+    var details = CompoundBinaryTag.builder()
         .putBoolean("natural", false)
         .putFloat("ambient_light", 0.0F)
         .putBoolean("shrunk", false)
@@ -828,15 +827,14 @@ public class LimboImpl implements Limbo {
         .putInt("min_y", 0)
         .putInt("height", 256)
         .putInt("monster_spawn_block_light_limit", 0)
-        .putInt("monster_spawn_light_level", 0)
-        .build();
+        .putInt("monster_spawn_light_level", 0);
     return version.noLessThan(ProtocolVersion.MINECRAFT_1_16_2)
         ? CompoundBinaryTag.builder()
             .putString("name", dimension.getKey())
             .putInt("id", dimension.getModernId())
             .put("element", details)
             .build()
-        : details.putString("name", dimension.getKey());
+        : details.putString("name", dimension.getKey()).build();
   }
 
   private JoinGamePacket createJoinGamePacket(ProtocolVersion version) {
@@ -925,10 +923,9 @@ public class LimboImpl implements Limbo {
         registry.put("minecraft:damage_type", DAMAGE_TYPE_120);
       }
 
-      // TODO: Generate mappings for painting_variant and wolf_variant registries
-      // TODO: API
+      // TODO: Auto-generate mappings and implement some APIs
       if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-        // TODO мб ещё сюда и варианты для баннеров добавлять (если их в регистре не отправит, то они пустыми будут)
+        // TODO мб ещё сюда и варианты для баннеров добавлять (если их в регистре не отправить, то они пустыми будут)
         registry.put("minecraft:wolf_variant", LimboImpl.createRegistry("minecraft:wolf_variant", Map.of(
             "minecraft:ashen", CompoundBinaryTag.builder()
                 .putString("wild_texture", "minecraft:entity/wolf/wolf_ashen")
@@ -947,6 +944,87 @@ public class LimboImpl implements Limbo {
                 .build()
         )));
       }
+      /*
+        if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_5) >= 0) {
+          // Cat
+          CompoundBinaryTag.Builder catVariant = CompoundBinaryTag.builder()
+              .putString("asset_id", "minecraft:entity/cat/all_black")
+              .put("spawn_conditions", ListBinaryTag.empty());
+
+          registryContainer.put("minecraft:cat_variant", this.createRegistry("minecraft:cat_variant",
+              Map.of("minecraft:all_black", catVariant.build())));
+
+          // Chicken
+          CompoundBinaryTag.Builder chickenVariant = CompoundBinaryTag.builder()
+              .putString("asset_id", "minecraft:entity/chicken/cold_chicken")
+              .putString("model", "cold")
+              .put("spawn_conditions", ListBinaryTag.empty());
+
+          registryContainer.put("minecraft:chicken_variant", this.createRegistry("minecraft:chicken_variant",
+              Map.of("minecraft:cold", chickenVariant.build())));
+
+          // Cow
+          CompoundBinaryTag.Builder cowVariant = CompoundBinaryTag.builder()
+              .putString("asset_id", "minecraft:entity/cow/cold_cow")
+              .putString("model", "cold")
+              .put("spawn_conditions", ListBinaryTag.empty());
+
+          registryContainer.put("minecraft:cow_variant", this.createRegistry("minecraft:cow_variant",
+              Map.of("minecraft:cold", cowVariant.build())));
+
+          // Frog
+          CompoundBinaryTag.Builder frogVariant = CompoundBinaryTag.builder()
+              .putString("asset_id", "minecraft:entity/frog/cold_frog")
+              .put("spawn_conditions", ListBinaryTag.empty());
+
+          registryContainer.put("minecraft:frog_variant", this.createRegistry("minecraft:frog_variant",
+              Map.of("minecraft:cold", frogVariant.build())));
+
+          // Pig
+          CompoundBinaryTag.Builder pigVariant = CompoundBinaryTag.builder()
+              .putString("asset_id", "minecraft:entity/pig/cold_pig")
+              .putString("model", "cold")
+              .put("spawn_conditions", ListBinaryTag.empty());
+
+          registryContainer.put("minecraft:pig_variant", this.createRegistry("minecraft:pig_variant",
+              Map.of("minecraft:cold", pigVariant.build())));
+
+          // Wolf Sound Variant
+          CompoundBinaryTag.Builder wolfSoundVariant = CompoundBinaryTag.builder()
+              .putString("ambient_sound", "minecraft:entity.wolf_angry.ambient")
+              .putString("death_sound", "minecraft:entity.wolf_angry.death")
+              .putString("growl_sound", "minecraft:entity.wolf_angry.growl")
+              .putString("hurt_sound", "minecraft:entity.wolf_angry.hurt")
+              .putString("pant_sound", "minecraft:entity.wolf_angry.pant")
+              .putString("whine_sound", "minecraft:entity.wolf_angry.whine");
+
+          registryContainer.put("minecraft:wolf_sound_variant", this.createRegistry("minecraft:wolf_sound_variant",
+              Map.of("minecraft:angry", wolfSoundVariant.build())));
+
+          // Wolf
+          CompoundBinaryTag.Builder wolfVariant = CompoundBinaryTag.builder()
+              .put("assets", CompoundBinaryTag.builder()
+                  .putString("wild", "minecraft:entity/wolf/wolf_ashen")
+                  .putString("tame", "minecraft:entity/wolf/wolf_ashen_tame")
+                  .putString("angry", "minecraft:entity/wolf/wolf_ashen_angry")
+                  .build())
+              .put("spawn_conditions", ListBinaryTag.empty());
+
+          registryContainer.put("minecraft:wolf_variant", this.createRegistry("minecraft:wolf_variant",
+              Map.of("minecraft:ashen", wolfVariant.build())));
+        } else {
+          CompoundBinaryTag.Builder wolfVariant = CompoundBinaryTag.builder()
+              .putString("wild_texture", "minecraft:entity/wolf/wolf_ashen")
+              .putString("tame_texture", "minecraft:entity/wolf/wolf_ashen_tame")
+              .putString("angry_texture", "minecraft:entity/wolf/wolf_ashen_angry")
+              .put("biomes", ListBinaryTag.builder()
+                  .add(StringBinaryTag.stringBinaryTag("minecraft:plains")).build()
+              );
+
+          registryContainer.put("minecraft:wolf_variant", this.createRegistry("minecraft:wolf_variant",
+              Map.of("minecraft:ashen", wolfVariant.build())));
+        }
+      */
     } else {
       registry.put("dimension", dimensionRegistry);
     }
@@ -969,7 +1047,7 @@ public class LimboImpl implements Limbo {
   }
 
   private DefaultSpawnPositionPacket createDefaultSpawnPositionPacket() {
-    return new DefaultSpawnPositionPacket((int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F);
+    return new DefaultSpawnPositionPacket(this.world.getDimension().getKey(), (int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F, 0.0f);
   }
 
   private SetTimePacket createWorldTicksPacket() {

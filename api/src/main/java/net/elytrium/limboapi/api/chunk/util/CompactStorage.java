@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * The LimboAPI (excluding the LimboAPI plugin) is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -19,7 +19,12 @@ public interface CompactStorage {
 
   int getBitsPerEntry();
 
-  int getDataLength();
+  @Deprecated(forRemoval = true)
+  default int getDataLength() {
+    return this.getDataLength(ProtocolVersion.MINIMUM_VERSION);
+  }
+
+  int getDataLength(ProtocolVersion version);
 
   long[] getData();
 

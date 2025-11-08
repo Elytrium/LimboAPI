@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,6 +45,7 @@ import net.elytrium.limboapi.api.protocol.packets.data.AbilityFlags;
 import net.elytrium.limboapi.api.protocol.packets.data.EntityDataValue;
 import net.elytrium.limboapi.api.protocol.packets.data.MapData;
 import net.elytrium.limboapi.api.protocol.packets.data.MapPalette;
+import net.elytrium.limboapi.injection.login.LoginTasksQueue;
 import net.elytrium.limboapi.protocol.packets.s2c.GameEventPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.MapDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.PlayerAbilitiesPacket;
@@ -305,7 +306,9 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
       this.sessionHandler.disconnectToConfig(() -> {
         // Rollback original CONFIG handler
-        this.connection.setActiveSessionHandler(StateRegistry.CONFIG, new ClientConfigSessionHandler(this.plugin.getServer(), this.player));
+        ClientConfigSessionHandler handler = new ClientConfigSessionHandler(this.plugin.getServer(), this.player);
+        LoginTasksQueue.BRAND_CHANNEL_SETTER.accept(handler, "minecraft:brand");
+        this.connection.setActiveSessionHandler(StateRegistry.CONFIG, handler);
         this.player.createConnectionRequest(server).fireAndForget();
       });
     } else {

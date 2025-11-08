@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -214,8 +214,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
       return true;
     }
-
-    this.plugin.setState(this.player.getConnection(), this.limbo.localStateRegistry);
 
     this.limbo.onSpawn(this.callback.getClass(), this.player.getConnection(), this.player, this);
     this.player.getConnection().flush();

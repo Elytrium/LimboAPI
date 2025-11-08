@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -47,6 +47,7 @@ import net.elytrium.limboapi.protocol.util.LimboProtocolUtils;
 import net.elytrium.limboapi.protocol.util.NetworkSection;
 import net.elytrium.limboapi.server.world.SimpleBlockEntity;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
+import net.kyori.adventure.nbt.LongArrayBinaryTag;
 
 // TODO fix 1.17.x spawn with offset -1 by y (i guess the client tries to fall before chunks are loaded, and as a result, due to the ping, the player may spawn inside the blocks)
 public class ChunkDataPacket implements MinecraftPacket {
@@ -60,6 +61,7 @@ public class ChunkDataPacket implements MinecraftPacket {
   private final BiomeData biomeData;
   private final CompoundBinaryTag heightmap114;
   private final CompoundBinaryTag heightmap116;
+  private final Map<Integer, long[]> heightmap1215;
   private final boolean hasSkyLight;
 
   private List<VirtualBlockEntity.Entry> flowerPots;
@@ -101,6 +103,15 @@ public class ChunkDataPacket implements MinecraftPacket {
     this.biomeData = new BiomeData(chunk);
     this.heightmap114 = this.createHeightMap(true);
     this.heightmap116 = this.createHeightMap(false);
+    // TODO create both maps at the same time
+    this.heightmap1215 = new HashMap<>();
+    for (Map.Entry<String, ? extends BinaryTag> entry : this.heightmap116) {
+      this.heightmap1215.put(switch (this.findHeightMapId(entry.getKey())) {
+        case "WORLD_SURFACE" -> 1;
+        case "MOTION_BLOCKING" -> 4;
+        default -> throw new IllegalArgumentException("Unsupported heightmap: " + entry);
+      }, ((LongArrayBinaryTag) entry.getValue()).value());
+    }
     this.hasSkyLight = hasSkyLight;
     this.flowerPots = flowerPots;
   }
@@ -142,8 +153,18 @@ public class ChunkDataPacket implements MinecraftPacket {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_14)) {
       if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_16)) {
         ProtocolUtils.writeBinaryTag(buf, protocolVersion, this.heightmap114);
-      } else {
+      } else if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
         ProtocolUtils.writeBinaryTag(buf, protocolVersion, this.heightmap116);
+      } else {
+        ProtocolUtils.writeVarInt(buf, this.heightmap1215.size());
+        for (Map.Entry<Integer, long[]> entry : this.heightmap1215.entrySet()) {
+          ProtocolUtils.writeVarInt(buf, entry.getKey());
+          // TODO writeLongArray
+          ProtocolUtils.writeVarInt(buf, entry.getValue().length);
+          for (long data : entry.getValue()) {
+            buf.writeLong(data);
+          }
+        }
       }
     }
 
@@ -267,7 +288,8 @@ public class ChunkDataPacket implements MinecraftPacket {
     }
 
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_18)) {
-      dataLength += (this.maxSections - this.nonNullSections) * (Short.BYTES + Byte.BYTES + 1 + 1 + Byte.BYTES + 1 + 1);
+      int emptySectionSize = version.lessThan(ProtocolVersion.MINECRAFT_1_21_5) ? (Short.BYTES + Byte.BYTES + 1 + 1 + Byte.BYTES + 1 + 1) : (Short.BYTES + Byte.BYTES + 1 + Byte.BYTES + 1);
+      dataLength += (this.maxSections - this.nonNullSections) * emptySectionSize;
     }
 
     ByteBuf data = Unpooled.buffer(dataLength);
@@ -294,10 +316,14 @@ public class ChunkDataPacket implements MinecraftPacket {
           data.writeShort(0); // Block count = 0
           data.writeByte(0); // BlockStorage: 0 bit per entry = Single palette
           ProtocolUtils.writeVarInt(data, Block.AIR.getId()); // Only air block in the palette
-          ProtocolUtils.writeVarInt(data, 0); // BlockStorage: 0 entries
+          if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
+            ProtocolUtils.writeVarInt(data, 0); // BlockStorage: 0 entries.
+          }
           data.writeByte(0); // BiomeStorage: 0 bit per entry = Single palette
           ProtocolUtils.writeVarInt(data, Biome.PLAINS.getId()); // Only Plain biome in the palette
-          ProtocolUtils.writeVarInt(data, 0); // BiomeStorage: 0 entries
+          if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
+            ProtocolUtils.writeVarInt(data, 0); // BiomeStorage: 0 entries.
+          }
         }
       }
     }

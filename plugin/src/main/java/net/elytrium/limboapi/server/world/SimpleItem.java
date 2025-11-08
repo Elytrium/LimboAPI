@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -46,7 +46,12 @@ public class SimpleItem implements VirtualItem {
 
   @Override
   public short itemId(WorldVersion version) {
-    return this.versionIds.get(version);
+    Short result = this.versionIds.get(version);
+    if (result == null) {
+      throw new IllegalArgumentException("Item " + this.modernId + " does not exists on " + version);
+    }
+
+    return result;
   }
 
   @Override

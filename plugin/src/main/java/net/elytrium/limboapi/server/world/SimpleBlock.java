@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -36,6 +36,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 public record SimpleBlock(String modernId, short blockId, short blockStateId, boolean air, boolean solid, boolean motionBlocking/*1.14+*/) implements VirtualBlock {
 
+  // TODO fastutil
   private static final ShortObjectHashMap<String> MODERN_BLOCK_STATE_PROTOCOL_ID_MAP;
   private static final Map<String, Map<Set<String>, Short>> MODERN_BLOCK_STATE_STRING_MAP;
   private static final EnumMap<ProtocolVersion, ShortObjectMap<Short>> MODERN_BLOCK_STATE_IDS_MAP;
@@ -56,7 +57,17 @@ public record SimpleBlock(String modernId, short blockId, short blockStateId, bo
   }
 
   public SimpleBlock(String modernId, short blockStateId, boolean air, boolean solid, boolean motionBlocking) {
-    this(modernId, SimpleBlock.MODERN_BLOCK_STRING_MAP.get(modernId.indexOf('[') == -1 ? modernId : modernId.substring(0, modernId.indexOf('['))), blockStateId, air, solid, motionBlocking);
+    this(modernId, SimpleBlock.findBlockId(modernId), blockStateId, air, solid, motionBlocking);
+  }
+
+  private static short findBlockId(String modernId) {
+    int bracketIndex = modernId.indexOf('[');
+    Short id = SimpleBlock.MODERN_BLOCK_STRING_MAP.get(bracketIndex == -1 ? modernId : modernId.substring(0, bracketIndex));
+    if (id == null) {
+      throw new IllegalStateException("failed to find local id for specific block: " + block);
+    }
+
+    return id;
   }
 
   public SimpleBlock(String modernID, short blockId, Map<String, String> properties, boolean air, boolean solid, boolean motionBlocking) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -73,6 +73,7 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
     fixedEntry.setGameMode(item.getGameMode());
     fixedEntry.setDisplayName(item.getDisplayName());
     fixedEntry.setListOrder(item.getListOrder());
+    // TODO setHat
     fixedEntry.setChatSession(item.getChatSession());
     return fixedEntry;
   }

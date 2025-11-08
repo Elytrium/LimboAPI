@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -126,7 +126,7 @@ import org.slf4j.Logger;
 @SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
-  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 768;
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 773;
 
   // TODO translate
   /**

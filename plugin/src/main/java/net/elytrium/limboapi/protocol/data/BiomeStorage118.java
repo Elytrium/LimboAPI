@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2024 Elytrium
+ * Copyright (C) 2021 - 2025 Elytrium
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -84,7 +84,7 @@ public class BiomeStorage118 {
     this.storage.write(buf, version);
   }
 
-  public int getDataLength() {
+  public int getDataLength(ProtocolVersion version) {
     int length = 1;
     if (this.storage.getBitsPerEntry() != BiomeStorage118.MAX_BITS_PER_ENTRY) {
       length += ProtocolUtils.varIntBytes(this.palette.size());
@@ -93,7 +93,7 @@ public class BiomeStorage118 {
       }
     }
 
-    return length + this.storage.getDataLength();
+    return length + this.storage.getDataLength(version);
   }
 
   public BiomeStorage118 copy() {
