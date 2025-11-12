@@ -85,6 +85,7 @@ enum MinecraftVersion {
       MINECRAFT_1_20,
       MINECRAFT_1_20_3,
       MINECRAFT_1_20_5,
+      MINECRAFT_1_21,
       MINECRAFT_1_21_2,
       MINECRAFT_1_21_4,
       MINECRAFT_1_21_5,
@@ -100,8 +101,6 @@ enum MinecraftVersion {
     return name.equalsIgnoreCase("legacy") ? MINIMUM_VERSION : valueOf("MINECRAFT_" + name.replace('.', '_'))
   }
 
-  // Cache version name to reduce memory usage in general
-  final String versionName = this.toString().substring(10).replace('_', '.')
   final int protocolVersion
 
   MinecraftVersion(int protocolVersion) {
@@ -109,7 +108,7 @@ enum MinecraftVersion {
   }
 
   String getVersionName() {
-    return this.versionName
+    return this.toString().substring(10).replace('_', '.')
   }
 }
 
