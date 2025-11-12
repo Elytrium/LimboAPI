@@ -20,21 +20,20 @@ package net.elytrium.limboapi.server.world;
 import com.google.gson.internal.LinkedTreeMap;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.api.chunk.BlockEntityVersion;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
-import net.elytrium.limboapi.api.chunk.VirtualChunk;
-import net.elytrium.limboapi.api.material.Item;
-import net.elytrium.limboapi.api.material.WorldVersion;
-import net.elytrium.limboapi.utils.JsonParser;
+import net.elytrium.limboapi.api.world.chunk.blockentity.BlockEntityVersion;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
+import net.elytrium.limboapi.api.world.chunk.VirtualChunk;
+import net.elytrium.limboapi.api.world.item.Item;
+import net.elytrium.limboapi.api.world.WorldVersion;
+import net.elytrium.limboapi.utils.JsonUtil;
 import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -42,12 +41,13 @@ import net.kyori.adventure.nbt.IntArrayBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
 import net.kyori.adventure.nbt.StringBinaryTag;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SimpleBlockEntity implements VirtualBlockEntity {
 
-  private static final Map<String, SimpleBlockEntity> MODERN_ID_MAP = new HashMap<>();
+  private static final Object2ObjectOpenHashMap<String, SimpleBlockEntity> MODERN_ID_MAP = new Object2ObjectOpenHashMap<>();
 
-  private final Map<BlockEntityVersion, Integer> versionIds = new EnumMap<>(BlockEntityVersion.class);
+  private final EnumMap<BlockEntityVersion, Integer> versionIds = new EnumMap<>(BlockEntityVersion.class);
   private final String modernId;
   private final String legacyId;
 
@@ -87,12 +87,12 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
   }
 
   @Override
-  public VirtualBlockEntity.Entry createEntry(VirtualChunk chunk, int posX, int posY, int posZ, CompoundBinaryTag nbt) {
+  public VirtualBlockEntity.Entry createEntry(@Nullable VirtualChunk chunk, int posX, int posY, int posZ, @Nullable CompoundBinaryTag nbt) {
     return new Entry(chunk, posX, posY, posZ, nbt);
   }
 
   static {
-    LinkedTreeMap<String, LinkedTreeMap<String, Number>> blockEntitiesMapping = JsonParser.parse(LimboAPI.class.getResourceAsStream("/mappings/block_entity_types_mappings.json"));
+    var blockEntitiesMapping = JsonUtil.<LinkedTreeMap<String, Number>>parse(LimboAPI.class.getResourceAsStream("/mappings/block_entity_types_mappings.json"));
     blockEntitiesMapping.forEach((modernId, versions) -> {
       String v1_9Id = SimpleBlockEntity.modern2v1_9(modernId);
       SimpleBlockEntity simpleBlockEntity = new SimpleBlockEntity(modernId, v1_9Id);
@@ -127,12 +127,12 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
     try {
       Field field = BlockEntityType.class.getDeclaredField("validBlocks");
       field.setAccessible(true);
-      BuiltInRegistries.BLOCK_ENTITY_TYPE.asHolderIdMap().forEach(blockEntityTypeReference -> {
+      BuiltInRegistries.BLOCK_ENTITY_TYPE.asHolderIdMap().forEach(holder -> {
         try {
-          String key = blockEntityTypeReference.unwrapKey().orElseThrow().location().toString();
-          List<String> validBlocks = ((Set<Block>) field.get(blockEntityTypeReference.value())).stream().map(block -> BuiltInRegistries.BLOCK.getKey(block).toString()).filter(block -> !block.equals(key)).toList();
+          String key = holder.unwrapKey().orElseThrow().location().toString();
+          List<String> validBlocks = ((Set<Block>) field.get(holder.value())).stream().map(block -> BuiltInRegistries.BLOCK.getKey(block).toString()).filter(block -> !block.equals(key)).toList();
           if (!validBlocks.isEmpty()) {
-            System.out.println("\"" + key + "\", \"" + String.join("\", \"", validBlocks) + "\"");
+            System.out.println("\"" + key + "\",\n\"" + String.join("\", \"", validBlocks) + "\"");
           }
         } catch (IllegalAccessException e) {
           throw new RuntimeException(e);
@@ -142,6 +142,10 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
       throw new RuntimeException(e);
     }
     */
+    SimpleBlockEntity.registerAliases("minecraft:chest",
+        "minecraft:copper_chest", "minecraft:exposed_copper_chest", "minecraft:oxidized_copper_chest", "minecraft:waxed_copper_chest", "minecraft:waxed_exposed_copper_chest",
+        "minecraft:waxed_oxidized_copper_chest", "minecraft:waxed_weathered_copper_chest", "minecraft:weathered_copper_chest"
+    );
     SimpleBlockEntity.registerAliases("minecraft:sign",
         "minecraft:acacia_sign", "minecraft:acacia_wall_sign", "minecraft:bamboo_sign", "minecraft:bamboo_wall_sign", "minecraft:birch_sign", "minecraft:birch_wall_sign",
         "minecraft:cherry_sign", "minecraft:cherry_wall_sign", "minecraft:crimson_sign", "minecraft:crimson_wall_sign", "minecraft:dark_oak_sign", "minecraft:dark_oak_wall_sign",
@@ -159,8 +163,8 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
     SimpleBlockEntity.registerAliases("minecraft:mob_spawner", "minecraft:spawner");
     SimpleBlockEntity.registerAliases("minecraft:piston", "minecraft:moving_piston");
     SimpleBlockEntity.registerAliases("minecraft:skull",
-        "minecraft:creeper_head", "minecraft:creeper_wall_head", "minecraft:dragon_head", "minecraft:dragon_wall_head",
-        "minecraft:piglin_head", "minecraft:piglin_wall_head", "minecraft:player_head", "minecraft:player_wall_head", "minecraft:skeleton_skull", "minecraft:skeleton_wall_skull",
+        "minecraft:creeper_head", "minecraft:creeper_wall_head", "minecraft:dragon_head", "minecraft:dragon_wall_head", "minecraft:piglin_head",
+        "minecraft:piglin_wall_head", "minecraft:player_head", "minecraft:player_wall_head", "minecraft:skeleton_skull", "minecraft:skeleton_wall_skull",
         "minecraft:wither_skeleton_skull", "minecraft:wither_skeleton_wall_skull", "minecraft:zombie_head", "minecraft:zombie_wall_head"
     );
     SimpleBlockEntity.registerAliases("minecraft:banner",
@@ -178,13 +182,21 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
         "minecraft:pink_shulker_box", "minecraft:purple_shulker_box", "minecraft:red_shulker_box", "minecraft:white_shulker_box", "minecraft:yellow_shulker_box"
     );
     SimpleBlockEntity.registerAliases("minecraft:bed",
-        "minecraft:black_bed", "minecraft:blue_bed", "minecraft:brown_bed", "minecraft:cyan_bed", "minecraft:gray_bed", "minecraft:green_bed", "minecraft:light_blue_bed",
-        "minecraft:light_gray_bed", "minecraft:lime_bed", "minecraft:magenta_bed", "minecraft:orange_bed", "minecraft:pink_bed", "minecraft:purple_bed", "minecraft:red_bed", "minecraft:white_bed",
-        "minecraft:yellow_bed"
+        "minecraft:black_bed", "minecraft:blue_bed", "minecraft:brown_bed", "minecraft:cyan_bed", "minecraft:gray_bed", "minecraft:green_bed", "minecraft:light_blue_bed", "minecraft:light_gray_bed",
+        "minecraft:lime_bed", "minecraft:magenta_bed", "minecraft:orange_bed", "minecraft:pink_bed", "minecraft:purple_bed", "minecraft:red_bed", "minecraft:white_bed", "minecraft:yellow_bed"
     );
     SimpleBlockEntity.registerAliases("minecraft:campfire", "minecraft:soul_campfire");
     SimpleBlockEntity.registerAliases("minecraft:beehive", "minecraft:bee_nest");
+    SimpleBlockEntity.registerAliases("minecraft:shelf",
+        "minecraft:acacia_shelf", "minecraft:bamboo_shelf", "minecraft:birch_shelf", "minecraft:cherry_shelf", "minecraft:crimson_shelf", "minecraft:dark_oak_shelf",
+        "minecraft:jungle_shelf", "minecraft:mangrove_shelf", "minecraft:oak_shelf", "minecraft:pale_oak_shelf", "minecraft:spruce_shelf", "minecraft:warped_shelf"
+    );
     SimpleBlockEntity.registerAliases("minecraft:brushable_block", "minecraft:suspicious_sand", "minecraft:suspicious_gravel");
+    SimpleBlockEntity.registerAliases("minecraft:copper_golem_statue",
+        "minecraft:exposed_copper_golem_statue", "minecraft:oxidized_copper_golem_statue", "minecraft:waxed_copper_golem_statue", "minecraft:waxed_exposed_copper_golem_statue",
+        "minecraft:waxed_oxidized_copper_golem_statue", "minecraft:waxed_weathered_copper_golem_statue", "minecraft:weathered_copper_golem_statue"
+    );
+    SimpleBlockEntity.MODERN_ID_MAP.trim();
   }
 
   private static void registerAliases(String target, String... aliases) {
@@ -304,9 +316,10 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
     private final int posX;
     private final int posY;
     private final int posZ;
+    @Nullable
     private final CompoundBinaryTag nbt;
 
-    public Entry(VirtualChunk chunk, int posX, int posY, int posZ, CompoundBinaryTag nbt) {
+    public Entry(VirtualChunk chunk, int posX, int posY, int posZ, @Nullable CompoundBinaryTag nbt) {
       this.chunk = chunk;
       this.posX = posX;
       this.posY = posY;
@@ -338,7 +351,7 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
     public CompoundBinaryTag getNbt(ProtocolVersion version) { // adventure-nbt is the worst api I ever used
       CompoundBinaryTag.Builder nbt = null;
       // TODO fix banners 1.20.5-1.21.2 by adding patterns to the registry (but i'm not sure is it important thing and does someone will need it)
-      if (version.lessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
+      if (this.nbt != null && version.lessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
         String modernId = SimpleBlockEntity.this.getModernId();
         boolean lessThen16 = version.lessThan(ProtocolVersion.MINECRAFT_1_16);
         boolean noGreaterThan12 = lessThen16 && version.noGreaterThan(ProtocolVersion.MINECRAFT_1_12_2);
@@ -570,7 +583,7 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
     }
 
     private static CompoundBinaryTag updateProfileTag(CompoundBinaryTag profileTag, ProtocolVersion version) {
-      CompoundBinaryTag.Builder builder = CompoundBinaryTag.builder();
+      CompoundBinaryTag.Builder builder = CompoundBinaryTag.builder(profileTag.size());
       {
         BinaryTag name = profileTag.get("name");
         if (name instanceof StringBinaryTag) {
@@ -578,31 +591,32 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
         }
 
         BinaryTag id = profileTag.get("id");
-        BinaryTag propertiesListTag = profileTag.get("properties");
-        if (propertiesListTag instanceof ListBinaryTag list) {
-          CompoundBinaryTag.Builder propertiesTag = CompoundBinaryTag.builder();
-          for (BinaryTag propertyTag : list) {
-            if (propertyTag instanceof CompoundBinaryTag property) {
-              BinaryTag value = property.get("value");
+        if (profileTag.get("properties") instanceof ListBinaryTag oldProperties) {
+          CompoundBinaryTag.Builder newPropertiesBuilder = CompoundBinaryTag.builder(oldProperties.size());
+          for (BinaryTag oldPropertyTag : oldProperties) {
+            if (oldPropertyTag instanceof CompoundBinaryTag oldProperty) {
+              BinaryTag value = oldProperty.get("value");
               if (value == null) {
                 value = StringBinaryTag.stringBinaryTag("");
               }
 
-              BinaryTag signature = property.get("signature");
-              propertiesTag.put(property.getString("name", ""), ListBinaryTag.listBinaryTag(BinaryTagTypes.COMPOUND, List.of(CompoundBinaryTag.from(
-                  signature instanceof StringBinaryTag ? Map.of("Value", value, "Signature", signature) : Map.of("Value", value)
-              ))));
+              newPropertiesBuilder.put(oldProperty.getString("name", ""), ListBinaryTag.listBinaryTag(BinaryTagTypes.COMPOUND, Collections.singletonList(
+                  CompoundBinaryTag.from(oldProperty.get("signature") instanceof StringBinaryTag signature
+                      ? Map.of("Value", value, "Signature", signature)
+                      : Collections.singletonMap("Value", value)
+                  )
+              )));
             }
           }
-          CompoundBinaryTag properties = propertiesTag.build();
-          builder.put("Properties", properties);
+          CompoundBinaryTag newProperties = newPropertiesBuilder.build();
+          builder.put("Properties", newProperties);
           if (id instanceof IntArrayBinaryTag) {
             // https://github.com/ViaVersion/ViaBackwards/blob/4.10.2/common/src/main/java/com/viaversion/viabackwards/protocol/protocol1_16_1to1_16_2/packets/BlockItemPackets1_16_2.java#L140
             BinaryTag firstValue;
             builder.put("Id",
                 version.lessThan(ProtocolVersion.MINECRAFT_1_16_2)
-                && properties.get("textures") instanceof ListBinaryTag textures
-                && textures.size() > 0 && textures.get(0) instanceof CompoundBinaryTag firstTexture && (firstValue = firstTexture.get("Value")) != null
+                && newProperties.get("textures") instanceof ListBinaryTag textures
+                && !textures.isEmpty() && textures.get(0) instanceof CompoundBinaryTag firstTexture && (firstValue = firstTexture.get("Value")) != null
                     ? Entry.uuid(version, firstValue.hashCode(), 0, 0, 0)
                     : Entry.uuid(version, (IntArrayBinaryTag) id)
             );

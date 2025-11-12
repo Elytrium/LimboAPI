@@ -18,20 +18,20 @@
 package net.elytrium.limboapi.protocol.packets;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import net.elytrium.limboapi.api.chunk.BlockEntityVersion;
-import net.elytrium.limboapi.api.chunk.Dimension;
-import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
-import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
-import net.elytrium.limboapi.api.material.VirtualItem;
-import net.elytrium.limboapi.api.material.WorldVersion;
+import net.elytrium.limboapi.api.protocol.data.EntityData;
+import net.elytrium.limboapi.api.world.chunk.Dimension;
+import net.elytrium.limboapi.api.world.chunk.blockentity.BlockEntityVersion;
+import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
+import net.elytrium.limboapi.api.world.chunk.ChunkSnapshot;
+import net.elytrium.limboapi.api.world.item.VirtualItem;
+import net.elytrium.limboapi.api.world.WorldVersion;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
-import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
-import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
-import net.elytrium.limboapi.api.protocol.packets.data.EntityDataValue;
-import net.elytrium.limboapi.api.protocol.packets.data.MapData;
+import net.elytrium.limboapi.api.world.item.datacomponent.DataComponentMap;
+import net.elytrium.limboapi.api.protocol.PacketFactory;
+import net.elytrium.limboapi.api.protocol.data.MapData;
 import net.elytrium.limboapi.protocol.packets.s2c.BlockEntityDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.ChunkDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.ChunkUnloadPacket;
@@ -67,7 +67,7 @@ public class PacketFactoryImpl implements PacketFactory {
   @Override
   public void prepareCompleteChunkDataPacket(ProtocolVersion minPrepareVersion, ProtocolVersion maxPrepareVersion, PreparedPacket packet, ChunkSnapshot chunkSnapshot, boolean hasSkyLight, int maxSections) {
     var flowerPots = minPrepareVersion.noGreaterThan(ProtocolVersion.MINECRAFT_1_12_2) ? ChunkDataPacket.getAdditionalFlowerPots(chunkSnapshot) : null;
-    packet.prepare(new ChunkDataPacket(chunkSnapshot, hasSkyLight, maxSections, flowerPots == null ? List.of() : flowerPots));
+    packet.prepare(new ChunkDataPacket(chunkSnapshot, hasSkyLight, maxSections, flowerPots == null ? Collections.emptyList() : flowerPots));
     packet.prepare(
         chunkSnapshot.blockEntityEntriesStream(ProtocolVersion.MINIMUM_VERSION)
             .filter(entry -> entry.getBlockEntity().isSupportedOn(BlockEntityVersion.LEGACY))
@@ -117,7 +117,7 @@ public class PacketFactoryImpl implements PacketFactory {
 
   @Override
   public Object createDefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle) {
-    return new DefaultSpawnPositionPacket(Dimension.OVERWORLD.getKey(), posX, posY, posZ, angle, 0);
+    return new DefaultSpawnPositionPacket(Dimension.OVERWORLD.getKey(), posX, posY, posZ, angle, 0.0F);
   }
 
   @Override
@@ -131,8 +131,8 @@ public class PacketFactoryImpl implements PacketFactory {
   }
 
   @Override
-  public Object createEntityDataPacket(int id, Collection<EntityDataValue<?>> packedItems) {
-    return new SetEntityDataPacket(id, packedItems);
+  public Object createEntityDataPacket(int id, EntityData data) {
+    return new SetEntityDataPacket(id, data);
   }
 
   @Override
@@ -166,7 +166,7 @@ public class PacketFactoryImpl implements PacketFactory {
   }
 
   @Override
-  public Object createSetSlotPacket(int containerId, int slot, VirtualItem item, int count, @Nullable ItemComponentMap map) {
+  public Object createSetSlotPacket(int containerId, int slot, VirtualItem item, int count, @Nullable DataComponentMap map) {
     return new SetSlotPacket(containerId, slot, item, count, map);
   }
 
@@ -181,12 +181,12 @@ public class PacketFactoryImpl implements PacketFactory {
   }
 
   @Override
-  public Object createSetSlotPacket(int containerId, int slot, VirtualItem item, int count, short data, @Nullable ItemComponentMap map) {
+  public Object createSetSlotPacket(int containerId, int slot, VirtualItem item, int count, short data, @Nullable DataComponentMap map) {
     return new SetSlotPacket(containerId, slot, item, count, data, map);
   }
 
   @Override
-  public Object createSetSlotPacket(int containerId, int slot, VirtualItem item, int count, short data, @Nullable CompoundBinaryTag nbt, @Nullable ItemComponentMap map) {
+  public Object createSetSlotPacket(int containerId, int slot, VirtualItem item, int count, short data, @Nullable CompoundBinaryTag nbt, @Nullable DataComponentMap map) {
     return new SetSlotPacket(containerId, slot, item, count, data, nbt, map);
   }
 

@@ -21,9 +21,9 @@ import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.data.BlockStorage;
-import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3D;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.chunk.data.BlockStorage;
+import net.elytrium.limboapi.api.world.chunk.util.NibbleArray3D;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -68,7 +68,7 @@ public class BlockStorage17 implements BlockStorage {
       NibbleArray3D metadata = new NibbleArray3D(SimpleChunk.MAX_BLOCKS_PER_SECTION);
       for (int i = 0; i < this.blocks.length; ++i) {
         VirtualBlock block = this.blocks[i];
-        metadata.set(i, block == null ? 0 : block.blockStateId(ProtocolVersion.MINECRAFT_1_7_2) & 0xFFFF);
+        metadata.set(i, block == null ? 0 : (byte) (block.blockStateId(ProtocolVersion.MINECRAFT_1_7_2) & 0xFFFF));
       }
 
       buf.writeBytes(metadata.getData());

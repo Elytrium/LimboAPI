@@ -18,8 +18,8 @@
 package net.elytrium.limboapi.file;
 
 import net.elytrium.limboapi.api.LimboFactory;
-import net.elytrium.limboapi.api.chunk.VirtualWorld;
-import net.elytrium.limboapi.api.file.WorldFile;
+import net.elytrium.limboapi.api.world.VirtualWorld;
+import net.elytrium.limboapi.api.world.WorldFile;
 import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.ByteArrayBinaryTag;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -42,7 +42,7 @@ public class MCEditSchematicFile implements WorldFile {
   }
 
   @Override
-  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, int lightLevel) {
+  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, byte lightLevel) {
     short[] blockIds = new short[this.blocks.length];
     for (int index = 0; index < blockIds.length; ++index) {
       if ((index >> 1) >= this.addBlocks.length) {

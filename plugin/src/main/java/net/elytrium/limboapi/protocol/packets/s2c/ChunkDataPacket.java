@@ -25,29 +25,30 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.zip.DataFormatException;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.api.chunk.VirtualBiome;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
-import net.elytrium.limboapi.api.chunk.data.BlockSection;
-import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
-import net.elytrium.limboapi.api.chunk.data.LightSection;
-import net.elytrium.limboapi.api.chunk.util.CompactStorage;
-import net.elytrium.limboapi.api.material.Block;
-import net.elytrium.limboapi.api.protocol.packets.data.BiomeData;
-import net.elytrium.limboapi.material.Biome;
+import net.elytrium.limboapi.api.world.chunk.biome.VirtualBiome;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
+import net.elytrium.limboapi.api.world.chunk.data.BlockSection;
+import net.elytrium.limboapi.api.world.chunk.ChunkSnapshot;
+import net.elytrium.limboapi.api.world.chunk.data.LightSection;
+import net.elytrium.limboapi.api.world.chunk.util.CompactStorage;
+import net.elytrium.limboapi.api.world.chunk.block.Block;
+import net.elytrium.limboapi.api.protocol.data.BiomeData;
+import net.elytrium.limboapi.server.world.Biome;
 import net.elytrium.limboapi.mcprotocollib.BitStorage116;
 import net.elytrium.limboapi.mcprotocollib.BitStorage19;
+import net.elytrium.limboapi.protocol.codec.ByteBufCodecs;
 import net.elytrium.limboapi.protocol.util.LimboProtocolUtils;
-import net.elytrium.limboapi.protocol.util.NetworkSection;
+import net.elytrium.limboapi.protocol.data.NetworkSection;
 import net.elytrium.limboapi.server.world.SimpleBlockEntity;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
-import net.kyori.adventure.nbt.LongArrayBinaryTag;
 
 // TODO fix 1.17.x spawn with offset -1 by y (i guess the client tries to fall before chunks are loaded, and as a result, due to the ping, the player may spawn inside the blocks)
 public class ChunkDataPacket implements MinecraftPacket {
@@ -61,13 +62,13 @@ public class ChunkDataPacket implements MinecraftPacket {
   private final BiomeData biomeData;
   private final CompoundBinaryTag heightmap114;
   private final CompoundBinaryTag heightmap116;
-  private final Map<Integer, long[]> heightmap1215;
+  private final Int2ObjectArrayMap<long[]> heightmap1215;
   private final boolean hasSkyLight;
 
   private List<VirtualBlockEntity.Entry> flowerPots;
 
   public ChunkDataPacket(ChunkSnapshot chunk, boolean hasSkyLight, int maxSections) {
-    this(chunk, hasSkyLight, maxSections, List.of());
+    this(chunk, hasSkyLight, maxSections, null);
   }
 
   public ChunkDataPacket(ChunkSnapshot chunk, boolean hasSkyLight, int maxSections, List<VirtualBlockEntity.Entry> flowerPots) {
@@ -101,17 +102,8 @@ public class ChunkDataPacket implements MinecraftPacket {
     this.maxSections = maxSections;
     this.nonNullSections = nonNullSections;
     this.biomeData = new BiomeData(chunk);
-    this.heightmap114 = this.createHeightMap(true);
-    this.heightmap116 = this.createHeightMap(false);
-    // TODO create both maps at the same time
-    this.heightmap1215 = new HashMap<>();
-    for (Map.Entry<String, ? extends BinaryTag> entry : this.heightmap116) {
-      this.heightmap1215.put(switch (this.findHeightMapId(entry.getKey())) {
-        case "WORLD_SURFACE" -> 1;
-        case "MOTION_BLOCKING" -> 4;
-        default -> throw new IllegalArgumentException("Unsupported heightmap: " + entry);
-      }, ((LongArrayBinaryTag) entry.getValue()).value());
-    }
+    this.heightmap114 = this.createHeightMap(null);
+    this.heightmap116 = this.createHeightMap(this.heightmap1215 = new Int2ObjectArrayMap<>());
     this.hasSkyLight = hasSkyLight;
     this.flowerPots = flowerPots;
   }
@@ -153,18 +145,10 @@ public class ChunkDataPacket implements MinecraftPacket {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_14)) {
       if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_16)) {
         ProtocolUtils.writeBinaryTag(buf, protocolVersion, this.heightmap114);
-      } else if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
+      } else if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
         ProtocolUtils.writeBinaryTag(buf, protocolVersion, this.heightmap116);
       } else {
-        ProtocolUtils.writeVarInt(buf, this.heightmap1215.size());
-        for (Map.Entry<Integer, long[]> entry : this.heightmap1215.entrySet()) {
-          ProtocolUtils.writeVarInt(buf, entry.getKey());
-          // TODO writeLongArray
-          ProtocolUtils.writeVarInt(buf, entry.getValue().length);
-          for (long data : entry.getValue()) {
-            buf.writeLong(data);
-          }
-        }
+        LimboProtocolUtils.writeMap(buf, this.heightmap1215, ProtocolUtils::writeVarInt, LimboProtocolUtils::writeLongArray);
       }
     }
 
@@ -200,7 +184,7 @@ public class ChunkDataPacket implements MinecraftPacket {
               }
             }
 
-            ProtocolUtils.writeBinaryTag(buf, protocolVersion, entry.getNbt(protocolVersion));
+            ByteBufCodecs.OPTIONAL_COMPOUND_TAG.encode(buf, protocolVersion, entry.getNbt(protocolVersion));
           };
           VirtualBlockEntity.Entry[] array = this.chunk.blockEntityEntries(protocolVersion);
           List<VirtualBlockEntity.Entry> flowerPots = null;
@@ -345,9 +329,9 @@ public class ChunkDataPacket implements MinecraftPacket {
     return data;
   }
 
-  private CompoundBinaryTag createHeightMap(boolean pre116) {
-    CompactStorage motionBlocking = pre116 ? new BitStorage19(9, 256) : new BitStorage116(9, 256);
-    CompactStorage surface = pre116 ? new BitStorage19(9, 256) : new BitStorage116(9, 256);
+  private CompoundBinaryTag createHeightMap(Int2ObjectArrayMap<long[]> heightmap1215) {
+    CompactStorage motionBlocking = heightmap1215 == null ? new BitStorage19(9, 256) : new BitStorage116(9, 256);
+    CompactStorage surface = heightmap1215 == null ? new BitStorage19(9, 256) : new BitStorage116(9, 256);
     // TODO better way (?) (я уже не помню что я имел ввиду)
     for (int posY = 0; posY < 256; ++posY) {
       for (int posX = 0; posX < 16; ++posX) {
@@ -362,6 +346,11 @@ public class ChunkDataPacket implements MinecraftPacket {
           }
         }
       }
+    }
+
+    if (heightmap1215 != null) {
+      heightmap1215.put(1, motionBlocking.getData());
+      heightmap1215.put(4, motionBlocking.getData());
     }
 
     return CompoundBinaryTag.builder()
@@ -398,7 +387,7 @@ public class ChunkDataPacket implements MinecraftPacket {
         int preIndex = out.writerIndex();
         compressor.deflate(compatibleIn, out);
         int postIndex = out.writerIndex();
-        out.writerIndex(preIndex - 4);
+        out.writerIndex(preIndex - Integer.BYTES);
         out.writeInt(postIndex - preIndex);
         out.writerIndex(postIndex);
       } catch (DataFormatException e) {

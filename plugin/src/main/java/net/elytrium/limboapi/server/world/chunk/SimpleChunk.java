@@ -20,14 +20,14 @@ package net.elytrium.limboapi.server.world.chunk;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import net.elytrium.limboapi.api.chunk.VirtualBiome;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
-import net.elytrium.limboapi.api.chunk.VirtualChunk;
-import net.elytrium.limboapi.api.chunk.data.BlockSection;
-import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
-import net.elytrium.limboapi.api.chunk.data.LightSection;
-import net.elytrium.limboapi.material.Biome;
+import net.elytrium.limboapi.api.world.chunk.biome.VirtualBiome;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
+import net.elytrium.limboapi.api.world.chunk.VirtualChunk;
+import net.elytrium.limboapi.api.world.chunk.data.BlockSection;
+import net.elytrium.limboapi.api.world.chunk.ChunkSnapshot;
+import net.elytrium.limboapi.api.world.chunk.data.LightSection;
+import net.elytrium.limboapi.server.world.Biome;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -44,7 +44,7 @@ public class SimpleChunk implements VirtualChunk {
 
   private final SimpleSection[] sections = new SimpleSection[16];
   private final LightSection[] light = new LightSection[18];
-  private final VirtualBiome[] biomes = new VirtualBiome[1024];
+  private final VirtualBiome[] biomes = new VirtualBiome[16 * SimpleChunk.MAX_BIOMES_PER_SECTION];
   private final List<VirtualBlockEntity.Entry> blockEntityEntries = new ArrayList<>();
 
   public SimpleChunk(int posX, int posZ) {
@@ -63,7 +63,7 @@ public class SimpleChunk implements VirtualChunk {
   }
 
   @Override
-  public void setBlock(int posX, int posY, int posZ, @Nullable VirtualBlock block) {
+  public void setBlock(@IntRange(from = 0, to = 15) int posX, int posY, @IntRange(from = 0, to = 15) int posZ, @Nullable VirtualBlock block) {
     this.getSection(posY).setBlockAt(posX, posY & 0x0F, posZ, block);
   }
 
@@ -77,6 +77,7 @@ public class SimpleChunk implements VirtualChunk {
 
   @Override
   public void setBlockEntity(VirtualBlockEntity.Entry blockEntityEntry) {
+    this.blockEntityEntries.removeIf(entry -> entry.getPosX() == blockEntityEntry.getPosX() && entry.getPosY() == blockEntityEntry.getPosY() && entry.getPosZ() == blockEntityEntry.getPosZ());
     this.blockEntityEntries.add(blockEntityEntry);
   }
 
@@ -84,8 +85,7 @@ public class SimpleChunk implements VirtualChunk {
     int sectionIndex = getSectionIndex(posY);
     SimpleSection section = this.sections[sectionIndex];
     if (section == null) {
-      section = new SimpleSection();
-      this.sections[sectionIndex] = section;
+      this.sections[sectionIndex] = section = new SimpleSection();
     }
 
     return section;
@@ -93,46 +93,46 @@ public class SimpleChunk implements VirtualChunk {
 
   @NonNull
   @Override
-  public VirtualBlock getBlock(int posX, int posY, int posZ) {
+  public VirtualBlock getBlock(@IntRange(from = 0, to = 15) int posX, int posY, @IntRange(from = 0, to = 15) int posZ) {
     SimpleSection section = this.sections[getSectionIndex(posY)];
     return section == null ? SimpleBlock.AIR : section.getBlockAt(posX, posY & 0x0F, posZ);
   }
 
   @Override
-  public void setBiome2D(int posX, int posZ, @NonNull VirtualBiome biome) {
-    for (int posY = 0; posY < 256; posY += 4) {
+  public void setBiome2D(@IntRange(from = 0, to = 15) int posX, @IntRange(from = 0, to = 15) int posZ, @NonNull VirtualBiome biome) {
+    for (int posY = 0; posY < 256; posY += 4) { // TODO check 1.17+
       this.setBiome3D(posX, posY, posZ, biome);
     }
   }
 
   @Override
-  public void setBiome3D(int posX, int posY, int posZ, @NonNull VirtualBiome biome) {
+  public void setBiome3D(@IntRange(from = 0, to = 15) int posX, int posY, @IntRange(from = 0, to = 15) int posZ, @NonNull VirtualBiome biome) {
     this.biomes[getBiomeIndex(posX, posY, posZ)] = biome;
   }
 
   @NonNull
   @Override
-  public VirtualBiome getBiome(int posX, int posY, int posZ) {
+  public VirtualBiome getBiome(@IntRange(from = 0, to = 15) int posX, int posY, @IntRange(from = 0, to = 15) int posZ) {
     return this.biomes[getBiomeIndex(posX, posY, posZ)];
   }
 
   @Override
-  public void setBlockLight(int posX, int posY, int posZ, byte light) {
+  public void setBlockLight(@IntRange(from = 0, to = 15) int posX, int posY, @IntRange(from = 0, to = 15) int posZ, @IntRange(from = 0, to = 15) byte light) {
     this.getLightSection(posY).setBlockLight(posX, posY & 0x0F, posZ, light);
   }
 
   @Override
-  public byte getBlockLight(int posX, int posY, int posZ) {
+  public byte getBlockLight(@IntRange(from = 0, to = 15) int posX, int posY, @IntRange(from = 0, to = 15) int posZ) {
     return this.getLightSection(posY).getBlockLight(posX, posY & 0x0F, posZ);
   }
 
   @Override
-  public void setSkyLight(int posX, int posY, int posZ, byte light) {
+  public void setSkyLight(@IntRange(from = 0, to = 15) int posX, int posY, @IntRange(from = 0, to = 15) int posZ, @IntRange(from = 0, to = 15) byte light) {
     this.getLightSection(posY).setSkyLight(posX, posY & 0x0F, posZ, light);
   }
 
   @Override
-  public byte getSkyLight(int posX, int posY, int posZ) {
+  public byte getSkyLight(@IntRange(from = 0, to = 15) int posX, int posY, @IntRange(from = 0, to = 15) int posZ) {
     return this.getLightSection(posY).getSkyLight(posX, posY & 0x0F, posZ);
   }
 
@@ -141,14 +141,14 @@ public class SimpleChunk implements VirtualChunk {
   }
 
   @Override
-  public void fillBlockLight(@IntRange(from = 0, to = 15) int level) {
+  public void fillBlockLight(@IntRange(from = 0, to = 15) byte level) {
     for (LightSection lightSection : this.light) {
       lightSection.getBlockLight().fill(level);
     }
   }
 
   @Override
-  public void fillSkyLight(@IntRange(from = 0, to = 15) int level) {
+  public void fillSkyLight(@IntRange(from = 0, to = 15) byte level) {
     for (LightSection lightSection : this.light) {
       lightSection.getSkyLight().fill(level);
     }

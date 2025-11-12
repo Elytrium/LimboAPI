@@ -1,8 +1,10 @@
 //file:noinspection VulnerableLibrariesLocal
 
-plugins {
+plugins() {
   id("maven-publish")
 }
+
+group = "net.elytrium.limboapi"
 
 java() {
   withSourcesJar()
@@ -11,7 +13,8 @@ java() {
 
 dependencies() {
   api(libs.velocity.api)
-  api("net.kyori:adventure-nbt:4.16.0")
+  api("net.kyori:adventure-nbt:4.25.0")
+  api("it.unimi.dsi:fastutil:8.5.18")
 
   compileOnly("net.elytrium.commons:config:1.2.3")
   shadowApi("net.elytrium.commons:utils:1.2.3")
@@ -36,25 +39,29 @@ javadoc() {
   options.setEncoding("UTF-8")
   options.setSource("17")
   options.addStringOption("Xdoclint:none", "-quiet")
-  options.getLinks().addAll("https://docs.oracle.com/en/java/javase/17/docs/api/", "https://jd.papermc.io/velocity/3.3.0/", "https://jd.advntr.dev/nbt/4.16.0/")
-  options.tags("sinceMinecraft:a:Since Minecraft:")
+  options.links("https://docs.oracle.com/en/java/javase/17/docs/api/", "https://jd.papermc.io/velocity/3.4.0/", "https://jd.advntr.dev/nbt/4.25.0/")
+  options.tags(
+      "apiNote:a:API Note:",
+      "implSpec:a:Implementation Requirements:",
+      "implNote:a:Implementation Note:",
+      "sinceMinecraft:a:Since Minecraft:"
+  )
 }
 
 publishing() {
   repositories() {
-    maven {
-      credentials {
-        setUsername(System.getenv("ELYTRIUM_MAVEN_USERNAME"))
-        setPassword(System.getenv("ELYTRIUM_MAVEN_PASSWORD"))
-      }
-
+    maven() {
       name = "elytrium"
       url = "https://maven.elytrium.net/repo/"
+      credentials() {
+        username = System.getenv("ELYTRIUM_MAVEN_USERNAME")
+        password = System.getenv("ELYTRIUM_MAVEN_PASSWORD")
+      }
     }
   }
 
-  publications.create("maven", MavenPublication) {
+  publications.create("publication", MavenPublication) {
     // TODO pom
-    from(components.java)
+    artifact(jar)
   }
 }

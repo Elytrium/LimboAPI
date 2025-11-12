@@ -62,6 +62,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
@@ -83,7 +84,7 @@ public class LoginTasksQueue {
   private static final MethodHandle SET_PERMISSION_FUNCTION_METHOD = Reflection.findVirtualVoid(ConnectedPlayer.class, "setPermissionFunction", PermissionFunction.class);
   private static final MethodHandle INITIAL_CONNECT_SESSION_HANDLER_CONSTRUCTOR = Reflection.findConstructor(InitialConnectSessionHandler.class, ConnectedPlayer.class, VelocityServer.class);
   private static final MethodHandle SET_CLIENT_BRAND = Reflection.findVirtualVoid(ConnectedPlayer.class, "setClientBrand", String.class);
-  private static final MethodHandle BRAND_CHANNEL_SETTER = Reflection.findSetter(ClientConfigSessionHandler.class, "brandChannel", String.class);
+  public static final MethodHandle BRAND_CHANNEL_SETTER = Reflection.findSetter(ClientConfigSessionHandler.class, "brandChannel", String.class);
   private static final MethodHandle CONNECT_TO_INITIAL_SERVER_METHOD = Reflection.findVirtual(AuthSessionHandler.class, "connectToInitialServer", CompletableFuture.class, ConnectedPlayer.class);
 
   private static final PermissionProvider DEFAULT_PERMISSIONS;
@@ -130,17 +131,15 @@ public class LoginTasksQueue {
         UUID uuid = LimboAPI.getClientUniqueId(this.player);
         if (connection.getProtocolVersion().noGreaterThan(ProtocolVersion.MINECRAFT_1_19_1)) {
           // TODO try to remove it
-          connection.delayedWrite(new LegacyPlayerListItemPacket(LegacyPlayerListItemPacket.REMOVE_PLAYER,
-              List.of(new LegacyPlayerListItemPacket.Item(uuid))
-          ));
-          connection.delayedWrite(new LegacyPlayerListItemPacket(LegacyPlayerListItemPacket.ADD_PLAYER,
-              List.of(new LegacyPlayerListItemPacket.Item(uuid).setName(gameProfile.getUsername()).setProperties(gameProfile.getGameProfile().getProperties()))
-          ));
+          connection.delayedWrite(new LegacyPlayerListItemPacket(LegacyPlayerListItemPacket.REMOVE_PLAYER, Collections.singletonList(new LegacyPlayerListItemPacket.Item(uuid))));
+          connection.delayedWrite(new LegacyPlayerListItemPacket(LegacyPlayerListItemPacket.ADD_PLAYER, Collections.singletonList(
+              new LegacyPlayerListItemPacket.Item(uuid).setName(gameProfile.getUsername()).setProperties(gameProfile.getGameProfile().getProperties())
+          )));
         } else if (connection.getState() != StateRegistry.CONFIG) {
           UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(uuid);
           playerInfoEntry.setDisplayName(new ComponentHolder(this.player.getProtocolVersion(), Component.text(gameProfile.getUsername())));
           playerInfoEntry.setProfile(gameProfile.getGameProfile());
-          connection.delayedWrite(new UpsertPlayerInfoPacket(EnumSet.of(UpsertPlayerInfoPacket.Action.UPDATE_DISPLAY_NAME, UpsertPlayerInfoPacket.Action.ADD_PLAYER), List.of(playerInfoEntry)));
+          connection.delayedWrite(new UpsertPlayerInfoPacket(EnumSet.of(UpsertPlayerInfoPacket.Action.UPDATE_DISPLAY_NAME, UpsertPlayerInfoPacket.Action.ADD_PLAYER), Collections.singletonList(playerInfoEntry)));
         }
 
         PROFILE_FIELD.invokeExact(this.player, gameProfile.getGameProfile());
@@ -193,10 +192,9 @@ public class LoginTasksQueue {
     this.plugin.deject3rdParty(pipeline);
 
     if (pipeline.get(Connections.FRAME_ENCODER) == null) {
-      this.plugin.fixCompressor(pipeline, version);
+      this.plugin.fixCompressor(pipeline);
     }
 
-    Logger logger = LimboAPI.getLogger();
     this.server.getEventManager().fire(new LoginEvent(this.player)).thenAcceptAsync(event -> {
       if (connection.isClosed()) {
         // The player was disconnected
@@ -216,7 +214,7 @@ public class LoginTasksQueue {
         }
       }
     }, connection.eventLoop()).exceptionally(t -> {
-      logger.error("Exception while completing login initialisation phase for {}", this.player.toString(), t);
+      LimboAPI.getLogger().error("Exception while completing login initialisation phase for {}", this.player.toString(), t);
       return null;
     });
   }

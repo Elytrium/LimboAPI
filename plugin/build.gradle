@@ -1,7 +1,7 @@
 //file:noinspection VulnerableLibrariesLocal
 
 plugins() {
-  id("com.modrinth.minotaur").version("2.8.7")
+  id("com.modrinth.minotaur").version("2.8.10")
 }
 
 apply(from: "mappings_generator.gradle")
@@ -9,11 +9,11 @@ apply(from: "mappings_generator.gradle")
 dependencies() {
   annotationProcessor(libs.velocity.api)
   compileOnly("com.velocitypowered:velocity-proxy:3.4.0-SNAPSHOT") // From Elytrium repo
-  compileOnly("com.velocitypowered:velocity-native:3.3.0-SNAPSHOT")
+  compileOnly("com.velocitypowered:velocity-native:3.4.0-SNAPSHOT")
 
-  compileOnly("io.netty:netty-codec:4.1.86.Final")
-  compileOnly("io.netty:netty-handler:4.1.86.Final")
-  compileOnly("it.unimi.dsi:fastutil-core:8.5.11")
+  compileOnly("io.netty:netty-codec:4.2.7.Final")
+  compileOnly("io.netty:netty-handler:4.2.7.Final")
+  compileOnly("it.unimi.dsi:fastutil:8.5.18")
 
   compileOnly(project(":api"))
   // TODO remove
@@ -29,11 +29,11 @@ dependencies() {
 
 //license() {
 //  matching(includes: ["**/mcprotocollib/**"]) {
-//    setHeader(getRootProject().file("HEADER_MCPROTOCOLLIB.txt"))
+//    header = rootProject.file("HEADER_MCPROTOCOLLIB.txt")
 //  }
 //  matching(includes: ["**/LoginListener.java", "**/LoginTasksQueue.java", "**/MinecraftLimitedCompressDecoder.java"]) {
-//    setHeader(getRootProject().file("HEADER_MIXED.txt"))
+//    header = rootProject.file("HEADER_MIXED.txt")
 //  }
 //
-//  setHeader(getRootProject().file("HEADER.txt"))
+//  header = rootProject.file("HEADER.txt")
 //}

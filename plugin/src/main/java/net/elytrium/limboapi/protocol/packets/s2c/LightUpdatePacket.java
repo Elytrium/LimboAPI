@@ -5,8 +5,8 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
-import net.elytrium.limboapi.api.chunk.data.LightSection;
+import net.elytrium.limboapi.api.world.chunk.ChunkSnapshot;
+import net.elytrium.limboapi.api.world.chunk.data.LightSection;
 
 public record LightUpdatePacket(int posX, int posZ, LightSection[] light, int[] masks) implements MinecraftPacket {
 

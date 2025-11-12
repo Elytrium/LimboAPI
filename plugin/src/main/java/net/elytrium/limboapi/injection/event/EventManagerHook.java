@@ -27,6 +27,7 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class EventManagerHook {
       VelocityEventManager.class,
       "fire",
       CompletableFuture.class, Object.class, int.class, boolean.class, Reflection.findClass("com.velocitypowered.proxy.event.VelocityEventManager$HandlerRegistration").arrayType()
-  );
+  ).asType(MethodType.methodType(void.class, VelocityEventManager.class, CompletableFuture.class, Object.class, int.class, boolean.class, Object.class));
   private static final MethodHandle FUTURE_FIELD = Reflection.findGetter(Reflection.findClass("com.velocitypowered.proxy.event.VelocityEventManager$ContinuationTask"), "future", CompletableFuture.class);
 
   private final Set<GameProfile> proceededProfiles = new HashSet<>();
@@ -80,7 +81,7 @@ public class EventManagerHook {
 
       if (this.hasHandlerRegistration) {
         try {
-          EventManagerHook.FIRE_METHOD.invoke(this.eventManager, fireFuture, event, 0, false/*currentlyAsync, passing false to run continuation tasks in asyncExecutor*/, this.handlerRegistrations);
+          EventManagerHook.FIRE_METHOD.invokeExact(this.eventManager, fireFuture, event, 0, false/*currentlyAsync, passing false to run continuation tasks in asyncExecutor*/, this.handlerRegistrations);
         } catch (Throwable t) {
           fireFuture.complete(event);
           throw new ReflectionException(t);
@@ -92,7 +93,7 @@ public class EventManagerHook {
       // ignoring other subscribers by directly completing the future
       return EventTask.withContinuation(continuation -> hookFuture.whenComplete((result, cause) -> {
         try {
-          CompletableFuture<GameProfileRequestEvent> future = (CompletableFuture<GameProfileRequestEvent>) FUTURE_FIELD.invokeExact(continuation);
+          CompletableFuture<GameProfileRequestEvent> future = (CompletableFuture<GameProfileRequestEvent>) EventManagerHook.FUTURE_FIELD.invokeExact(continuation);
           if (future != null) {
             future.complete(result);
           }

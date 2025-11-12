@@ -17,7 +17,6 @@
 
 package net.elytrium.limboapi.server.world;
 
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,17 +25,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import net.elytrium.limboapi.api.chunk.Dimension;
-import net.elytrium.limboapi.api.chunk.VirtualBiome;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
-import net.elytrium.limboapi.api.chunk.VirtualChunk;
-import net.elytrium.limboapi.api.chunk.VirtualWorld;
-import net.elytrium.limboapi.material.Biome;
+import net.elytrium.limboapi.api.world.chunk.Dimension;
+import net.elytrium.limboapi.api.world.chunk.biome.VirtualBiome;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
+import net.elytrium.limboapi.api.world.chunk.VirtualChunk;
+import net.elytrium.limboapi.api.world.VirtualWorld;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class SimpleWorld implements VirtualWorld {
 
@@ -82,15 +81,16 @@ public class SimpleWorld implements VirtualWorld {
   }
 
   @Override
-  public void setBiome2d(int posX, int posZ, @NonNull VirtualBiome biome) {
+  public void setBiome2D(int posX, int posZ, @NonNull VirtualBiome biome) {
     this.getChunkOrNew(posX, posZ).setBiome2D(getChunkCoordinate(posX), getChunkCoordinate(posZ), biome);
   }
 
   @Override
-  public void setBiome3d(int posX, int posY, int posZ, @NonNull VirtualBiome biome) {
+  public void setBiome3D(int posX, int posY, int posZ, @NonNull VirtualBiome biome) {
     this.getChunkOrNew(posX, posZ).setBiome3D(getChunkCoordinate(posX), posY, getChunkCoordinate(posZ), biome);
   }
 
+  @NotNull
   @Override
   public VirtualBiome getBiome(int posX, int posY, int posZ) {
     return this.chunkAction(posX, posZ, chunk -> chunk.getBiome(posX, posY, posZ), () -> Biome.PLAINS);
@@ -107,14 +107,14 @@ public class SimpleWorld implements VirtualWorld {
   }
 
   @Override
-  public void fillBlockLight(int level) {
+  public void fillBlockLight(byte level) {
     for (SimpleChunk chunk : this.chunks.values()) {
       chunk.fillBlockLight(level);
     }
   }
 
   @Override
-  public void fillSkyLight(int level) {
+  public void fillSkyLight(byte level) {
     for (SimpleChunk chunk : this.chunks.values()) {
       chunk.fillSkyLight(level);
     }
@@ -122,7 +122,7 @@ public class SimpleWorld implements VirtualWorld {
 
   @Override
   public List<VirtualChunk> getChunks() {
-    return ImmutableList.copyOf(this.chunks.values());
+    return List.copyOf(this.chunks.values());
   }
 
   @Override
@@ -144,6 +144,7 @@ public class SimpleWorld implements VirtualWorld {
     return this.chunks.get(getChunkIndex(getChunkXZ(posX), getChunkXZ(posZ)));
   }
 
+  @NotNull
   @Override
   public SimpleChunk getChunkOrNew(int posX, int posZ) {
     posX = getChunkXZ(posX);

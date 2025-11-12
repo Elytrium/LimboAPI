@@ -13,21 +13,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
-import net.elytrium.limboapi.api.chunk.BuiltInBiome;
-import net.elytrium.limboapi.api.chunk.Dimension;
-import net.elytrium.limboapi.api.chunk.VirtualBiome;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
-import net.elytrium.limboapi.api.chunk.VirtualChunk;
-import net.elytrium.limboapi.api.chunk.VirtualWorld;
-import net.elytrium.limboapi.api.file.BuiltInWorldFileType;
-import net.elytrium.limboapi.api.file.WorldFile;
-import net.elytrium.limboapi.api.material.Block;
-import net.elytrium.limboapi.api.material.Item;
-import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.api.world.chunk.biome.BuiltInBiome;
+import net.elytrium.limboapi.api.world.chunk.Dimension;
+import net.elytrium.limboapi.api.world.chunk.biome.VirtualBiome;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
+import net.elytrium.limboapi.api.world.chunk.VirtualChunk;
+import net.elytrium.limboapi.api.world.VirtualWorld;
+import net.elytrium.limboapi.api.world.BuiltInWorldFileType;
+import net.elytrium.limboapi.api.world.WorldFile;
+import net.elytrium.limboapi.api.world.chunk.block.Block;
+import net.elytrium.limboapi.api.world.item.Item;
+import net.elytrium.limboapi.api.world.item.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
-import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
-import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
+import net.elytrium.limboapi.api.world.item.datacomponent.DataComponentMap;
+import net.elytrium.limboapi.api.protocol.PacketFactory;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -155,7 +155,7 @@ public interface LimboFactory {
 
   /**
    * Creates new virtual chunk
-   * You need to provide the chunk location, you can get it using ({@code block_coordinate >> 4})
+   * You need to provide the chunk location, you can get it using {@code blockCoordinate >> 4}
    *
    * @param posX         Chunk position by X
    * @param posZ         Chunk position by Z
@@ -174,9 +174,9 @@ public interface LimboFactory {
    */
   Limbo createLimbo(VirtualWorld world);
 
-
   /**
-   * Releases a thread after PreparedPacket#build executions
+   * Releases the thread after {@link PreparedPacket#build()} executions.
+   * <p>
    * Used to free compression libraries
    */
   void releasePreparedPacketThread(Thread thread);
@@ -250,9 +250,9 @@ public interface LimboFactory {
   VirtualItem getLegacyItem(int legacyId);
 
   /**
-   * @return new item component map
+   * @return new data component map
    */
-  ItemComponentMap createItemComponentMap();
+  DataComponentMap createDataComponentMap();
 
   @Deprecated(forRemoval = true)
   default VirtualBlockEntity getBlockEntity(String entityId) {
@@ -289,7 +289,6 @@ public interface LimboFactory {
    */
   WorldFile openWorldFile(BuiltInWorldFileType apiType, Path file) throws IOException;
 
-
   /**
    * Opens world file (a.k.a. schematic file)
    *
@@ -298,7 +297,6 @@ public interface LimboFactory {
    * @return Ready to use WorldFile
    */
   WorldFile openWorldFile(BuiltInWorldFileType apiType, InputStream stream) throws IOException;
-
 
   /**
    * Opens world file (a.k.a. schematic file)

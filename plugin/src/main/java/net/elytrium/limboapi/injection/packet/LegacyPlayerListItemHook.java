@@ -27,14 +27,12 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import java.lang.invoke.MethodHandle;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.protocol.LimboProtocol;
-import net.elytrium.limboapi.utils.Reflection;
 
 @SuppressWarnings("unchecked")
 public class LegacyPlayerListItemHook extends LegacyPlayerListItemPacket {

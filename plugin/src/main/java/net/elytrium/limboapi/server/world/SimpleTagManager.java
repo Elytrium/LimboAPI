@@ -19,26 +19,28 @@ package net.elytrium.limboapi.server.world;
 
 import com.google.gson.internal.LinkedTreeMap;
 import com.velocitypowered.api.network.ProtocolVersion;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.api.material.WorldVersion;
+import net.elytrium.limboapi.api.world.WorldVersion;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateTagsPacket;
-import net.elytrium.limboapi.utils.JsonParser;
+import net.elytrium.limboapi.utils.JsonUtil;
 
 public class SimpleTagManager {
 
-  private static final Map<String, Integer> FLUIDS;
+  private static final Object2IntOpenHashMap<String> FLUIDS;
   private static final Map<WorldVersion, UpdateTagsPacket> VERSION_MAP;
 
   static {
-    LinkedTreeMap<String, Number> fluids = JsonParser.parse(LimboAPI.class.getResourceAsStream("/mappings/fluids.json"));
-    FLUIDS = new HashMap<>(fluids.size());
+    var fluids = JsonUtil.<Number>parse(LimboAPI.class.getResourceAsStream("/mappings/fluids.json"));
+    FLUIDS = new Object2IntOpenHashMap<>(fluids.size());
     fluids.forEach((id, protocolId) -> SimpleTagManager.FLUIDS.put(id, protocolId.intValue()));
 
-    LinkedTreeMap<String, LinkedTreeMap<String, List<String>>> tags = JsonParser.parse(LimboAPI.class.getResourceAsStream("/mappings/tags.json"));
+    var tags = JsonUtil.<LinkedTreeMap<String, List<String>>>parse(LimboAPI.class.getResourceAsStream("/mappings/tags.json"));
     VERSION_MAP = new EnumMap<>(WorldVersion.class);
     for (WorldVersion version : WorldVersion.values()) {
       SimpleTagManager.VERSION_MAP.put(version, SimpleTagManager.createPacket(tags, version));
@@ -54,13 +56,13 @@ public class SimpleTagManager {
   }
 
   private static UpdateTagsPacket createPacket(LinkedTreeMap<String, LinkedTreeMap<String, List<String>>> defaultTags, WorldVersion version) {
-    Map<String, Map<String, int[]>> tags = new LinkedTreeMap<>();
+    Object2ObjectOpenHashMap<String, Map<String, int[]>> tags = new Object2ObjectOpenHashMap<>();
     defaultTags.forEach((tagType, defaultTagList) -> {
-      LinkedTreeMap<String, int[]> tagList = new LinkedTreeMap<>();
+      Object2ObjectOpenHashMap<String, int[]> tagList = new Object2ObjectOpenHashMap<>();
       switch (tagType) {
         case "minecraft:block": {
           defaultTagList.forEach((tagName, blockList) -> tagList.put(tagName, blockList.stream()
-              .map(modernId -> SimpleBlock.fromModernId(modernId, Map.of()))
+              .map(modernId -> SimpleBlock.fromModernId(modernId, Collections.emptyMap()))
               .filter(block -> block.isSupportedOn(version))
               .mapToInt(block -> block.blockId(version))
               .toArray()
@@ -68,7 +70,7 @@ public class SimpleTagManager {
           break;
         }
         case "minecraft:fluid": {
-          defaultTagList.forEach((tagName, fluidList) -> tagList.put(tagName, fluidList.stream().mapToInt(FLUIDS::get).toArray()));
+          defaultTagList.forEach((tagName, fluidList) -> tagList.put(tagName, fluidList.stream().mapToInt(SimpleTagManager.FLUIDS::getInt).toArray()));
           break;
         }
         case "minecraft:item": {

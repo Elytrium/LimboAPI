@@ -22,13 +22,14 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import net.elytrium.limboapi.api.material.VirtualItem;
-import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
+import net.elytrium.limboapi.api.world.item.VirtualItem;
+import net.elytrium.limboapi.api.world.item.datacomponent.DataComponentMap;
+import net.elytrium.limboapi.protocol.codec.ByteBufCodecs;
 import net.elytrium.limboapi.protocol.util.LimboProtocolUtils;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public record SetSlotPacket(int containerId, int slot, VirtualItem item, int count, short data, @Nullable CompoundBinaryTag nbt, @Nullable ItemComponentMap map) implements MinecraftPacket {
+public record SetSlotPacket(int containerId, int slot, VirtualItem item, int count, short data, @Nullable CompoundBinaryTag nbt, @Nullable DataComponentMap map) implements MinecraftPacket {
 
   public SetSlotPacket(int containerId, int slot, VirtualItem item, int count) {
     this(containerId, slot, item, count, (short) 0, null, null);
@@ -38,7 +39,7 @@ public record SetSlotPacket(int containerId, int slot, VirtualItem item, int cou
     this(containerId, slot, item, count, (short) 0, nbt, null);
   }
 
-  public SetSlotPacket(int containerId, int slot, VirtualItem item, int count, @Nullable ItemComponentMap map) {
+  public SetSlotPacket(int containerId, int slot, VirtualItem item, int count, @Nullable DataComponentMap map) {
     this(containerId, slot, item, count, (short) 0, null, map);
   }
 
@@ -50,7 +51,7 @@ public record SetSlotPacket(int containerId, int slot, VirtualItem item, int cou
     this(containerId, slot, item, count, data, nbt, null);
   }
 
-  public SetSlotPacket(int containerId, int slot, VirtualItem item, int count, short data, @Nullable ItemComponentMap map) {
+  public SetSlotPacket(int containerId, int slot, VirtualItem item, int count, short data, @Nullable DataComponentMap map) {
     this(containerId, slot, item, count, data, null, map);
   }
 
@@ -61,7 +62,7 @@ public record SetSlotPacket(int containerId, int slot, VirtualItem item, int cou
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    LimboProtocolUtils.writeContainerId(buf, protocolVersion, this.containerId);
+    ByteBufCodecs.CONTAINER_ID.encode(buf, protocolVersion, this.containerId);
 
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_17_1)) {
       ProtocolUtils.writeVarInt(buf, 0); // State id
@@ -93,7 +94,7 @@ public record SetSlotPacket(int containerId, int slot, VirtualItem item, int cou
           buf.writeShort(this.data);
         }
 
-        LimboProtocolUtils.writeBinaryTag(buf, protocolVersion, this.nbt);
+        ByteBufCodecs.OPTIONAL_COMPOUND_TAG.encode(buf, protocolVersion, this.nbt);
       }
     } else if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
       ProtocolUtils.writeVarInt(buf, 0);

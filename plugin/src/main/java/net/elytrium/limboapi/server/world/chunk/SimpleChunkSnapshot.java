@@ -17,12 +17,12 @@
 
 package net.elytrium.limboapi.server.world.chunk;
 
-import net.elytrium.limboapi.api.chunk.VirtualBiome;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
-import net.elytrium.limboapi.api.chunk.data.BlockSection;
-import net.elytrium.limboapi.api.chunk.data.ChunkSnapshot;
-import net.elytrium.limboapi.api.chunk.data.LightSection;
+import net.elytrium.limboapi.api.world.chunk.biome.VirtualBiome;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
+import net.elytrium.limboapi.api.world.chunk.data.BlockSection;
+import net.elytrium.limboapi.api.world.chunk.ChunkSnapshot;
+import net.elytrium.limboapi.api.world.chunk.data.LightSection;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 
 public record SimpleChunkSnapshot(int posX, int posZ, boolean fullChunk,

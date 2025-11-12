@@ -7,7 +7,7 @@
 
 package net.elytrium.limboapi.api;
 
-import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.elytrium.limboapi.api.world.player.LimboPlayer;
 
 public interface LimboSessionHandler {
 

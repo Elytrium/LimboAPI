@@ -72,8 +72,8 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
     fixedEntry.setLatency(item.getLatency());
     fixedEntry.setGameMode(item.getGameMode());
     fixedEntry.setDisplayName(item.getDisplayName());
+    fixedEntry.setShowHat(item.isShowHat());
     fixedEntry.setListOrder(item.getListOrder());
-    // TODO setHat
     fixedEntry.setChatSession(item.getChatSession());
     return fixedEntry;
   }

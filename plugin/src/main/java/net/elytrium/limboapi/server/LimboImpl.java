@@ -17,7 +17,6 @@
 
 package net.elytrium.limboapi.server;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.brigadier.tree.RootCommandNode;
 import com.velocitypowered.api.command.Command;
@@ -60,13 +59,13 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import it.unimi.dsi.fastutil.Pair;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -79,7 +78,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import net.elytrium.commons.utils.reflection.ReflectionException;
@@ -88,16 +86,16 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboSessionHandler;
-import net.elytrium.limboapi.api.chunk.Dimension;
-import net.elytrium.limboapi.api.chunk.VirtualChunk;
-import net.elytrium.limboapi.api.chunk.VirtualWorld;
-import net.elytrium.limboapi.api.player.GameMode;
+import net.elytrium.limboapi.api.world.chunk.Dimension;
+import net.elytrium.limboapi.api.world.chunk.VirtualChunk;
+import net.elytrium.limboapi.api.world.VirtualWorld;
+import net.elytrium.limboapi.api.world.player.GameMode;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
-import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
+import net.elytrium.limboapi.api.protocol.PacketMapping;
 import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
-import net.elytrium.limboapi.material.Biome;
+import net.elytrium.limboapi.server.world.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.s2c.GameEventPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket;
@@ -117,18 +115,18 @@ import net.kyori.adventure.text.Component;
 
 public class LimboImpl implements Limbo {
 
-  private static final ImmutableSet<String> LEVELS = ImmutableSet.of(
+  private static final MethodHandle GRACEFUL_DISCONNECT_SETTER = Reflection.findSetter(VelocityServerConnection.class, "gracefulDisconnect", boolean.class);
+  private static final MethodHandle PARTIAL_HASHED_SEED_SETTER = Reflection.findSetter(JoinGamePacket.class, "partialHashedSeed", long.class);
+  private static final MethodHandle LEVEL_NAMES_SETTER = Reflection.findSetter(JoinGamePacket.class, "levelNames", ImmutableSet.class);
+  private static final MethodHandle REGISTRY_SETTER = Reflection.findSetter(JoinGamePacket.class, "registry", CompoundBinaryTag.class);
+  private static final MethodHandle CURRENT_DIMENSION_DATA_SETTER = Reflection.findSetter(JoinGamePacket.class, "currentDimensionData", CompoundBinaryTag.class);
+  private static final MethodHandle ROOT_NODE_SETTER = Reflection.findSetter(AvailableCommandsPacket.class, "rootNode", RootCommandNode.class);
+
+  private static final List<String> LEVELS = List.of(
       Dimension.OVERWORLD.getKey(),
       Dimension.NETHER.getKey(),
       Dimension.THE_END.getKey()
   );
-
-  private static final MethodHandle GRACEFUL_DISCONNECT_FIELD = Reflection.findSetter(VelocityServerConnection.class, "gracefulDisconnect", boolean.class);
-  private static final MethodHandle PARTIAL_HASHED_SEED_FIELD = Reflection.findSetter(JoinGamePacket.class, "partialHashedSeed", long.class);
-  private static final MethodHandle LEVEL_NAMES_FIELDS = Reflection.findSetter(JoinGamePacket.class, "levelNames", ImmutableSet.class);
-  private static final MethodHandle REGISTRY_FIELD = Reflection.findSetter(JoinGamePacket.class, "registry", CompoundBinaryTag.class);
-  private static final MethodHandle CURRENT_DIMENSION_DATA_FIELD = Reflection.findSetter(JoinGamePacket.class, "currentDimensionData", CompoundBinaryTag.class);
-  private static final MethodHandle ROOT_NODE_FIELD = Reflection.findSetter(AvailableCommandsPacket.class, "rootNode", RootCommandNode.class);
 
   private static final CompoundBinaryTag CHAT_TYPE_119;
   private static final CompoundBinaryTag CHAT_TYPE_1191;
@@ -136,18 +134,15 @@ public class LimboImpl implements Limbo {
   private static final CompoundBinaryTag DAMAGE_TYPE_120;
 
   private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
-  private final LimboAPI plugin;
-  private final VirtualWorld world;
+  private final List<PreparedPacket> queuedToRelease = new ArrayList<>();
 
   private final LongAdder currentOnline = new LongAdder();
+
   private final RootCommandNode<CommandSource> commandNode = new RootCommandNode<>();
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
-  private final List<PreparedPacket> queuedToRelease = new ArrayList<>();
-  private final List<CommandRegistrar<?>> registrars = ImmutableList.of(
-      new BrigadierCommandRegistrar(this.commandNode, this.lock.writeLock()),
-      new SimpleCommandRegistrar(this.commandNode, this.lock.writeLock()),
-      new RawCommandRegistrar(this.commandNode, this.lock.writeLock())
-  );
+  private final List<CommandRegistrar<?>> registrars;
+
+  private final LimboAPI plugin;
+  private final VirtualWorld world;
 
   private String limboName;
   private Integer readTimeout;
@@ -164,7 +159,7 @@ public class LimboImpl implements Limbo {
   private PreparedPacket respawnPackets;
   protected PreparedPacket configTransitionPackets;
   protected PreparedPacket configPackets;
-  protected StateRegistry localStateRegistry;
+  protected StateRegistry localStateRegistry = LimboProtocol.getLimboStateRegistry();
   private boolean shouldRespawn = true;
   private boolean shouldRejoin = true;
   private boolean shouldUpdateTags = true;
@@ -175,9 +170,15 @@ public class LimboImpl implements Limbo {
   private boolean disposeScheduled = false;
 
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
+    var lock = new ReentrantReadWriteLock();
+    this.registrars = List.of(
+        new BrigadierCommandRegistrar(this.commandNode, lock.writeLock()),
+        new SimpleCommandRegistrar(this.commandNode, lock.writeLock()),
+        new RawCommandRegistrar(this.commandNode, lock.writeLock())
+    );
+
     this.plugin = plugin;
     this.world = world;
-    this.localStateRegistry = LimboProtocol.getLimboStateRegistry();
 
     this.refresh();
   }
@@ -285,8 +286,8 @@ public class LimboImpl implements Limbo {
       String type = entry.getString("type");
       ListBinaryTag values = entry.getList("value", BinaryTagTypes.COMPOUND);
 
-      Pair<String, BinaryTag> emptyTag = null;
-      Pair<String, BinaryTag>[] tags = new Pair[0];
+      Map.Entry<String, BinaryTag> emptyTag = null;
+      Map.Entry<String, BinaryTag>[] tags = new Map.Entry[0];
 
       for (BinaryTag elementTag : values) {
         CompoundBinaryTag element = (CompoundBinaryTag) elementTag;
@@ -295,7 +296,7 @@ public class LimboImpl implements Limbo {
           tags = Arrays.copyOf(tags, id + 1);
         }
 
-        tags[id] = Pair.of(element.getString("name"), element.getCompound("element"));
+        tags[id] = Map.entry(element.getString("name"), element.getCompound("element"));
         if (emptyTag == null) {
           emptyTag = tags[id];
         }
@@ -303,7 +304,7 @@ public class LimboImpl implements Limbo {
 
       for (int i = 0; i < tags.length; ++i) {
         if (tags[i] == null) {
-          tags[i] = Pair.of("limboapi_padding_" + i, emptyTag.value());
+          tags[i] = Map.entry("limboapi_padding_" + i, emptyTag.getValue());
         }
       }
 
@@ -313,8 +314,8 @@ public class LimboImpl implements Limbo {
 
         ProtocolUtils.writeString(registry, type);
         LimboProtocolUtils.writeArray(registry, patchedTags, pair -> {
-          ProtocolUtils.writeString(registry, pair.left());
-          BinaryTag tag = pair.right();
+          ProtocolUtils.writeString(registry, pair.getKey());
+          BinaryTag tag = pair.getValue();
           if (tag == null) {
             registry.writeBoolean(false);
           } else {
@@ -393,7 +394,7 @@ public class LimboImpl implements Limbo {
         MinecraftConnection serverConnection = server.getConnection();
         if (serverConnection != null) {
           try {
-            GRACEFUL_DISCONNECT_FIELD.invokeExact(server, true);
+            GRACEFUL_DISCONNECT_SETTER.invokeExact(server, true);
           } catch (Throwable t) {
             throw new ReflectionException(t);
           }
@@ -536,7 +537,7 @@ public class LimboImpl implements Limbo {
     MinecraftPacket playerInfoPacket;
     if (connection.getProtocolVersion().noGreaterThan(ProtocolVersion.MINECRAFT_1_19_1)) {
       playerInfoPacket = new LegacyPlayerListItemPacket(LegacyPlayerListItemPacket.ADD_PLAYER,
-          List.of(new LegacyPlayerListItemPacket.Item(uuid).setName(player.getUsername()).setGameMode(this.gameMode).setProperties(player.getGameProfileProperties()))
+          Collections.singletonList(new LegacyPlayerListItemPacket.Item(uuid).setName(player.getUsername()).setGameMode(this.gameMode).setProperties(player.getGameProfileProperties()))
       );
     } else {
       UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(uuid);
@@ -545,7 +546,7 @@ public class LimboImpl implements Limbo {
       playerInfoEntry.setProfile(player.getGameProfile());
       playerInfoPacket = new UpsertPlayerInfoPacket(
           EnumSet.of(UpsertPlayerInfoPacket.Action.UPDATE_DISPLAY_NAME, UpsertPlayerInfoPacket.Action.UPDATE_GAME_MODE, UpsertPlayerInfoPacket.Action.ADD_PLAYER),
-          List.of(playerInfoEntry)
+          Collections.singletonList(playerInfoEntry)
       );
     }
 
@@ -832,7 +833,7 @@ public class LimboImpl implements Limbo {
         ? CompoundBinaryTag.builder()
             .putString("name", dimension.getKey())
             .putInt("id", dimension.getModernId())
-            .put("element", details)
+            .put("element", details.build())
             .build()
         : details.putString("name", dimension.getKey()).build();
   }
@@ -847,7 +848,7 @@ public class LimboImpl implements Limbo {
     joinGame.setDimension(dimension.getModernId());
     joinGame.setDifficulty((short) 0);
     try {
-      PARTIAL_HASHED_SEED_FIELD.invokeExact(joinGame, ThreadLocalRandom.current().nextLong());
+      PARTIAL_HASHED_SEED_SETTER.invokeExact(joinGame, ThreadLocalRandom.current().nextLong());
     } catch (Throwable t) {
       throw new ReflectionException(t);
     }
@@ -870,9 +871,9 @@ public class LimboImpl implements Limbo {
         currentDimensionData = currentDimensionData.getCompound("element");
       }
 
-      LEVEL_NAMES_FIELDS.invokeExact(joinGame, LEVELS);
-      REGISTRY_FIELD.invokeExact(joinGame, LimboImpl.createRegistry(version, dimensionRegistry));
-      CURRENT_DIMENSION_DATA_FIELD.invokeExact(joinGame, currentDimensionData);
+      LEVEL_NAMES_SETTER.invokeExact(joinGame, LEVELS);
+      REGISTRY_SETTER.invokeExact(joinGame, LimboImpl.createRegistry(version, dimensionRegistry));
+      CURRENT_DIMENSION_DATA_SETTER.invokeExact(joinGame, currentDimensionData);
     } catch (Throwable t) {
       throw new ReflectionException(t);
     }
@@ -926,17 +927,73 @@ public class LimboImpl implements Limbo {
       // TODO: Auto-generate mappings and implement some APIs
       if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
         // TODO мб ещё сюда и варианты для баннеров добавлять (если их в регистре не отправить, то они пустыми будут)
-        registry.put("minecraft:wolf_variant", LimboImpl.createRegistry("minecraft:wolf_variant", Map.of(
-            "minecraft:ashen", CompoundBinaryTag.builder()
-                .putString("wild_texture", "minecraft:entity/wolf/wolf_ashen")
-                .putString("tame_texture", "minecraft:entity/wolf/wolf_ashen_tame")
-                .putString("angry_texture", "minecraft:entity/wolf/wolf_ashen_angry")
-                .put("biomes", ListBinaryTag.builder().add(StringBinaryTag.stringBinaryTag("minecraft:plains")).build())
-                .build()
-        )));
+        if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
+          registry.put("minecraft:wolf_variant", LimboImpl.createRegistry("minecraft:wolf_variant", Collections.singletonMap(
+              "minecraft:ashen", CompoundBinaryTag.builder()
+                  .putString("wild_texture", "minecraft:entity/wolf/wolf_ashen")
+                  .putString("tame_texture", "minecraft:entity/wolf/wolf_ashen_tame")
+                  .putString("angry_texture", "minecraft:entity/wolf/wolf_ashen_angry")
+                  .put("biomes", ListBinaryTag.builder().add(StringBinaryTag.stringBinaryTag("minecraft:plains")).build())
+                  .build()
+          )));
+        } else {
+          registry.put("minecraft:wolf_variant", LimboImpl.createRegistry("minecraft:wolf_variant", Collections.singletonMap(
+              "minecraft:ashen", CompoundBinaryTag.builder()
+                  .put("assets", CompoundBinaryTag.builder()
+                      .putString("wild", "minecraft:entity/wolf/wolf_ashen")
+                      .putString("tame", "minecraft:entity/wolf/wolf_ashen_tame")
+                      .putString("angry", "minecraft:entity/wolf/wolf_ashen_angry")
+                      .build()
+                  ).put("spawn_conditions", ListBinaryTag.empty())
+                  .build()
+          )));
+          registry.put("minecraft:wolf_sound_variant", LimboImpl.createRegistry("minecraft:wolf_sound_variant", Collections.singletonMap(
+              "minecraft:angry", CompoundBinaryTag.builder()
+                  .putString("ambient_sound", "minecraft:entity.wolf_angry.ambient")
+                  .putString("death_sound", "minecraft:entity.wolf_angry.death")
+                  .putString("growl_sound", "minecraft:entity.wolf_angry.growl")
+                  .putString("hurt_sound", "minecraft:entity.wolf_angry.hurt")
+                  .putString("pant_sound", "minecraft:entity.wolf_angry.pant")
+                  .putString("whine_sound", "minecraft:entity.wolf_angry.whine")
+                  .build()
+          )));
+          registry.put("minecraft:cat_variant", LimboImpl.createRegistry("minecraft:cat_variant", Collections.singletonMap(
+              "minecraft:all_black", CompoundBinaryTag.builder()
+                  .putString("asset_id", "minecraft:entity/cat/all_black")
+                  .put("spawn_conditions", ListBinaryTag.empty())
+                  .build()
+          )));
+          registry.put("minecraft:chicken_variant", LimboImpl.createRegistry("minecraft:chicken_variant", Collections.singletonMap(
+              "minecraft:cold", CompoundBinaryTag.builder()
+                  .putString("asset_id", "minecraft:entity/chicken/cold_chicken")
+                  .putString("model", "cold")
+                  .put("spawn_conditions", ListBinaryTag.empty())
+                  .build()
+          )));
+          registry.put("minecraft:cow_variant", LimboImpl.createRegistry("minecraft:cow_variant", Collections.singletonMap(
+              "minecraft:cold", CompoundBinaryTag.builder()
+                  .putString("asset_id", "minecraft:entity/cow/cold_cow")
+                  .putString("model", "cold")
+                  .put("spawn_conditions", ListBinaryTag.empty())
+                  .build()
+          )));
+          registry.put("minecraft:frog_variant", LimboImpl.createRegistry("minecraft:frog_variant", Collections.singletonMap(
+              "minecraft:cold", CompoundBinaryTag.builder()
+                  .putString("asset_id", "minecraft:entity/frog/cold_frog")
+                  .put("spawn_conditions", ListBinaryTag.empty())
+                  .build()
+          )));
+          registry.put("minecraft:pig_variant", LimboImpl.createRegistry("minecraft:pig_variant", Collections.singletonMap(
+              "minecraft:cold", CompoundBinaryTag.builder()
+                  .putString("asset_id", "minecraft:entity/pig/cold_pig")
+                  .putString("model", "cold")
+                  .put("spawn_conditions", ListBinaryTag.empty())
+                  .build()
+          )));
+        }
       }
       if (version.noLessThan(ProtocolVersion.MINECRAFT_1_21)) {
-        registry.put("minecraft:painting_variant", LimboImpl.createRegistry("minecraft:painting_variant", Map.of(
+        registry.put("minecraft:painting_variant", LimboImpl.createRegistry("minecraft:painting_variant", Collections.singletonMap(
             "minecraft:alban", CompoundBinaryTag.builder()
                 .putInt("width", 1)
                 .putInt("height", 1)
@@ -944,87 +1001,6 @@ public class LimboImpl implements Limbo {
                 .build()
         )));
       }
-      /*
-        if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_5) >= 0) {
-          // Cat
-          CompoundBinaryTag.Builder catVariant = CompoundBinaryTag.builder()
-              .putString("asset_id", "minecraft:entity/cat/all_black")
-              .put("spawn_conditions", ListBinaryTag.empty());
-
-          registryContainer.put("minecraft:cat_variant", this.createRegistry("minecraft:cat_variant",
-              Map.of("minecraft:all_black", catVariant.build())));
-
-          // Chicken
-          CompoundBinaryTag.Builder chickenVariant = CompoundBinaryTag.builder()
-              .putString("asset_id", "minecraft:entity/chicken/cold_chicken")
-              .putString("model", "cold")
-              .put("spawn_conditions", ListBinaryTag.empty());
-
-          registryContainer.put("minecraft:chicken_variant", this.createRegistry("minecraft:chicken_variant",
-              Map.of("minecraft:cold", chickenVariant.build())));
-
-          // Cow
-          CompoundBinaryTag.Builder cowVariant = CompoundBinaryTag.builder()
-              .putString("asset_id", "minecraft:entity/cow/cold_cow")
-              .putString("model", "cold")
-              .put("spawn_conditions", ListBinaryTag.empty());
-
-          registryContainer.put("minecraft:cow_variant", this.createRegistry("minecraft:cow_variant",
-              Map.of("minecraft:cold", cowVariant.build())));
-
-          // Frog
-          CompoundBinaryTag.Builder frogVariant = CompoundBinaryTag.builder()
-              .putString("asset_id", "minecraft:entity/frog/cold_frog")
-              .put("spawn_conditions", ListBinaryTag.empty());
-
-          registryContainer.put("minecraft:frog_variant", this.createRegistry("minecraft:frog_variant",
-              Map.of("minecraft:cold", frogVariant.build())));
-
-          // Pig
-          CompoundBinaryTag.Builder pigVariant = CompoundBinaryTag.builder()
-              .putString("asset_id", "minecraft:entity/pig/cold_pig")
-              .putString("model", "cold")
-              .put("spawn_conditions", ListBinaryTag.empty());
-
-          registryContainer.put("minecraft:pig_variant", this.createRegistry("minecraft:pig_variant",
-              Map.of("minecraft:cold", pigVariant.build())));
-
-          // Wolf Sound Variant
-          CompoundBinaryTag.Builder wolfSoundVariant = CompoundBinaryTag.builder()
-              .putString("ambient_sound", "minecraft:entity.wolf_angry.ambient")
-              .putString("death_sound", "minecraft:entity.wolf_angry.death")
-              .putString("growl_sound", "minecraft:entity.wolf_angry.growl")
-              .putString("hurt_sound", "minecraft:entity.wolf_angry.hurt")
-              .putString("pant_sound", "minecraft:entity.wolf_angry.pant")
-              .putString("whine_sound", "minecraft:entity.wolf_angry.whine");
-
-          registryContainer.put("minecraft:wolf_sound_variant", this.createRegistry("minecraft:wolf_sound_variant",
-              Map.of("minecraft:angry", wolfSoundVariant.build())));
-
-          // Wolf
-          CompoundBinaryTag.Builder wolfVariant = CompoundBinaryTag.builder()
-              .put("assets", CompoundBinaryTag.builder()
-                  .putString("wild", "minecraft:entity/wolf/wolf_ashen")
-                  .putString("tame", "minecraft:entity/wolf/wolf_ashen_tame")
-                  .putString("angry", "minecraft:entity/wolf/wolf_ashen_angry")
-                  .build())
-              .put("spawn_conditions", ListBinaryTag.empty());
-
-          registryContainer.put("minecraft:wolf_variant", this.createRegistry("minecraft:wolf_variant",
-              Map.of("minecraft:ashen", wolfVariant.build())));
-        } else {
-          CompoundBinaryTag.Builder wolfVariant = CompoundBinaryTag.builder()
-              .putString("wild_texture", "minecraft:entity/wolf/wolf_ashen")
-              .putString("tame_texture", "minecraft:entity/wolf/wolf_ashen_tame")
-              .putString("angry_texture", "minecraft:entity/wolf/wolf_ashen_angry")
-              .put("biomes", ListBinaryTag.builder()
-                  .add(StringBinaryTag.stringBinaryTag("minecraft:plains")).build()
-              );
-
-          registryContainer.put("minecraft:wolf_variant", this.createRegistry("minecraft:wolf_variant",
-              Map.of("minecraft:ashen", wolfVariant.build())));
-        }
-      */
     } else {
       registry.put("dimension", dimensionRegistry);
     }
@@ -1047,7 +1023,7 @@ public class LimboImpl implements Limbo {
   }
 
   private DefaultSpawnPositionPacket createDefaultSpawnPositionPacket() {
-    return new DefaultSpawnPositionPacket(this.world.getDimension().getKey(), (int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F, 0.0f);
+    return new DefaultSpawnPositionPacket(this.world.getDimension().getKey(), (int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F, 0.0F);
   }
 
   private SetTimePacket createWorldTicksPacket() {
@@ -1057,7 +1033,7 @@ public class LimboImpl implements Limbo {
   private AvailableCommandsPacket createAvailableCommandsPacket() {
     try {
       AvailableCommandsPacket packet = new AvailableCommandsPacket();
-      ROOT_NODE_FIELD.invokeExact(packet, this.commandNode);
+      ROOT_NODE_SETTER.invokeExact(packet, this.commandNode);
       return packet;
     } catch (Throwable t) {
       throw new ReflectionException(t);
@@ -1066,10 +1042,8 @@ public class LimboImpl implements Limbo {
 
   private PreparedPacket createFirstChunks() {
     PreparedPacket packet = this.plugin.createPreparedPacket();
-    var orderedChunks = this.world.getOrderedChunks();
-
     int chunkCounter = 0;
-    for (List<VirtualChunk> chunksWithSameDistance : orderedChunks) {
+    for (List<VirtualChunk> chunksWithSameDistance : this.world.getOrderedChunks()) {
       if (++chunkCounter > Settings.IMP.MAIN.CHUNK_RADIUS_SEND_ON_SPAWN) {
         break;
       }
@@ -1085,7 +1059,7 @@ public class LimboImpl implements Limbo {
   private List<PreparedPacket> createDelayedChunksPackets() {
     var orderedChunks = this.world.getOrderedChunks();
     if (orderedChunks.size() <= Settings.IMP.MAIN.CHUNK_RADIUS_SEND_ON_SPAWN) {
-      return List.of();
+      return Collections.emptyList();
     }
 
     List<PreparedPacket> packets = new LinkedList<>();
@@ -1149,8 +1123,7 @@ public class LimboImpl implements Limbo {
     packets.add(fakeSwitchPacket);
 
     // Now send a respawn packet in the correct dimension.
-    RespawnPacket correctSwitchPacket = RespawnPacket.fromJoinGame(joinGame);
-    packets.add(correctSwitchPacket);
+    packets.add(RespawnPacket.fromJoinGame(joinGame));
 
     return packets;
   }

@@ -43,7 +43,7 @@ public interface RewritingTabList {
         .gameMode(entry.getGameMode())
         .listed(entry.isListed())
         .listOrder(entry.getListOrder())
-        .showHatTODO(entry.isShowHat())
+        .showHat(entry.isShowHat())
         .build();
   }
 

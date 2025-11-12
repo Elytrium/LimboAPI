@@ -29,8 +29,7 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
-import net.elytrium.limboapi.api.chunk.util.CompactStorage;
-import net.elytrium.limboapi.protocol.util.LimboProtocolUtils;
+import net.elytrium.limboapi.api.world.chunk.util.CompactStorage;
 
 public class BitStorage116 implements CompactStorage {
 
@@ -113,12 +112,12 @@ public class BitStorage116 implements CompactStorage {
   @Override
   public void write(Object bufObj, ProtocolVersion version) {
     Preconditions.checkArgument(bufObj instanceof ByteBuf);
-    ByteBuf buf = (ByteBuf) byteBufObject;
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_5) < 0) {
+    ByteBuf buf = (ByteBuf) bufObj;
+    if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
       ProtocolUtils.writeVarInt(buf, this.data.length);
     }
-    for (long data : this.data) {
-      buf.writeLong(data);
+    for (long value : this.data) {
+      buf.writeLong(value);
     }
   }
 

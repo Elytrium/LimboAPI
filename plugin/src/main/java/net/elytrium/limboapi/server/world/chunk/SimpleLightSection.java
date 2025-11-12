@@ -18,13 +18,13 @@
 package net.elytrium.limboapi.server.world.chunk;
 
 import com.google.common.base.Preconditions;
-import net.elytrium.limboapi.api.chunk.data.LightSection;
-import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3D;
+import net.elytrium.limboapi.api.world.chunk.data.LightSection;
+import net.elytrium.limboapi.api.world.chunk.util.NibbleArray3D;
 
 public class SimpleLightSection implements LightSection {
 
   private static final NibbleArray3D NO_LIGHT = new NibbleArray3D(SimpleChunk.MAX_BLOCKS_PER_SECTION);
-  private static final NibbleArray3D ALL_LIGHT = new NibbleArray3D(SimpleChunk.MAX_BLOCKS_PER_SECTION, 15);
+  private static final NibbleArray3D ALL_LIGHT = new NibbleArray3D(SimpleChunk.MAX_BLOCKS_PER_SECTION, (byte) 15);
 
   private NibbleArray3D blockLight;
   private NibbleArray3D skyLight;

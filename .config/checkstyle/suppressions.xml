@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suppressions PUBLIC
-        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
-        "http://checkstyle.org/dtds/suppressions_1_2.dtd">
+          "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+          "http://checkstyle.org/dtds/suppressions_1_2.dtd">
 
 <suppressions>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/].*" checks="SummaryJavadoc"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/].*" checks="MissingJavadocType"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/].*" checks="MissingJavadocMethod"/>
+  <suppress files=".*[\\/]net[\\/]elytrium[\\/].*" checks="SummaryJavadoc"/>
+  <suppress files=".*[\\/]net[\\/]elytrium[\\/].*" checks="MissingJavadocType"/>
+  <suppress files=".*[\\/]net[\\/]elytrium[\\/].*" checks="MissingJavadocMethod"/>
 
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="TypeName"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="LineLength"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="MemberName"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="RequireThis"/>
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="AbbreviationAsWordInName"/>
+  <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="TypeName"/>
+  <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="LineLength"/>
+  <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="MemberName"/>
+  <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="RequireThis"/>
+  <suppress files=".*[\\/]net[\\/]elytrium[\\/].*[\\/]Settings.java" checks="AbbreviationAsWordInName"/>
 
-    <suppress files=".*[\\/]net[\\/]elytrium[\\/]limboapi[\\/]server[\\/]LimboPlayerImpl.java" checks="Indentation"/>
+  <suppress files=".*[\\/]net[\\/]elytrium[\\/]limboapi[\\/]server[\\/]LimboPlayerImpl.java" checks="Indentation"/>
 </suppressions>

@@ -22,7 +22,7 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import net.elytrium.limboapi.protocol.util.LimboProtocolUtils;
+import net.elytrium.limboapi.server.item.codec.data.BlockPosCodec;
 
 public record DefaultSpawnPositionPacket(String dimension, int posX, int posY, int posZ, float yaw, float pitch) implements MinecraftPacket {
 
@@ -33,9 +33,16 @@ public record DefaultSpawnPositionPacket(String dimension, int posX, int posY, i
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    LimboProtocolUtils.writeBlockPos(buf, protocolVersion, this.posX, this.posY, this.posZ);
+    boolean v1_21_9 = protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_21_9);
+    if (v1_21_9) {
+      ProtocolUtils.writeString(buf, this.dimension);
+    }
+    BlockPosCodec.encode(buf, protocolVersion, this.posX, this.posY, this.posZ);
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_17)) {
-      buf.writeFloat(this.angle);
+      buf.writeFloat(this.yaw);
+    }
+    if (v1_21_9) {
+      buf.writeFloat(this.pitch);
     }
   }
 

@@ -54,7 +54,7 @@ import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.api.LimboSessionHandler;
-import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.elytrium.limboapi.api.world.player.LimboPlayer;
 import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveOnGroundOnlyPacket;

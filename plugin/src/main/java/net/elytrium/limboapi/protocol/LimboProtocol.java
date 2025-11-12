@@ -35,8 +35,8 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
-import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
-import net.elytrium.limboapi.api.utils.OverlayMap;
+import net.elytrium.limboapi.api.protocol.PacketMapping;
+import net.elytrium.limboapi.utils.overlay.OverlayMap;
 import net.elytrium.limboapi.protocol.packets.c2s.AcceptTeleportationPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.ChatSessionUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveOnGroundOnlyPacket;
@@ -59,14 +59,15 @@ import net.elytrium.limboapi.protocol.packets.s2c.SetSlotPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.SetTimePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateSignPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateTagsPacket;
-import net.elytrium.limboapi.utils.OverlayIntObjectMap;
-import net.elytrium.limboapi.utils.OverlayObject2IntMap;
+import net.elytrium.limboapi.utils.overlay.OverlayIntObjectMap;
+import net.elytrium.limboapi.utils.overlay.OverlayObject2IntMap;
 import net.elytrium.limboapi.utils.Reflection;
 
 @SuppressWarnings("unchecked")
 public class LimboProtocol {
 
   public static final String READ_TIMEOUT = "limboapi-read-timeout";
+
   public static final MethodHandle VERSIONS_GETTER;
   public static final Field VERSIONS_FIELD;
   public static final MethodHandle PACKET_ID_TO_SUPPLIER_GETTER;
@@ -139,13 +140,14 @@ public class LimboProtocol {
 
         versionField.set(protoRegistry, version);
 
-        var playPacketIDToSupplier = (IntObjectMap<Supplier<? extends MinecraftPacket>>) PACKET_ID_TO_SUPPLIER_GETTER.invokeExact(playProtoRegistry);
-        PACKET_ID_TO_SUPPLIER_FIELD.set(protoRegistry, new OverlayIntObjectMap<>(playPacketIDToSupplier, new IntObjectHashMap<>(16, 0.5F)));
-
-        var playPacketClassToID = (Object2IntMap<Class<? extends MinecraftPacket>>) PACKET_CLASS_TO_ID_GETTER.invokeExact(playProtoRegistry);
-        Object2IntMap<Class<? extends MinecraftPacket>> packetClassToID = new Object2IntOpenHashMap<>(16, 0.5F);
-        packetClassToID.defaultReturnValue(playPacketClassToID.defaultReturnValue());
-        PACKET_CLASS_TO_ID_FIELD.set(protoRegistry, new OverlayObject2IntMap<>(playPacketClassToID, packetClassToID));
+        PACKET_ID_TO_SUPPLIER_FIELD.set(protoRegistry, new OverlayIntObjectMap<>(
+            (IntObjectMap<Supplier<? extends MinecraftPacket>>) PACKET_ID_TO_SUPPLIER_GETTER.invokeExact(playProtoRegistry),
+            new IntObjectHashMap<>(16, 0.5F)
+        ));
+        PACKET_CLASS_TO_ID_FIELD.set(protoRegistry, new OverlayObject2IntMap<>(
+            (Object2IntMap<Class<? extends MinecraftPacket>>) PACKET_CLASS_TO_ID_GETTER.invokeExact(playProtoRegistry),
+            new Object2IntOpenHashMap<>(16, 0.5F)
+        ));
 
         versions.put(version, protoRegistry);
       }
@@ -216,7 +218,9 @@ public class LimboProtocol {
         createMapping(0x27, ProtocolVersion.MINECRAFT_1_19_4, true),
         createMapping(0x28, ProtocolVersion.MINECRAFT_1_20_2, true),
         createMapping(0x2A, ProtocolVersion.MINECRAFT_1_20_5, true),
-        createMapping(0x2B, ProtocolVersion.MINECRAFT_1_21_2, true)
+        createMapping(0x2B, ProtocolVersion.MINECRAFT_1_21_2, true),
+        createMapping(0x2A, ProtocolVersion.MINECRAFT_1_21_5, true),
+        createMapping(0x2F, ProtocolVersion.MINECRAFT_1_21_9, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         BlockEntityDataPacket.class, null,
@@ -397,7 +401,7 @@ public class LimboProtocol {
         createMapping(0x6F, ProtocolVersion.MINECRAFT_1_21_9, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
-        SetChunkCacheCenterPacket.class, null, // ViewCentre, ChunkRenderDistanceCenter
+        SetChunkCacheCenterPacket.class, null, // Also known as ViewCentre, ChunkRenderDistanceCenter
         createMapping(0x40, ProtocolVersion.MINECRAFT_1_14, true),
         createMapping(0x41, ProtocolVersion.MINECRAFT_1_15, true),
         createMapping(0x40, ProtocolVersion.MINECRAFT_1_16, true),
@@ -526,23 +530,26 @@ public class LimboProtocol {
         createMapping(0x09, ProtocolVersion.MINECRAFT_1_21_6, false)
     );
 
+    final boolean enableSetEntityDataRewrite = !true; // TODO to config
     register(PLAY_CLIENTBOUND_REGISTRY,
-        SetEntityDataPacket.class, SetEntityDataPacket::new,
-        createMapping(0x1C, ProtocolVersion.MINECRAFT_1_7_2, false),
-        createMapping(0x39, ProtocolVersion.MINECRAFT_1_9, false),
-        createMapping(0x3B, ProtocolVersion.MINECRAFT_1_12, false),
-        createMapping(0x3C, ProtocolVersion.MINECRAFT_1_12_1, false),
-        createMapping(0x3F, ProtocolVersion.MINECRAFT_1_13, false),
-        createMapping(0x43, ProtocolVersion.MINECRAFT_1_14, false),
-        createMapping(0x44, ProtocolVersion.MINECRAFT_1_15, false),
-        createMapping(0x4D, ProtocolVersion.MINECRAFT_1_17, false),
-        createMapping(0x50, ProtocolVersion.MINECRAFT_1_19_1, false),
-        createMapping(0x4E, ProtocolVersion.MINECRAFT_1_19_3, false),
-        createMapping(0x52, ProtocolVersion.MINECRAFT_1_19_4, false),
-        createMapping(0x54, ProtocolVersion.MINECRAFT_1_20_2, false),
-        createMapping(0x56, ProtocolVersion.MINECRAFT_1_20_3, false),
-        createMapping(0x58, ProtocolVersion.MINECRAFT_1_20_5, false),
-        createMapping(0x5D, ProtocolVersion.MINECRAFT_1_21_2, false)
+        SetEntityDataPacket.class, enableSetEntityDataRewrite ? null : SetEntityDataPacket::new,
+        createMapping(0x1C, ProtocolVersion.MINECRAFT_1_7_2, enableSetEntityDataRewrite),
+        createMapping(0x39, ProtocolVersion.MINECRAFT_1_9, enableSetEntityDataRewrite),
+        createMapping(0x3B, ProtocolVersion.MINECRAFT_1_12, enableSetEntityDataRewrite),
+        createMapping(0x3C, ProtocolVersion.MINECRAFT_1_12_1, enableSetEntityDataRewrite),
+        createMapping(0x3F, ProtocolVersion.MINECRAFT_1_13, enableSetEntityDataRewrite),
+        createMapping(0x43, ProtocolVersion.MINECRAFT_1_14, enableSetEntityDataRewrite),
+        createMapping(0x44, ProtocolVersion.MINECRAFT_1_15, enableSetEntityDataRewrite),
+        createMapping(0x4D, ProtocolVersion.MINECRAFT_1_17, enableSetEntityDataRewrite),
+        createMapping(0x50, ProtocolVersion.MINECRAFT_1_19_1, enableSetEntityDataRewrite),
+        createMapping(0x4E, ProtocolVersion.MINECRAFT_1_19_3, enableSetEntityDataRewrite),
+        createMapping(0x52, ProtocolVersion.MINECRAFT_1_19_4, enableSetEntityDataRewrite),
+        createMapping(0x54, ProtocolVersion.MINECRAFT_1_20_2, enableSetEntityDataRewrite),
+        createMapping(0x56, ProtocolVersion.MINECRAFT_1_20_3, enableSetEntityDataRewrite),
+        createMapping(0x58, ProtocolVersion.MINECRAFT_1_20_5, enableSetEntityDataRewrite),
+        createMapping(0x5D, ProtocolVersion.MINECRAFT_1_21_2, enableSetEntityDataRewrite),
+        createMapping(0x5C, ProtocolVersion.MINECRAFT_1_21_5, enableSetEntityDataRewrite),
+        createMapping(0x61, ProtocolVersion.MINECRAFT_1_21_9, enableSetEntityDataRewrite)
     );
   }
 

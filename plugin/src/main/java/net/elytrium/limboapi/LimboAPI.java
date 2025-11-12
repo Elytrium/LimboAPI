@@ -67,23 +67,23 @@ import net.elytrium.fastprepare.PreparedPacketFactory;
 import net.elytrium.fastprepare.handler.PreparedPacketEncoder;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
-import net.elytrium.limboapi.api.chunk.BuiltInBiome;
-import net.elytrium.limboapi.api.chunk.Dimension;
-import net.elytrium.limboapi.api.chunk.VirtualBiome;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
-import net.elytrium.limboapi.api.chunk.VirtualChunk;
-import net.elytrium.limboapi.api.chunk.VirtualWorld;
-import net.elytrium.limboapi.api.file.BuiltInWorldFileType;
-import net.elytrium.limboapi.api.file.WorldFile;
-import net.elytrium.limboapi.api.material.Block;
-import net.elytrium.limboapi.api.material.Item;
-import net.elytrium.limboapi.api.material.VirtualItem;
+import net.elytrium.limboapi.api.world.chunk.biome.BuiltInBiome;
+import net.elytrium.limboapi.api.world.chunk.Dimension;
+import net.elytrium.limboapi.api.world.chunk.biome.VirtualBiome;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
+import net.elytrium.limboapi.api.world.chunk.VirtualChunk;
+import net.elytrium.limboapi.api.world.VirtualWorld;
+import net.elytrium.limboapi.api.world.BuiltInWorldFileType;
+import net.elytrium.limboapi.api.world.WorldFile;
+import net.elytrium.limboapi.api.world.chunk.block.Block;
+import net.elytrium.limboapi.api.world.item.Item;
+import net.elytrium.limboapi.api.world.item.VirtualItem;
 import net.elytrium.limboapi.api.protocol.PreparedPacket;
-import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
-import net.elytrium.limboapi.api.protocol.packets.PacketFactory;
-import net.elytrium.limboapi.file.WorldFileTypeRegistry;
-import net.elytrium.limboapi.injection.disconnect.DisconnectListener;
+import net.elytrium.limboapi.api.world.item.datacomponent.DataComponentMap;
+import net.elytrium.limboapi.api.protocol.PacketFactory;
+import net.elytrium.limboapi.file.WorldFileRegistry;
+import net.elytrium.limboapi.listener.DisconnectListener;
 import net.elytrium.limboapi.injection.event.EventManagerHook;
 import net.elytrium.limboapi.injection.login.LoginListener;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
@@ -94,18 +94,19 @@ import net.elytrium.limboapi.injection.packet.MinecraftLimitedCompressDecoder;
 import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.elytrium.limboapi.injection.packet.RemovePlayerInfoHook;
 import net.elytrium.limboapi.injection.packet.UpsertPlayerInfoHook;
-import net.elytrium.limboapi.material.Biome;
+import net.elytrium.limboapi.listener.ReloadListener;
+import net.elytrium.limboapi.server.world.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.PacketFactoryImpl;
 import net.elytrium.limboapi.server.CachedPackets;
 import net.elytrium.limboapi.server.LimboImpl;
-import net.elytrium.limboapi.server.item.SimpleItemComponentMap;
+import net.elytrium.limboapi.server.item.SimpleDataComponentMap;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.SimpleBlockEntity;
 import net.elytrium.limboapi.server.world.SimpleItem;
 import net.elytrium.limboapi.server.world.SimpleWorld;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
-import net.elytrium.limboapi.utils.ReloadListener;
+import net.elytrium.limboapi.utils.LibLoader;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
@@ -124,7 +125,7 @@ import org.slf4j.Logger;
     }
 )
 @SuppressFBWarnings("MS_EXPOSE_REP")
-public class LimboAPI implements LimboFactory {
+public class LimboAPI implements LimboFactory { // TODO replace every map with fastutil
 
   private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 773;
 
@@ -162,6 +163,7 @@ public class LimboAPI implements LimboFactory {
   @Inject
   public LimboAPI(Logger logger, ProxyServer server, Metrics.Factory metricsFactory, @DataDirectory Path dataDirectory) {
     setLogger(logger);
+    LibLoader.resolveAndLoad(this, server, new String[] {"it/unimi/dsi/fastutil/8.5.18/fastutil-8.5.18.jar"});
 
     this.server = (VelocityServer) server;
     this.metricsFactory = metricsFactory;
@@ -205,7 +207,7 @@ public class LimboAPI implements LimboFactory {
     if (Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX) == YamlConfig.LoadResult.CONFIG_NOT_EXISTS) {
       LOGGER.warn("************* FIRST LAUNCH *************");
       LOGGER.warn("Thanks for installing LimboAPI!");
-      LOGGER.warn("(C) 2021-2024 Elytrium");
+      LOGGER.warn("(C) 2021-2025 Elytrium");
       LOGGER.warn("");
       LOGGER.warn("Check out our plugins here: https://ely.su/github <3");
       LOGGER.warn("Discord: https://ely.su/discord");
@@ -461,7 +463,7 @@ public class LimboAPI implements LimboFactory {
   }
 
   public void fixDecompressor(ChannelPipeline pipeline, int threshold, boolean onLogin) {
-    ChannelHandler decoder = onLogin && Settings.IMP.MAIN.DISCARD_COMPRESSION_ON_LOGIN || !onLogin && Settings.IMP.MAIN.DISCARD_COMPRESSION_AFTER_LOGIN
+    ChannelHandler decoder = (onLogin ? Settings.IMP.MAIN.DISCARD_COMPRESSION_ON_LOGIN : Settings.IMP.MAIN.DISCARD_COMPRESSION_AFTER_LOGIN)
         ? new MinecraftDiscardCompressDecoder()
         : new MinecraftLimitedCompressDecoder(threshold, Natives.compress.get().create(this.server.getConfiguration().getCompressionLevel()));
     if (Settings.IMP.MAIN.COMPATIBILITY_MODE && pipeline.context(Connections.COMPRESSION_DECODER) != null) {
@@ -471,7 +473,7 @@ public class LimboAPI implements LimboFactory {
     }
   }
 
-  public void fixCompressor(ChannelPipeline pipeline, ProtocolVersion version) {
+  public void fixCompressor(ChannelPipeline pipeline) {
     ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
     if (compressionHandler == null) {
       if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
@@ -480,26 +482,29 @@ public class LimboAPI implements LimboFactory {
     } else {
       VelocityConfiguration configuration = this.server.getConfiguration();
       int compressionThreshold = configuration.getCompressionThreshold();
-      VelocityCompressor compressor = Natives.compress.get().create(configuration.getCompressionLevel());
+      VelocityCompressor compressor = null;
       if (!Settings.IMP.MAIN.COMPATIBILITY_MODE) {
-        MinecraftCompressorAndLengthEncoder encoder = new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor);
         pipeline.remove(compressionHandler);
-        pipeline.addBefore(Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER, encoder);
+        pipeline.addBefore(
+            Connections.MINECRAFT_ENCODER, Connections.COMPRESSION_ENCODER,
+            new MinecraftCompressorAndLengthEncoder(compressionThreshold, compressor = Natives.compress.get().create(configuration.getCompressionLevel()))
+        );
       }
 
       if (pipeline.get(Connections.COMPRESSION_DECODER) instanceof LimboCompressDecoder) {
-        MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(compressionThreshold, compressor);
-        pipeline.replace(Connections.COMPRESSION_DECODER, Connections.COMPRESSION_DECODER, decoder);
-      } else if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
-        compressor.close();
+        pipeline.replace(
+            Connections.COMPRESSION_DECODER, Connections.COMPRESSION_DECODER,
+            new MinecraftCompressDecoder(compressionThreshold, compressor == null ? Natives.compress.get().create(configuration.getCompressionLevel()) : compressor)
+        );
       }
     }
   }
 
   @Override
   public void passLoginLimbo(Player player) {
-    if (this.loginQueue.containsKey(player)) {
-      this.loginQueue.get(player).next();
+    var queue = this.loginQueue.get(player);
+    if (queue != null) {
+      queue.next();
     }
   }
 
@@ -519,8 +524,8 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
-  public ItemComponentMap createItemComponentMap() {
-    return new SimpleItemComponentMap();
+  public DataComponentMap createDataComponentMap() {
+    return new SimpleDataComponentMap();
   }
 
   @Override
@@ -632,17 +637,17 @@ public class LimboAPI implements LimboFactory {
 
   @Override
   public WorldFile openWorldFile(BuiltInWorldFileType apiType, Path file) throws IOException {
-    return WorldFileTypeRegistry.fromApiType(apiType, file);
+    return WorldFileRegistry.of(apiType, file);
   }
 
   @Override
   public WorldFile openWorldFile(BuiltInWorldFileType apiType, InputStream stream) throws IOException {
-    return WorldFileTypeRegistry.fromApiType(apiType, stream);
+    return WorldFileRegistry.of(apiType, stream);
   }
 
   @Override
   public WorldFile openWorldFile(BuiltInWorldFileType apiType, CompoundBinaryTag tag) {
-    return WorldFileTypeRegistry.fromApiType(apiType, tag);
+    return WorldFileRegistry.of(apiType, tag);
   }
 
   public static void setClientUniqueId(Player player, UUID clientUniqueId) {

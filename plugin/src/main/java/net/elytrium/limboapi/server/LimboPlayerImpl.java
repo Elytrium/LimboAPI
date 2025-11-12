@@ -29,22 +29,22 @@ import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfoPacket;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
+import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.api.Limbo;
-import net.elytrium.limboapi.api.material.Item;
-import net.elytrium.limboapi.api.material.VirtualItem;
-import net.elytrium.limboapi.api.player.GameMode;
-import net.elytrium.limboapi.api.player.LimboPlayer;
-import net.elytrium.limboapi.api.protocol.item.ItemComponentMap;
-import net.elytrium.limboapi.api.protocol.packets.data.AbilityFlags;
-import net.elytrium.limboapi.api.protocol.packets.data.EntityDataValue;
-import net.elytrium.limboapi.api.protocol.packets.data.MapData;
-import net.elytrium.limboapi.api.protocol.packets.data.MapPalette;
+import net.elytrium.limboapi.api.protocol.data.EntityData;
+import net.elytrium.limboapi.api.world.item.Item;
+import net.elytrium.limboapi.api.world.item.VirtualItem;
+import net.elytrium.limboapi.api.world.player.GameMode;
+import net.elytrium.limboapi.api.world.player.LimboPlayer;
+import net.elytrium.limboapi.api.world.item.datacomponent.DataComponentMap;
+import net.elytrium.limboapi.api.protocol.data.AbilityFlags;
+import net.elytrium.limboapi.api.protocol.data.MapData;
+import net.elytrium.limboapi.api.protocol.data.MapPalette;
 import net.elytrium.limboapi.injection.login.LoginTasksQueue;
 import net.elytrium.limboapi.protocol.packets.s2c.GameEventPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.MapDataPacket;
@@ -176,7 +176,7 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
-  public void setItem(int slot, VirtualItem item, int count, ItemComponentMap map) {
+  public void setItem(int slot, VirtualItem item, int count, DataComponentMap map) {
     this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, map));
   }
 
@@ -191,12 +191,12 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
-  public void setItem(int slot, VirtualItem item, int count, short data, @Nullable ItemComponentMap map) {
+  public void setItem(int slot, VirtualItem item, int count, short data, @Nullable DataComponentMap map) {
     this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, data, map));
   }
 
   @Override
-  public void setItem(int slot, VirtualItem item, int count, short data, CompoundBinaryTag nbt, ItemComponentMap map) {
+  public void setItem(int slot, VirtualItem item, int count, short data, CompoundBinaryTag nbt, DataComponentMap map) {
     this.writePacketAndFlush(new SetSlotPacket(0, slot, item, count, data, nbt, map));
   }
 
@@ -211,11 +211,11 @@ public class LimboPlayerImpl implements LimboPlayer {
       if (!is17) {
         UUID uuid = LimboAPI.getClientUniqueId(this.player);
         if (version.noGreaterThan(ProtocolVersion.MINECRAFT_1_19_1)) {
-          this.writePacket(new LegacyPlayerListItemPacket(LegacyPlayerListItemPacket.UPDATE_GAMEMODE, List.of(new LegacyPlayerListItemPacket.Item(uuid).setGameMode(id))));
+          this.writePacket(new LegacyPlayerListItemPacket(LegacyPlayerListItemPacket.UPDATE_GAMEMODE, Collections.singletonList(new LegacyPlayerListItemPacket.Item(uuid).setGameMode(id))));
         } else {
           UpsertPlayerInfoPacket.Entry playerInfoEntry = new UpsertPlayerInfoPacket.Entry(uuid);
           playerInfoEntry.setGameMode(id);
-          this.writePacket(new UpsertPlayerInfoPacket(EnumSet.of(UpsertPlayerInfoPacket.Action.UPDATE_GAME_MODE), List.of(playerInfoEntry)));
+          this.writePacket(new UpsertPlayerInfoPacket(EnumSet.of(UpsertPlayerInfoPacket.Action.UPDATE_GAME_MODE), Collections.singletonList(playerInfoEntry)));
         }
       }
       this.writePacket(new GameEventPacket(3, id)); // CHANGE_GAME_MODE
@@ -295,7 +295,7 @@ public class LimboPlayerImpl implements LimboPlayer {
   private void deject() {
     var pipeline = this.connection.getChannel().pipeline();
     this.plugin.deject3rdParty(pipeline);
-    this.plugin.fixCompressor(pipeline, this.player.getProtocolVersion());
+    this.plugin.fixCompressor(pipeline);
   }
 
   private void sendToRegisteredServer(RegisteredServer server) {
@@ -307,7 +307,11 @@ public class LimboPlayerImpl implements LimboPlayer {
       this.sessionHandler.disconnectToConfig(() -> {
         // Rollback original CONFIG handler
         ClientConfigSessionHandler handler = new ClientConfigSessionHandler(this.plugin.getServer(), this.player);
-        LoginTasksQueue.BRAND_CHANNEL_SETTER.accept(handler, "minecraft:brand");
+        try {
+          LoginTasksQueue.BRAND_CHANNEL_SETTER.invokeExact(handler, "minecraft:brand");
+        } catch (Throwable t) {
+          throw new ReflectionException(t);
+        }
         this.connection.setActiveSessionHandler(StateRegistry.CONFIG, handler);
         this.player.createConnectionRequest(server).fireAndForget();
       });
@@ -315,7 +319,7 @@ public class LimboPlayerImpl implements LimboPlayer {
       if (version.noGreaterThan(ProtocolVersion.MINECRAFT_1_19_1)) {
         this.connection.delayedWrite(new LegacyPlayerListItemPacket(
             LegacyPlayerListItemPacket.REMOVE_PLAYER,
-            List.of(new LegacyPlayerListItemPacket.Item(LimboAPI.getClientUniqueId(this.player)))
+            Collections.singletonList(new LegacyPlayerListItemPacket.Item(LimboAPI.getClientUniqueId(this.player)))
         ));
       }
 
@@ -325,8 +329,8 @@ public class LimboPlayerImpl implements LimboPlayer {
   }
 
   @Override
-  public void setEntityData(int id, Collection<EntityDataValue<?>> packedItems) {
-    this.writePacketAndFlush(new SetEntityDataPacket(id, packedItems));
+  public void setEntityData(int id, EntityData data) {
+    this.writePacketAndFlush(new SetEntityDataPacket(id, data));
   }
 
   @Override

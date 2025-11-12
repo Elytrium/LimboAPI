@@ -11,9 +11,9 @@ import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.proxy.Player;
 import java.util.function.Supplier;
-import net.elytrium.limboapi.api.player.GameMode;
+import net.elytrium.limboapi.api.world.player.GameMode;
 import net.elytrium.limboapi.api.protocol.PacketDirection;
-import net.elytrium.limboapi.api.protocol.packets.PacketMapping;
+import net.elytrium.limboapi.api.protocol.PacketMapping;
 
 public interface Limbo {
 
@@ -46,7 +46,7 @@ public interface Limbo {
   Limbo setMaxSuppressPacketLength(int maxSuppressPacketLength);
 
   /**
-   * @deprecated Use {@link com.velocitypowered.api.command.CommandManager#metaBuilder(String)}
+   * @deprecated Use {@link #registerCommand(CommandMeta)} in conjunction with {@link com.velocitypowered.api.command.CommandManager#metaBuilder(String)}
    */
   @Deprecated(forRemoval = true)
   default Limbo registerCommand(net.elytrium.limboapi.api.command.LimboCommandMeta commandMeta) {

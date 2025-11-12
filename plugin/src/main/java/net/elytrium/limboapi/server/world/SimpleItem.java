@@ -19,21 +19,21 @@ package net.elytrium.limboapi.server.world;
 
 import com.google.gson.internal.LinkedTreeMap;
 import com.velocitypowered.api.network.ProtocolVersion;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.api.material.Item;
-import net.elytrium.limboapi.api.material.VirtualItem;
-import net.elytrium.limboapi.api.material.WorldVersion;
-import net.elytrium.limboapi.utils.JsonParser;
+import net.elytrium.limboapi.api.world.item.Item;
+import net.elytrium.limboapi.api.world.item.VirtualItem;
+import net.elytrium.limboapi.api.world.WorldVersion;
+import net.elytrium.limboapi.utils.JsonUtil;
 
 public class SimpleItem implements VirtualItem {
 
-  private static final Map<String, SimpleItem> MODERN_ID_MAP;
-  private static final Map<Integer, SimpleItem> LEGACY_ID_MAP;
+  private static final Object2ObjectOpenHashMap<String, SimpleItem> MODERN_ID_MAP;
+  private static final Int2ObjectOpenHashMap<SimpleItem> LEGACY_ID_MAP;
 
-  private final Map<WorldVersion, Short> versionIds = new EnumMap<>(WorldVersion.class);
+  private final EnumMap<WorldVersion, Short> versionIds = new EnumMap<>(WorldVersion.class);
   private final String modernId;
 
   public SimpleItem(String modernId) {
@@ -70,9 +70,9 @@ public class SimpleItem implements VirtualItem {
   }
 
   static {
-    LinkedTreeMap<String, LinkedTreeMap<String, Number>> itemsMapping = JsonParser.parse(LimboAPI.class.getResourceAsStream("/mappings/items_mappings.json"));
-    MODERN_ID_MAP = new HashMap<>(itemsMapping.size());
-    LinkedTreeMap<String, String> modernIdRemap = JsonParser.parse(LimboAPI.class.getResourceAsStream("/mappings/modern_item_id_remap.json"));
+    var itemsMapping = JsonUtil.<LinkedTreeMap<String, Number>>parse(LimboAPI.class.getResourceAsStream("/mappings/items_mappings.json"));
+    MODERN_ID_MAP = new Object2ObjectOpenHashMap<>(itemsMapping.size());
+    var modernIdRemap = JsonUtil.<String>parse(LimboAPI.class.getResourceAsStream("/mappings/modern_item_id_remap.json"));
     itemsMapping.forEach((modernId, versions) -> {
       SimpleItem simpleItem = new SimpleItem(modernId);
       versions.forEach((version, item) -> simpleItem.versionIds.put(WorldVersion.from(ProtocolVersion.getProtocolVersion(Integer.parseInt(version))), item.shortValue()));
@@ -87,9 +87,10 @@ public class SimpleItem implements VirtualItem {
         SimpleItem.MODERN_ID_MAP.put(remapped, simpleItem);
       }
     });
+    SimpleItem.MODERN_ID_MAP.trim();
 
-    LinkedTreeMap<String, String> legacyItems = JsonParser.parse(LimboAPI.class.getResourceAsStream("/mappings/legacy_items.json"));
-    LEGACY_ID_MAP = new HashMap<>(legacyItems.size());
+    var legacyItems = JsonUtil.<String>parse(LimboAPI.class.getResourceAsStream("/mappings/legacy_items.json"));
+    LEGACY_ID_MAP = new Int2ObjectOpenHashMap<>(legacyItems.size());
     legacyItems.forEach((legacyProtocolId, modernId) -> {
       int id = Integer.parseInt(legacyProtocolId);
       SimpleItem value = SimpleItem.MODERN_ID_MAP.get(modernId);

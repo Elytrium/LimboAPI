@@ -6,8 +6,8 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import java.util.regex.Pattern;
-import net.elytrium.limboapi.api.chunk.VirtualBlockEntity;
-import net.elytrium.limboapi.protocol.util.LimboProtocolUtils;
+import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
+import net.elytrium.limboapi.server.item.codec.data.BlockPosCodec;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -22,8 +22,12 @@ public record UpdateSignPacket(int posX, int posY, int posZ, Component[] lines) 
   // TODO get rid of this method when JEP 447
   private static Component[] extractLines(CompoundBinaryTag nbt) {
     Component[] lines = new Component[4];
+    if (nbt == null) {
+      return lines;
+    }
+
     var serializer = ProtocolUtils.getJsonChatSerializer(ProtocolVersion.MINECRAFT_1_9_4);
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; ++i) {
       lines[i] = serializer.deserialize(nbt.getString("Text" + (i + 1)));
     }
 
@@ -43,7 +47,7 @@ public record UpdateSignPacket(int posX, int posY, int posZ, Component[] lines) 
       buf.writeShort(this.posY);
       buf.writeInt(this.posZ);
     } else {
-      LimboProtocolUtils.writeBlockPos(buf, protocolVersion, this.posX, this.posY, this.posZ);
+      BlockPosCodec.encode(buf, protocolVersion, this.posX, this.posY, this.posZ);
     }
     var serializer = protocolVersion.noGreaterThan(ProtocolVersion.MINECRAFT_1_8) ? LegacyComponentSerializer.legacySection() : ProtocolUtils.getJsonChatSerializer(protocolVersion);
     for (int i = 0; i < 4; ++i) {

@@ -29,7 +29,7 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
-import net.elytrium.limboapi.api.chunk.util.CompactStorage;
+import net.elytrium.limboapi.api.world.chunk.util.CompactStorage;
 import net.elytrium.limboapi.protocol.util.LimboProtocolUtils;
 
 public class BitStorage19 implements CompactStorage {

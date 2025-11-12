@@ -48,7 +48,12 @@ enum MinecraftVersion {
   MINECRAFT_1_20_3(765),
   MINECRAFT_1_20_5(766),
   MINECRAFT_1_21(767),
-  MINECRAFT_1_21_2(768)
+  MINECRAFT_1_21_2(768),
+  MINECRAFT_1_21_4(769),
+  MINECRAFT_1_21_5(770),
+  MINECRAFT_1_21_6(771),
+  MINECRAFT_1_21_7(772),
+  MINECRAFT_1_21_9(773)
 
   public static final List<MinecraftVersion> BLOCK_ENTITY_VERSIONS = List.of(
       MINECRAFT_1_13,
@@ -61,7 +66,9 @@ enum MinecraftVersion {
       MINECRAFT_1_20,
       MINECRAFT_1_20_3,
       MINECRAFT_1_20_5,
-      MINECRAFT_1_21_2
+      MINECRAFT_1_21_2,
+      MINECRAFT_1_21_5,
+      MINECRAFT_1_21_9
   )
 
   public static final List<MinecraftVersion> WORLD_VERSIONS = List.of(
@@ -78,7 +85,12 @@ enum MinecraftVersion {
       MINECRAFT_1_20,
       MINECRAFT_1_20_3,
       MINECRAFT_1_20_5,
-      MINECRAFT_1_21_2
+      MINECRAFT_1_21_2,
+      MINECRAFT_1_21_4,
+      MINECRAFT_1_21_5,
+      MINECRAFT_1_21_6,
+      MINECRAFT_1_21_7,
+      MINECRAFT_1_21_9
   )
 
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
@@ -102,7 +114,7 @@ enum MinecraftVersion {
 }
 
 ext() {
-  File buildDirectory = this.getLayout().getBuildDirectory().get().getAsFile()
+  File buildDirectory = this.layout.getBuildDirectory().get().getAsFile()
   dataDirectory = new File(buildDirectory, "minecraft")
   generatedDir = new File(buildDirectory, "generated/minecraft")
   versionManifestFile = new File(dataDirectory, "manifest.json")
@@ -175,6 +187,12 @@ File getServerJar(String version) {
   return jarFile
 }
 
+interface InjectedExecOps {
+
+  @javax.inject.Inject
+  ExecOperations getExecOps()
+}
+
 @SuppressWarnings("GrDeprecatedAPIUsage")
 File generateData(MinecraftVersion version) {
   File cache = this.getGeneratedCache(version)
@@ -187,7 +205,7 @@ File generateData(MinecraftVersion version) {
 
   targetDir.deleteDir()
 
-  this.javaexec() {
+  this.project.getObjects().newInstance(InjectedExecOps).getExecOps().javaexec() { // У тебя батя хуесос, сынок.
     classpath(jarFile)
     if (version >= MinecraftVersion.MINECRAFT_1_18) {
       jvmArgs("-DbundlerMainClass=net.minecraft.data.Main")
