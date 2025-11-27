@@ -139,7 +139,7 @@ public class LimboImpl implements Limbo {
   private static final CompoundBinaryTag DAMAGE_TYPE_1194;
   private static final CompoundBinaryTag DAMAGE_TYPE_120;
 
-  private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
+  private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>(2);
   private final LimboAPI plugin;
   private final VirtualWorld world;
 
@@ -829,6 +829,9 @@ public class LimboImpl implements Limbo {
 
   private void localDispose() {
     this.takeSnapshot().forEach(PreparedPacket::release);
+    this.built = false;
+    this.brandMessages.values().forEach(PreparedPacket::release);
+    this.brandMessages.clear();
   }
 
   // From Velocity.
@@ -1207,14 +1210,17 @@ public class LimboImpl implements Limbo {
     return packets;
   }
 
-  private PreparedPacket getBrandMessage(Class<? extends LimboSessionHandler> handlerClass) {
-    if (this.brandMessages.containsKey(handlerClass)) {
-      return this.brandMessages.get(handlerClass);
-    } else {
-      PreparedPacket preparedPacket = this.plugin.createPreparedPacket().prepare(this::createBrandMessage).build();
-      this.brandMessages.put(handlerClass, preparedPacket);
-      return preparedPacket;
+  private PreparedPacket getBrandMessage(Class<? extends LimboSessionHandler> clazz) {
+    PreparedPacket preparedPacket = this.brandMessages.get(clazz);
+    if (preparedPacket == null) {
+      this.brandMessages.put(clazz, preparedPacket = this.plugin.createPreparedPacket()
+          .prepare(this.createBrandMessage(ProtocolVersion.MINECRAFT_1_7_2), ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_7_6)
+          .prepare(this.createBrandMessage(ProtocolVersion.MINECRAFT_1_8), ProtocolVersion.MINECRAFT_1_8)
+          .build()
+      );
     }
+
+    return preparedPacket;
   }
 
   private PluginMessagePacket createBrandMessage(ProtocolVersion version) {
