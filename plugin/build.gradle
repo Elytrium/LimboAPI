@@ -214,9 +214,7 @@ File downloadVersionManifest(String version) {
   this.println("> Downloading ${version} manifest...")
 
   Object manifest = new JsonSlurper().parse(versionManifestFile)
-
-  // TODO: remove
-  def optional = manifest.versions.stream().filter({ version == "1.21.9" ? it.id == version + "-rc1" : it.id == version }).findFirst()
+  def optional = manifest.versions.stream().filter({ it.id == version }).findFirst()
   if (optional.empty()) {
     throw new RuntimeException("Couldn't find version: ${version}")
   }
