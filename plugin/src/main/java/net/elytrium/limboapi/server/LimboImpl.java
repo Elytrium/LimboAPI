@@ -805,6 +805,9 @@ public class LimboImpl implements Limbo {
     if (this.safeRejoinPackets != null) {
       packets.add(this.safeRejoinPackets);
     }
+    if (this.postJoinPackets != null) {
+      packets.add(this.postJoinPackets);
+    }
     if (this.respawnPackets != null) {
       packets.add(this.respawnPackets);
     }
