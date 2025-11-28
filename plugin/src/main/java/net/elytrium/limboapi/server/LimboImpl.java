@@ -1213,11 +1213,7 @@ public class LimboImpl implements Limbo {
   private PreparedPacket getBrandMessage(Class<? extends LimboSessionHandler> clazz) {
     PreparedPacket preparedPacket = this.brandMessages.get(clazz);
     if (preparedPacket == null) {
-      this.brandMessages.put(clazz, preparedPacket = this.plugin.createPreparedPacket()
-          .prepare(this.createBrandMessage(ProtocolVersion.MINECRAFT_1_7_2), ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_7_6)
-          .prepare(this.createBrandMessage(ProtocolVersion.MINECRAFT_1_8), ProtocolVersion.MINECRAFT_1_8)
-          .build()
-      );
+      this.brandMessages.put(clazz, preparedPacket = this.plugin.createPreparedPacket().prepare(this::createBrandMessage).build());
     }
 
     return preparedPacket;
