@@ -52,7 +52,12 @@ public class SimpleItem implements VirtualItem {
 
   @Override
   public short getID(WorldVersion version) {
-    return this.versionIDs.get(version);
+    Short result = this.versionIDs.get(version);
+    if (result == null) {
+      throw new IllegalArgumentException("Item " + this.modernId + " does not exists on " + version);
+    }
+
+    return result;
   }
 
   @Override

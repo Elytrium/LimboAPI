@@ -67,7 +67,12 @@ public class PacketFactoryImpl implements PacketFactory {
 
   @Override
   public Object createDefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle) {
-    return new DefaultSpawnPositionPacket(posX, posY, posZ, angle);
+    return new DefaultSpawnPositionPacket(Dimension.OVERWORLD.getKey(), posX, posY, posZ, angle, 0);
+  }
+
+  @Override
+  public Object createDefaultSpawnPositionPacket(String dimension, int posX, int posY, int posZ, float yaw, float pitch) {
+    return new DefaultSpawnPositionPacket(dimension, posX, posY, posZ, yaw, pitch);
   }
 
   @Override

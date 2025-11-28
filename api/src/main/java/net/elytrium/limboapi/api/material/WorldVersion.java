@@ -34,7 +34,8 @@ public enum WorldVersion {
   MINECRAFT_1_21_4(ProtocolVersion.MINECRAFT_1_21_4),
   MINECRAFT_1_21_5(ProtocolVersion.MINECRAFT_1_21_5),
   MINECRAFT_1_21_6(ProtocolVersion.MINECRAFT_1_21_6),
-  MINECRAFT_1_21_7(EnumSet.range(ProtocolVersion.MINECRAFT_1_21_7, ProtocolVersion.MAXIMUM_VERSION));
+  MINECRAFT_1_21_7(ProtocolVersion.MINECRAFT_1_21_7),
+  MINECRAFT_1_21_9(EnumSet.range(ProtocolVersion.MINECRAFT_1_21_9, ProtocolVersion.MAXIMUM_VERSION));
 
   private static final EnumMap<ProtocolVersion, WorldVersion> MC_VERSION_TO_ITEM_VERSIONS = new EnumMap<>(ProtocolVersion.class);
   private static final Map<String, WorldVersion> KEY_LOOKUP = Map.copyOf(EnumUniverse.createProtocolLookup(values()));

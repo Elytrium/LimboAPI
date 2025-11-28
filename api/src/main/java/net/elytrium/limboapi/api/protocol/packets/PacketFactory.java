@@ -32,6 +32,8 @@ public interface PacketFactory {
 
   Object createDefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle);
 
+  Object createDefaultSpawnPositionPacket(String dimension, int posX, int posY, int posZ, float yaw, float pitch);
+
   Object createMapDataPacket(int mapID, byte scale, MapData mapData);
 
   /**
