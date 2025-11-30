@@ -27,11 +27,8 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
 import io.netty.util.collection.IntObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Supplier;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
@@ -40,14 +37,6 @@ import net.elytrium.limboapi.protocol.LimboProtocol;
 @SuppressWarnings("unchecked")
 public class LegacyPlayerListItemHook extends LegacyPlayerListItemPacket {
 
-  private static final MethodHandle SERVER_CONN_FIELD;
-
-  private final LimboAPI plugin;
-
-  private LegacyPlayerListItemHook(LimboAPI plugin) {
-    this.plugin = plugin;
-  }
-
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     if (handler instanceof BackendPlaySessionHandler) {
@@ -55,19 +44,17 @@ public class LegacyPlayerListItemHook extends LegacyPlayerListItemPacket {
       for (int i = 0; i < items.size(); ++i) {
         try {
           Item item = items.get(i);
-          ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.invokeExact((BackendPlaySessionHandler) handler)).getPlayer();
-          UUID initialID = this.plugin.getInitialID(player);
-
+          ConnectedPlayer player = ((VelocityServerConnection) UpsertPlayerInfoHook.SERVER_CONN_FIELD.invokeExact((BackendPlaySessionHandler) handler)).getPlayer();
           if (player.getUniqueId().equals(item.getUuid())) {
-            items.set(i, new Item(initialID)
+            items.set(i, new Item(LimboAPI.getClientUniqueId(player))
                 .setDisplayName(item.getDisplayName())
                 .setGameMode(item.getGameMode())
                 .setLatency(item.getLatency())
                 .setName(item.getName())
                 .setProperties(item.getProperties()));
           }
-        } catch (Throwable e) {
-          throw new ReflectionException(e);
+        } catch (Throwable t) {
+          throw new ReflectionException(t);
         }
       }
     }
@@ -75,17 +62,7 @@ public class LegacyPlayerListItemHook extends LegacyPlayerListItemPacket {
     return super.handle(handler);
   }
 
-  static {
-    try {
-      SERVER_CONN_FIELD = MethodHandles.privateLookupIn(BackendPlaySessionHandler.class, MethodHandles.lookup())
-          .findGetter(BackendPlaySessionHandler.class, "serverConn", VelocityServerConnection.class);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new ReflectionException(e);
-    }
-  }
-
-  public static void init(LimboAPI plugin, StateRegistry.PacketRegistry registry) throws ReflectiveOperationException {
-    // See LimboProtocol#overlayRegistry about var.
+  public static void init(StateRegistry.PacketRegistry registry) throws ReflectiveOperationException {
     var playProtocolRegistryVersions = (Map<ProtocolVersion, StateRegistry.PacketRegistry.ProtocolRegistry>) LimboProtocol.VERSIONS_FIELD.get(registry);
     playProtocolRegistryVersions.forEach((protocolVersion, protocolRegistry) -> {
       try {
@@ -94,7 +71,7 @@ public class LegacyPlayerListItemHook extends LegacyPlayerListItemPacket {
 
         int id = packetClassToID.getInt(LegacyPlayerListItemPacket.class);
         packetClassToID.put(LegacyPlayerListItemHook.class, id);
-        packetIDToSupplier.put(id, () -> new LegacyPlayerListItemHook(plugin));
+        packetIDToSupplier.put(id, LegacyPlayerListItemHook::new);
       } catch (ReflectiveOperationException e) {
         throw new ReflectionException(e);
       }

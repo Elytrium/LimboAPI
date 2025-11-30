@@ -28,28 +28,30 @@ public interface RewritingTabList {
   Player getPlayer();
 
   default TabListEntry rewriteEntry(TabListEntry entry) {
-    if (entry == null || entry.getProfile() == null || !this.getPlayer().getUniqueId().equals(entry.getProfile().getId())) {
+    GameProfile profile;
+    UUID profileId;
+    if (entry == null || (profile = entry.getProfile()) == null || !this.getPlayer().getUniqueId().equals(profileId = profile.getId())) {
       return entry;
     }
 
-    TabListEntry.Builder builder = TabListEntry.builder();
-    builder.tabList(entry.getTabList());
-    builder.profile(new GameProfile(this.rewriteUuid(entry.getProfile().getId()),
-        entry.getProfile().getName(), entry.getProfile().getProperties()));
-    builder.listed(entry.isListed());
-    builder.latency(entry.getLatency());
-    builder.gameMode(entry.getGameMode());
-    entry.getDisplayNameComponent().ifPresent(builder::displayName);
-    builder.chatSession(entry.getChatSession());
-    builder.listOrder(entry.getListOrder());
-    builder.showHat(entry.isShowHat());
-
-    return builder.build();
+    return TabListEntry.builder()
+        .tabList(entry.getTabList())
+        .profile(new GameProfile(this.rewriteUuid(profileId), profile.getName(), profile.getProperties()))
+        .chatSession(entry.getChatSession())
+        .displayName(entry.getDisplayNameComponent().orElse(null))
+        .latency(entry.getLatency())
+        .gameMode(entry.getGameMode())
+        .listed(entry.isListed())
+        .listOrder(entry.getListOrder())
+        .showHat(entry.isShowHat())
+        .build();
   }
 
   default UUID rewriteUuid(UUID uuid) {
-    if (this.getPlayer().getUniqueId().equals(uuid)) {
-      return LimboAPI.INITIAL_ID.getOrDefault(this.getPlayer(), uuid);
+    Player player = this.getPlayer();
+    if (player.getUniqueId().equals(uuid)) {
+      UUID clientUniqueId = LimboAPI.getClientUniqueId(player);
+      return clientUniqueId == null ? uuid : clientUniqueId;
     }
 
     return uuid;

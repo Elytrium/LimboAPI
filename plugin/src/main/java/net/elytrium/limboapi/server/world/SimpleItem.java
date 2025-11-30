@@ -17,42 +17,52 @@
 
 package net.elytrium.limboapi.server.world;
 
-import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import com.velocitypowered.api.network.ProtocolVersion;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.api.material.Item;
-import net.elytrium.limboapi.api.material.VirtualItem;
-import net.elytrium.limboapi.api.material.WorldVersion;
+import net.elytrium.limboapi.api.world.item.Item;
+import net.elytrium.limboapi.api.world.item.VirtualItem;
+import net.elytrium.limboapi.api.world.WorldVersion;
+import net.elytrium.limboapi.utils.JsonUtil;
 
 public class SimpleItem implements VirtualItem {
 
-  private static final Gson GSON = new Gson();
+  private static final EnumMap<WorldVersion, Short2ObjectOpenHashMap<SimpleItem>> VERSION_2_ID_MAP = new EnumMap<>(WorldVersion.class);
+  private static final Object2ObjectOpenHashMap<String, SimpleItem> MODERN_ID_MAP;
+  private static final Short2ObjectOpenHashMap<SimpleItem> LEGACY_ID_MAP;
 
-  private static final Map<String, SimpleItem> MODERN_ID_MAP = new HashMap<>();
-  private static final Map<Integer, SimpleItem> LEGACY_ID_MAP = new HashMap<>();
-
+  private final EnumMap<WorldVersion, Short> versionIds = new EnumMap<>(WorldVersion.class);
   private final String modernId;
-  private final Map<WorldVersion, Short> versionIDs = new EnumMap<>(WorldVersion.class);
 
   public SimpleItem(String modernId) {
     this.modernId = modernId;
   }
 
-  @Override
-  public short getID(ProtocolVersion version) {
-    return this.getID(WorldVersion.from(version));
+  public String modernId() {
+    return this.modernId;
   }
 
   @Override
-  public short getID(WorldVersion version) {
-    return this.versionIDs.get(version);
+  public short itemId(WorldVersion version) {
+    Short result = this.versionIds.get(version);
+    if (result == null) {
+      throw new IllegalArgumentException("Item " + this.modernId + " does not exists on " + version);
+    }
+
+    return result;
+  }
+
+  @Override
+  public short itemId(ProtocolVersion version) {
+    return this.itemId(WorldVersion.from(version));
+  }
+
+  @Override
+  public boolean isSupportedOn(WorldVersion version) {
+    return this.versionIds.containsKey(version);
   }
 
   @Override
@@ -60,72 +70,64 @@ public class SimpleItem implements VirtualItem {
     return this.isSupportedOn(WorldVersion.from(version));
   }
 
-  @Override
-  public boolean isSupportedOn(WorldVersion version) {
-    return this.versionIDs.containsKey(version);
-  }
-
-  public String getModernID() {
-    return this.modernId;
-  }
-
-  @SuppressWarnings("unchecked")
-  public static void init() {
-    LinkedTreeMap<String, LinkedTreeMap<String, String>> itemsMapping = GSON.fromJson(
-        new InputStreamReader(
-            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/items_mapping.json")), StandardCharsets.UTF_8
-        ),
-        LinkedTreeMap.class
-    );
-
-    LinkedTreeMap<String, String> modernItems = GSON.fromJson(
-        new InputStreamReader(
-            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/items.json")), StandardCharsets.UTF_8
-        ),
-        LinkedTreeMap.class
-    );
-
-    LinkedTreeMap<String, String> legacyItems = GSON.fromJson(
-        new InputStreamReader(
-            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/legacyitems.json")), StandardCharsets.UTF_8
-        ),
-        LinkedTreeMap.class
-    );
-
-    LinkedTreeMap<String, String> modernIdRemap = GSON.fromJson(
-        new InputStreamReader(
-            Objects.requireNonNull(LimboAPI.class.getResourceAsStream("/mapping/modern_item_id_remap.json")), StandardCharsets.UTF_8
-        ),
-        LinkedTreeMap.class
-    );
-
-    modernItems.forEach((modernId, modernProtocolId) -> {
+  static {
+    var itemsMapping = JsonUtil.<LinkedTreeMap<String, Number>>parse(LimboAPI.class.getResourceAsStream("/mappings/items_mappings.json"));
+    var modernIdRemap = JsonUtil.<String>parse(LimboAPI.class.getResourceAsStream("/mappings/modern_item_id_remap.json"));
+    MODERN_ID_MAP = new Object2ObjectOpenHashMap<>(itemsMapping.size() + modernIdRemap.size());
+    String maxProtocol = Integer.toString(ProtocolVersion.MAXIMUM_VERSION.getProtocol());
+    itemsMapping.forEach((modernId, versions) -> {
       SimpleItem simpleItem = new SimpleItem(modernId);
-      itemsMapping.get(modernProtocolId).forEach((key, value) -> simpleItem.versionIDs.put(WorldVersion.parse(key), Short.parseShort(value)));
-      MODERN_ID_MAP.put(modernId, simpleItem);
+      versions.forEach((version, item) -> {
+        WorldVersion worldVersion = WorldVersion.from(ProtocolVersion.getProtocolVersion(Integer.parseInt(version)));
+        short id = item.shortValue();
+        simpleItem.versionIds.put(worldVersion, id);
+        SimpleItem.VERSION_2_ID_MAP.computeIfAbsent(worldVersion, key -> new Short2ObjectOpenHashMap<>(itemsMapping.size())).put(id, simpleItem);
+      });
+      if (versions.containsKey(maxProtocol)) {
+        SimpleItem.MODERN_ID_MAP.put(modernId, simpleItem);
 
-      String remapped = modernIdRemap.get(modernId);
-      if (remapped != null) {
-        if (MODERN_ID_MAP.containsKey(remapped)) {
-          throw new IllegalStateException("Remapped id " + remapped + " (from " + modernId + ") already exists");
+        String remapped = modernIdRemap.get(modernId);
+        if (remapped != null) {
+          if (SimpleItem.MODERN_ID_MAP.containsKey(remapped)) {
+            throw new IllegalStateException("Remapped id " + remapped + " (from " + modernId + ") already exists");
+          }
+
+          SimpleItem.MODERN_ID_MAP.put(remapped, simpleItem);
         }
-
-        MODERN_ID_MAP.put(remapped, simpleItem);
       }
     });
+    SimpleItem.MODERN_ID_MAP.trim();
+    SimpleItem.VERSION_2_ID_MAP.values().forEach(Short2ObjectOpenHashMap::trim);
 
-    legacyItems.forEach((legacyProtocolId, modernId) -> LEGACY_ID_MAP.put(Integer.parseInt(legacyProtocolId), MODERN_ID_MAP.get(modernId)));
+    var legacyItems = JsonUtil.<String>parse(LimboAPI.class.getResourceAsStream("/mappings/legacy_items.json"));
+    LEGACY_ID_MAP = new Short2ObjectOpenHashMap<>(legacyItems.size());
+    legacyItems.forEach((legacyProtocolId, modernId) -> {
+      short id = Short.parseShort(legacyProtocolId);
+      SimpleItem value = SimpleItem.MODERN_ID_MAP.get(modernId);
+      SimpleItem.LEGACY_ID_MAP.put(id, value);
+      if (value != null) {
+        value.versionIds.put(WorldVersion.LEGACY, id);
+      }
+    });
+  }
+
+  public static SimpleItem fromModernId(String id) {
+    return SimpleItem.MODERN_ID_MAP.get(id);
+  }
+
+  public static VirtualItem fromId(ProtocolVersion version, short id) {
+    return SimpleItem.fromId(WorldVersion.from(version), id);
+  }
+
+  public static VirtualItem fromId(WorldVersion version, short id) {
+    return SimpleItem.VERSION_2_ID_MAP.get(version).get(id);
   }
 
   public static SimpleItem fromItem(Item item) {
-    return LEGACY_ID_MAP.get(item.getLegacyID());
+    return SimpleItem.fromLegacyId(item.getLegacyId());
   }
 
-  public static SimpleItem fromLegacyID(int id) {
-    return LEGACY_ID_MAP.get(id);
-  }
-
-  public static SimpleItem fromModernID(String id) {
-    return MODERN_ID_MAP.get(id);
+  public static SimpleItem fromLegacyId(short id) {
+    return SimpleItem.LEGACY_ID_MAP.get(id);
   }
 }

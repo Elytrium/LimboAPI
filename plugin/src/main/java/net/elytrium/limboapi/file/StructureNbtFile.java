@@ -20,12 +20,13 @@ package net.elytrium.limboapi.file;
 import java.util.HashMap;
 import java.util.Map;
 import net.elytrium.limboapi.api.LimboFactory;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.VirtualWorld;
-import net.elytrium.limboapi.api.file.WorldFile;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.VirtualWorld;
+import net.elytrium.limboapi.api.world.WorldFile;
 import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
+import net.kyori.adventure.nbt.StringBinaryTag;
 
 public class StructureNbtFile implements WorldFile {
 
@@ -38,35 +39,32 @@ public class StructureNbtFile implements WorldFile {
   }
 
   @Override
-  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, int lightLevel) {
+  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, byte lightLevel) {
     VirtualBlock[] palettedBlocks = new VirtualBlock[this.palette.size()];
     for (int i = 0; i < this.palette.size(); ++i) {
       CompoundBinaryTag map = this.palette.getCompound(i);
-
-      Map<String, String> propertiesMap = null;
-      if (map.keySet().contains("Properties")) {
-        propertiesMap = new HashMap<>();
-        CompoundBinaryTag properties = map.getCompound("Properties");
-        for (String entry : properties.keySet()) {
-          propertiesMap.put(entry, properties.getString(entry));
-        }
+      BinaryTag properties = map.get("Properties");
+      if (properties == null) {
+        palettedBlocks[i] = factory.createSimpleBlock(map.getString("Name"), null);
+      } else {
+        Map<String, String> propertiesMap = new HashMap<>();
+        ((CompoundBinaryTag) properties).forEach(entry -> propertiesMap.put(entry.getKey(), ((StringBinaryTag) entry.getValue()).value()));
+        palettedBlocks[i] = factory.createSimpleBlock(map.getString("Name"), propertiesMap);
       }
-
-      palettedBlocks[i] = factory.createSimpleBlock(map.getString("Name"), propertiesMap);
     }
 
     for (BinaryTag binaryTag : this.blocks) {
       CompoundBinaryTag blockMap = (CompoundBinaryTag) binaryTag;
-      ListBinaryTag posTag = blockMap.getList("pos");
+      ListBinaryTag pos = blockMap.getList("pos");
       VirtualBlock block = palettedBlocks[blockMap.getInt("state")];
-      int x = offsetX + posTag.getInt(0);
-      int y = offsetY + posTag.getInt(1);
-      int z = offsetZ + posTag.getInt(2);
-      world.setBlock(x, y, z, block);
+      int posX = offsetX + pos.getInt(0);
+      int posY = offsetY + pos.getInt(1);
+      int posZ = offsetZ + pos.getInt(2);
+      world.setBlock(posX, posY, posZ, block);
 
       CompoundBinaryTag blockEntityNbt = blockMap.getCompound("nbt");
       if (!blockEntityNbt.keySet().isEmpty()) {
-        world.setBlockEntity(x, y, z, blockEntityNbt, factory.getBlockEntity(block.getModernStringID()));
+        world.setBlockEntity(posX, posY, posZ, blockEntityNbt, factory.getBlockEntityFromModernId(block.modernId()));
       }
     }
 

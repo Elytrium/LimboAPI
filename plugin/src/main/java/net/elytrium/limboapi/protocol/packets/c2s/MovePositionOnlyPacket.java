@@ -35,18 +35,17 @@ public class MovePositionOnlyPacket implements MinecraftPacket {
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     this.posX = buf.readDouble();
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
-      buf.skipBytes(8);
-    }
     this.posY = buf.readDouble();
+    if (protocolVersion.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6)) {
+      buf.skipBytes(Double.BYTES); // eyes pos
+    }
     this.posZ = buf.readDouble();
-
     if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_21_2)) {
       this.onGround = buf.readBoolean();
     } else {
       int flags = buf.readUnsignedByte();
-      this.onGround = (flags & 1) != 0;
-      this.collideHorizontally = (flags & 2) != 0;
+      this.onGround = (flags & 0b01) != 0;
+      this.collideHorizontally = (flags & 0b10) != 0;
     }
   }
 
@@ -57,32 +56,17 @@ public class MovePositionOnlyPacket implements MinecraftPacket {
 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
-    if (handler instanceof LimboSessionHandlerImpl) {
-      return ((LimboSessionHandlerImpl) handler).handle(this);
-    } else {
-      return true;
-    }
+    return !(handler instanceof LimboSessionHandlerImpl limbo) || limbo.handle(this);
   }
 
   @Override
   public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0 ? 33 : 25;
+    return version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6) ? Double.BYTES * 4 + 1 : Double.BYTES * 3 + 1;
   }
 
   @Override
   public int decodeExpectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 25;
-  }
-
-  @Override
-  public String toString() {
-    return "PlayerPosition{"
-        + "posX=" + this.posX
-        + ", posY=" + this.posY
-        + ", posZ=" + this.posZ
-        + ", onGround=" + this.onGround
-        + ", collideHorizontally=" + this.collideHorizontally
-        + "}";
+    return this.decodeExpectedMaxLength(buf, direction, version);
   }
 
   public double getX() {
@@ -103,5 +87,16 @@ public class MovePositionOnlyPacket implements MinecraftPacket {
 
   public boolean isCollideHorizontally() {
     return this.collideHorizontally;
+  }
+
+  @Override
+  public String toString() {
+    return "MovePositionOnlyPacket{"
+        + "posX=" + this.posX
+        + ", posY=" + this.posY
+        + ", posZ=" + this.posZ
+        + ", onGround=" + this.onGround
+        + ", collideHorizontally=" + this.collideHorizontally
+        + "}";
   }
 }

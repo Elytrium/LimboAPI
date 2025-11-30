@@ -7,7 +7,7 @@
 
 package net.elytrium.limboapi.api;
 
-import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.elytrium.limboapi.api.world.player.LimboPlayer;
 
 public interface LimboSessionHandler {
 
@@ -19,11 +19,11 @@ public interface LimboSessionHandler {
 
   }
 
-  default void onMove(double posX, double posY, double posZ) {
+  default void onMove(double posX, double posY, double posZ, float yaw, float pitch) {
 
   }
 
-  default void onMove(double posX, double posY, double posZ, float yaw, float pitch) {
+  default void onMove(double posX, double posY, double posZ) {
 
   }
 
@@ -35,7 +35,7 @@ public interface LimboSessionHandler {
 
   }
 
-  default void onTeleport(int teleportID) {
+  default void onTeleport(int teleportId) {
 
   }
 
@@ -44,7 +44,7 @@ public interface LimboSessionHandler {
   }
 
   /**
-   * @param packet Any velocity built-in packet or any packet registered via {@link Limbo#registerPacket}.
+   * @param packet Any velocity built-in packet or any packet registered via {@link Limbo#registerPacket}
    */
   default void onGeneric(Object packet) {
 

@@ -7,22 +7,26 @@
 
 package net.elytrium.limboapi.api.command;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.brigadier.tree.CommandNode;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.CommandSource;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+/**
+ * @deprecated Use {@link CommandMeta}
+ */
+@Deprecated(forRemoval = true)
 public class LimboCommandMeta implements CommandMeta {
 
   @NonNull
   private final Collection<String> aliases;
   @NonNull
   private final Collection<CommandNode<CommandSource>> hints;
-  @Nullable // Why?..
+  @Nullable
   private final Object plugin;
 
   public LimboCommandMeta(@NonNull Collection<String> aliases) {
@@ -35,7 +39,7 @@ public class LimboCommandMeta implements CommandMeta {
 
   public LimboCommandMeta(@NonNull Collection<String> aliases, @Nullable Collection<CommandNode<CommandSource>> hints, @Nullable Object plugin) {
     this.aliases = aliases;
-    this.hints = Objects.requireNonNullElse(hints, ImmutableList.of());
+    this.hints = Objects.requireNonNullElse(hints, Collections.emptyList());
     this.plugin = plugin;
   }
 

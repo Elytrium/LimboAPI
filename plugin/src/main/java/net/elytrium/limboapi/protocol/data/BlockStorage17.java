@@ -21,9 +21,9 @@ import com.google.common.base.Preconditions;
 import com.velocitypowered.api.network.ProtocolVersion;
 import io.netty.buffer.ByteBuf;
 import java.util.Arrays;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.data.BlockStorage;
-import net.elytrium.limboapi.api.mcprotocollib.NibbleArray3D;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.chunk.data.BlockStorage;
+import net.elytrium.limboapi.api.world.chunk.util.NibbleArray3D;
 import net.elytrium.limboapi.server.world.SimpleBlock;
 import net.elytrium.limboapi.server.world.chunk.SimpleChunk;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -45,11 +45,11 @@ public class BlockStorage17 implements BlockStorage {
     Preconditions.checkArgument(byteBufObject instanceof ByteBuf);
     ByteBuf buf = (ByteBuf) byteBufObject;
     if (pass == 0) {
-      if (version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+      if (version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6)) {
         byte[] raw = new byte[this.blocks.length];
         for (int i = 0; i < this.blocks.length; ++i) {
           VirtualBlock block = this.blocks[i];
-          raw[i] = (byte) (block == null ? 0 : block.getBlockStateID(ProtocolVersion.MINECRAFT_1_7_2) >> 4);
+          raw[i] = (byte) (block == null ? 0 : block.blockStateId(ProtocolVersion.MINECRAFT_1_7_2) >> 4);
         }
 
         buf.writeBytes(raw);
@@ -57,18 +57,18 @@ public class BlockStorage17 implements BlockStorage {
         short[] raw = new short[this.blocks.length];
         for (int i = 0; i < this.blocks.length; ++i) {
           VirtualBlock block = this.blocks[i];
-          raw[i] = (short) (block == null ? 0 : block.getBlockStateID(ProtocolVersion.MINECRAFT_1_8));
+          raw[i] = (short) (block == null ? 0 : block.blockStateId(ProtocolVersion.MINECRAFT_1_8));
         }
 
-        for (short s : raw) {
-          buf.writeShortLE(s);
+        for (short value : raw) {
+          buf.writeShortLE(value);
         }
       }
-    } else if (pass == 1 && version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+    } else if (pass == 1 && version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6)) {
       NibbleArray3D metadata = new NibbleArray3D(SimpleChunk.MAX_BLOCKS_PER_SECTION);
       for (int i = 0; i < this.blocks.length; ++i) {
         VirtualBlock block = this.blocks[i];
-        metadata.set(i, block == null ? 0 : block.getBlockStateID(ProtocolVersion.MINECRAFT_1_7_2) & 0xFFFF);
+        metadata.set(i, block == null ? 0 : (byte) (block.blockStateId(ProtocolVersion.MINECRAFT_1_7_2) & 0xFFFF));
       }
 
       buf.writeBytes(metadata.getData());
@@ -89,7 +89,7 @@ public class BlockStorage17 implements BlockStorage {
 
   @Override
   public int getDataLength(ProtocolVersion version) {
-    return version.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0 ? this.blocks.length + (SimpleChunk.MAX_BLOCKS_PER_SECTION >> 1) : this.blocks.length * 2;
+    return version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6) ? this.blocks.length + (SimpleChunk.MAX_BLOCKS_PER_SECTION >> 1) : this.blocks.length * Short.BYTES;
   }
 
   @Override

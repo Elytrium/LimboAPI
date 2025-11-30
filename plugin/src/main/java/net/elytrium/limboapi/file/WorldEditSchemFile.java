@@ -21,9 +21,9 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.elytrium.limboapi.api.LimboFactory;
-import net.elytrium.limboapi.api.chunk.VirtualBlock;
-import net.elytrium.limboapi.api.chunk.VirtualWorld;
-import net.elytrium.limboapi.api.file.WorldFile;
+import net.elytrium.limboapi.api.world.chunk.block.VirtualBlock;
+import net.elytrium.limboapi.api.world.VirtualWorld;
+import net.elytrium.limboapi.api.world.WorldFile;
 import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
@@ -46,24 +46,23 @@ public class WorldEditSchemFile implements WorldFile {
 
     ByteBuf blockDataBuf = Unpooled.wrappedBuffer(tag.getByteArray("BlockData"));
     this.blocks = new int[this.width * this.height * this.length];
-
-    for (int i = 0; i < this.blocks.length; i++) {
+    for (int i = 0; i < this.blocks.length; ++i) {
       this.blocks[i] = ProtocolUtils.readVarInt(blockDataBuf);
     }
+    blockDataBuf.release();
 
     this.blockEntities = tag.getList("BlockEntities");
   }
 
   @Override
-  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, int lightLevel) {
+  public void toWorld(LimboFactory factory, VirtualWorld world, int offsetX, int offsetY, int offsetZ, byte lightLevel) {
     VirtualBlock[] palettedBlocks = new VirtualBlock[this.palette.keySet().size()];
-    this.palette.forEach((entry) -> palettedBlocks[((IntBinaryTag) entry.getValue()).value()] = factory.createSimpleBlock(entry.getKey()));
+    this.palette.forEach(entry -> palettedBlocks[((IntBinaryTag) entry.getValue()).value()] = factory.createSimpleBlock(entry.getKey()));
 
     for (int posX = 0; posX < this.width; ++posX) {
       for (int posY = 0; posY < this.height; ++posY) {
         for (int posZ = 0; posZ < this.length; ++posZ) {
-          int index = (posY * this.length + posZ) * this.width + posX;
-          world.setBlock(posX + offsetX, posY + offsetY, posZ + offsetZ, palettedBlocks[this.blocks[index]]);
+          world.setBlock(offsetX + posX, offsetY + posY, offsetZ + posZ, palettedBlocks[this.blocks[(posY * this.length + posZ) * this.width + posX]]);
         }
       }
     }
@@ -71,12 +70,7 @@ public class WorldEditSchemFile implements WorldFile {
     for (BinaryTag blockEntity : this.blockEntities) {
       CompoundBinaryTag blockEntityData = (CompoundBinaryTag) blockEntity;
       int[] posTag = blockEntityData.getIntArray("Pos");
-      world.setBlockEntity(
-          offsetX + posTag[0],
-          offsetY + posTag[1],
-          offsetZ + posTag[2],
-          blockEntityData,
-          factory.getBlockEntity(blockEntityData.getString("Id")));
+      world.setBlockEntity(offsetX + posTag[0], offsetY + posTag[1], offsetZ + posTag[2], blockEntityData, factory.getBlockEntityFromModernId(blockEntityData.getString("Id")));
     }
 
     world.fillSkyLight(lightLevel);

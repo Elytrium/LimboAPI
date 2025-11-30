@@ -25,11 +25,6 @@ import io.netty.buffer.ByteBuf;
 
 public record ChunkUnloadPacket(int posX, int posZ) implements MinecraftPacket {
 
-  public ChunkUnloadPacket() {
-    this(0, 0);
-    throw new IllegalStateException();
-  }
-
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     throw new IllegalStateException();
@@ -57,5 +52,16 @@ public record ChunkUnloadPacket(int posX, int posZ) implements MinecraftPacket {
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     throw new IllegalStateException();
+  }
+
+  @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    if (version.noGreaterThan(ProtocolVersion.MINECRAFT_1_8)) {
+      return version == ProtocolVersion.MINECRAFT_1_8
+          ? Long.BYTES + 1 + Short.BYTES + 1
+          : Long.BYTES + 1 + Short.BYTES + Short.BYTES + Integer.BYTES;
+    }
+
+    return Long.BYTES;
   }
 }
