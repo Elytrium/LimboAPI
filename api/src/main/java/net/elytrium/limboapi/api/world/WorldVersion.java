@@ -10,11 +10,11 @@ package net.elytrium.limboapi.api.world;
 import com.velocitypowered.api.network.ProtocolVersion;
 import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.Set;
+import java.util.Objects;
 
 public enum WorldVersion {
 
-  LEGACY(EnumSet.range(ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_12_2)),
+  LEGACY(EnumSet.range(ProtocolVersion.MINECRAFT_1_7_2, ProtocolVersion.MINECRAFT_1_12_2)), // TODO better legacy support
   MINECRAFT_1_13(EnumSet.of(ProtocolVersion.MINECRAFT_1_13)),
   MINECRAFT_1_13_2(EnumSet.of(ProtocolVersion.MINECRAFT_1_13_1, ProtocolVersion.MINECRAFT_1_13_2)),
   MINECRAFT_1_14(EnumSet.range(ProtocolVersion.MINECRAFT_1_14, ProtocolVersion.MINECRAFT_1_14_4)),
@@ -36,27 +36,25 @@ public enum WorldVersion {
   MINECRAFT_1_21_7(EnumSet.of(ProtocolVersion.MINECRAFT_1_21_7)),
   MINECRAFT_1_21_9(EnumSet.of(ProtocolVersion.MINECRAFT_1_21_9));
 
-  private static final EnumMap<ProtocolVersion, WorldVersion> MC_VERSION_TO_ITEM_VERSIONS = new EnumMap<>(ProtocolVersion.class);
+  private static final EnumMap<ProtocolVersion, WorldVersion> VERSIONS_MAP = new EnumMap<>(ProtocolVersion.class);
 
-  private final Set<ProtocolVersion> versions;
+  private final EnumSet<ProtocolVersion> versions;
 
-  WorldVersion(Set<ProtocolVersion> versions) {
+  WorldVersion(EnumSet<ProtocolVersion> versions) {
     this.versions = versions;
   }
 
-  public Set<ProtocolVersion> getVersions() {
+  public EnumSet<ProtocolVersion> getVersions() {
     return this.versions;
   }
 
   static {
     for (WorldVersion version : WorldVersion.values()) {
-      for (ProtocolVersion protocolVersion : version.getVersions()) {
-        WorldVersion.MC_VERSION_TO_ITEM_VERSIONS.put(protocolVersion, version);
-      }
+      version.getVersions().forEach(protocolVersion -> WorldVersion.VERSIONS_MAP.put(protocolVersion, version));
     }
   }
 
   public static WorldVersion from(ProtocolVersion protocolVersion) {
-    return WorldVersion.MC_VERSION_TO_ITEM_VERSIONS.get(protocolVersion);
+    return Objects.requireNonNull(WorldVersion.VERSIONS_MAP.get(protocolVersion));
   }
 }

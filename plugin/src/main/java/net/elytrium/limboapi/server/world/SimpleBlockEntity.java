@@ -33,6 +33,7 @@ import net.elytrium.limboapi.api.world.chunk.blockentity.VirtualBlockEntity;
 import net.elytrium.limboapi.api.world.chunk.VirtualChunk;
 import net.elytrium.limboapi.api.world.item.Item;
 import net.elytrium.limboapi.api.world.WorldVersion;
+import net.elytrium.limboapi.server.item.codec.data.ComponentHolderCodec;
 import net.elytrium.limboapi.utils.JsonUtil;
 import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.BinaryTagTypes;
@@ -347,24 +348,114 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
       return this.posZ;
     }
 
+    private static BinaryTag convertSignTextToJson(ProtocolVersion version, BinaryTag tag) {
+      if (tag instanceof CompoundBinaryTag compoundBinaryTag) {
+        var builder = CompoundBinaryTag.builder().put(compoundBinaryTag);
+        if (compoundBinaryTag.get("messages") instanceof ListBinaryTag messages) {
+          builder.put("messages", messages.stream().map(binaryTag -> Entry.toJson(version, binaryTag)).collect(ListBinaryTag.toListTag()));
+        }
+
+        if (compoundBinaryTag.get("filtered_messages") instanceof ListBinaryTag filteredMessages) {
+          builder.put("filtered_messages", filteredMessages.stream().map(binaryTag -> Entry.toJson(version, binaryTag)).collect(ListBinaryTag.toListTag()));
+        }
+
+        return builder.build();
+      }
+
+      return tag;
+    }
+
+    private static StringBinaryTag toJson(ProtocolVersion version, BinaryTag tag) {
+      return StringBinaryTag.stringBinaryTag(ComponentHolderCodec.CODEC.component2Json(version, ComponentHolderCodec.CODEC.binaryTag2Component(version, tag)));
+    }
+
     @Override
     public CompoundBinaryTag getNbt(ProtocolVersion version) { // adventure-nbt is the worst api I ever used
       CompoundBinaryTag.Builder nbt = null;
-      // TODO fix banners 1.20.5-1.21.2 by adding patterns to the registry (but i'm not sure is it important thing and does someone will need it)
-      if (this.nbt != null && version.lessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-        String modernId = SimpleBlockEntity.this.getModernId();
-        boolean lessThen16 = version.lessThan(ProtocolVersion.MINECRAFT_1_16);
-        boolean noGreaterThan12 = lessThen16 && version.noGreaterThan(ProtocolVersion.MINECRAFT_1_12_2);
+      // TODO fix banners 1.20.5+ by adding patterns to the registry (but i'm not sure is it important thing and does someone will need it)
+      if (this.nbt != null && version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
         if (!Entry.warned && this.nbt.get("SkullOwner") != null) {
-          LimboAPI.getLogger().warn("The world contains legacy block entities, it's recommended to update your schema to the latest version (>=1.20.5).");
+          LimboAPI.getLogger().warn("The world contains legacy block entities, it's recommended to update your schema to the latest version (>=1.21.5).");
           Entry.warned = true;
         }
 
-        // https://github.com/ViaVersion/ViaBackwards/blob/4.10.2/common/src/main/java/com/viaversion/viabackwards/protocol/protocol1_20_3to1_20_5/rewriter/BlockItemPacketRewriter1_20_5.java#L190
+        // https://github.com/ViaVersion/ViaBackwards/blob/5.5.1/common/src/main/java/com/viaversion/viabackwards/protocol/v1_21_5to1_21_4/rewriter/BlockItemPacketRewriter1_21_5.java#L300
         {
+          BinaryTag customName = this.nbt.get("CustomName");
+          if (customName != null) {
+            if (nbt == null) {
+              nbt = CompoundBinaryTag.builder().put(this.nbt);
+            }
+
+            nbt.put("CustomName", Entry.toJson(version, customName));
+          }
+
+          // https://github.com/ViaVersion/ViaBackwards/blob/4.10.2/common/src/main/java/com/viaversion/viabackwards/protocol/protocol1_19_4to1_20/packets/BlockItemPackets1_20.java#L191
+          int id = SimpleBlockEntity.this.getId(ProtocolVersion.MINECRAFT_1_20);
+          if (id == 7 || id == 8) {
+            BinaryTag frontText = this.nbt.get("front_text");
+            BinaryTag backText = this.nbt.get("back_text");
+            if (frontText != null || backText != null) {
+              if (nbt == null) {
+                nbt = CompoundBinaryTag.builder().put(this.nbt);
+              }
+
+              frontText = Entry.convertSignTextToJson(version, frontText);
+              if (version.lessThan(ProtocolVersion.MINECRAFT_1_20)) {
+                nbt.remove("front_text");
+                nbt.remove("back_text");
+                if (version.greaterThan(ProtocolVersion.MINECRAFT_1_9_2) && frontText instanceof CompoundBinaryTag frontTextTag) {
+                  if (frontTextTag.get("messages") instanceof ListBinaryTag messages) {
+                    boolean noGreaterThan11 = version.noGreaterThan(ProtocolVersion.MINECRAFT_1_11_1);
+                    int i = 0;
+                    var serializer = ProtocolUtils.getJsonChatSerializer(version);
+                    for (BinaryTag message : messages) {
+                      nbt.put("Text" + ++i, noGreaterThan11 ? StringBinaryTag.stringBinaryTag(serializer.serialize(serializer.deserialize(((StringBinaryTag) message).value()))) : message);
+                    }
+                  }
+
+                  if (frontTextTag.get("filtered_messages") instanceof ListBinaryTag filteredMessages) {
+                    int i = 0;
+                    for (BinaryTag message : filteredMessages) {
+                      nbt.put("FilteredText" + ++i, message);
+                    }
+                  }
+
+                  BinaryTag color = frontTextTag.get("color");
+                  if (color != null) {
+                    nbt.put("Color", color);
+                  }
+
+                  BinaryTag glowing = frontTextTag.get("has_glowing_text");
+                  if (glowing != null) {
+                    nbt.put("GlowingText", glowing);
+                  }
+                }
+              } else {
+                if (frontText != null) {
+                  nbt.put("front_text", frontText);
+                }
+                backText = Entry.convertSignTextToJson(version, backText);
+                if (backText != null) {
+                  nbt.put("back_text", backText);
+                }
+              }
+            }
+          }
+        }
+
+        // https://github.com/ViaVersion/ViaBackwards/blob/4.10.2/common/src/main/java/com/viaversion/viabackwards/protocol/protocol1_20_3to1_20_5/rewriter/BlockItemPacketRewriter1_20_5.java#L190
+        if (version.lessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
+          String modernId = SimpleBlockEntity.this.getModernId();
+          boolean lessThen16 = version.lessThan(ProtocolVersion.MINECRAFT_1_16);
+          boolean noGreaterThan12 = lessThen16 && version.noGreaterThan(ProtocolVersion.MINECRAFT_1_12_2);
+
           BinaryTag profile = this.nbt.get("profile");
           if (profile != null) {
-            nbt = CompoundBinaryTag.builder().put(this.nbt);
+            if (nbt == null) {
+              nbt = CompoundBinaryTag.builder().put(this.nbt);
+            }
+
             nbt.remove("profile");
             if (profile instanceof StringBinaryTag) {
               // https://github.com/ViaVersion/ViaBackwards/blob/4.10.2/common/src/main/java/com/viaversion/viabackwards/protocol/protocol1_15_2to1_16/packets/BlockItemPackets1_16.java#L270
@@ -385,112 +476,67 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
               }
             }
           }
-        }
 
-        if (this.nbt.get("patterns") instanceof ListBinaryTag patterns) {
-          int i = 0;
-          for (BinaryTag pattern : patterns) {
-            if (pattern instanceof CompoundBinaryTag patternTag) {
-              if (patternTag.get("color") instanceof StringBinaryTag colorTag) {
-                String legacy = Entry.patternIdModern2Legacy(patternTag.getString("pattern", ""));
-                if (legacy != null) {
-                  int color = Entry.colorIdModern2Legacy(colorTag.value());
-                  patterns = patterns.set(i, CompoundBinaryTag.builder().put(patternTag)
-                      .remove("pattern")
-                      .remove("color")
-                      .putString("Pattern", legacy)
-                      .putInt("Color", noGreaterThan12 ? 15 - color : color)
-                      .build(), null
-                  );
+          if (this.nbt.get("patterns") instanceof ListBinaryTag patterns) {
+            int i = 0;
+            for (BinaryTag pattern : patterns) {
+              if (pattern instanceof CompoundBinaryTag patternTag) {
+                if (patternTag.get("color") instanceof StringBinaryTag colorTag) {
+                  String legacy = Entry.patternIdModern2Legacy(patternTag.getString("pattern", ""));
+                  if (legacy != null) {
+                    int color = Entry.colorIdModern2Legacy(colorTag.value());
+                    patterns = patterns.set(i, CompoundBinaryTag.builder().put(patternTag)
+                        .remove("pattern")
+                        .remove("color")
+                        .putString("Pattern", legacy)
+                        .putInt("Color", noGreaterThan12 ? 15 - color : color)
+                        .build(), null
+                    );
+                  }
                 }
               }
+
+              ++i;
             }
 
-            ++i;
-          }
-
-          if (nbt == null) {
-            nbt = CompoundBinaryTag.builder().put(this.nbt);
-          }
-
-          nbt.remove("patterns");
-          nbt.put("Patterns", patterns);
-
-          if (noGreaterThan12 && this.chunk != null) {
-            short id = this.getBlock().blockStateId(ProtocolVersion.MINECRAFT_1_13);
-            if (id >= 6854/*BANNER_START*/ && id <= 7109/*BANNER_STOP*/) {
-              nbt.putInt("Base", 15 - ((id - 6854/*BANNER_START*/) >> 4));
-            } else if (id >= 7110/*WALL_BANNER_START*/ && id <= 7173/*WALL_BANNER_STOP*/) {
-              nbt.putInt("Base", 15 - ((id - 7110/*WALL_BANNER_START*/) >> 2));
-            } else {
-              LimboAPI.getLogger().warn("Why does this block have the banner block entity? nbt={}", this.nbt);
-            }
-          }
-        }
-
-        if (version.lessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
-          // https://github.com/ViaVersion/ViaBackwards/blob/4.10.2/common/src/main/java/com/viaversion/viabackwards/protocol/protocol1_20to1_20_2/rewriter/BlockItemPacketRewriter1_20_2.java#L397
-          BinaryTag primaryEffect = this.nbt.get("primary_effect");
-          BinaryTag secondaryEffect = this.nbt.get("secondary_effect");
-          boolean primary = primaryEffect instanceof StringBinaryTag;
-          boolean secondary = secondaryEffect instanceof StringBinaryTag;
-          if (primary || secondary) {
             if (nbt == null) {
               nbt = CompoundBinaryTag.builder().put(this.nbt);
             }
 
-            if (primary) {
-              nbt.remove("primary_effect");
-              nbt.putInt("Primary", Entry.potionEffectLegacyId(((StringBinaryTag) primaryEffect).value()) + 1/*Empty effect at 0*/);
-            }
+            nbt.remove("patterns");
+            nbt.put("Patterns", patterns);
 
-            if (secondary) {
-              nbt.remove("secondary_effect");
-              nbt.putInt("Secondary", Entry.potionEffectLegacyId(((StringBinaryTag) secondaryEffect).value()) + 1/*Empty effect at 0*/);
+            if (noGreaterThan12 && this.chunk != null) {
+              short id = this.getBlock().blockStateId(ProtocolVersion.MINECRAFT_1_13);
+              if (id >= 6854/*BANNER_START*/ && id <= 7109/*BANNER_STOP*/) {
+                nbt.putInt("Base", 15 - ((id - 6854/*BANNER_START*/) >> 4));
+              } else if (id >= 7110/*WALL_BANNER_START*/ && id <= 7173/*WALL_BANNER_STOP*/) {
+                nbt.putInt("Base", 15 - ((id - 7110/*WALL_BANNER_START*/) >> 2));
+              } else {
+                LimboAPI.getLogger().warn("Why does this block have the banner block entity? nbt={}", this.nbt);
+              }
             }
           }
 
-          if (version.lessThan(ProtocolVersion.MINECRAFT_1_20)) {
-            // https://github.com/ViaVersion/ViaBackwards/blob/4.10.2/common/src/main/java/com/viaversion/viabackwards/protocol/protocol1_19_4to1_20/packets/BlockItemPackets1_20.java#L191
-            {
-              int id = SimpleBlockEntity.this.getId(ProtocolVersion.MINECRAFT_1_20);
-              if (id == 7 || id == 8) {
-                BinaryTag frontText = this.nbt.get("front_text");
-                if (frontText != null || this.nbt.get("back_text") != null) {
-                  if (nbt == null) {
-                    nbt = CompoundBinaryTag.builder().put(this.nbt);
-                  }
+          if (version.lessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
+            // https://github.com/ViaVersion/ViaBackwards/blob/4.10.2/common/src/main/java/com/viaversion/viabackwards/protocol/protocol1_20to1_20_2/rewriter/BlockItemPacketRewriter1_20_2.java#L397
+            BinaryTag primaryEffect = this.nbt.get("primary_effect");
+            BinaryTag secondaryEffect = this.nbt.get("secondary_effect");
+            boolean primary = primaryEffect instanceof StringBinaryTag;
+            boolean secondary = secondaryEffect instanceof StringBinaryTag;
+            if (primary || secondary) {
+              if (nbt == null) {
+                nbt = CompoundBinaryTag.builder().put(this.nbt);
+              }
 
-                  nbt.remove("front_text");
-                  nbt.remove("back_text");
-                  if (version.greaterThan(ProtocolVersion.MINECRAFT_1_9_2) && frontText instanceof CompoundBinaryTag frontTextTag) {
-                    if (frontTextTag.get("messages") instanceof ListBinaryTag messages) {
-                      boolean noGreaterThan11 = version.noGreaterThan(ProtocolVersion.MINECRAFT_1_11_1);
-                      int i = 0;
-                      var serializer = ProtocolUtils.getJsonChatSerializer(version);
-                      for (BinaryTag message : messages) {
-                        nbt.put("Text" + ++i, noGreaterThan11 ? StringBinaryTag.stringBinaryTag(serializer.serialize(serializer.deserialize(((StringBinaryTag) message).value()))) : message);
-                      }
-                    }
+              if (primary) {
+                nbt.remove("primary_effect");
+                nbt.putInt("Primary", Entry.potionEffectLegacyId(((StringBinaryTag) primaryEffect).value()) + 1/*Empty effect at 0*/);
+              }
 
-                    if (frontTextTag.get("filtered_messages") instanceof ListBinaryTag filteredMessages) {
-                      int i = 0;
-                      for (BinaryTag message : filteredMessages) {
-                        nbt.put("FilteredText" + ++i, message);
-                      }
-                    }
-
-                    BinaryTag color = frontTextTag.get("color");
-                    if (color != null) {
-                      nbt.put("Color", color);
-                    }
-
-                    BinaryTag glowing = frontTextTag.get("has_glowing_text");
-                    if (glowing != null) {
-                      nbt.put("GlowingText", glowing);
-                    }
-                  }
-                }
+              if (secondary) {
+                nbt.remove("secondary_effect");
+                nbt.putInt("Secondary", Entry.potionEffectLegacyId(((StringBinaryTag) secondaryEffect).value()) + 1/*Empty effect at 0*/);
               }
             }
 
@@ -504,7 +550,7 @@ public class SimpleBlockEntity implements VirtualBlockEntity {
                 nbt.put("x", IntBinaryTag.intBinaryTag(this.posX));
                 nbt.put("y", IntBinaryTag.intBinaryTag(this.posY));
                 nbt.put("z", IntBinaryTag.intBinaryTag(this.posZ));
-                String id = version.noLessThan(ProtocolVersion.MINECRAFT_1_11) ? SimpleBlockEntity.this.getModernId() : SimpleBlockEntity.this.getLegacyId();
+                String id = version.noLessThan(ProtocolVersion.MINECRAFT_1_11) ? modernId : SimpleBlockEntity.this.getLegacyId();
                 BinaryTag currentId = this.nbt.get("id");
                 if (currentId == null || !((StringBinaryTag) currentId).value().equals(id)) {
                   nbt.putString("id", id);

@@ -10,7 +10,7 @@ package net.elytrium.limboapi.api.world.chunk.blockentity;
 import com.velocitypowered.api.network.ProtocolVersion;
 import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.Set;
+import java.util.Objects;
 
 public enum BlockEntityVersion {
 
@@ -24,7 +24,7 @@ public enum BlockEntityVersion {
   MINECRAFT_1_17(EnumSet.range(ProtocolVersion.MINECRAFT_1_17, ProtocolVersion.MINECRAFT_1_18_2)),
   MINECRAFT_1_19(EnumSet.range(ProtocolVersion.MINECRAFT_1_19, ProtocolVersion.MINECRAFT_1_19_1)),
   MINECRAFT_1_19_3(EnumSet.of(ProtocolVersion.MINECRAFT_1_19_3)),
-  MINECRAFT_1_19_4(EnumSet.range(ProtocolVersion.MINECRAFT_1_19_4, ProtocolVersion.MINECRAFT_1_20)),
+  MINECRAFT_1_19_4(EnumSet.of(ProtocolVersion.MINECRAFT_1_19_4)),
   MINECRAFT_1_20(EnumSet.range(ProtocolVersion.MINECRAFT_1_20, ProtocolVersion.MINECRAFT_1_20_2)),
   MINECRAFT_1_20_3(EnumSet.of(ProtocolVersion.MINECRAFT_1_20_3)),
   MINECRAFT_1_20_5(EnumSet.range(ProtocolVersion.MINECRAFT_1_20_5, ProtocolVersion.MINECRAFT_1_21)),
@@ -32,27 +32,25 @@ public enum BlockEntityVersion {
   MINECRAFT_1_21_5(EnumSet.range(ProtocolVersion.MINECRAFT_1_21_5, ProtocolVersion.MINECRAFT_1_21_7)),
   MINECRAFT_1_21_9(EnumSet.range(ProtocolVersion.MINECRAFT_1_21_9, ProtocolVersion.MAXIMUM_VERSION));
 
-  private static final EnumMap<ProtocolVersion, BlockEntityVersion> MC_VERSION_TO_ITEM_VERSIONS = new EnumMap<>(ProtocolVersion.class);
+  private static final EnumMap<ProtocolVersion, BlockEntityVersion> VERSIONS_MAP = new EnumMap<>(ProtocolVersion.class);
 
-  private final Set<ProtocolVersion> versions;
+  private final EnumSet<ProtocolVersion> versions;
 
-  BlockEntityVersion(Set<ProtocolVersion> versions) {
+  BlockEntityVersion(EnumSet<ProtocolVersion> versions) {
     this.versions = versions;
   }
 
-  public Set<ProtocolVersion> getVersions() {
+  public EnumSet<ProtocolVersion> getVersions() {
     return this.versions;
   }
 
   static {
     for (BlockEntityVersion version : BlockEntityVersion.values()) {
-      for (ProtocolVersion protocolVersion : version.getVersions()) {
-        BlockEntityVersion.MC_VERSION_TO_ITEM_VERSIONS.put(protocolVersion, version);
-      }
+      version.getVersions().forEach(protocolVersion -> BlockEntityVersion.VERSIONS_MAP.put(protocolVersion, version));
     }
   }
 
   public static BlockEntityVersion from(ProtocolVersion protocolVersion) {
-    return BlockEntityVersion.MC_VERSION_TO_ITEM_VERSIONS.get(protocolVersion);
+    return Objects.requireNonNull(BlockEntityVersion.VERSIONS_MAP.get(protocolVersion));
   }
 }

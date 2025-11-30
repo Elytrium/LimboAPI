@@ -215,59 +215,59 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
     };
   }
 
-  static <C, T1> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      Function<T1, C> constructor
+  static <V, T1> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      Function<T1, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(codec1.decode(buf, version));
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
       }
     };
   }
 
-  static <C, T1, T2> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      BiFunction<T1, T2, C> constructor
+  static <V, T1, T2> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      BiFunction<T1, T2, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(codec1.decode(buf, version), codec2.decode(buf, version));
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
       }
     };
   }
 
-  static <C, T1, T2, T3> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      StreamCodec<T3> codec3, Function<C, T3> getter3,
-      Function3<T1, T2, T3, C> constructor
+  static <V, T1, T2, T3> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      StreamCodec<T3> codec3, Function<V, T3> getter3,
+      Function3<T1, T2, T3, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(codec1.decode(buf, version), codec2.decode(buf, version), codec3.decode(buf, version));
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
         codec3.encode(buf, version, getter3.apply(value));
@@ -275,22 +275,22 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
     };
   }
 
-  static <C, T1, T2, T3, T4> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      StreamCodec<T3> codec3, Function<C, T3> getter3,
-      StreamCodec<T4> codec4, Function<C, T4> getter4,
-      Function4<T1, T2, T3, T4, C> constructor
+  static <V, T1, T2, T3, T4> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      StreamCodec<T3> codec3, Function<V, T3> getter3,
+      StreamCodec<T4> codec4, Function<V, T4> getter4,
+      Function4<T1, T2, T3, T4, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(codec1.decode(buf, version), codec2.decode(buf, version), codec3.decode(buf, version), codec4.decode(buf, version));
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
         codec3.encode(buf, version, getter3.apply(value));
@@ -299,23 +299,23 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
     };
   }
 
-  static <C, T1, T2, T3, T4, T5> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      StreamCodec<T3> codec3, Function<C, T3> getter3,
-      StreamCodec<T4> codec4, Function<C, T4> getter4,
-      StreamCodec<T5> codec5, Function<C, T5> getter5,
-      Function5<T1, T2, T3, T4, T5, C> constructor
+  static <V, T1, T2, T3, T4, T5> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      StreamCodec<T3> codec3, Function<V, T3> getter3,
+      StreamCodec<T4> codec4, Function<V, T4> getter4,
+      StreamCodec<T5> codec5, Function<V, T5> getter5,
+      Function5<T1, T2, T3, T4, T5, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(codec1.decode(buf, version), codec2.decode(buf, version), codec3.decode(buf, version), codec4.decode(buf, version), codec5.decode(buf, version));
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
         codec3.encode(buf, version, getter3.apply(value));
@@ -325,19 +325,19 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
     };
   }
 
-  static <C, T1, T2, T3, T4, T5, T6> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      StreamCodec<T3> codec3, Function<C, T3> getter3,
-      StreamCodec<T4> codec4, Function<C, T4> getter4,
-      StreamCodec<T5> codec5, Function<C, T5> getter5,
-      StreamCodec<T6> codec6, Function<C, T6> getter6,
-      Function6<T1, T2, T3, T4, T5, T6, C> constructor
+  static <V, T1, T2, T3, T4, T5, T6> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      StreamCodec<T3> codec3, Function<V, T3> getter3,
+      StreamCodec<T4> codec4, Function<V, T4> getter4,
+      StreamCodec<T5> codec5, Function<V, T5> getter5,
+      StreamCodec<T6> codec6, Function<V, T6> getter6,
+      Function6<T1, T2, T3, T4, T5, T6, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(
             codec1.decode(buf, version), codec2.decode(buf, version), codec3.decode(buf, version),
             codec4.decode(buf, version), codec5.decode(buf, version), codec6.decode(buf, version)
@@ -345,7 +345,7 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
         codec3.encode(buf, version, getter3.apply(value));
@@ -356,20 +356,20 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
     };
   }
 
-  static <C, T1, T2, T3, T4, T5, T6, T7> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      StreamCodec<T3> codec3, Function<C, T3> getter3,
-      StreamCodec<T4> codec4, Function<C, T4> getter4,
-      StreamCodec<T5> codec5, Function<C, T5> getter5,
-      StreamCodec<T6> codec6, Function<C, T6> getter6,
-      StreamCodec<T7> codec7, Function<C, T7> getter7,
-      Function7<T1, T2, T3, T4, T5, T6, T7, C> constructor
+  static <V, T1, T2, T3, T4, T5, T6, T7> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      StreamCodec<T3> codec3, Function<V, T3> getter3,
+      StreamCodec<T4> codec4, Function<V, T4> getter4,
+      StreamCodec<T5> codec5, Function<V, T5> getter5,
+      StreamCodec<T6> codec6, Function<V, T6> getter6,
+      StreamCodec<T7> codec7, Function<V, T7> getter7,
+      Function7<T1, T2, T3, T4, T5, T6, T7, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(
             codec1.decode(buf, version), codec2.decode(buf, version), codec3.decode(buf, version),
             codec4.decode(buf, version), codec5.decode(buf, version), codec6.decode(buf, version), codec7.decode(buf, version)
@@ -377,7 +377,7 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
         codec3.encode(buf, version, getter3.apply(value));
@@ -389,21 +389,21 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
     };
   }
 
-  static <C, T1, T2, T3, T4, T5, T6, T7, T8> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      StreamCodec<T3> codec3, Function<C, T3> getter3,
-      StreamCodec<T4> codec4, Function<C, T4> getter4,
-      StreamCodec<T5> codec5, Function<C, T5> getter5,
-      StreamCodec<T6> codec6, Function<C, T6> getter6,
-      StreamCodec<T7> codec7, Function<C, T7> getter7,
-      StreamCodec<T8> codec8, Function<C, T8> getter8,
-      Function8<T1, T2, T3, T4, T5, T6, T7, T8, C> constructor
+  static <V, T1, T2, T3, T4, T5, T6, T7, T8> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      StreamCodec<T3> codec3, Function<V, T3> getter3,
+      StreamCodec<T4> codec4, Function<V, T4> getter4,
+      StreamCodec<T5> codec5, Function<V, T5> getter5,
+      StreamCodec<T6> codec6, Function<V, T6> getter6,
+      StreamCodec<T7> codec7, Function<V, T7> getter7,
+      StreamCodec<T8> codec8, Function<V, T8> getter8,
+      Function8<T1, T2, T3, T4, T5, T6, T7, T8, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(
             codec1.decode(buf, version), codec2.decode(buf, version), codec3.decode(buf, version), codec4.decode(buf, version),
             codec5.decode(buf, version), codec6.decode(buf, version), codec7.decode(buf, version), codec8.decode(buf, version)
@@ -411,7 +411,7 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
         codec3.encode(buf, version, getter3.apply(value));
@@ -424,22 +424,22 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
     };
   }
 
-  static <C, T1, T2, T3, T4, T5, T6, T7, T8, T9> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      StreamCodec<T3> codec3, Function<C, T3> getter3,
-      StreamCodec<T4> codec4, Function<C, T4> getter4,
-      StreamCodec<T5> codec5, Function<C, T5> getter5,
-      StreamCodec<T6> codec6, Function<C, T6> getter6,
-      StreamCodec<T7> codec7, Function<C, T7> getter7,
-      StreamCodec<T8> codec8, Function<C, T8> getter8,
-      StreamCodec<T9> codec9, Function<C, T9> getter9,
-      Function9<T1, T2, T3, T4, T5, T6, T7, T8, T9, C> constructor
+  static <V, T1, T2, T3, T4, T5, T6, T7, T8, T9> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      StreamCodec<T3> codec3, Function<V, T3> getter3,
+      StreamCodec<T4> codec4, Function<V, T4> getter4,
+      StreamCodec<T5> codec5, Function<V, T5> getter5,
+      StreamCodec<T6> codec6, Function<V, T6> getter6,
+      StreamCodec<T7> codec7, Function<V, T7> getter7,
+      StreamCodec<T8> codec8, Function<V, T8> getter8,
+      StreamCodec<T9> codec9, Function<V, T9> getter9,
+      Function9<T1, T2, T3, T4, T5, T6, T7, T8, T9, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(
             codec1.decode(buf, version), codec2.decode(buf, version), codec3.decode(buf, version), codec4.decode(buf, version),
             codec5.decode(buf, version), codec6.decode(buf, version), codec7.decode(buf, version), codec8.decode(buf, version), codec9.decode(buf, version)
@@ -447,7 +447,7 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
         codec3.encode(buf, version, getter3.apply(value));
@@ -461,23 +461,23 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
     };
   }
 
-  static <C, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      StreamCodec<T3> codec3, Function<C, T3> getter3,
-      StreamCodec<T4> codec4, Function<C, T4> getter4,
-      StreamCodec<T5> codec5, Function<C, T5> getter5,
-      StreamCodec<T6> codec6, Function<C, T6> getter6,
-      StreamCodec<T7> codec7, Function<C, T7> getter7,
-      StreamCodec<T8> codec8, Function<C, T8> getter8,
-      StreamCodec<T9> codec9, Function<C, T9> getter9,
-      StreamCodec<T10> codec10, Function<C, T10> getter10,
-      Function10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, C> constructor
+  static <V, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      StreamCodec<T3> codec3, Function<V, T3> getter3,
+      StreamCodec<T4> codec4, Function<V, T4> getter4,
+      StreamCodec<T5> codec5, Function<V, T5> getter5,
+      StreamCodec<T6> codec6, Function<V, T6> getter6,
+      StreamCodec<T7> codec7, Function<V, T7> getter7,
+      StreamCodec<T8> codec8, Function<V, T8> getter8,
+      StreamCodec<T9> codec9, Function<V, T9> getter9,
+      StreamCodec<T10> codec10, Function<V, T10> getter10,
+      Function10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(
             codec1.decode(buf, version), codec2.decode(buf, version), codec3.decode(buf, version), codec4.decode(buf, version), codec5.decode(buf, version),
             codec6.decode(buf, version), codec7.decode(buf, version), codec8.decode(buf, version), codec9.decode(buf, version), codec10.decode(buf, version)
@@ -485,7 +485,7 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
         codec3.encode(buf, version, getter3.apply(value));
@@ -500,24 +500,24 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
     };
   }
 
-  static <C, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> StreamCodec<C> composite(
-      StreamCodec<T1> codec1, Function<C, T1> getter1,
-      StreamCodec<T2> codec2, Function<C, T2> getter2,
-      StreamCodec<T3> codec3, Function<C, T3> getter3,
-      StreamCodec<T4> codec4, Function<C, T4> getter4,
-      StreamCodec<T5> codec5, Function<C, T5> getter5,
-      StreamCodec<T6> codec6, Function<C, T6> getter6,
-      StreamCodec<T7> codec7, Function<C, T7> getter7,
-      StreamCodec<T8> codec8, Function<C, T8> getter8,
-      StreamCodec<T9> codec9, Function<C, T9> getter9,
-      StreamCodec<T10> codec10, Function<C, T10> getter10,
-      StreamCodec<T11> codec11, Function<C, T11> getter11,
-      Function11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, C> constructor
+  static <V, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> StreamCodec<V> composite(
+      StreamCodec<T1> codec1, Function<V, T1> getter1,
+      StreamCodec<T2> codec2, Function<V, T2> getter2,
+      StreamCodec<T3> codec3, Function<V, T3> getter3,
+      StreamCodec<T4> codec4, Function<V, T4> getter4,
+      StreamCodec<T5> codec5, Function<V, T5> getter5,
+      StreamCodec<T6> codec6, Function<V, T6> getter6,
+      StreamCodec<T7> codec7, Function<V, T7> getter7,
+      StreamCodec<T8> codec8, Function<V, T8> getter8,
+      StreamCodec<T9> codec9, Function<V, T9> getter9,
+      StreamCodec<T10> codec10, Function<V, T10> getter10,
+      StreamCodec<T11> codec11, Function<V, T11> getter11,
+      Function11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, V> constructor
   ) {
     return new StreamCodec<>() {
 
       @Override
-      public C decode(ByteBuf buf, ProtocolVersion version) {
+      public V decode(ByteBuf buf, ProtocolVersion version) {
         return constructor.apply(
             codec1.decode(buf, version), codec2.decode(buf, version), codec3.decode(buf, version), codec4.decode(buf, version), codec5.decode(buf, version),
             codec6.decode(buf, version), codec7.decode(buf, version), codec8.decode(buf, version), codec9.decode(buf, version), codec10.decode(buf, version), codec11.decode(buf, version)
@@ -525,7 +525,7 @@ public interface StreamCodec<V> extends StreamDecoder<V>, StreamEncoder<V> {
       }
 
       @Override
-      public void encode(ByteBuf buf, ProtocolVersion version, C value) {
+      public void encode(ByteBuf buf, ProtocolVersion version, V value) {
         codec1.encode(buf, version, getter1.apply(value));
         codec2.encode(buf, version, getter2.apply(value));
         codec3.encode(buf, version, getter3.apply(value));

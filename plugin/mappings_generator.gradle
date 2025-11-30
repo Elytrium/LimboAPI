@@ -380,7 +380,7 @@ void generateRegistryMappings(File targetDir, Map<MinecraftVersion, Map<String, 
   this.generateRegistryMappings("block_entity_type", targetDir, registryReports.findAll(entry -> MinecraftVersion.BLOCK_ENTITY_VERSIONS.contains(entry.getKey())), false)
 
   def worldVersions = registryReports.findAll(entry -> MinecraftVersion.WORLD_VERSIONS.contains(entry.getKey()))
-  this.generateRegistryMappings("item", targetDir, worldVersions, true)
+  this.generateRegistryMappings("item", targetDir, worldVersions, false)
   this.generateRegistryMappings("block", targetDir, worldVersions, true)
 
   this.generateRegistryMappings("data_component_type", targetDir, registryReports.findAll(entry -> entry.getKey() >= MinecraftVersion.MINECRAFT_1_20_5), false)

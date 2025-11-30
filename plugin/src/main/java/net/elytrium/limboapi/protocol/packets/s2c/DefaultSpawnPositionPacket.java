@@ -50,4 +50,21 @@ public record DefaultSpawnPositionPacket(String dimension, int posX, int posY, i
   public boolean handle(MinecraftSessionHandler handler) {
     throw new IllegalStateException();
   }
+
+  @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    if (version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6)) {
+      return Integer.BYTES * 3;
+    }
+
+    if (version.lessThan(ProtocolVersion.MINECRAFT_1_17)) {
+      return Long.BYTES;
+    }
+
+    if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_9)) {
+      return Long.BYTES + Float.BYTES;
+    }
+
+    return ProtocolUtils.stringSizeHint(this.dimension) + (Long.BYTES + Float.BYTES * 2);
+  }
 }

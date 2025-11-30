@@ -59,6 +59,21 @@ public class ChatSessionUpdatePacket implements MinecraftPacket {
   }
 
   @Override
+  public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return this.encodeSizeHint(direction, version);
+  }
+
+  @Override
+  public int decodeExpectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return this.encodeSizeHint(direction, version);
+  }
+
+  @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return Long.BYTES * 2 + Long.BYTES/*expiry*/ + 2/*key size*/ + 294/*key*/ + 2/*sign size*/ + 512/*sign*/;
+  }
+
+  @Override
   public String toString() {
     return "PlayerChatSessionPacket{"
            + "holderId=" + this.sessionId

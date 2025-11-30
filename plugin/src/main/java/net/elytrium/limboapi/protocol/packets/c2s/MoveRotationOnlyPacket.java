@@ -35,13 +35,12 @@ public class MoveRotationOnlyPacket implements MinecraftPacket {
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     this.yaw = buf.readFloat();
     this.pitch = buf.readFloat();
-
     if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_21_2)) {
       this.onGround = buf.readBoolean();
     } else {
       int flags = buf.readUnsignedByte();
-      this.onGround = (flags & 1) != 0;
-      this.collideHorizontally = (flags & 2) != 0;
+      this.onGround = (flags & 0b01) != 0;
+      this.collideHorizontally = (flags & 0b10) != 0;
     }
   }
 
@@ -62,7 +61,7 @@ public class MoveRotationOnlyPacket implements MinecraftPacket {
 
   @Override
   public int decodeExpectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return Float.BYTES * 2 + 1;
+    return this.decodeExpectedMaxLength(buf, direction, version);
   }
 
   public float getYaw() {

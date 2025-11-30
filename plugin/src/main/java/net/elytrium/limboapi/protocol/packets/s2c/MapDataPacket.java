@@ -72,4 +72,11 @@ public record MapDataPacket(int mapId, byte scale, MapData mapData) implements M
   public boolean handle(MinecraftSessionHandler handler) {
     throw new IllegalStateException();
   }
+
+  @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return version.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6)
+        ? 5 + 2 + Byte.BYTES * 3 + 1 + MapData.MAP_DIM_SIZE
+        : 5 + Byte.BYTES * 8 + 5 + MapData.MAP_SIZE;
+  }
 }

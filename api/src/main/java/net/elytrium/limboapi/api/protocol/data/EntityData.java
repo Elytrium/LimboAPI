@@ -9,8 +9,9 @@ package net.elytrium.limboapi.api.protocol.data;
 
 import com.velocitypowered.api.network.ProtocolVersion;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.shorts.Short2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectMap;
 import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.OptionalInt;
 import java.util.UUID;
@@ -49,7 +50,43 @@ import org.jspecify.annotations.NullMarked;
  * @see LimboPlayer#setEntityData(int, EntityData)
  */
 @NullMarked
-public class EntityData extends Short2ObjectLinkedOpenHashMap<Object> {
+public class EntityData extends Short2ObjectOpenHashMap<Object> {
+
+  public EntityData(int expected, float f) {
+    super(expected, f);
+  }
+
+  public EntityData(int expected) {
+    super(expected);
+  }
+
+  public EntityData() {
+
+  }
+
+  public EntityData(Map<? extends Short, ?> m, float f) {
+    super(m, f);
+  }
+
+  public EntityData(Map<? extends Short, ?> m) {
+    super(m);
+  }
+
+  public EntityData(Short2ObjectMap<Object> m, float f) {
+    super(m, f);
+  }
+
+  public EntityData(Short2ObjectMap<Object> m) {
+    super(m);
+  }
+
+  public EntityData(short[] k, Object[] v, float f) {
+    super(k, v, f);
+  }
+
+  public EntityData(short[] k, Object[] v) {
+    super(k, v);
+  }
 
   public record OptionalComponentHolder(@Nullable ComponentHolder component) {
 

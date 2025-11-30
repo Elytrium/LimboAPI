@@ -43,4 +43,9 @@ public record SetTimePacket(long gameTime, long dayTime) implements MinecraftPac
   public boolean handle(MinecraftSessionHandler handler) {
     throw new IllegalStateException();
   }
+
+  @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return Long.BYTES * 2 + 1;
+  }
 }

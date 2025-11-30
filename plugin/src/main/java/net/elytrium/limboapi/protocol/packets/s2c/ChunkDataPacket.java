@@ -365,6 +365,11 @@ public class ChunkDataPacket implements MinecraftPacket {
   }
 
   @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 128 * 1024; // Should be enough for most cases
+  }
+
+  @Override
   public String toString() {
     return "ChunkDataPacket{"
            + "chunk=" + this.chunk

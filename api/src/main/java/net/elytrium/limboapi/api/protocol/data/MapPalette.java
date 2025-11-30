@@ -236,13 +236,13 @@ public class MapPalette {
     }
 
     static {
-      for (MapVersion value : MapVersion.values()) {
-        value.versions.forEach(version -> VERSIONS_MAP.put(version, value));
+      for (MapVersion version : MapVersion.values()) {
+        version.getVersions().forEach(protocolVersion -> VERSIONS_MAP.put(protocolVersion, version));
       }
     }
 
     public static MapVersion fromProtocolVersion(ProtocolVersion version) {
-      return VERSIONS_MAP.get(version);
+      return Objects.requireNonNull(VERSIONS_MAP.get(version));
     }
   }
 }

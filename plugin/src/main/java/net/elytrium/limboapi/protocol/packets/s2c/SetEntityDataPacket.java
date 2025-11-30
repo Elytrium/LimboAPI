@@ -74,7 +74,7 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
   private int id;
   private EntityData data;
 
-  private ByteBuf buf; // TODO remove after proper tests
+  private ByteBuf fallbackBuf; // TODO remove after proper tests
 
   public SetEntityDataPacket(int id, EntityData data) {
     this.id = id;
@@ -124,8 +124,8 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
         }
       }
     } catch (Throwable t) {
-      this.buf = buf.retainedDuplicate().readerIndex(readerIndex);
-      LimboAPI.getLogger().error("Failed to read SetEntityDataPacket (direction={}, version={}, data=\"{}\")", direction, protocolVersion, Base64.getEncoder().encodeToString(ByteBufUtil.getBytes(this.buf)), t);
+      this.fallbackBuf = buf.retainedDuplicate().readerIndex(readerIndex);
+      LimboAPI.getLogger().error("Failed to read SetEntityDataPacket (direction={}, version={}, data=\"{}\")", direction, protocolVersion, Base64.getEncoder().encodeToString(ByteBufUtil.getBytes(this.fallbackBuf)), t);
       buf.readerIndex(buf.writerIndex());
     }
   }
@@ -133,8 +133,8 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
   @Override
   @SuppressWarnings("unchecked")
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    if (this.buf != null) {
-      buf.writeBytes(this.buf);
+    if (this.fallbackBuf != null) {
+      buf.writeBytes(this.fallbackBuf);
       return;
     }
 
@@ -151,7 +151,7 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
           Object value = entry.getValue();
           var pair = registry.get(value.getClass());
           if (pair == null) {
-            throw new IllegalArgumentException("Don't know how to encode " + value);
+            throw new IllegalArgumentException("Don't know how to encode " + value + " (" + value.getClass() + ") for " + protocolVersion);
           }
           buf.writeByte((pair.leftInt() << 5 | entry.getShortKey() & 0b00011111) & 0xFF);
           ((StreamCodec<Object>) pair.right()).encode(buf, protocolVersion, value);
@@ -167,9 +167,7 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
           Object value = entry.getValue();
           var pair = registry.get(value.getClass());
           if (pair == null) {
-            System.out.println(protocolVersion);
-            System.out.println(registry);
-            throw new IllegalArgumentException("Don't know how to encode " + value + " (" + value.getClass() + ")");
+            throw new IllegalArgumentException("Don't know how to encode " + value + " (" + value.getClass() + ") for " + protocolVersion);
           }
           ProtocolUtils.writeVarInt(buf, pair.leftInt());
           ((StreamCodec<Object>) pair.right()).encode(buf, protocolVersion, value);
@@ -188,13 +186,13 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public int refCnt() {
-    return this.buf == null ? -1 : this.buf.refCnt();
+    return this.fallbackBuf == null ? -1 : this.fallbackBuf.refCnt();
   }
 
   @Override
   public ReferenceCounted retain() {
-    if (this.buf != null) {
-      this.buf.retain();
+    if (this.fallbackBuf != null) {
+      this.fallbackBuf.retain();
     }
 
     return this;
@@ -202,8 +200,8 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public ReferenceCounted retain(int increment) {
-    if (this.buf != null) {
-      this.buf.retain(increment);
+    if (this.fallbackBuf != null) {
+      this.fallbackBuf.retain(increment);
     }
 
     return this;
@@ -211,8 +209,8 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public ReferenceCounted touch() {
-    if (this.buf != null) {
-      this.buf.touch();
+    if (this.fallbackBuf != null) {
+      this.fallbackBuf.touch();
     }
 
     return this;
@@ -220,8 +218,8 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public ReferenceCounted touch(Object hint) {
-    if (this.buf != null) {
-      this.buf.touch(hint);
+    if (this.fallbackBuf != null) {
+      this.fallbackBuf.touch(hint);
     }
 
     return this;
@@ -229,12 +227,12 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
 
   @Override
   public boolean release() {
-    return this.buf != null && this.buf.release();
+    return this.fallbackBuf != null && this.fallbackBuf.release();
   }
 
   @Override
   public boolean release(int decrement) {
-    return this.buf != null && this.buf.release(decrement);
+    return this.fallbackBuf != null && this.fallbackBuf.release(decrement);
   }
 
   static {
@@ -249,7 +247,7 @@ public class SetEntityDataPacket implements MinecraftPacket, ReferenceCounted { 
           .map(EntityData.OptionalUUID.class, optional -> LimboAPI.getClientUniqueId(optional.orElseThrow()).toString())
           .map(ComponentHolder.class, component -> component.getJson(ProtocolVersion.MINECRAFT_1_7_2))
           .map(EntityData.OptionalComponentHolder.class, optional -> optional.orElseThrow().getJson(ProtocolVersion.MINECRAFT_1_7_2));
-      builder.register(ItemStack.class, ItemStackCodec.CODEC);
+      builder.register(ItemStack.class, ItemStackCodec.OPTIONAL_CODEC);
       builder.register(BlockPos.class, BlockPosCodec.CODEC).map(EntityData.OptionalBlockPos.class, EntityData.OptionalBlockPos::orElseThrow);
     }
     try (var builder = new RegistryBuilder<>(ProtocolVersion.MINECRAFT_1_8).inheritAllFrom(ProtocolVersion.MINECRAFT_1_7_2)) {

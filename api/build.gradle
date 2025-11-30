@@ -62,6 +62,6 @@ publishing() {
 
   publications.create("publication", MavenPublication) {
     // TODO pom
-    artifact(jar)
+    from(components.java)
   }
 }

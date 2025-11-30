@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
+import net.elytrium.limboapi.api.world.WorldVersion;
 import net.elytrium.limboapi.api.world.chunk.biome.BuiltInBiome;
 import net.elytrium.limboapi.api.world.chunk.Dimension;
 import net.elytrium.limboapi.api.world.chunk.biome.VirtualBiome;
@@ -222,32 +223,15 @@ public interface LimboFactory {
    */
   void passLoginLimbo(Player player);
 
-  /**
-   * Creates new virtual item from Item enum
-   *
-   * @param item Item from item enum
-   *
-   * @return new virtual item
-   */
   VirtualItem getItem(Item item);
 
-  /**
-   * Creates new virtual item from Item enum
-   *
-   * @param modernId Modern item identifier
-   *
-   * @return new virtual item
-   */
   VirtualItem getItem(String modernId);
 
-  /**
-   * Creates new virtual item from Item enum
-   *
-   * @param legacyId Legacy item ID
-   *
-   * @return new virtual item
-   */
-  VirtualItem getLegacyItem(int legacyId);
+  VirtualItem getItem(ProtocolVersion version, short id);
+
+  VirtualItem getItem(WorldVersion version, short id);
+
+  VirtualItem getLegacyItem(short legacyId);
 
   /**
    * @return new data component map

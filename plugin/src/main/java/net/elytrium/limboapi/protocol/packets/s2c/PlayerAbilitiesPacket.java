@@ -41,4 +41,9 @@ public record PlayerAbilitiesPacket(byte abilities, float flyingSpeed, float wal
   public boolean handle(MinecraftSessionHandler handler) {
     throw new IllegalStateException();
   }
+
+  @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return Byte.BYTES + Float.BYTES * 2;
+  }
 }

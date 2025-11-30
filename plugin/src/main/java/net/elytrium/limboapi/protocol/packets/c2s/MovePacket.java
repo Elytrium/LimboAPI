@@ -48,8 +48,8 @@ public class MovePacket implements MinecraftPacket {
       this.onGround = buf.readBoolean();
     } else {
       int flags = buf.readUnsignedByte();
-      this.onGround = (flags & 1) != 0;
-      this.collideHorizontally = (flags & 2) != 0;
+      this.onGround = (flags & 0b01) != 0;
+      this.collideHorizontally = (flags & 0b10) != 0;
     }
   }
 
@@ -70,7 +70,7 @@ public class MovePacket implements MinecraftPacket {
 
   @Override
   public int decodeExpectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return Double.BYTES * 3 + Float.BYTES * 2 + 1;
+    return this.decodeExpectedMaxLength(buf, direction, version);
   }
 
   public double getX() {

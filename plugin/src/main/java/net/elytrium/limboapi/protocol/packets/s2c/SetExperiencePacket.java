@@ -46,4 +46,9 @@ public record SetExperiencePacket(float experienceProgress, int experienceLevel,
   public boolean handle(MinecraftSessionHandler handler) {
     throw new IllegalStateException();
   }
+
+  @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return Float.BYTES + 5 + 5;
+  }
 }

@@ -30,18 +30,19 @@ public record PlayerPositionPacket(double posX, double posY, double posZ, float 
     throw new IllegalStateException();
   }
 
+  @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    final boolean v121 = protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_21_2);
-    final boolean v17 = !v121 && protocolVersion.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6);
+    final boolean v1_21_2 = protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_21_2);
+    final boolean v1_7_x = !v1_21_2 && protocolVersion.noGreaterThan(ProtocolVersion.MINECRAFT_1_7_6);
 
-    if (v121) {
+    if (v1_21_2) {
       ProtocolUtils.writeVarInt(buf, this.teleportId);
     }
 
     buf.writeDouble(this.posX);
-    buf.writeDouble(v17 ? this.posY + 1.62F/*in 1.7.x posY means eyes position*/ : this.posY);
+    buf.writeDouble(v1_7_x ? this.posY + 1.62F/*in 1.7.x posY means eyes position*/ : this.posY);
     buf.writeDouble(this.posZ);
-    if (v121) {
+    if (v1_21_2) {
       // deltaMovement
       buf.writeDouble(0);
       buf.writeDouble(0);
@@ -50,9 +51,9 @@ public record PlayerPositionPacket(double posX, double posY, double posZ, float 
     buf.writeFloat(this.yaw);
     buf.writeFloat(this.pitch);
 
-    if (v121) {
+    if (v1_21_2) {
       buf.writeInt(0x00); // relatives
-    } else if (v17) {
+    } else if (v1_7_x) {
       buf.writeBoolean(this.onGround);
     } else {
       buf.writeByte(0x00); // relativeArguments
@@ -69,5 +70,10 @@ public record PlayerPositionPacket(double posX, double posY, double posZ, float 
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     throw new IllegalStateException();
+  }
+
+  @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return 5 + Double.BYTES * 3 + Double.BYTES * 3 + Float.BYTES * 2 + Integer.BYTES; // The worst case scenario
   }
 }

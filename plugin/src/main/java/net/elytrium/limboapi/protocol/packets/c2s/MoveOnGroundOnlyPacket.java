@@ -35,8 +35,8 @@ public class MoveOnGroundOnlyPacket implements MinecraftPacket {
       this.onGround = buf.readBoolean();
     } else {
       int flags = buf.readUnsignedByte();
-      this.onGround = (flags & 1) != 0;
-      this.collideHorizontally = (flags & 2) != 0;
+      this.onGround = (flags & 0b01) != 0;
+      this.collideHorizontally = (flags & 0b10) != 0;
     }
   }
 

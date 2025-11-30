@@ -53,4 +53,15 @@ public record ChunkUnloadPacket(int posX, int posZ) implements MinecraftPacket {
   public boolean handle(MinecraftSessionHandler handler) {
     throw new IllegalStateException();
   }
+
+  @Override
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
+    if (version.noGreaterThan(ProtocolVersion.MINECRAFT_1_8)) {
+      return version == ProtocolVersion.MINECRAFT_1_8
+          ? Long.BYTES + 1 + Short.BYTES + 1
+          : Long.BYTES + 1 + Short.BYTES + Short.BYTES + Integer.BYTES;
+    }
+
+    return Long.BYTES;
+  }
 }

@@ -346,10 +346,10 @@ public enum Item {
   RECORD_11(2266),
   RECORD_WAIT(2267);
 
-  private final int id;
+  private final short id;
 
   Item(int id) {
-    this.id = id;
+    this.id = (short) id;
   }
 
   @Deprecated(forRemoval = true)
@@ -362,7 +362,7 @@ public enum Item {
     return this.id;
   }
 
-  public int getLegacyId() {
+  public short getLegacyId() {
     return this.id;
   }
 }

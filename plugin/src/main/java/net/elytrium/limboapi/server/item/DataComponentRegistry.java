@@ -92,7 +92,6 @@ public class DataComponentRegistry {
       }
     }
 
-    int size = mappings.size();
     mappings.forEach((name, versions) -> {
       DataComponentTypeImpl<?> type;
       try {
@@ -103,9 +102,9 @@ public class DataComponentRegistry {
 
       versions.forEach((version, _id) -> {
         var entry = DataComponentRegistry.REGISTRY.computeIfAbsent(ProtocolVersion.getProtocolVersion(Integer.parseInt(version)), key -> {
-          Object2IntOpenHashMap<DataComponentType> t2i = new Object2IntOpenHashMap<>(size);
+          Object2IntOpenHashMap<DataComponentType> t2i = new Object2IntOpenHashMap<>(mappings.size());
           t2i.defaultReturnValue(Integer.MIN_VALUE);
-          return Map.entry(new Int2ObjectOpenHashMap<>(size), t2i);
+          return Map.entry(new Int2ObjectOpenHashMap<>(mappings.size()), t2i);
         });
         int id = _id.intValue();
         entry.getKey().put(id, type);
@@ -229,6 +228,7 @@ public class DataComponentRegistry {
   public static final class DataComponentTypeImpl<T> implements DataComponentType.Valued<@NonNull T>, DataComponentType.NonValued {
 
     private final String name;
+
     private StreamCodec<T> codec;
 
     private DataComponentTypeImpl(String name) {

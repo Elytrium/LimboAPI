@@ -177,7 +177,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.loaded = false;
 
     if (this.player.isOnlineMode() && this.player.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_21_2) && this.joinGameTriggered) {
-      // There is a race condition in the client then it reconnects too quickly (https://bugs.mojang.com/browse/MC-272506)
+      // There is a race condition in the client when it reconnects too quickly (https://bugs.mojang.com/browse/MC-272506)
       if (!this.chatSession.isDone() && this.chatSessionTimeoutTask == null) {
         this.chatSessionTimeoutTask = this.player.getConnection().eventLoop()
             .schedule(() -> this.chatSession.complete(this), Settings.IMP.MAIN.CHAT_SESSION_PACKET_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -369,7 +369,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       if (this.player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_2) && PluginMessageUtil.isMcBrand(pluginMessage)) {
         try {
           this.brand = ProtocolUtils.readString(pluginMessage.content().slice(), Settings.IMP.MAIN.MAX_BRAND_NAME_LENGTH);
-        } catch (QuietDecoderException ignored) {
+        } catch (QuietDecoderException e) {
           this.kickTooBigPacket("brand name", pluginMessage.content().readableBytes());
           return;
         }
@@ -407,7 +407,6 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public void disconnected() {
-    //this.disconnected = true;
     this.release();
 
     if (Settings.IMP.MAIN.LOGGING_ENABLED) {

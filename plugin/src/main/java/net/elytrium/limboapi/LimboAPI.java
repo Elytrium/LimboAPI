@@ -67,6 +67,7 @@ import net.elytrium.fastprepare.PreparedPacketFactory;
 import net.elytrium.fastprepare.handler.PreparedPacketEncoder;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.LimboFactory;
+import net.elytrium.limboapi.api.world.WorldVersion;
 import net.elytrium.limboapi.api.world.chunk.biome.BuiltInBiome;
 import net.elytrium.limboapi.api.world.chunk.Dimension;
 import net.elytrium.limboapi.api.world.chunk.biome.VirtualBiome;
@@ -95,6 +96,7 @@ import net.elytrium.limboapi.injection.packet.PreparedPacketImpl;
 import net.elytrium.limboapi.injection.packet.RemovePlayerInfoHook;
 import net.elytrium.limboapi.injection.packet.UpsertPlayerInfoHook;
 import net.elytrium.limboapi.listener.ReloadListener;
+import net.elytrium.limboapi.server.item.DataComponentRegistry;
 import net.elytrium.limboapi.server.world.Biome;
 import net.elytrium.limboapi.protocol.LimboProtocol;
 import net.elytrium.limboapi.protocol.packets.PacketFactoryImpl;
@@ -195,6 +197,7 @@ public class LimboAPI implements LimboFactory { // TODO replace every map with f
       UpsertPlayerInfoHook.init(LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
       RemovePlayerInfoHook.init(LimboProtocol.PLAY_CLIENTBOUND_REGISTRY);
       LimboProtocol.init();
+      DataComponentRegistry.getType(0, ProtocolVersion.MAXIMUM_VERSION); // Call <clinit>
     } catch (Throwable t) {
       throw new ReflectionException(t);
     }
@@ -519,7 +522,17 @@ public class LimboAPI implements LimboFactory { // TODO replace every map with f
   }
 
   @Override
-  public VirtualItem getLegacyItem(int legacyId) {
+  public VirtualItem getItem(ProtocolVersion version, short id) {
+    return SimpleItem.fromId(version, id);
+  }
+
+  @Override
+  public VirtualItem getItem(WorldVersion version, short id) {
+    return SimpleItem.fromId(version, id);
+  }
+
+  @Override
+  public VirtualItem getLegacyItem(short legacyId) {
     return SimpleItem.fromLegacyId(legacyId);
   }
 

@@ -99,6 +99,10 @@ public interface PacketFactory {
 
   Object createChunkUnloadPacket(int posX, int posZ);
 
+  /**
+   * @deprecated Use {@link PacketFactory#createDefaultSpawnPositionPacket(String, int, int, int, float, float)}
+   */
+  @Deprecated
   Object createDefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle);
 
   Object createDefaultSpawnPositionPacket(String dimension, int posX, int posY, int posZ, float yaw, float pitch);

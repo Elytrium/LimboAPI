@@ -122,7 +122,7 @@ public class LimboImpl implements Limbo {
   private static final MethodHandle CURRENT_DIMENSION_DATA_SETTER = Reflection.findSetter(JoinGamePacket.class, "currentDimensionData", CompoundBinaryTag.class);
   private static final MethodHandle ROOT_NODE_SETTER = Reflection.findSetter(AvailableCommandsPacket.class, "rootNode", RootCommandNode.class);
 
-  private static final List<String> LEVELS = List.of(
+  private static final ImmutableSet<String> LEVELS = ImmutableSet.of(
       Dimension.OVERWORLD.getKey(),
       Dimension.NETHER.getKey(),
       Dimension.THE_END.getKey()
@@ -133,7 +133,7 @@ public class LimboImpl implements Limbo {
   private static final CompoundBinaryTag DAMAGE_TYPE_1194;
   private static final CompoundBinaryTag DAMAGE_TYPE_120;
 
-  private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>();
+  private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>(2);
   private final List<PreparedPacket> queuedToRelease = new ArrayList<>();
 
   private final LongAdder currentOnline = new LongAdder();
@@ -157,16 +157,16 @@ public class LimboImpl implements Limbo {
   private PreparedPacket firstChunks;
   private List<PreparedPacket> delayedChunks;
   private PreparedPacket respawnPackets;
-  protected PreparedPacket configTransitionPackets;
-  protected PreparedPacket configPackets;
-  protected StateRegistry localStateRegistry = LimboProtocol.getLimboStateRegistry();
+  private PreparedPacket configTransitionPackets;
+  private PreparedPacket configPackets;
+  private StateRegistry localStateRegistry = LimboProtocol.getLimboStateRegistry();
   private boolean shouldRespawn = true;
   private boolean shouldRejoin = true;
   private boolean shouldUpdateTags = true;
   private boolean reducedDebugInfo = Settings.IMP.MAIN.REDUCED_DEBUG_INFO;
   private int viewDistance = Settings.IMP.MAIN.VIEW_DISTANCE;
   private int simulationDistance = Settings.IMP.MAIN.SIMULATION_DISTANCE;
-  private volatile boolean built = true;
+  private volatile boolean built = false;
   private boolean disposeScheduled = false;
 
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
@@ -179,8 +179,6 @@ public class LimboImpl implements Limbo {
 
     this.plugin = plugin;
     this.world = world;
-
-    this.refresh();
   }
 
   protected void refresh() {
@@ -753,6 +751,9 @@ public class LimboImpl implements Limbo {
     if (this.safeRejoinPackets != null) {
       packets.add(this.safeRejoinPackets);
     }
+    if (this.postJoinPackets != null) {
+      packets.add(this.postJoinPackets);
+    }
     if (this.respawnPackets != null) {
       packets.add(this.respawnPackets);
     }
@@ -773,6 +774,9 @@ public class LimboImpl implements Limbo {
 
   private void localDispose() {
     this.takeSnapshot().forEach(PreparedPacket::release);
+    this.built = false;
+    this.brandMessages.values().forEach(PreparedPacket::release);
+    this.brandMessages.clear();
   }
 
   // From Velocity
@@ -1129,13 +1133,12 @@ public class LimboImpl implements Limbo {
   }
 
   private PreparedPacket getBrandMessage(Class<? extends LimboSessionHandler> clazz) {
-    if (this.brandMessages.containsKey(clazz)) {
-      return this.brandMessages.get(clazz);
-    } else {
-      PreparedPacket preparedPacket = this.plugin.createPreparedPacket().prepare(this::createBrandMessage).build();
-      this.brandMessages.put(clazz, preparedPacket);
-      return preparedPacket;
+    PreparedPacket preparedPacket = this.brandMessages.get(clazz);
+    if (preparedPacket == null) {
+      this.brandMessages.put(clazz, preparedPacket = this.plugin.createPreparedPacket().prepare(this::createBrandMessage).build());
     }
+
+    return preparedPacket;
   }
 
   private PluginMessagePacket createBrandMessage(ProtocolVersion version) {
