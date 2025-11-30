@@ -43,6 +43,6 @@ public record SetChunkCacheCenterPacket(int posX, int posZ) implements Minecraft
 
   @Override
   public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 10;
+    return 5 + 5;
   }
 }
