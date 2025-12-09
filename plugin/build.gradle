@@ -134,7 +134,8 @@ enum MinecraftVersion {
   MINECRAFT_1_21_5(770),
   MINECRAFT_1_21_6(771),
   MINECRAFT_1_21_7(772),
-  MINECRAFT_1_21_9(773)
+  MINECRAFT_1_21_9(773),
+  MINECRAFT_1_21_11(774)
 
   public static final List<MinecraftVersion> WORLD_VERSIONS = List.of(
     MINECRAFT_1_13,
@@ -155,7 +156,8 @@ enum MinecraftVersion {
     MINECRAFT_1_21_5,
     MINECRAFT_1_21_6,
     MINECRAFT_1_21_7,
-    MINECRAFT_1_21_9
+    MINECRAFT_1_21_9,
+    MINECRAFT_1_21_11
   )
 
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
@@ -214,7 +216,9 @@ File downloadVersionManifest(String version) {
   this.println("> Downloading ${version} manifest...")
 
   Object manifest = new JsonSlurper().parse(versionManifestFile)
-  def optional = manifest.versions.stream().filter({ it.id == version }).findFirst()
+
+  // TODO: remove
+  def optional = manifest.versions.stream().filter({ version == "1.21.11" ? it.id == version + "-rc3" : it.id == version }).findFirst()
   if (optional.empty()) {
     throw new RuntimeException("Couldn't find version: ${version}")
   }

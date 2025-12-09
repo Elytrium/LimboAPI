@@ -246,7 +246,8 @@ public class LimboImpl implements Limbo {
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_20_5, ProtocolVersion.MINECRAFT_1_20_5);
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MINECRAFT_1_21);
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_2, ProtocolVersion.MINECRAFT_1_21_4);
-    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_5, ProtocolVersion.MAXIMUM_VERSION);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_5, ProtocolVersion.MINECRAFT_1_21_9);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_11, ProtocolVersion.MAXIMUM_VERSION);
     if (this.shouldUpdateTags) {
       configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
     }
@@ -1055,6 +1056,16 @@ public class LimboImpl implements Limbo {
 
           registryContainer.put("minecraft:wolf_variant", this.createRegistry("minecraft:wolf_variant",
               Map.of("minecraft:ashen", wolfVariant.build())));
+
+          if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_11) >= 0) {
+            // Zombie nautilus variant
+            CompoundBinaryTag zombieVariant = CompoundBinaryTag.builder()
+                .putString("asset_id", "minecraft:entity/nautilus/zombie_nautilus")
+                .put("spawn_conditions", ListBinaryTag.empty()).build();
+
+            registryContainer.put("minecraft:zombie_nautilus_variant", this.createRegistry("minecraft:zombie_nautilus_variant",
+                Map.of("minecraft:temperate", zombieVariant)));
+          }
         } else {
           CompoundBinaryTag.Builder wolfVariant = CompoundBinaryTag.builder()
               .putString("wild_texture", "minecraft:entity/wolf/wolf_ashen")
