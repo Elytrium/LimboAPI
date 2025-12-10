@@ -868,7 +868,7 @@ public class LimboImpl implements Limbo {
   }
 
   private CompoundBinaryTag createDimensionData(Dimension dimension, ProtocolVersion version) {
-    CompoundBinaryTag details = CompoundBinaryTag.builder()
+    CompoundBinaryTag.Builder details = CompoundBinaryTag.builder()
         .putBoolean("natural", false)
         .putFloat("ambient_light", 0.0F)
         .putBoolean("shrunk", false)
@@ -886,17 +886,49 @@ public class LimboImpl implements Limbo {
         .putInt("min_y", 0)
         .putInt("height", 256)
         .putInt("monster_spawn_block_light_limit", 0)
-        .putInt("monster_spawn_light_level", 0)
-        .build();
+        .putInt("monster_spawn_light_level", 0);
+
+    if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_11) >= 0) {
+      // TODO: use timelines?
+      switch (dimension) {
+        case OVERWORLD -> {
+          details.put("attributes", CompoundBinaryTag.builder()
+              .putString("minecraft:visual/cloud_color", "#ccffffff")
+              .putFloat("minecraft:visual/cloud_height", 192.33f)
+              .putString("minecraft:visual/fog_color", "#c0d8ff")
+              .putString("minecraft:visual/sky_color", "#78a7ff")
+              .build());
+        }
+        case NETHER -> {
+          details.putString("cardinal_light", "nether");
+          details.putString("skybox", "none");
+          details.put("attributes", CompoundBinaryTag.builder()
+              .putFloat("minecraft:gameplay/sky_light_level", 4.0f)
+              .putFloat("minecraft:visual/fog_end_distance", 96.0f)
+              .putFloat("minecraft:visual/fog_start_distance", 10.0f)
+              .putString("minecraft:visual/sky_light_color", "#7a7aff")
+              .build());
+        }
+        case THE_END -> {
+          details.putString("skybox", "end");
+          details.put("attributes", CompoundBinaryTag.builder()
+              .putString("minecraft:visual/fog_color", "#181318")
+              .putString("minecraft:visual/sky_color", "#000000")
+              .putString("minecraft:visual/sky_light_color", "#e580ff")
+              .build());
+        }
+        default -> throw new IllegalStateException("Unknown dimension: " + dimension); // Checkstyle madness
+      }
+    }
 
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_16_2) >= 0) {
       return CompoundBinaryTag.builder()
           .putString("name", dimension.getKey())
           .putInt("id", dimension.getModernID())
-          .put("element", details)
+          .put("element", details.build())
           .build();
     } else {
-      return details.putString("name", dimension.getKey());
+      return details.build().putString("name", dimension.getKey());
     }
   }
 
