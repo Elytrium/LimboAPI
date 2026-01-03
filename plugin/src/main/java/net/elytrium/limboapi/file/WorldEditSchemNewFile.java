@@ -29,7 +29,7 @@ import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.IntBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
 
-public class WorldEditSchemFile implements WorldFile {
+public class WorldEditSchemNewFile implements WorldFile {
 
   private final short width;
   private final short height;
@@ -38,25 +38,29 @@ public class WorldEditSchemFile implements WorldFile {
   private final CompoundBinaryTag palette;
   private final ListBinaryTag blockEntities;
 
-  public WorldEditSchemFile(CompoundBinaryTag tag) {
-    // Check is it new worldedit schema
-    if (!tag.contains("Width")) {
-      throw new IllegalArgumentException("Invalid worldedit file format. Try using WORLDEDIT_SCHEM_NEW instead.");
+  public WorldEditSchemNewFile(CompoundBinaryTag rootTag) {
+    CompoundBinaryTag schematicTag = rootTag.getCompound("Schematic");
+
+    // Check is it old or newer worldedit schema
+    if (!schematicTag.contains("Width")) {
+      throw new IllegalArgumentException("Invalid worldedit file format. Try using WORLDEDIT_SCHEM instead or open an issue on GitHub.");
     }
 
-    this.width = tag.getShort("Width");
-    this.height = tag.getShort("Height");
-    this.length = tag.getShort("Length");
-    this.palette = tag.getCompound("Palette");
+    this.width = schematicTag.getShort("Width");
+    this.height = schematicTag.getShort("Height");
+    this.length = schematicTag.getShort("Length");
 
-    ByteBuf blockDataBuf = Unpooled.wrappedBuffer(tag.getByteArray("BlockData"));
+    CompoundBinaryTag blocksTag = schematicTag.getCompound("Blocks");
+    this.palette = blocksTag.getCompound("Palette");
+
+    ByteBuf blockDataBuf = Unpooled.wrappedBuffer(blocksTag.getByteArray("Data"));
     this.blocks = new int[this.width * this.height * this.length];
 
     for (int i = 0; i < this.blocks.length; i++) {
       this.blocks[i] = ProtocolUtils.readVarInt(blockDataBuf);
     }
 
-    this.blockEntities = tag.getList("BlockEntities");
+    this.blockEntities = blocksTag.getList("BlockEntities");
   }
 
   @Override
