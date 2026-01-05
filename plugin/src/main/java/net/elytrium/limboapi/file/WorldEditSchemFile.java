@@ -38,25 +38,44 @@ public class WorldEditSchemFile implements WorldFile {
   private final CompoundBinaryTag palette;
   private final ListBinaryTag blockEntities;
 
-  public WorldEditSchemFile(CompoundBinaryTag tag) {
-    // Check is it new worldedit schema
-    if (!tag.contains("Width")) {
-      throw new IllegalArgumentException("Invalid worldedit file format. Try using WORLDEDIT_SCHEM_NEW instead.");
+  public WorldEditSchemFile(CompoundBinaryTag rootTag) {
+
+    ByteBuf blockDataBuf;
+
+    if (rootTag.contains("Width")) {
+      // Check is it old worldedit schema
+      this.width = rootTag.getShort("Width");
+      this.height = rootTag.getShort("Height");
+      this.length = rootTag.getShort("Length");
+      this.palette = rootTag.getCompound("Palette");
+
+      blockDataBuf = Unpooled.wrappedBuffer(rootTag.getByteArray("BlockData"));
+
+      this.blockEntities = rootTag.getList("BlockEntities");
+
+    } else if (rootTag.getCompound("Schematic").contains("Blocks")) {
+      // Check is it new worldedit schema
+      CompoundBinaryTag schematicTag = rootTag.getCompound("Schematic");
+
+      this.width = schematicTag.getShort("Width");
+      this.height = schematicTag.getShort("Height");
+      this.length = schematicTag.getShort("Length");
+
+      CompoundBinaryTag blocksTag = schematicTag.getCompound("Blocks");
+      this.palette = blocksTag.getCompound("Palette");
+
+      blockDataBuf = Unpooled.wrappedBuffer(blocksTag.getByteArray("Data"));
+
+      this.blockEntities = blocksTag.getList("BlockEntities");
+    } else {
+      // Unknown schema, throw exception
+      throw new IllegalArgumentException("Invalid worldedit file format. Please open an issue on GitHub.");
     }
 
-    this.width = tag.getShort("Width");
-    this.height = tag.getShort("Height");
-    this.length = tag.getShort("Length");
-    this.palette = tag.getCompound("Palette");
-
-    ByteBuf blockDataBuf = Unpooled.wrappedBuffer(tag.getByteArray("BlockData"));
     this.blocks = new int[this.width * this.height * this.length];
-
     for (int i = 0; i < this.blocks.length; i++) {
       this.blocks[i] = ProtocolUtils.readVarInt(blockDataBuf);
     }
-
-    this.blockEntities = tag.getList("BlockEntities");
   }
 
   @Override
