@@ -37,6 +37,9 @@ import net.elytrium.limboapi.LimboAPI;
 
 public class LoginConfirmHandler implements MinecraftSessionHandler {
 
+  private static final boolean BACKPRESSURE_LOG =
+      Boolean.getBoolean("velocity.log-server-backpressure");
+
   private static final MethodHandle TEARDOWN_METHOD;
 
   private final LimboAPI plugin;
@@ -106,6 +109,17 @@ public class LoginConfirmHandler implements MinecraftSessionHandler {
   @Override
   public void handleUnknown(ByteBuf buf) {
     this.connection.close(true);
+  }
+
+  @Override
+  public void writabilityChanged() {
+    if (BACKPRESSURE_LOG) {
+      if (this.connection.getChannel().isWritable()) {
+        LimboAPI.getLogger().info("{} is writable, will auto-read", this.player);
+      } else {
+        LimboAPI.getLogger().info("{} is not writable, not auto-reading", this.player);
+      }
+    }
   }
 
   @Override

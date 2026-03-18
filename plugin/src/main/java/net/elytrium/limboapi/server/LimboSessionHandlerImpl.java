@@ -68,6 +68,9 @@ import net.elytrium.limboapi.protocol.packets.c2s.TeleportConfirmPacket;
 
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
+  private static final boolean BACKPRESSURE_LOG =
+      Boolean.getBoolean("velocity.log-server-backpressure");
+
   private static final MethodHandle TEARDOWN_METHOD;
 
   private final LimboAPI plugin;
@@ -378,6 +381,17 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     }
 
     this.callback.onGeneric(packet);
+  }
+
+  @Override
+  public void writabilityChanged() {
+    if (BACKPRESSURE_LOG) {
+      if (this.player.getConnection().getChannel().isWritable()) {
+        LimboAPI.getLogger().info("{} is writable, will auto-read", this.player);
+      } else {
+        LimboAPI.getLogger().info("{} is not writable, not auto-reading", this.player);
+      }
+    }
   }
 
   private void kickTooBigPacket(String type, int length) {
