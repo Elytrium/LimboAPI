@@ -87,7 +87,8 @@ public class Settings extends YamlConfig {
         "1_7_2, 1_7_6, 1_8, 1_9, 1_9_1, 1_9_2, 1_9_4, 1_10, 1_11, 1_11_1, 1_12, 1_12_1, 1_12_2,",
         "1_13, 1_13_1, 1_13_2, 1_14, 1_14_1, 1_14_2, 1_14_3, 1_14_4, 1_15, 1_15_1, 1_15_2,",
         "1_16, 1_16_1, 1_16_2, 1_16_3, 1_16_4, 1_17, 1_17_1, 1_18, 1_18_2, 1_19, 1_19_1, 1_19_3,",
-        "1_20, 1_20_2, 1_20_3, 1_20_5, 1_21, 1_21_2, 1_21_4, 1_21_5, 1_21_6, 1_21_7, 1_21_9, 1_21_11, LATEST"
+        "1_20, 1_20_2, 1_20_3, 1_20_5, 1_21, 1_21_2, 1_21_4, 1_21_5, 1_21_6, 1_21_7, 1_21_9, 1_21_11,",
+        "26_1, LATEST"
     })
     public String PREPARE_MIN_VERSION = "1_7_2";
     public String PREPARE_MAX_VERSION = "LATEST";
@@ -97,6 +98,9 @@ public class Settings extends YamlConfig {
 
     @Comment("Should reduced debug info be enabled (reduced information in F3) if there is no preference for Limbo")
     public boolean REDUCED_DEBUG_INFO = false;
+
+    @Comment("Used to hide unsigned chat popup")
+    public boolean SEND_ENFORCE_SECURE_CHAT = true;
 
     public int VIEW_DISTANCE = 10;
 

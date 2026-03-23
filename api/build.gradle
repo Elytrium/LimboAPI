@@ -6,7 +6,7 @@ plugins {
 }
 
 compileJava() {
-  getOptions().getRelease().set(17)
+  getOptions().getRelease().set(21)
   getOptions().setEncoding("UTF-8")
 }
 
@@ -22,7 +22,7 @@ dependencies() {
 }
 
 license() {
-  matching(includes: ["**/mcprotocollib/**"]) {
+  matching("**/mcprotocollib/**") {
     header = rootProject.file("HEADER_MCPROTOCOLLIB.txt")
   }
 
@@ -31,7 +31,7 @@ license() {
 
 javadoc() {
   options.setEncoding("UTF-8")
-  options.setSource("17")
+  options.setSource("21")
   options.links("https://docs.oracle.com/en/java/javase/11/docs/api/")
   options.addStringOption("Xdoclint:none", "-quiet")
   if (JavaVersion.current() >= JavaVersion.VERSION_1_9 && JavaVersion.current() < JavaVersion.VERSION_12) {

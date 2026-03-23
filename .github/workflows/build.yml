@@ -17,8 +17,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4.7.0
         with:
-          distribution: adopt
-          java-version: 21
+          distribution: temurin
+          java-version: 25
       - name: Build LimboAPI
         run: ./gradlew build
       - name: Upload LimboAPI

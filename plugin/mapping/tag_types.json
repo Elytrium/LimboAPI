@@ -4,7 +4,9 @@
     "entity_types": "minecraft:entity_type",
     "fluids": "minecraft:fluid",
     "game_events": "minecraft:game_event",
-    "items": "minecraft:item"
+    "items": "minecraft:item",
+    "damage_type": "minecraft:damage_type",
+    "banner_pattern": "minecraft:banner_pattern"
   },
   "supported_tag_types": [
     "minecraft:block",

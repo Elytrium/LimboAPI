@@ -85,6 +85,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.fastprepare.PreparedPacketFactory;
@@ -247,9 +248,13 @@ public class LimboImpl implements Limbo {
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21, ProtocolVersion.MINECRAFT_1_21);
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_2, ProtocolVersion.MINECRAFT_1_21_4);
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_5, ProtocolVersion.MINECRAFT_1_21_9);
-    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_11, ProtocolVersion.MAXIMUM_VERSION);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_11, ProtocolVersion.MINECRAFT_1_21_11);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_26_1, ProtocolVersion.MAXIMUM_VERSION);
     if (this.shouldUpdateTags) {
       configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
+    } else {
+      // 26.1 requires tags to persist.
+      configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_26_1);
     }
     configPackets.prepare(FinishedUpdatePacket.INSTANCE, ProtocolVersion.MINECRAFT_1_20_2);
     this.configPackets = configPackets.build();
@@ -889,33 +894,56 @@ public class LimboImpl implements Limbo {
         .putInt("monster_spawn_light_level", 0);
 
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_11) >= 0) {
-      // TODO: use timelines?
+      CompoundBinaryTag.Builder attributes = CompoundBinaryTag.builder();
       switch (dimension) {
         case OVERWORLD -> {
-          details.put("attributes", CompoundBinaryTag.builder()
-              .putString("minecraft:visual/cloud_color", "#ccffffff")
+          attributes.putString("minecraft:visual/cloud_color", "#ccffffff")
               .putFloat("minecraft:visual/cloud_height", 192.33f)
               .putString("minecraft:visual/fog_color", "#c0d8ff")
-              .putString("minecraft:visual/sky_color", "#78a7ff")
-              .build());
+              .putString("minecraft:visual/sky_color", "#78a7ff");
+          if (version.noLessThan(ProtocolVersion.MINECRAFT_26_1)) {
+            attributes.putString("minecraft:visual/ambient_light_color", "#0a0a0a");
+          }
         }
         case NETHER -> {
           details.putString("cardinal_light", "nether");
           details.putString("skybox", "none");
-          details.put("attributes", CompoundBinaryTag.builder()
-              .putFloat("minecraft:gameplay/sky_light_level", 4.0f)
+          attributes.putFloat("minecraft:gameplay/sky_light_level", 4.0f)
               .putFloat("minecraft:visual/fog_end_distance", 96.0f)
               .putFloat("minecraft:visual/fog_start_distance", 10.0f)
-              .putString("minecraft:visual/sky_light_color", "#7a7aff")
-              .build());
+              .putString("minecraft:visual/sky_light_color", "#7a7aff");
+          if (version.noLessThan(ProtocolVersion.MINECRAFT_26_1)) {
+            attributes.putString("minecraft:visual/ambient_light_color", "#302821");
+          }
         }
         case THE_END -> {
           details.putString("skybox", "end");
-          details.put("attributes", CompoundBinaryTag.builder()
-              .putString("minecraft:visual/fog_color", "#181318")
+          attributes.putString("minecraft:visual/fog_color", "#181318")
               .putString("minecraft:visual/sky_color", "#000000")
-              .putString("minecraft:visual/sky_light_color", "#e580ff")
-              .build());
+              .putString("minecraft:visual/sky_light_color", "#e580ff");
+          if (version.noLessThan(ProtocolVersion.MINECRAFT_26_1)) {
+            attributes.putString("minecraft:visual/ambient_light_color", "#3f473f");
+          }
+        }
+        default -> throw new IllegalStateException("Unknown dimension: " + dimension); // Checkstyle madness
+      }
+
+      details.put("attributes", attributes.build());
+    }
+
+    if (version.compareTo(ProtocolVersion.MINECRAFT_26_1) >= 0) {
+      switch (dimension) {
+        case OVERWORLD -> {
+          details.putString("timelines", "minecraft:day");
+          details.putString("default_clock", "minecraft:overworld");
+          details.putBoolean("has_ender_dragon_fight", false);
+        }
+        case NETHER -> {
+          details.putBoolean("has_ender_dragon_fight", false);
+        }
+        case THE_END -> {
+          details.putString("default_clock", "minecraft:overworld");
+          details.putBoolean("has_ender_dragon_fight", true);
         }
         default -> throw new IllegalStateException("Unknown dimension: " + dimension); // Checkstyle madness
       }
@@ -957,6 +985,7 @@ public class LimboImpl implements Limbo {
 
     String key = dimension.getKey();
     joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false, version));
+    joinGame.setEnforcesSecureChat(Settings.IMP.MAIN.SEND_ENFORCE_SECURE_CHAT);
 
     CompoundBinaryTag.Builder registryContainer = CompoundBinaryTag.builder();
     ListBinaryTag encodedDimensionRegistry = ListBinaryTag.builder(BinaryTagTypes.COMPOUND)
@@ -981,7 +1010,6 @@ public class LimboImpl implements Limbo {
       if (version.compareTo(ProtocolVersion.MINECRAFT_1_19_4) == 0) {
         registryContainer.put("minecraft:damage_type", DAMAGE_TYPE_1194);
       } else if (version.compareTo(ProtocolVersion.MINECRAFT_1_21) >= 0) {
-        CompoundBinaryTag.Builder builder = CompoundBinaryTag.builder();
         ListBinaryTag values = DAMAGE_TYPE_120.getList("value");
 
         ListBinaryTag.Builder<CompoundBinaryTag> tags = ListBinaryTag.builder(BinaryTagTypes.COMPOUND);
@@ -989,11 +1017,14 @@ public class LimboImpl implements Limbo {
           tags.add((CompoundBinaryTag) tag);
         }
 
-        String[] types;
+        List<String> types = new ArrayList<>();
+        types.add("minecraft:campfire");
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_21_2) >= 0) {
-          types = new String[] { "minecraft:campfire", "minecraft:ender_pearl", "minecraft:mace_smash" };
-        } else {
-          types = new String[] { "minecraft:campfire" };
+          types.add("minecraft:ender_pearl");
+          types.add("minecraft:mace_smash");
+        }
+        if (version.compareTo(ProtocolVersion.MINECRAFT_26_1) >= 0) {
+          types.add("minecraft:spear");
         }
 
         int id = values.size();
@@ -1026,6 +1057,9 @@ public class LimboImpl implements Limbo {
           CompoundBinaryTag.Builder catVariant = CompoundBinaryTag.builder()
               .putString("asset_id", "minecraft:entity/cat/all_black")
               .put("spawn_conditions", ListBinaryTag.empty());
+          if (version.noLessThan(ProtocolVersion.MINECRAFT_26_1)) {
+            catVariant.putString("baby_asset_id", "minecraft:entity/cat/all_black");
+          }
 
           registryContainer.put("minecraft:cat_variant", this.createRegistry("minecraft:cat_variant",
               Map.of("minecraft:all_black", catVariant.build())));
@@ -1035,15 +1069,23 @@ public class LimboImpl implements Limbo {
               .putString("asset_id", "minecraft:entity/chicken/cold_chicken")
               .putString("model", "cold")
               .put("spawn_conditions", ListBinaryTag.empty());
+          if (version.noLessThan(ProtocolVersion.MINECRAFT_26_1)) {
+            chickenVariant.putString("baby_asset_id", "minecraft:entity/chicken/cold_chicken");
+          }
 
           registryContainer.put("minecraft:chicken_variant", this.createRegistry("minecraft:chicken_variant",
-              Map.of("minecraft:cold", chickenVariant.build())));
+              Map.of("minecraft:cold", chickenVariant.build(),
+                  "minecraft:temperate", chickenVariant.build(),
+                  "minecraft:warm", chickenVariant.build())));
 
           // Cow
           CompoundBinaryTag.Builder cowVariant = CompoundBinaryTag.builder()
               .putString("asset_id", "minecraft:entity/cow/cold_cow")
               .putString("model", "cold")
               .put("spawn_conditions", ListBinaryTag.empty());
+          if (version.noLessThan(ProtocolVersion.MINECRAFT_26_1)) {
+            cowVariant.putString("baby_asset_id", "minecraft:entity/cow/cold_cow");
+          }
 
           registryContainer.put("minecraft:cow_variant", this.createRegistry("minecraft:cow_variant",
               Map.of("minecraft:cold", cowVariant.build())));
@@ -1061,25 +1103,51 @@ public class LimboImpl implements Limbo {
               .putString("asset_id", "minecraft:entity/pig/cold_pig")
               .putString("model", "cold")
               .put("spawn_conditions", ListBinaryTag.empty());
+          if (version.noLessThan(ProtocolVersion.MINECRAFT_26_1)) {
+            pigVariant.putString("baby_asset_id", "minecraft:entity/pig/cold_pig");
+          }
 
           registryContainer.put("minecraft:pig_variant", this.createRegistry("minecraft:pig_variant",
               Map.of("minecraft:cold", pigVariant.build())));
 
           // Wolf Sound Variant
-          CompoundBinaryTag.Builder wolfSoundVariant = CompoundBinaryTag.builder()
+          CompoundBinaryTag wolfSoundVariant = CompoundBinaryTag.builder()
               .putString("ambient_sound", "minecraft:entity.wolf_angry.ambient")
               .putString("death_sound", "minecraft:entity.wolf_angry.death")
               .putString("growl_sound", "minecraft:entity.wolf_angry.growl")
               .putString("hurt_sound", "minecraft:entity.wolf_angry.hurt")
               .putString("pant_sound", "minecraft:entity.wolf_angry.pant")
-              .putString("whine_sound", "minecraft:entity.wolf_angry.whine");
+              .putString("whine_sound", "minecraft:entity.wolf_angry.whine").build();
+          if (version.noLessThan(ProtocolVersion.MINECRAFT_26_1)) {
+            wolfSoundVariant = this.soundVariant(
+                builder -> builder.putString("ambient_sound", "minecraft:entity.wolf_angry.ambient")
+                    .putString("death_sound", "minecraft:entity.wolf_angry.death")
+                    .putString("growl_sound", "minecraft:entity.wolf_angry.growl")
+                    .putString("hurt_sound", "minecraft:entity.wolf_angry.hurt")
+                    .putString("pant_sound", "minecraft:entity.wolf_angry.pant")
+                    .putString("step_sound", "minecraft:entity.wolf.step")
+                    .putString("whine_sound", "minecraft:entity.wolf_angry.whine"),
+                builder -> builder.putString("ambient_sound", "minecraft:entity.baby_wolf.ambient")
+                    .putString("death_sound", "minecraft:entity.baby_wolf.death")
+                    .putString("growl_sound", "minecraft:entity.baby_wolf.growl")
+                    .putString("hurt_sound", "minecraft:entity.baby_wolf.hurt")
+                    .putString("pant_sound", "minecraft:entity.baby_wolf.pant")
+                    .putString("step_sound", "minecraft:entity.baby_wolf.step")
+                    .putString("whine_sound", "minecraft:entity.baby_wolf.whine")
+            );
+          }
 
           registryContainer.put("minecraft:wolf_sound_variant", this.createRegistry("minecraft:wolf_sound_variant",
-              Map.of("minecraft:angry", wolfSoundVariant.build())));
+              Map.of("minecraft:angry", wolfSoundVariant)));
 
           // Wolf
           CompoundBinaryTag.Builder wolfVariant = CompoundBinaryTag.builder()
               .put("assets", CompoundBinaryTag.builder()
+                  .putString("wild", "minecraft:entity/wolf/wolf_ashen")
+                  .putString("tame", "minecraft:entity/wolf/wolf_ashen_tame")
+                  .putString("angry", "minecraft:entity/wolf/wolf_ashen_angry")
+                  .build())
+              .put("baby_assets", CompoundBinaryTag.builder()
                   .putString("wild", "minecraft:entity/wolf/wolf_ashen")
                   .putString("tame", "minecraft:entity/wolf/wolf_ashen_tame")
                   .putString("angry", "minecraft:entity/wolf/wolf_ashen_angry")
@@ -1097,6 +1165,136 @@ public class LimboImpl implements Limbo {
 
             registryContainer.put("minecraft:zombie_nautilus_variant", this.createRegistry("minecraft:zombie_nautilus_variant",
                 Map.of("minecraft:temperate", zombieVariant)));
+          }
+
+          if (version.compareTo(ProtocolVersion.MINECRAFT_26_1) >= 0) {
+            // World clock
+            registryContainer.put("minecraft:world_clock", this.createRegistry("minecraft:world_clock",
+                Map.of("minecraft:overworld", CompoundBinaryTag.builder().build())));
+
+            // Sound variants
+            CompoundBinaryTag soundVariant = this.soundVariant(
+                builder -> builder.putString("ambient_sound", "minecraft:entity.pig.ambient")
+                    .putString("death_sound", "minecraft:entity.pig.death")
+                    .putString("eat_sound", "minecraft:entity.pig.eat")
+                    .putString("hurt_sound", "minecraft:entity.pig.hurt")
+                    .putString("step_sound", "minecraft:entity.pig.step"),
+                builder -> builder.putString("ambient_sound", "minecraft:entity.baby_pig.ambient")
+                    .putString("death_sound", "minecraft:entity.baby_pig.death")
+                    .putString("eat_sound", "minecraft:entity.baby_pig.eat")
+                    .putString("hurt_sound", "minecraft:entity.baby_pig.hurt")
+                    .putString("step_sound", "minecraft:entity.baby_pig.step")
+            );
+
+            registryContainer.put("minecraft:pig_sound_variant", this.createRegistry("minecraft:pig_sound_variant",
+                Map.of("minecraft:classic", soundVariant)));
+
+            soundVariant = this.soundVariant(
+                builder -> builder.putString("ambient_sound", "minecraft:entity.cat.ambient")
+                    .putString("beg_for_food_sound", "minecraft:entity.cat.beg_for_food")
+                    .putString("death_sound", "minecraft:entity.cat.death")
+                    .putString("eat_sound", "minecraft:entity.cat.eat")
+                    .putString("hiss_sound", "minecraft:entity.cat.hiss")
+                    .putString("hurt_sound", "minecraft:entity.cat.hurt")
+                    .putString("purr_sound", "minecraft:entity.cat.purr")
+                    .putString("purreow_sound", "minecraft:entity.cat.purreow")
+                    .putString("stray_ambient_sound", "minecraft:entity.cat.stray_ambient"),
+                builder -> builder.putString("ambient_sound", "minecraft:entity.baby_cat.ambient")
+                    .putString("beg_for_food_sound", "minecraft:entity.baby_cat.beg_for_food")
+                    .putString("death_sound", "minecraft:entity.baby_cat.death")
+                    .putString("eat_sound", "minecraft:entity.baby_cat.eat")
+                    .putString("hiss_sound", "minecraft:entity.baby_cat.hiss")
+                    .putString("hurt_sound", "minecraft:entity.baby_cat.hurt")
+                    .putString("purr_sound", "minecraft:entity.baby_cat.purr")
+                    .putString("purreow_sound", "minecraft:entity.baby_cat.purreow")
+                    .putString("stray_ambient_sound", "minecraft:entity.baby_cat.stray_ambient")
+            );
+
+            registryContainer.put("minecraft:cat_sound_variant", this.createRegistry("minecraft:cat_sound_variant",
+                Map.of("minecraft:classic", soundVariant)));
+
+            CompoundBinaryTag.Builder cowSoundVariant = CompoundBinaryTag.builder()
+                .putString("ambient_sound", "minecraft:entity.cow.ambient")
+                .putString("death_sound", "minecraft:entity.cow.death")
+                .putString("hurt_sound", "minecraft:entity.cow.hurt")
+                .putString("step_sound", "minecraft:entity.cow.step");
+
+            registryContainer.put("minecraft:cow_sound_variant", this.createRegistry("minecraft:cow_sound_variant",
+                Map.of("minecraft:classic", cowSoundVariant.build())));
+
+            soundVariant = this.soundVariant(
+                builder -> builder.putString("ambient_sound", "minecraft:entity.chicken.ambient")
+                    .putString("death_sound", "minecraft:entity.chicken.death")
+                    .putString("hurt_sound", "minecraft:entity.chicken.hurt")
+                    .putString("step_sound", "minecraft:entity.chicken.step"),
+                builder -> builder.putString("ambient_sound", "minecraft:entity.baby_chicken.ambient")
+                    .putString("death_sound", "minecraft:entity.baby_chicken.death")
+                    .putString("hurt_sound", "minecraft:entity.baby_chicken.hurt")
+                    .putString("step_sound", "minecraft:entity.baby_chicken.step")
+            );
+
+            registryContainer.put("minecraft:chicken_sound_variant", this.createRegistry("minecraft:chicken_sound_variant",
+                Map.of("minecraft:classic", soundVariant)));
+
+            // Trim material
+            CompoundBinaryTag trim = CompoundBinaryTag.builder()
+                .putString("asset_name", "redstone")
+                .put("description", CompoundBinaryTag.builder()
+                    .putString("color", "#971607")
+                    .putString("translate", "trim_material.minecraft.redstone")
+                    .build())
+                .build();
+
+            Map<String, CompoundBinaryTag> trims = new HashMap<>();
+            for (String trimName : List.of("amethyst", "copper", "diamond",
+                "emerald", "gold", "iron", "lapis", "netherite", "quartz",
+                "redstone", "resin")) {
+              trims.put(trimName, trim);
+            }
+            registryContainer.put("minecraft:trim_material", this.createRegistry("minecraft:trim_material", trims));
+
+            // Trim material
+            CompoundBinaryTag song = CompoundBinaryTag.builder()
+                .putString("sound_event", "minecraft:music_disc.5")
+                .put("description", CompoundBinaryTag.builder()
+                    .putString("translate", "jukebox_song.minecraft.5")
+                    .build())
+                .putFloat("length_in_seconds", 178f)
+                .putInt("comparator_output", 15)
+                .build();
+
+            Map<String, CompoundBinaryTag> songs = new HashMap<>();
+            for (String songName : List.of("11", "13", "5", "blocks", "cat", "chirp", "creator",
+                "creator_music_box", "far", "lava_chicken", "mall", "mellohi", "otherside",
+                "pigstep", "precipice", "relic", "stal", "strad", "tears", "wait", "ward")) {
+              songs.put(songName, song);
+            }
+            registryContainer.put("minecraft:jukebox_song", this.createRegistry("minecraft:jukebox_song", songs));
+
+            // Instrument
+            Map<String, CompoundBinaryTag> instruments = new HashMap<>();
+            for (String instrumentName : List.of("admire_goat_horn", "call_goat_horn", "dream_goat_horn", "feel_goat_horn",
+                "ponder_goat_horn", "seek_goat_horn", "sing_goat_horn", "yearn_goat_horn")) {
+              instruments.put(instrumentName, CompoundBinaryTag.builder()
+                  .putString("sound_event", "minecraft:item.goat_horn.sound.0")
+                  .putFloat("range", 256)
+                  .putFloat("use_duration", 256)
+                  .put("description", CompoundBinaryTag.builder()
+                      .putString("translate", "instrument.minecraft.ponder_goat_horn")
+                      .build())
+                  .build());
+            }
+            registryContainer.put("minecraft:instrument", this.createRegistry("minecraft:instrument", instruments));
+
+            // Timeline
+            Map<String, CompoundBinaryTag> timelines = new HashMap<>();
+            for (String timelineName : List.of("day")) {
+              timelines.put(timelineName, CompoundBinaryTag.builder()
+                  .putString("clock", "minecraft:overworld")
+                  .putFloat("period_ticks", 24000)
+                  .build());
+            }
+            registryContainer.put("minecraft:timeline", this.createRegistry("minecraft:timeline", timelines));
           }
         } else {
           CompoundBinaryTag.Builder wolfVariant = CompoundBinaryTag.builder()
@@ -1129,6 +1327,13 @@ public class LimboImpl implements Limbo {
     }
 
     return joinGame;
+  }
+
+  private CompoundBinaryTag soundVariant(Function<CompoundBinaryTag.Builder, CompoundBinaryTag.Builder> adult,
+      Function<CompoundBinaryTag.Builder, CompoundBinaryTag.Builder> baby) {
+    return CompoundBinaryTag.builder()
+        .put("adult_sounds", adult.apply(CompoundBinaryTag.builder()).build())
+        .put("baby_sounds", baby.apply(CompoundBinaryTag.builder()).build()).build();
   }
 
   private JoinGamePacket createLegacyJoinGamePacket() {
