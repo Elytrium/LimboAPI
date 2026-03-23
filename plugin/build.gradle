@@ -298,18 +298,15 @@ File generateData(MinecraftVersion version) {
     command = "\"%s\" -cp \"${jarFile.getAbsolutePath()}\" net.minecraft.data.Main --reports --server"
   }
 
-  exec {
-    if (System.getProperty("os.name").toLowerCase().contains("win")) {
-      File java = new File(System.getProperty("java.home"), "bin/java.exe")
-      commandLine("cmd", "/c", String.format(command, java))
-    } else {
-      File java = new File(System.getProperty("java.home"), "bin/java")
-      commandLine("bash", "-c", String.format(command, java))
-    }
-
-    workingDir(jarFile.getParentFile())
+  List<String> commandLine;
+  if (System.getProperty("os.name").toLowerCase().contains("win")) {
+    File java = new File(System.getProperty("java.home"), "bin/java.exe")
+    commandLine = ["cmd", "/c", String.format(command, java)]
+  } else {
+    File java = new File(System.getProperty("java.home"), "bin/java")
+    commandLine = ["bash", "-c", String.format(command, java)]
   }
-
+  commandLine.execute([], jarFile.getParentFile()).waitFor()
   return targetDir
 }
 
