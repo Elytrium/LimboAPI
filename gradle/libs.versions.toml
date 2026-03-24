@@ -1,12 +1,12 @@
 [versions]
 elytrium-commons = "1.2.3" # https://github.com/Elytrium/elytrium-java-commons
 elytrium-fastprepare = "1.0.13" #https://github.com/Elytrium/FastPrepareAPI
-gradle-licenser = "0.6.1" # https://github.com/CadixDev/licenser
-gradle-shadow = "8.3.6" # https://github.com/GradleUp/shadow
-gradle-spotbugs = "6.0.12" # https://github.com/spotbugs/spotbugs-gradle-plugin
+gradle-licenser = "1.2.0" # https://github.com/CadixDev/licenser
+gradle-shadow = "9.4.0" # https://github.com/GradleUp/shadow
+gradle-spotbugs = "6.4.8" # https://github.com/spotbugs/spotbugs-gradle-plugin
 minecraft-adventure = "4.15.0" # https://github.com/KyoriPowered/adventure
 minecraft-bstats = "3.0.0" # https://github.com/Bastian/bStats
-minecraft-velocity = "3.4.0-SNAPSHOT" # https://github.com/PaperMC/Velocity
+minecraft-velocity = "3.5.0-SNAPSHOT" # https://github.com/PaperMC/Velocity
 tool-commons-io = "2.6" # https://github.com/apache/commons-io
 tool-fastutil = "8.5.11" # https://github.com/vigna/fastutil/
 tool-google-guava = "28.0-jre" # https://github.com/google/guava
@@ -32,6 +32,6 @@ tool-netty-handler = { module = "io.netty:netty-handler", version.ref = "tool-ne
 tool-spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "tool-spotbugs-annotations" }
 
 [plugins]
-gradle-licenser = { id = "org.cadixdev.licenser", version.ref = "gradle-licenser" }
+gradle-licenser = { id = "net.minecraftforge.licenser", version.ref = "gradle-licenser" }
 gradle-shadow = { id = "com.gradleup.shadow", version.ref = "gradle-shadow" }
 gradle-spotbugs = { id = "com.github.spotbugs", version.ref = "gradle-spotbugs" }

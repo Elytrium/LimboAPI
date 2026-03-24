@@ -1,3 +1,0 @@
-getRootProject().setName("limboapi")
-
-include("api", "plugin")
