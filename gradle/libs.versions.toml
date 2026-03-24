@@ -1,0 +1,37 @@
+[versions]
+elytrium-commons = "1.2.3" # https://github.com/Elytrium/elytrium-java-commons
+elytrium-fastprepare = "1.0.13" #https://github.com/Elytrium/FastPrepareAPI
+gradle-licenser = "0.6.1" # https://github.com/CadixDev/licenser
+gradle-shadow = "8.3.6" # https://github.com/GradleUp/shadow
+gradle-spotbugs = "6.0.12" # https://github.com/spotbugs/spotbugs-gradle-plugin
+minecraft-adventure = "4.15.0" # https://github.com/KyoriPowered/adventure
+minecraft-bstats = "3.0.0" # https://github.com/Bastian/bStats
+minecraft-velocity = "3.4.0-SNAPSHOT" # https://github.com/PaperMC/Velocity
+tool-commons-io = "2.6" # https://github.com/apache/commons-io
+tool-fastutil = "8.5.11" # https://github.com/vigna/fastutil/
+tool-google-guava = "28.0-jre" # https://github.com/google/guava
+tool-netty = "4.1.86.Final" # https://github.com/netty/netty
+tool-spotbugs-annotations = "4.7.3" # https://github.com/spotbugs/spotbugs
+
+[libraries]
+elytrium-commons-config = { module = "net.elytrium.commons:config", version.ref = "elytrium-commons" }
+elytrium-commons-kyori = { module = "net.elytrium.commons:kyori", version.ref = "elytrium-commons" }
+elytrium-commons-utils = { module = "net.elytrium.commons:utils", version.ref = "elytrium-commons" }
+elytrium-commons-velocity = { module = "net.elytrium.commons:velocity", version.ref = "elytrium-commons" }
+elytrium-fastprepare = { module = "net.elytrium:fastprepare", version.ref = "elytrium-fastprepare" }
+minecraft-adventure-nbt = { module = "net.kyori:adventure-nbt", version.ref = "minecraft-adventure" }
+minecraft-bstats-velocity = { module = "org.bstats:bstats-velocity", version.ref = "minecraft-bstats" }
+minecraft-velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "minecraft-velocity" }
+minecraft-velocity-native = { module = "com.velocitypowered:velocity-native", version.ref = "minecraft-velocity" }
+minecraft-velocity-proxy = { module = "com.velocitypowered:velocity-proxy", version.ref = "minecraft-velocity" }
+tool-commons-io = { module = "commons-io:commons-io", version.ref = "tool-commons-io" }
+tool-fastutil = { module = "it.unimi.dsi:fastutil-core", version.ref = "tool-fastutil" }
+tool-google-guava = { module = "com.google.guava:guava", version.ref = "tool-google-guava" }
+tool-netty-codec = { module = "io.netty:netty-codec", version.ref = "tool-netty" }
+tool-netty-handler = { module = "io.netty:netty-handler", version.ref = "tool-netty" }
+tool-spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "tool-spotbugs-annotations" }
+
+[plugins]
+gradle-licenser = { id = "org.cadixdev.licenser", version.ref = "gradle-licenser" }
+gradle-shadow = { id = "com.gradleup.shadow", version.ref = "gradle-shadow" }
+gradle-spotbugs = { id = "com.github.spotbugs", version.ref = "gradle-spotbugs" }
