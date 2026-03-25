@@ -1253,7 +1253,7 @@ public class LimboImpl implements Limbo {
             }
             registryContainer.put("minecraft:trim_material", this.createRegistry("minecraft:trim_material", trims));
 
-            // Trim material
+            // Jukebox song
             CompoundBinaryTag song = CompoundBinaryTag.builder()
                 .putString("sound_event", "minecraft:music_disc.5")
                 .put("description", CompoundBinaryTag.builder()
