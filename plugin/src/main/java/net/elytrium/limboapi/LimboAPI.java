@@ -43,7 +43,6 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEnco
 import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
@@ -128,10 +127,9 @@ import org.slf4j.Logger;
         "Elytrium (https://elytrium.net/)",
     }
 )
-@SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
-  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 774;
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 775;
 
   @MonotonicNonNull
   private static Logger LOGGER;
@@ -281,7 +279,6 @@ public class LimboAPI implements LimboFactory {
     this.eventManagerHook.reloadHandlers();
   }
 
-  @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "LEGACY_AMPERSAND can't be null in velocity.")
   public void reload() {
     Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX);
     ComponentSerializer<Component, Component, String> serializer = Settings.IMP.SERIALIZER.getSerializer();

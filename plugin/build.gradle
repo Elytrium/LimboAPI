@@ -9,11 +9,11 @@ buildscript() {
 
 plugins() {
   id("java")
-  id("com.gradleup.shadow").version("8.3.6")
+  id("com.gradleup.shadow").version("9.4.0")
 }
 
 compileJava() {
-  getOptions().getRelease().set(17)
+  getOptions().getRelease().set(21)
   getOptions().setEncoding("UTF-8")
 }
 
@@ -55,14 +55,27 @@ shadowJar() {
 }
 
 license() {
-  matching(includes: ["**/mcprotocollib/**"]) {
-    setHeader(getRootProject().file("HEADER_MCPROTOCOLLIB.txt"))
-  }
-  matching(includes: ["**/LoginListener.java", "**/KickListener.java", "**/LoginTasksQueue.java", "**/MinecraftLimitedCompressDecoder.java"]) {
-    setHeader(getRootProject().file("HEADER_MIXED.txt"))
+  matching("**/mcprotocollib/**") {
+    header = rootProject.file("HEADER_MCPROTOCOLLIB.txt")
   }
 
-  setHeader(getRootProject().file("HEADER.txt"))
+  matching("**/LoginListener.java") {
+    header = rootProject.file("HEADER_MIXED.txt")
+  }
+
+  matching("**/KickListener.java") {
+    header = rootProject.file("HEADER_MIXED.txt")
+  }
+
+  matching("**/LoginTasksQueue.java") {
+    header = rootProject.file("HEADER_MIXED.txt")
+  }
+
+  matching("**/MinecraftLimitedCompressDecoder.java") {
+    header = rootProject.file("HEADER_MIXED.txt")
+  }
+
+  header = rootProject.file("HEADER.txt")
 }
 
 tasks.register("finalize") {
@@ -135,7 +148,8 @@ enum MinecraftVersion {
   MINECRAFT_1_21_6(771),
   MINECRAFT_1_21_7(772),
   MINECRAFT_1_21_9(773),
-  MINECRAFT_1_21_11(774)
+  MINECRAFT_1_21_11(774),
+  MINECRAFT_26_1(774)
 
   public static final List<MinecraftVersion> WORLD_VERSIONS = List.of(
     MINECRAFT_1_13,
@@ -157,7 +171,8 @@ enum MinecraftVersion {
     MINECRAFT_1_21_6,
     MINECRAFT_1_21_7,
     MINECRAFT_1_21_9,
-    MINECRAFT_1_21_11
+    MINECRAFT_1_21_11,
+    MINECRAFT_26_1
   )
 
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
@@ -283,18 +298,15 @@ File generateData(MinecraftVersion version) {
     command = "\"%s\" -cp \"${jarFile.getAbsolutePath()}\" net.minecraft.data.Main --reports --server"
   }
 
-  exec {
-    if (System.getProperty("os.name").toLowerCase().contains("win")) {
-      File java = new File(System.getProperty("java.home"), "bin/java.exe")
-      commandLine("cmd", "/c", String.format(command, java))
-    } else {
-      File java = new File(System.getProperty("java.home"), "bin/java")
-      commandLine("bash", "-c", String.format(command, java))
-    }
-
-    workingDir(jarFile.getParentFile())
+  List<String> commandLine;
+  if (System.getProperty("os.name").toLowerCase().contains("win")) {
+    File java = new File(System.getProperty("java.home"), "bin/java.exe")
+    commandLine = ["cmd", "/c", String.format(command, java)]
+  } else {
+    File java = new File(System.getProperty("java.home"), "bin/java")
+    commandLine = ["bash", "-c", String.format(command, java)]
   }
-
+  commandLine.execute([], jarFile.getParentFile()).waitFor()
   return targetDir
 }
 
