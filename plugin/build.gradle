@@ -446,11 +446,6 @@ static Map<String, Integer> getBlockMappings(Object data, Map<String, Map<String
 }
 
 void generateBlockMappings(File targetDir, Map<MinecraftVersion, Object> blockReports) {
-  if (blockReports == null || blockReports.isEmpty()) {
-    logger.error("generateBlockMappings: blockReports is empty or null, skipping block mappings generation")
-    return
-  }
-
   File defaultBlockPropertiesFile = new File(targetDir, "defaultblockproperties.json")
   File blockStatesFile = new File(targetDir, "blockstates.json")
   File blockStatesMappingFile = new File(targetDir, "blockstates_mapping.json")
@@ -465,11 +460,6 @@ void generateBlockMappings(File targetDir, Map<MinecraftVersion, Object> blockRe
               [version, getDefaultProperties(report)]
             })
 
-    if (defaultProperties[MinecraftVersion.MAXIMUM_VERSION] == null) {
-      logger.error("generateBlockMappings: no data for MAXIMUM_VERSION (${MinecraftVersion.MAXIMUM_VERSION}), skipping block mappings generation")
-      return
-    }
-
     defaultBlockPropertiesFile.write(JsonOutput.prettyPrint(
             JsonOutput.toJson(defaultProperties[MinecraftVersion.MAXIMUM_VERSION].sort())), "UTF-8")
 
@@ -483,11 +473,6 @@ void generateBlockMappings(File targetDir, Map<MinecraftVersion, Object> blockRe
     })
 
     Map<String, Integer> blocks = mappings[MinecraftVersion.MAXIMUM_VERSION]
-
-    if (blocks == null) {
-      logger.error("generateBlockMappings: no block mappings for MAXIMUM_VERSION (${MinecraftVersion.MAXIMUM_VERSION}), skipping block mappings generation")
-      return
-    }
 
     blockStatesFile.write(
             JsonOutput.prettyPrint(JsonOutput.toJson(
@@ -593,11 +578,6 @@ void generateRegistryMapping(String target, File targetDir, Map<MinecraftVersion
 }
 
 void generateRegistryMappings(File targetDir, Map<MinecraftVersion, Object> registriesReports) {
-  if (registriesReports == null || registriesReports.isEmpty()) {
-    logger.error("generateRegistryMappings: registriesReports is empty or null, skipping registry mappings generation")
-    return
-  }
-
   this.generateRegistryMapping("item", targetDir, registriesReports
           .findAll({ e -> MinecraftVersion.WORLD_VERSIONS.contains(e.getKey()) }))
   this.generateRegistryMapping("block", targetDir, registriesReports)
@@ -678,11 +658,6 @@ static Map<String, Map<String, List<String>>> getTags(File tagDir, Map<String, S
 }
 
 void generateTags(File targetDir, Map<MinecraftVersion, File> tagDirs) {
-  if (tagDirs == null || tagDirs.isEmpty()) {
-    logger.error("generateTags: tagDirs is empty or null, skipping tags generation")
-    return
-  }
-
   File tagsFile = new File(targetDir, "tags.json");
   if (checkIsCacheValid(tagsFile)) {
       this.println("> Generating tags...")
@@ -732,14 +707,7 @@ tasks.register("generateMappings") {
           .dropWhile({ it < MinecraftVersion.MINECRAFT_1_13 })
           .collect(Collectors.toMap(Function.identity(), this::generateData))
 
-  Map<MinecraftVersion, Object> blockReports = generated.findAll({ version, directory ->
-    File file = new File(directory, "reports/blocks.json")
-    if (!file.exists()) {
-      logger.error("Skipping ${version}: file not found: ${file.absolutePath}")
-      return false
-    }
-    return true
-  }).collectEntries({ version, directory ->
+  Map<MinecraftVersion, Object> blockReports = generated.collectEntries({ version, directory ->
     [version, new JsonSlurper().parse(new File(directory, "reports/blocks.json"))]
   })
 
@@ -747,14 +715,6 @@ tasks.register("generateMappings") {
 
   Map<MinecraftVersion, Object> registriesReports = generated
           .findAll({ it.getKey() >= MinecraftVersion.MINECRAFT_1_14 })
-          .findAll({ version, directory ->
-            File file = new File(directory, "reports/registries.json")
-            if (!file.exists()) {
-              logger.error("Skipping ${version}: file not found: ${file.absolutePath}")
-              return false
-            }
-            return true
-          })
           .collectEntries({ version, directory ->
             [version, new JsonSlurper().parse(new File(directory, "reports/registries.json"))]
           })
@@ -762,14 +722,6 @@ tasks.register("generateMappings") {
   this.generateRegistryMappings(targetDir, registriesReports)
 
   Map<MinecraftVersion, File> tags = generated
-          .findAll({ version, directory ->
-            File file = new File(directory, "data/minecraft/tags")
-            if (!file.exists()) {
-              logger.error("Skipping ${version}: directory not found: ${file.absolutePath}")
-              return false
-            }
-            return true
-          })
           .collectEntries({ version, directory ->
             [version, new File(directory, "data/minecraft/tags")]
           })
