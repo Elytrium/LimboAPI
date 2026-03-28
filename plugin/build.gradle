@@ -337,6 +337,8 @@ File generateData(MinecraftVersion version) {
     }
   }
 
+  // TODO: revert this line
+
   return targetDir
 }
 
