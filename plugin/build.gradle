@@ -8,16 +8,16 @@ buildscript() {
 }
 
 plugins() {
-  id("java")
+  alias(libs.plugins.gradle.licenser)
   alias(libs.plugins.gradle.shadow)
   alias(libs.plugins.gradle.spotbugs)
-  alias(libs.plugins.gradle.licenser)
+  id("java")
+  id("net.elytrium.checkstyle")
   id("net.elytrium.java.version")
+  id("net.elytrium.licence")
   id("net.elytrium.module.info")
   id("net.elytrium.revision")
   id("net.elytrium.spotbugs")
-  id("net.elytrium.checkstyle")
-  id("net.elytrium.licence")
 }
 
 dependencies() {

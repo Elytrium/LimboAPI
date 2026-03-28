@@ -1,6 +1,3 @@
-import com.github.spotbugs.snom.SpotBugsExtension
-import com.github.spotbugs.snom.SpotBugsTask
-
 plugins {
     java
     checkstyle
