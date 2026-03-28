@@ -292,19 +292,9 @@ public class LoginTasksQueue {
       PROFILE_FIELD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findSetter(ConnectedPlayer.class, "profile", GameProfile.class);
 
-      PermissionProvider defaultPermissions;
-      try {
-        Field defaultPermissionsField = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
-        defaultPermissionsField.setAccessible(true);
-        defaultPermissions = (PermissionProvider) defaultPermissionsField.get(null);
-      } catch (NoSuchFieldException e) {
-        Field defaultPermissionResolverField = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSION_RESOLVER");
-        defaultPermissionResolverField.setAccessible(true);
-        PermissionFunction defaultResolver = (PermissionFunction) defaultPermissionResolverField.get(null);
-        // Velocity-CTD does not expose DEFAULT_PERMISSIONS; adapt its resolver to the PermissionProvider contract.
-        defaultPermissions = subject -> (PermissionFunction) defaultResolver;
-      }
-      DEFAULT_PERMISSIONS = defaultPermissions;
+      Field defaultPermissionsField = ConnectedPlayer.class.getDeclaredField("DEFAULT_PERMISSIONS");
+      defaultPermissionsField.setAccessible(true);
+      DEFAULT_PERMISSIONS = (PermissionProvider) defaultPermissionsField.get(null);
 
       SET_PERMISSION_FUNCTION_METHOD = MethodHandles.privateLookupIn(ConnectedPlayer.class, MethodHandles.lookup())
           .findVirtual(ConnectedPlayer.class, "setPermissionFunction", MethodType.methodType(void.class, PermissionFunction.class));
