@@ -24,7 +24,7 @@ jobs:
         with:
           path: |
             plugin/build/minecraft/
-            plugin/build/generated/minecraft/mappings/
+            plugin/build/generated/minecraft/mapping/
           key: minecraft-${{ hashFiles('gradle.properties') }}
       - name: Build LimboAPI
         run: ./gradlew build
