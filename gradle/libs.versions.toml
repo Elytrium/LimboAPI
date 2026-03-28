@@ -30,6 +30,8 @@ tool-google-guava = { module = "com.google.guava:guava", version.ref = "tool-goo
 tool-netty-codec = { module = "io.netty:netty-codec", version.ref = "tool-netty" }
 tool-netty-handler = { module = "io.netty:netty-handler", version.ref = "tool-netty" }
 tool-spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "tool-spotbugs-annotations" }
+gradle-spotbugs = { module = "com.github.spotbugs:com.github.spotbugs.gradle.plugin", version.ref = "gradle-spotbugs" }
+gradle-licenser = { module = "net.minecraftforge.licenser:net.minecraftforge.licenser.gradle.plugin", version.ref = "gradle-licenser" }
 
 [plugins]
 gradle-licenser = { id = "net.minecraftforge.licenser", version.ref = "gradle-licenser" }

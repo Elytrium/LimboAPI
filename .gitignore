@@ -85,6 +85,7 @@ $RECYCLE.BIN/
 
 # Gradle
 .gradle
+.kotlin
 build/
 
 # Gradle Patch

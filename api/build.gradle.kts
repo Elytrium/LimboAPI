@@ -7,11 +7,14 @@ import org.gradle.kotlin.dsl.closureOf
 plugins {
     `java-library`
     `maven-publish`
-}
-
-tasks.withType<JavaCompile> {
-    options.release.set(21)
-    options.encoding = "UTF-8"
+    alias(libs.plugins.gradle.spotbugs)
+    alias(libs.plugins.gradle.licenser)
+    id("net.elytrium.java.version")
+    id("net.elytrium.module.info")
+    id("net.elytrium.revision")
+    id("net.elytrium.spotbugs")
+    id("net.elytrium.checkstyle")
+    id("net.elytrium.licence")
 }
 
 dependencies {
@@ -23,16 +26,6 @@ dependencies {
     api(libs.minecraft.adventure.nbt)
 
     compileOnly(libs.tool.spotbugs.annotations)
-}
-
-extensions.configure<LicenseExtension> {
-    matching(
-        "**/mcprotocollib/**",
-        closureOf<LicenseProperties> {
-            setHeader(rootProject.file("HEADER_MCPROTOCOLLIB.txt"))
-        }
-    )
-    setHeader(file("HEADER.txt"))
 }
 
 tasks.named<Javadoc>("javadoc") {
@@ -82,13 +75,10 @@ artifacts {
     archives(sourcesJar)
 }
 
-@Suppress("UNCHECKED_CAST")
-val getCurrentShortRevision = rootProject.extra["getCurrentShortRevision"] as () -> String
-
-
 val versionStringProvider = provider {
     if (version.toString().contains("-")) {
-        "${version} (git-${getCurrentShortRevision()})"
+        val currentShortRevision = currentShortRevisionProvider.getCurrentShortRevision()
+        "${version} (git-${currentShortRevision})"
     } else {
         version.toString()
     }
