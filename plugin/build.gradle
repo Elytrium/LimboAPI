@@ -2,14 +2,14 @@
 
 buildscript() {
   dependencies() {
-    classpath("commons-io:commons-io:2.6")
-    classpath("com.google.guava:guava:28.0-jre")
+    classpath(libs.tool.commons.io)
+    classpath(libs.tool.google.guava)
   }
 }
 
 plugins() {
   id("java")
-  id("com.gradleup.shadow").version("9.4.0")
+  alias(libs.plugins.gradle.shadow)
 }
 
 compileJava() {
@@ -19,25 +19,25 @@ compileJava() {
 
 dependencies() {
   implementation(project(":api"))
-  implementation("net.elytrium.commons:config:$elytriumCommonsVersion")
-  implementation("net.elytrium.commons:utils:$elytriumCommonsVersion")
-  implementation("net.elytrium.commons:velocity:$elytriumCommonsVersion")
-  implementation("net.elytrium.commons:kyori:$elytriumCommonsVersion")
+  implementation(libs.elytrium.commons.config)
+  implementation(libs.elytrium.commons.utils)
+  implementation(libs.elytrium.commons.velocity)
+  implementation(libs.elytrium.commons.kyori)
 
-  implementation("net.elytrium:fastprepare:$fastPrepareVersion")
-  compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
-  annotationProcessor("com.velocitypowered:velocity-api:$velocityVersion")
-  compileOnly("com.velocitypowered:velocity-proxy:$velocityVersion") // From Elytrium Repo.
-  compileOnly("com.velocitypowered:velocity-native:$velocityVersion")
+  implementation(libs.elytrium.fastprepare)
+  compileOnly(libs.minecraft.velocity.api)
+  annotationProcessor(libs.minecraft.velocity.api)
+  compileOnly(libs.minecraft.velocity.proxy) // From Elytrium Repo.
+  compileOnly(libs.minecraft.velocity.native)
 
   // Needs for some velocity methods.
-  compileOnly("io.netty:netty-codec:$nettyVersion")
-  compileOnly("io.netty:netty-handler:$nettyVersion")
-  compileOnly("it.unimi.dsi:fastutil-core:$fastutilVersion")
+  compileOnly(libs.tool.netty.codec)
+  compileOnly(libs.tool.netty.handler)
+  compileOnly(libs.tool.fastutil)
 
-  implementation("org.bstats:bstats-velocity:$bstatsVersion")
+  implementation(libs.minecraft.bstats.velocity)
 
-  compileOnly("com.github.spotbugs:spotbugs-annotations:$spotbugsVersion")
+  compileOnly(libs.tool.spotbugs.annotations)
 }
 
 shadowJar() {
