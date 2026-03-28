@@ -37,7 +37,7 @@ extensions.configure<LicenseExtension> {
 
 tasks.named<Javadoc>("javadoc") {
     options.encoding = "UTF-8"
-    (options as StandardJavadocDocletOptions).apply {
+    (options as? StandardJavadocDocletOptions)?.apply {
         source = "21"
         links("https://docs.oracle.com/en/java/javase/11/docs/api/")
         addStringOption("Xdoclint:none", "-quiet")

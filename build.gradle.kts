@@ -21,18 +21,6 @@ allprojects {
         targetCompatibility = JavaVersion.VERSION_21.toString()
     }
 
-    repositories {
-        mavenCentral()
-        maven {
-            name = "elytrium-repo"
-            url = uri("https://maven.elytrium.net/repo/")
-        }
-        maven {
-            name = "papermc-repo"
-            url = uri("https://repo.papermc.io/repository/maven-public/")
-        }
-    }
-
     checkstyle {
         toolVersion = "10.12.1"
         configFile = file("$rootDir/config/checkstyle/checkstyle.xml")
@@ -45,13 +33,11 @@ allprojects {
         excludeFilter.set(file("${rootDir}/config/spotbugs/suppressions.xml"))
     }
 
-    if (project != rootProject) {
-        tasks.withType<SpotBugsTask> {
-            reports.register("html") {
-                required.set(true)
-                outputLocation.set(layout.buildDirectory.file("reports/spotbugs/main/spotbugs.html"))
-                setStylesheet("fancy-hist.xsl")
-            }
+    tasks.withType<SpotBugsTask>() {
+        reports.create("html") {
+            required.set(true)
+            outputLocation.set(layout.buildDirectory.file("reports/spotbugs/main/spotbugs.html"))
+            setStylesheet("fancy-hist.xsl")
         }
     }
 }
