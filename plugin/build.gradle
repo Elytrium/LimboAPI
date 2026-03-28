@@ -283,7 +283,8 @@ File generateData(MinecraftVersion version) {
   }
 
   File jarFile = this.getServerJar(version.getVersionName())
-  File targetDir = new File(jarFile.getParentFile(), "generated")
+  File parent = jarFile.getParentFile()
+  File targetDir = new File(parent, "generated")
 
   try {
     FileUtils.deleteDirectory(targetDir)
@@ -306,7 +307,36 @@ File generateData(MinecraftVersion version) {
     File java = new File(System.getProperty("java.home"), "bin/java")
     commandLine = ["bash", "-c", String.format(command, java)]
   }
-  commandLine.execute([], jarFile.getParentFile()).waitFor()
+  commandLine.execute([], parent).waitFor()
+
+  // Remove/compact files, reduces disk usage from ~2.9gb to ~92mb (or ~9.5mb on a compressed filesystem)
+  jarFile.delete()
+  FileUtils.deleteDirectory(new File(parent, "logs"))
+  FileUtils.deleteDirectory(new File(parent, "libraries"))
+  FileUtils.deleteDirectory(new File(parent, "versions"))
+
+  new File(targetDir, "reports/commands.json").delete()
+
+  FileUtils.deleteDirectory(new File(targetDir, ".cache"))
+  FileUtils.deleteDirectory(new File(targetDir, "reports/biome_parameters"))
+  FileUtils.deleteDirectory(new File(targetDir, "reports/biomes"))
+  FileUtils.deleteDirectory(new File(targetDir, "reports/worldgen"))
+  FileUtils.deleteDirectory(new File(targetDir, "reports/minecraft/components/item"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/datapacks"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/advancements"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/advancement"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/recipes"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/recipe"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/loot_tables"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/loot_table"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/worldgen"))
+
+  java.nio.file.Files.walk(parent.toPath(), 32).forEach { it ->
+    if (it.fileName.toString().endsWith(".json")) {
+      java.nio.file.Files.writeString(it, JsonOutput.toJson(new JsonSlurper().parse(it)))
+    }
+  }
+
   return targetDir
 }
 
