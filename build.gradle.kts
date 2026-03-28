@@ -45,12 +45,13 @@ allprojects {
         excludeFilter.set(file("${rootDir}/config/spotbugs/suppressions.xml"))
     }
 
-    tasks.withType<SpotBugsTask> {
-        if (project == rootProject) return@withType
-        reports.register("html") {
-            required.set(true)
-            outputLocation.set(layout.buildDirectory.file("reports/spotbugs/main/spotbugs.html"))
-            setStylesheet("fancy-hist.xsl")
+    if (project != rootProject) {
+        tasks.withType<SpotBugsTask> {
+            reports.register("html") {
+                required.set(true)
+                outputLocation.set(layout.buildDirectory.file("reports/spotbugs/main/spotbugs.html"))
+                setStylesheet("fancy-hist.xsl")
+            }
         }
     }
 }
