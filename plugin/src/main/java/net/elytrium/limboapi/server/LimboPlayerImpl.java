@@ -125,7 +125,7 @@ public class LimboPlayerImpl implements LimboPlayer {
     if (sendItem) {
       if (this.version.noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
         this.setInventory(36, SimpleItem.fromItem(Item.FILLED_MAP), 1, mapID,
-            this.plugin.createItemComponentMap().add(ProtocolVersion.MINECRAFT_1_20_5, "minecraft:map_id", 0));
+            this.plugin.createItemComponentMap().add(ProtocolVersion.MINECRAFT_1_20_5, "minecraft:map_id", mapID));
       } else if (this.version.noLessThan(ProtocolVersion.MINECRAFT_1_17)) {
         this.setInventory(36, SimpleItem.fromItem(Item.FILLED_MAP), 1, mapID,
             CompoundBinaryTag.builder().put("map", IntBinaryTag.intBinaryTag(mapID)).build());
