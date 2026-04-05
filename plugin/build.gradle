@@ -27,13 +27,8 @@ dependencies() {
   implementation(libs.elytrium.fastprepare)
   compileOnly(libs.minecraft.velocity.api)
   annotationProcessor(libs.minecraft.velocity.api)
-  compileOnly(libs.minecraft.velocity.proxy) // From Elytrium Repo.
-  compileOnly(libs.minecraft.velocity.native)
-
-  // Needs for some velocity methods.
-  compileOnly(libs.tool.netty.codec)
-  compileOnly(libs.tool.netty.handler)
-  compileOnly(libs.tool.fastutil)
+  compileOnly(files("../libs/velocity-proxy-3.5.0-SNAPSHOT-all.jar"))
+  compileOnly("it.unimi.dsi:fastutil:8.5.18") // not able to compile without it
 
   implementation(libs.minecraft.bstats.velocity)
 
