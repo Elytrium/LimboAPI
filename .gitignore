@@ -90,6 +90,9 @@ build/
 # Gradle Patch
 **/build/
 
+# Mapping generator outputs
+/mapping/build/
+
 # Common working directory
 run/
 
