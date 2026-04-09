@@ -37,6 +37,7 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftCompressDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
@@ -532,7 +533,7 @@ public class LimboAPI implements LimboFactory {
       }
 
       if (pipeline.get(Connections.COMPRESSION_DECODER) instanceof LimboCompressDecoder) {
-        MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(compressionThreshold, compressor);
+        MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(compressionThreshold, compressor, ProtocolUtils.Direction.SERVERBOUND);
         pipeline.replace(Connections.COMPRESSION_DECODER, Connections.COMPRESSION_DECODER, decoder);
       } else if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
         compressor.close();
