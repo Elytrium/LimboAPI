@@ -32,8 +32,8 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -167,7 +167,8 @@ public final class MappingGenerator {
 
   private void downloadManifest() throws IOException {
     System.out.println("> Downloading version manifest...");
-    Files.createDirectories(this.versionManifestFile.getParent());
+    Path manifestParent = Objects.requireNonNull(this.versionManifestFile.getParent(), "manifest file has no parent");
+    Files.createDirectories(manifestParent);
     if (this.checkIsCacheValid(this.versionManifestFile)) {
       this.downloadToFileWithRetries(new URL(this.manifestUrl), this.versionManifestFile, "version manifest");
     }
@@ -207,7 +208,8 @@ public final class MappingGenerator {
     }
 
     Path output = this.dataDirectory.resolve(version).resolve("manifest.json");
-    Files.createDirectories(output.getParent());
+    Path outputParent = Objects.requireNonNull(output.getParent(), "version manifest output has no parent");
+    Files.createDirectories(outputParent);
     this.downloadToFileWithRetries(new URL(resolved.get("url").getAsString()), output, version + " manifest");
     return output;
   }
@@ -244,7 +246,8 @@ public final class MappingGenerator {
     Path jarFile = this.dataDirectory.resolve(version).resolve("server.jar");
     if (!validateServer(jarFile, server.get("sha1").getAsString())) {
       System.out.println("> Downloading " + version + " server...");
-      Files.createDirectories(jarFile.getParent());
+      Path jarParent = Objects.requireNonNull(jarFile.getParent(), "server jar path has no parent");
+      Files.createDirectories(jarParent);
 
       IOException lastException = null;
       for (int attempt = 1; attempt <= DOWNLOAD_ATTEMPTS; ++attempt) {
@@ -317,7 +320,7 @@ public final class MappingGenerator {
     }
 
     Path jarFile = this.getServerJar(version.getVersionName());
-    Path parent = jarFile.getParent();
+    Path parent = Objects.requireNonNull(jarFile.getParent(), "server jar path has no parent");
     Path targetDir = parent.resolve("generated");
 
     FileUtils.deleteDirectory(targetDir.toFile());

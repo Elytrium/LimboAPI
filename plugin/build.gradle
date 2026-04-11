@@ -89,9 +89,11 @@ license() {
   header = rootProject.file("HEADER.txt")
 }
 
+def plainJarPath = layout.buildDirectory.file("libs/${project.name}-${project.version}.jar")
+
 tasks.register("finalize") {
   doLast {
-    file("build/libs/${project.name}-${project.version}.jar").delete()
+    plainJarPath.get().asFile.delete()
   }
 }
 
