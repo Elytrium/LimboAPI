@@ -77,6 +77,7 @@ public class EventManagerHook {
           this.plugin.getLoginListener().hookLoginSession(modifiedEvent);
           hookFuture.complete(modifiedEvent);
         } catch (Throwable e) {
+          LimboAPI.getLogger().error("Failed to handle GameProfileRequestEvent", e);
           throw new ReflectionException(e);
         }
       });
