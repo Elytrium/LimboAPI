@@ -99,6 +99,7 @@ public class LoginListener {
   private static final MethodHandle CONNECTED_PLAYER_CONSTRUCTOR;
   private static final MethodHandle SPAWNED_FIELD;
   private static final BiConsumer<ConnectedPlayer, TabList> TAB_LIST_SETTER;
+  private static final MethodHandle FORWARDING_MODE_GETTER;
 
   private final LimboAPI plugin;
   private final VelocityServer server;
@@ -222,7 +223,7 @@ public class LoginListener {
 
               VelocityConfiguration configuration = this.server.getConfiguration();
               UUID playerUniqueID = player.getUniqueId();
-              if (configuration.getPlayerInfoForwardingMode() == PlayerInfoForwarding.NONE) {
+              if ((PlayerInfoForwarding) FORWARDING_MODE_GETTER.invokeExact(configuration) == PlayerInfoForwarding.NONE) {
                 playerUniqueID = UuidUtils.generateOfflinePlayerUuid(player.getUsername());
               }
 
@@ -341,6 +342,16 @@ public class LoginListener {
       Field tabListField = ConnectedPlayer.class.getDeclaredField("tabList");
       tabListField.setAccessible(true);
       TAB_LIST_SETTER = LambdaUtil.setterOf(tabListField);
+
+      MethodHandle forwardingModeGetter;
+      try {
+        forwardingModeGetter = MethodHandles.lookup()
+            .findVirtual(VelocityConfiguration.class, "getForwardingMode", MethodType.methodType(PlayerInfoForwarding.class));
+      } catch (NoSuchMethodException e) {
+        forwardingModeGetter = MethodHandles.lookup()
+            .findVirtual(VelocityConfiguration.class, "getPlayerInfoForwardingMode", MethodType.methodType(PlayerInfoForwarding.class));
+      }
+      FORWARDING_MODE_GETTER = forwardingModeGetter;
     } catch (Throwable e) {
       throw new ReflectionException(e);
     }
