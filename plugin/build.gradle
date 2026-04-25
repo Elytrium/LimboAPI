@@ -245,9 +245,13 @@ File downloadVersionManifest(String version) {
 @SuppressWarnings('GrMethodMayBeStatic')
 File getGeneratedCache(MinecraftVersion version) {
   File generated = new File(dataDirectory, "${version.getVersionName()}/generated")
-  return new File(generated, "reports/blocks.json").exists()
-          && new File(generated, "reports/${version >= MinecraftVersion.MINECRAFT_1_14 ? "registries" : "items"}.json").exists()
-          && new File(generated, "data/minecraft/tags").exists()
+  File blocks = new File(generated, "reports/blocks.json")
+  File registries = new File(generated, "reports/${version >= MinecraftVersion.MINECRAFT_1_14 ? "registries" : "items"}.json")
+  File tags = new File(generated, "data/minecraft/tags")
+
+  return blocks.exists() && blocks.length() > 0
+          && registries.exists() && registries.length() > 0
+          && tags.exists()
           ? generated : null
 }
 
@@ -307,7 +311,10 @@ File generateData(MinecraftVersion version) {
     File java = new File(System.getProperty("java.home"), "bin/java")
     commandLine = ["bash", "-c", String.format(command, java)]
   }
-  commandLine.execute([], parent).waitFor()
+  int exitCode = commandLine.execute([], parent).waitFor()
+  if (exitCode != 0) {
+    throw new RuntimeException("Failed to generate data for ${version.getVersionName()}, exit code: ${exitCode}")
+  }
 
   // Remove/compact files, reduces disk usage from ~2.9gb to ~92mb (or ~9.5mb on a compressed filesystem)
   jarFile.delete()
