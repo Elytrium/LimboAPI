@@ -8,13 +8,16 @@ buildscript() {
 }
 
 plugins() {
-  id("java")
+  alias(libs.plugins.gradle.licenser)
   alias(libs.plugins.gradle.shadow)
-}
-
-compileJava() {
-  getOptions().getRelease().set(21)
-  getOptions().setEncoding("UTF-8")
+  alias(libs.plugins.gradle.spotbugs)
+  id("java")
+  id("net.elytrium.checkstyle")
+  id("net.elytrium.java.version")
+  id("net.elytrium.licence")
+  id("net.elytrium.module.info")
+  id("net.elytrium.revision")
+  id("net.elytrium.spotbugs")
 }
 
 dependencies() {
@@ -52,30 +55,6 @@ shadowJar() {
   relocate("net.elytrium.commons.velocity", "net.elytrium.limboapi.thirdparty.commons.velocity")
   relocate("net.elytrium.commons.kyori", "net.elytrium.limboapi.thirdparty.commons.kyori")
   relocate("net.elytrium.commons.config", "net.elytrium.limboapi.thirdparty.commons.config")
-}
-
-license() {
-  matching("**/mcprotocollib/**") {
-    header = rootProject.file("HEADER_MCPROTOCOLLIB.txt")
-  }
-
-  matching("**/LoginListener.java") {
-    header = rootProject.file("HEADER_MIXED.txt")
-  }
-
-  matching("**/KickListener.java") {
-    header = rootProject.file("HEADER_MIXED.txt")
-  }
-
-  matching("**/LoginTasksQueue.java") {
-    header = rootProject.file("HEADER_MIXED.txt")
-  }
-
-  matching("**/MinecraftLimitedCompressDecoder.java") {
-    header = rootProject.file("HEADER_MIXED.txt")
-  }
-
-  header = rootProject.file("HEADER.txt")
 }
 
 tasks.register("finalize") {
