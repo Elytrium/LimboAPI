@@ -73,7 +73,7 @@ public class Settings extends YamlConfig {
         "WARNING: do not change when proxy is running, it will break exsiting connections",
         "LimboAPI will be running in compatibility mode, allowing other plugins to",
         "intercept or modify packets sent by it, but will reduce performance in some cases.",
-        "Enable if you are using plugins that modify packets. (e.g. ViaVersion, Raknetify or PacketEvents)",
+        "Enable if you are using plugins that modify packets. (e.g. ViaVersion, Raknetify, EaglerX or PacketEvents)",
         "Require 'save-uncompressed-packets: true' to work properly"
     })
     public boolean COMPATIBILITY_MODE = false;
