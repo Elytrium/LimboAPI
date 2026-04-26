@@ -194,7 +194,8 @@ public class LoginListener {
               // Complete the Login process.
               int threshold = this.server.getConfiguration().getCompressionThreshold();
               ChannelPipeline pipeline = connection.getChannel().pipeline();
-              boolean compressionEnabled = threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0;
+              boolean compressionEnabled = threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0
+                  && pipeline.context(Connections.FRAME_ENCODER) != null;
               if (compressionEnabled) {
                 connection.write(new SetCompressionPacket(threshold));
                 this.plugin.fixDecompressor(pipeline, threshold, true);
