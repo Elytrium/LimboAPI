@@ -42,6 +42,7 @@ public class NetworkSection {
   private final int index;
 
   private int blockCount = -1;
+  private int fluidCount = -1;
 
   public NetworkSection(int index, BlockSection section, NibbleArray3D blockLight, NibbleArray3D skyLight, VirtualBiome[] biomes) {
     this.index = index;
@@ -61,6 +62,9 @@ public class NetworkSection {
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_14) >= 0) {
       dataLength += 2; // Block count short.
+    }
+    if (version.compareTo(ProtocolVersion.MINECRAFT_26_1) >= 0) {
+      dataLength += 2; // Fluid count short.
     }
     if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {
       dataLength += this.ensure118BiomeCreated(version).getDataLength(version);
@@ -129,6 +133,9 @@ public class NetworkSection {
 
   private void write114Data(ByteBuf buf, BlockStorage storage, ProtocolVersion version, int pass) {
     buf.writeShort(this.blockCount);
+    if (version.noLessThan(ProtocolVersion.MINECRAFT_26_1)) {
+      buf.writeShort(this.fluidCount);
+    }
     storage.write(buf, version, pass);
   }
 
@@ -169,6 +176,9 @@ public class NetworkSection {
 
     if (this.blockCount == -1) {
       this.blockCount = blockCount;
+
+      // TODO: properly set fluidCount, as of 26.1 it is used only to guess about fluid in chunks.
+      this.fluidCount = blockCount;
     }
   }
 }

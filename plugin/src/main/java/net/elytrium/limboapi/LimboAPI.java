@@ -37,18 +37,21 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
+import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftCompressDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftCompressorAndLengthEncoder;
+import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -125,10 +128,9 @@ import org.slf4j.Logger;
         "Elytrium (https://elytrium.net/)",
     }
 )
-@SuppressFBWarnings("MS_EXPOSE_REP")
 public class LimboAPI implements LimboFactory {
 
-  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 774;
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 775;
 
   @MonotonicNonNull
   private static Logger LOGGER;
@@ -136,6 +138,8 @@ public class LimboAPI implements LimboFactory {
   private static Serializer SERIALIZER;
 
   public static final ConcurrentHashMap<Player, UUID> INITIAL_ID = new ConcurrentHashMap<>();
+
+  private static final MethodHandle STATE_FIELD;
 
   private final VelocityServer server;
   private final Metrics.Factory metricsFactory;
@@ -276,7 +280,6 @@ public class LimboAPI implements LimboFactory {
     this.eventManagerHook.reloadHandlers();
   }
 
-  @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "LEGACY_AMPERSAND can't be null in velocity.")
   public void reload() {
     Settings.IMP.reload(this.configFile, Settings.IMP.PREFIX);
     ComponentSerializer<Component, Component, String> serializer = Settings.IMP.SERIALIZER.getSerializer();
@@ -443,12 +446,14 @@ public class LimboAPI implements LimboFactory {
   public void setState(MinecraftConnection connection, StateRegistry stateRegistry) {
     connection.setState(stateRegistry);
     this.setEncoderState(connection, stateRegistry);
+    this.fixDecoderState(connection, stateRegistry);
   }
 
   public void setActiveSessionHandler(MinecraftConnection connection, StateRegistry stateRegistry,
                                       MinecraftSessionHandler sessionHandler) {
     connection.setActiveSessionHandler(stateRegistry, sessionHandler);
     this.setEncoderState(connection, stateRegistry);
+    this.fixDecoderState(connection, stateRegistry);
   }
 
   public void setEncoderState(MinecraftConnection connection, StateRegistry state) {
@@ -470,6 +475,20 @@ public class LimboAPI implements LimboFactory {
         encoder.setFactory(this.preparedPacketFactory);
       } else {
         encoder.setFactory(this.configPreparedPacketFactory);
+      }
+    }
+  }
+
+  public void fixDecoderState(MinecraftConnection connection, StateRegistry state) {
+    if (state.name() == null) { // custom state
+      MinecraftDecoder decoder = connection.getChannel().pipeline().get(MinecraftDecoder.class);
+      if (decoder != null) {
+        try {
+          // Let decoder know what we're in PLAY state, or it will kick the player.
+          STATE_FIELD.invokeExact(decoder, StateRegistry.PLAY);
+        } catch (Throwable throwable) {
+          LimboAPI.getLogger().error("Failed to fixup decoder", throwable);
+        }
       }
     }
   }
@@ -514,7 +533,7 @@ public class LimboAPI implements LimboFactory {
       }
 
       if (pipeline.get(Connections.COMPRESSION_DECODER) instanceof LimboCompressDecoder) {
-        MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(compressionThreshold, compressor);
+        MinecraftCompressDecoder decoder = new MinecraftCompressDecoder(compressionThreshold, compressor, ProtocolUtils.Direction.SERVERBOUND);
         pipeline.replace(Connections.COMPRESSION_DECODER, Connections.COMPRESSION_DECODER, decoder);
       } else if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
         compressor.close();
@@ -692,5 +711,14 @@ public class LimboAPI implements LimboFactory {
 
   public static Serializer getSerializer() {
     return SERIALIZER;
+  }
+
+  static {
+    try {
+      STATE_FIELD = MethodHandles.privateLookupIn(MinecraftDecoder.class, MethodHandles.lookup())
+          .findSetter(MinecraftDecoder.class, "state", StateRegistry.class);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

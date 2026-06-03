@@ -8,7 +8,6 @@
 package net.elytrium.limboapi.api.protocol.packets.data;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.awt.image.BufferedImage;
 import java.io.IOError;
 import java.io.IOException;
@@ -19,7 +18,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-@SuppressFBWarnings("MS_EXPOSE_REP")
 public class MapPalette {
 
   private static final Map<MapVersion, byte[]> REMAP_BUFFERS = new EnumMap<>(MapVersion.class);

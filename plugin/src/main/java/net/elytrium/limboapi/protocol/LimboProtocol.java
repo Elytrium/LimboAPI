@@ -218,7 +218,8 @@ public class LimboProtocol {
         createMapping(0x27, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x28, ProtocolVersion.MINECRAFT_1_21_2, true),
         createMapping(0x27, ProtocolVersion.MINECRAFT_1_21_5, true),
-        createMapping(0x2C, ProtocolVersion.MINECRAFT_1_21_9, true)
+        createMapping(0x2C, ProtocolVersion.MINECRAFT_1_21_9, true),
+        createMapping(0x2D, ProtocolVersion.MINECRAFT_26_1, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         ChunkUnloadPacket.class, ChunkUnloadPacket::new,
@@ -261,7 +262,8 @@ public class LimboProtocol {
         createMapping(0x56, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x5B, ProtocolVersion.MINECRAFT_1_21_2, true),
         createMapping(0x5A, ProtocolVersion.MINECRAFT_1_21_5, true),
-        createMapping(0x5F, ProtocolVersion.MINECRAFT_1_21_9, true)
+        createMapping(0x5F, ProtocolVersion.MINECRAFT_1_21_9, true),
+        createMapping(0x61, ProtocolVersion.MINECRAFT_26_1, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         MapDataPacket.class, MapDataPacket::new,
@@ -280,7 +282,8 @@ public class LimboProtocol {
         createMapping(0x2C, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x2D, ProtocolVersion.MINECRAFT_1_21_2, true),
         createMapping(0x2C, ProtocolVersion.MINECRAFT_1_21_5, true),
-        createMapping(0x31, ProtocolVersion.MINECRAFT_1_21_9, true)
+        createMapping(0x31, ProtocolVersion.MINECRAFT_1_21_9, true),
+        createMapping(0x33, ProtocolVersion.MINECRAFT_26_1, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         PlayerAbilitiesPacket.class, PlayerAbilitiesPacket::new,
@@ -301,7 +304,8 @@ public class LimboProtocol {
         createMapping(0x38, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x3A, ProtocolVersion.MINECRAFT_1_21_2, true),
         createMapping(0x39, ProtocolVersion.MINECRAFT_1_21_5, true),
-        createMapping(0x3E, ProtocolVersion.MINECRAFT_1_21_9, true)
+        createMapping(0x3E, ProtocolVersion.MINECRAFT_1_21_9, true),
+        createMapping(0x40, ProtocolVersion.MINECRAFT_26_1, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         PositionRotationPacket.class, PositionRotationPacket::new,
@@ -322,7 +326,8 @@ public class LimboProtocol {
         createMapping(0x40, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x42, ProtocolVersion.MINECRAFT_1_21_2, true),
         createMapping(0x41, ProtocolVersion.MINECRAFT_1_21_5, true),
-        createMapping(0x46, ProtocolVersion.MINECRAFT_1_21_9, true)
+        createMapping(0x46, ProtocolVersion.MINECRAFT_1_21_9, true),
+        createMapping(0x48, ProtocolVersion.MINECRAFT_26_1, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         SetExperiencePacket.class, SetExperiencePacket::new,
@@ -342,7 +347,8 @@ public class LimboProtocol {
         createMapping(0x5C, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x61, ProtocolVersion.MINECRAFT_1_21_2, true),
         createMapping(0x60, ProtocolVersion.MINECRAFT_1_21_5, true),
-        createMapping(0x65, ProtocolVersion.MINECRAFT_1_21_9, true)
+        createMapping(0x65, ProtocolVersion.MINECRAFT_1_21_9, true),
+        createMapping(0x67, ProtocolVersion.MINECRAFT_26_1, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         SetSlotPacket.class, SetSlotPacket::new,
@@ -380,7 +386,8 @@ public class LimboProtocol {
         createMapping(0x64, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x6B, ProtocolVersion.MINECRAFT_1_21_2, true),
         createMapping(0x6A, ProtocolVersion.MINECRAFT_1_21_5, true),
-        createMapping(0x6F, ProtocolVersion.MINECRAFT_1_21_9, true)
+        createMapping(0x6F, ProtocolVersion.MINECRAFT_1_21_9, true),
+        createMapping(0x71, ProtocolVersion.MINECRAFT_26_1, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         UpdateViewPositionPacket.class, UpdateViewPositionPacket::new, // ViewCentre, ChunkRenderDistanceCenter
@@ -397,7 +404,8 @@ public class LimboProtocol {
         createMapping(0x54, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x58, ProtocolVersion.MINECRAFT_1_21_2, true),
         createMapping(0x57, ProtocolVersion.MINECRAFT_1_21_5, true),
-        createMapping(0x5C, ProtocolVersion.MINECRAFT_1_21_9, true)
+        createMapping(0x5C, ProtocolVersion.MINECRAFT_1_21_9, true),
+        createMapping(0x5E, ProtocolVersion.MINECRAFT_26_1, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         UpdateTagsPacket.class, UpdateTagsPacket::new,
@@ -415,7 +423,8 @@ public class LimboProtocol {
         createMapping(0x74, ProtocolVersion.MINECRAFT_1_20_3, true),
         createMapping(0x78, ProtocolVersion.MINECRAFT_1_20_5, true),
         createMapping(0x7F, ProtocolVersion.MINECRAFT_1_21_2, true),
-        createMapping(0x84, ProtocolVersion.MINECRAFT_1_21_9, true)
+        createMapping(0x84, ProtocolVersion.MINECRAFT_1_21_9, true),
+        createMapping(0x86, ProtocolVersion.MINECRAFT_26_1, true)
     );
 
     register(LIMBO_STATE_REGISTRY, PacketDirection.SERVERBOUND,
@@ -436,7 +445,8 @@ public class LimboProtocol {
         createMapping(0x18, ProtocolVersion.MINECRAFT_1_20_3, false),
         createMapping(0x1B, ProtocolVersion.MINECRAFT_1_20_5, false),
         createMapping(0x1D, ProtocolVersion.MINECRAFT_1_21_2, false),
-        createMapping(0x1E, ProtocolVersion.MINECRAFT_1_21_6, false)
+        createMapping(0x1E, ProtocolVersion.MINECRAFT_1_21_6, false),
+        createMapping(0x1F, ProtocolVersion.MINECRAFT_26_1, false)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.SERVERBOUND,
         MovePositionOnlyPacket.class, MovePositionOnlyPacket::new,
@@ -456,7 +466,8 @@ public class LimboProtocol {
         createMapping(0x17, ProtocolVersion.MINECRAFT_1_20_3, false),
         createMapping(0x1A, ProtocolVersion.MINECRAFT_1_20_5, false),
         createMapping(0x1C, ProtocolVersion.MINECRAFT_1_21_2, false),
-        createMapping(0x1D, ProtocolVersion.MINECRAFT_1_21_6, false)
+        createMapping(0x1D, ProtocolVersion.MINECRAFT_1_21_6, false),
+        createMapping(0x1E, ProtocolVersion.MINECRAFT_26_1, false)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.SERVERBOUND,
         MoveRotationOnlyPacket.class, MoveRotationOnlyPacket::new,
@@ -476,7 +487,8 @@ public class LimboProtocol {
         createMapping(0x19, ProtocolVersion.MINECRAFT_1_20_3, false),
         createMapping(0x1C, ProtocolVersion.MINECRAFT_1_20_5, false),
         createMapping(0x1E, ProtocolVersion.MINECRAFT_1_21_2, false),
-        createMapping(0x1F, ProtocolVersion.MINECRAFT_1_21_6, false)
+        createMapping(0x1F, ProtocolVersion.MINECRAFT_1_21_6, false),
+        createMapping(0x20, ProtocolVersion.MINECRAFT_26_1, false)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.SERVERBOUND,
         MoveOnGroundOnlyPacket.class, MoveOnGroundOnlyPacket::new,
@@ -496,7 +508,8 @@ public class LimboProtocol {
         createMapping(0x1A, ProtocolVersion.MINECRAFT_1_20_3, false),
         createMapping(0x1D, ProtocolVersion.MINECRAFT_1_20_5, false),
         createMapping(0x1F, ProtocolVersion.MINECRAFT_1_21_2, false),
-        createMapping(0x20, ProtocolVersion.MINECRAFT_1_21_6, false)
+        createMapping(0x20, ProtocolVersion.MINECRAFT_1_21_6, false),
+        createMapping(0x21, ProtocolVersion.MINECRAFT_26_1, false)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.SERVERBOUND,
         TeleportConfirmPacket.class, TeleportConfirmPacket::new,
@@ -509,7 +522,8 @@ public class LimboProtocol {
         createMapping(0x06, ProtocolVersion.MINECRAFT_1_19_4, false),
         createMapping(0x07, ProtocolVersion.MINECRAFT_1_20_5, false),
         createMapping(0x08, ProtocolVersion.MINECRAFT_1_21_2, false),
-        createMapping(0x09, ProtocolVersion.MINECRAFT_1_21_6, false)
+        createMapping(0x09, ProtocolVersion.MINECRAFT_1_21_6, false),
+        createMapping(0x0A, ProtocolVersion.MINECRAFT_26_1, false)
     );
   }
 

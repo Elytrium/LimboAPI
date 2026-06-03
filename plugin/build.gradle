@@ -2,42 +2,42 @@
 
 buildscript() {
   dependencies() {
-    classpath("commons-io:commons-io:2.6")
-    classpath("com.google.guava:guava:28.0-jre")
+    classpath(libs.tool.commons.io)
+    classpath(libs.tool.google.guava)
   }
 }
 
 plugins() {
   id("java")
-  id("com.gradleup.shadow").version("8.3.6")
+  alias(libs.plugins.gradle.shadow)
 }
 
 compileJava() {
-  getOptions().getRelease().set(17)
+  getOptions().getRelease().set(21)
   getOptions().setEncoding("UTF-8")
 }
 
 dependencies() {
   implementation(project(":api"))
-  implementation("net.elytrium.commons:config:$elytriumCommonsVersion")
-  implementation("net.elytrium.commons:utils:$elytriumCommonsVersion")
-  implementation("net.elytrium.commons:velocity:$elytriumCommonsVersion")
-  implementation("net.elytrium.commons:kyori:$elytriumCommonsVersion")
+  implementation(libs.elytrium.commons.config)
+  implementation(libs.elytrium.commons.utils)
+  implementation(libs.elytrium.commons.velocity)
+  implementation(libs.elytrium.commons.kyori)
 
-  implementation("net.elytrium:fastprepare:$fastPrepareVersion")
-  compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
-  annotationProcessor("com.velocitypowered:velocity-api:$velocityVersion")
-  compileOnly("com.velocitypowered:velocity-proxy:$velocityVersion") // From Elytrium Repo.
-  compileOnly("com.velocitypowered:velocity-native:$velocityVersion")
+  implementation(libs.elytrium.fastprepare)
+  compileOnly(libs.minecraft.velocity.api)
+  annotationProcessor(libs.minecraft.velocity.api)
+  compileOnly(libs.minecraft.velocity.proxy) // From Elytrium Repo.
+  compileOnly(libs.minecraft.velocity.native)
 
   // Needs for some velocity methods.
-  compileOnly("io.netty:netty-codec:$nettyVersion")
-  compileOnly("io.netty:netty-handler:$nettyVersion")
-  compileOnly("it.unimi.dsi:fastutil-core:$fastutilVersion")
+  compileOnly(libs.tool.netty.codec)
+  compileOnly(libs.tool.netty.handler)
+  compileOnly(libs.tool.fastutil)
 
-  implementation("org.bstats:bstats-velocity:$bstatsVersion")
+  implementation(libs.minecraft.bstats.velocity)
 
-  compileOnly("com.github.spotbugs:spotbugs-annotations:$spotbugsVersion")
+  compileOnly(libs.tool.spotbugs.annotations)
 }
 
 shadowJar() {
@@ -55,14 +55,27 @@ shadowJar() {
 }
 
 license() {
-  matching(includes: ["**/mcprotocollib/**"]) {
-    setHeader(getRootProject().file("HEADER_MCPROTOCOLLIB.txt"))
-  }
-  matching(includes: ["**/LoginListener.java", "**/KickListener.java", "**/LoginTasksQueue.java", "**/MinecraftLimitedCompressDecoder.java"]) {
-    setHeader(getRootProject().file("HEADER_MIXED.txt"))
+  matching("**/mcprotocollib/**") {
+    header = rootProject.file("HEADER_MCPROTOCOLLIB.txt")
   }
 
-  setHeader(getRootProject().file("HEADER.txt"))
+  matching("**/LoginListener.java") {
+    header = rootProject.file("HEADER_MIXED.txt")
+  }
+
+  matching("**/KickListener.java") {
+    header = rootProject.file("HEADER_MIXED.txt")
+  }
+
+  matching("**/LoginTasksQueue.java") {
+    header = rootProject.file("HEADER_MIXED.txt")
+  }
+
+  matching("**/MinecraftLimitedCompressDecoder.java") {
+    header = rootProject.file("HEADER_MIXED.txt")
+  }
+
+  header = rootProject.file("HEADER.txt")
 }
 
 tasks.register("finalize") {
@@ -135,7 +148,8 @@ enum MinecraftVersion {
   MINECRAFT_1_21_6(771),
   MINECRAFT_1_21_7(772),
   MINECRAFT_1_21_9(773),
-  MINECRAFT_1_21_11(774)
+  MINECRAFT_1_21_11(774),
+  MINECRAFT_26_1(774)
 
   public static final List<MinecraftVersion> WORLD_VERSIONS = List.of(
     MINECRAFT_1_13,
@@ -157,7 +171,8 @@ enum MinecraftVersion {
     MINECRAFT_1_21_6,
     MINECRAFT_1_21_7,
     MINECRAFT_1_21_9,
-    MINECRAFT_1_21_11
+    MINECRAFT_1_21_11,
+    MINECRAFT_26_1
   )
 
   public static final MinecraftVersion MINIMUM_VERSION = MINECRAFT_1_7_2
@@ -268,7 +283,8 @@ File generateData(MinecraftVersion version) {
   }
 
   File jarFile = this.getServerJar(version.getVersionName())
-  File targetDir = new File(jarFile.getParentFile(), "generated")
+  File parent = jarFile.getParentFile()
+  File targetDir = new File(parent, "generated")
 
   try {
     FileUtils.deleteDirectory(targetDir)
@@ -283,16 +299,42 @@ File generateData(MinecraftVersion version) {
     command = "\"%s\" -cp \"${jarFile.getAbsolutePath()}\" net.minecraft.data.Main --reports --server"
   }
 
-  exec {
-    if (System.getProperty("os.name").toLowerCase().contains("win")) {
-      File java = new File(System.getProperty("java.home"), "bin/java.exe")
-      commandLine("cmd", "/c", String.format(command, java))
-    } else {
-      File java = new File(System.getProperty("java.home"), "bin/java")
-      commandLine("bash", "-c", String.format(command, java))
-    }
+  List<String> commandLine;
+  if (System.getProperty("os.name").toLowerCase().contains("win")) {
+    File java = new File(System.getProperty("java.home"), "bin/java.exe")
+    commandLine = ["cmd", "/c", String.format(command, java)]
+  } else {
+    File java = new File(System.getProperty("java.home"), "bin/java")
+    commandLine = ["bash", "-c", String.format(command, java)]
+  }
+  commandLine.execute([], parent).waitFor()
 
-    workingDir(jarFile.getParentFile())
+  // Remove/compact files, reduces disk usage from ~2.9gb to ~92mb (or ~9.5mb on a compressed filesystem)
+  jarFile.delete()
+  FileUtils.deleteDirectory(new File(parent, "logs"))
+  FileUtils.deleteDirectory(new File(parent, "libraries"))
+  FileUtils.deleteDirectory(new File(parent, "versions"))
+
+  new File(targetDir, "reports/commands.json").delete()
+
+  FileUtils.deleteDirectory(new File(targetDir, ".cache"))
+  FileUtils.deleteDirectory(new File(targetDir, "reports/biome_parameters"))
+  FileUtils.deleteDirectory(new File(targetDir, "reports/biomes"))
+  FileUtils.deleteDirectory(new File(targetDir, "reports/worldgen"))
+  FileUtils.deleteDirectory(new File(targetDir, "reports/minecraft/components/item"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/datapacks"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/advancements"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/advancement"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/recipes"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/recipe"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/loot_tables"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/loot_table"))
+  FileUtils.deleteDirectory(new File(targetDir, "data/minecraft/worldgen"))
+
+  java.nio.file.Files.walk(parent.toPath(), 32).forEach { it ->
+    if (it.fileName.toString().endsWith(".json")) {
+      java.nio.file.Files.writeString(it, JsonOutput.toJson(new JsonSlurper().parse(it)))
+    }
   }
 
   return targetDir

@@ -196,7 +196,6 @@ public class LoginTasksQueue {
   }
 
   // From Velocity.
-  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void initialize(MinecraftConnection connection) throws Throwable {
     connection.setAssociation(this.player);
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0

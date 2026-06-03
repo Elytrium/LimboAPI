@@ -194,7 +194,8 @@ public class LoginListener {
               // Complete the Login process.
               int threshold = this.server.getConfiguration().getCompressionThreshold();
               ChannelPipeline pipeline = connection.getChannel().pipeline();
-              boolean compressionEnabled = threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0;
+              boolean compressionEnabled = threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0
+                  && pipeline.context(Connections.FRAME_ENCODER) != null;
               if (compressionEnabled) {
                 connection.write(new SetCompressionPacket(threshold));
                 this.plugin.fixDecompressor(pipeline, threshold, true);
@@ -266,7 +267,8 @@ public class LoginListener {
             player.disconnect0(Component.translatable("velocity.error.already-connected-proxy", NamedTextColor.RED), true);
           }
         } catch (Throwable e) {
-          throw new ReflectionException(e);
+          inbound.getConnection().close();
+          throw e;
         }
       }
     }

@@ -1,4 +1,8 @@
 {
+  "MINECRAFT_1_21_11": {
+    "minecraft:golden_dandelion": "minecraft:dandelion",
+    "minecraft:potted_golden_dandelion": "minecraft:potted_dandelion"
+  },
   "MINECRAFT_1_21_7": {
     "minecraft:acacia_shelf": "minecraft:acacia_planks",
     "minecraft:bamboo_shelf": "minecraft:bamboo_planks",

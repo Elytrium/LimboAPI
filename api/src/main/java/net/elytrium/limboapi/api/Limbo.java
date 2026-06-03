@@ -36,6 +36,7 @@ public interface Limbo {
 
   Limbo setShouldRespawn(boolean shouldRespawn);
 
+  @Deprecated
   Limbo setShouldUpdateTags(boolean shouldUpdateTags);
 
   Limbo setReducedDebugInfo(boolean reducedDebugInfo);
