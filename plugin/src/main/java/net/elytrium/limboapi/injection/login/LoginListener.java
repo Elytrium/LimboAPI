@@ -119,10 +119,11 @@ public class LoginListener {
 
   @SuppressWarnings("ConstantConditions")
   public void hookLoginSession(GameProfileRequestEvent event) throws Throwable {
-    LoginInboundConnection inboundConnection = (LoginInboundConnection) event.getConnection();
-    // In some cases, e.g. if the player logged out or was kicked right before the GameProfileRequestEvent hook,
-    // the connection will be broken (possibly by GC) and we can't get it from the delegate field.
-    if (LoginInboundConnection.class.isAssignableFrom(inboundConnection.getClass())) {
+    // The connection is not always a LoginInboundConnection: LimboAPI re-fires a GameProfileRequestEvent in
+    // LoginTasksQueue#finish using the InitialInboundConnection delegate, and in some cases (e.g. if the player
+    // logged out or was kicked right before this hook) the connection may be broken. We must check the type
+    // before casting, otherwise we'd throw a ClassCastException instead of gracefully skipping it.
+    if (event.getConnection() instanceof LoginInboundConnection inboundConnection) {
       // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
       // method (which checks mcConnection.isActive()) and to override it. :)
       InitialInboundConnection inbound = (InitialInboundConnection) DELEGATE_FIELD.invokeExact(inboundConnection);
