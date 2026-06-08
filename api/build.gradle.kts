@@ -77,9 +77,8 @@ publishing {
     }
 }
 
-artifacts {
-    archives(javadocJar)
-    archives(sourcesJar)
+tasks.named("assemble") {
+    dependsOn(javadocJar, sourcesJar)
 }
 
 @Suppress("UNCHECKED_CAST")

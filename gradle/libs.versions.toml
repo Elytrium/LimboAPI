@@ -10,6 +10,7 @@ minecraft-velocity = "3.5.0-SNAPSHOT" # https://github.com/PaperMC/Velocity
 tool-commons-io = "2.6" # https://github.com/apache/commons-io
 tool-fastutil = "8.5.11" # https://github.com/vigna/fastutil/
 tool-google-guava = "28.0-jre" # https://github.com/google/guava
+tool-google-gson = "2.13.2" # https://github.com/google/gson
 tool-netty = "4.1.86.Final" # https://github.com/netty/netty
 tool-spotbugs-annotations = "4.7.3" # https://github.com/spotbugs/spotbugs
 
@@ -27,6 +28,7 @@ minecraft-velocity-proxy = { module = "com.velocitypowered:velocity-proxy", vers
 tool-commons-io = { module = "commons-io:commons-io", version.ref = "tool-commons-io" }
 tool-fastutil = { module = "it.unimi.dsi:fastutil-core", version.ref = "tool-fastutil" }
 tool-google-guava = { module = "com.google.guava:guava", version.ref = "tool-google-guava" }
+tool-google-gson = { module = "com.google.code.gson:gson", version.ref = "tool-google-gson" }
 tool-netty-codec = { module = "io.netty:netty-codec", version.ref = "tool-netty" }
 tool-netty-handler = { module = "io.netty:netty-handler", version.ref = "tool-netty" }
 tool-spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "tool-spotbugs-annotations" }
