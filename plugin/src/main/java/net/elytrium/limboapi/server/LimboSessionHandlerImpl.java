@@ -335,6 +335,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     // response can't be delivered here. Buffer it (just like ClientSettings/brand) and let
     // LoginTasksQueue replay it once the player is handed back to Velocity's session handling.
     this.cookies.add(packet);
+    // Also surface it live to the Limbo handler so plugins can use the cookie value during the
+    // session (the buffered CookieReceiveEvent only fires later, on hand-back to Velocity).
+    this.callback.onCookieResponse(packet.getKey(), packet.getPayload());
     return true;
   }
 
