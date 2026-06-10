@@ -276,6 +276,43 @@ File getServerJar(String version) {
   return jarFile
 }
 
+// Some Minecraft versions require a newer JDK to run their data generator than the JDK running Gradle
+// (e.g. 26.1 needs Java 25). Pick a suitable installed JDK by reading sibling JDKs' "release" files.
+@SuppressWarnings('GrMethodMayBeStatic')
+File selectJavaHome(int requiredMajor) {
+  File current = new File(System.getProperty("java.home"))
+  if (requiredMajor <= Runtime.version().feature()) {
+    return current
+  }
+
+  boolean win = System.getProperty("os.name").toLowerCase().contains("win")
+  File jdksDir = current.getParentFile()
+  File best = null
+  int bestMajor = Integer.MAX_VALUE
+  jdksDir.listFiles()?.each { File dir ->
+    File release = new File(dir, "release")
+    File javaExe = new File(dir, win ? "bin/java.exe" : "bin/java")
+    if (!release.exists() || !javaExe.exists()) {
+      return
+    }
+    String verLine = release.readLines().find { it.startsWith("JAVA_VERSION=") }
+    if (verLine == null) {
+      return
+    }
+    String ver = verLine.substring(verLine.indexOf('=') + 1).replace('"', '').trim()
+    int major = ver.startsWith("1.") ? Integer.parseInt(ver.split("\\.")[1]) : Integer.parseInt(ver.split("[._-]")[0])
+    if (major >= requiredMajor && major < bestMajor) {
+      best = dir
+      bestMajor = major
+    }
+  }
+  if (best == null) {
+    throw new RuntimeException("No installed JDK satisfies required Java ${requiredMajor} (searched ${jdksDir}). Install JDK ${requiredMajor}+.")
+  }
+  this.println("> Using JDK ${bestMajor} at ${best} for data generation (version requires Java ${requiredMajor})")
+  return best
+}
+
 File generateData(MinecraftVersion version) {
   File cache = getGeneratedCache(version)
   if (cache != null) {
@@ -292,6 +329,10 @@ File generateData(MinecraftVersion version) {
     // Ignored.
   }
 
+  Object versionManifest = new JsonSlurper().parse(new File(parent, "manifest.json"))
+  int requiredJava = (versionManifest.javaVersion?.majorVersion ?: Runtime.version().feature()) as int
+  File javaHome = this.selectJavaHome(requiredJava)
+
   String command
   if (version >= MinecraftVersion.MINECRAFT_1_18) {
     command = "\"%s\" -DbundlerMainClass=net.minecraft.data.Main -jar \"${jarFile.getAbsolutePath()}\" --reports --server"
@@ -301,13 +342,15 @@ File generateData(MinecraftVersion version) {
 
   List<String> commandLine;
   if (System.getProperty("os.name").toLowerCase().contains("win")) {
-    File java = new File(System.getProperty("java.home"), "bin/java.exe")
+    File java = new File(javaHome, "bin/java.exe")
     commandLine = ["cmd", "/c", String.format(command, java)]
   } else {
-    File java = new File(System.getProperty("java.home"), "bin/java")
+    File java = new File(javaHome, "bin/java")
     commandLine = ["bash", "-c", String.format(command, java)]
   }
-  commandLine.execute([], parent).waitFor()
+  Process process = commandLine.execute([], parent)
+  process.consumeProcessOutput() // drain stdout/stderr so the generator can't deadlock on a full pipe buffer
+  process.waitFor()
 
   // Remove/compact files, reduces disk usage from ~2.9gb to ~92mb (or ~9.5mb on a compressed filesystem)
   jarFile.delete()
