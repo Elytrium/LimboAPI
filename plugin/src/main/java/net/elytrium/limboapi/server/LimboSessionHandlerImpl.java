@@ -17,10 +17,12 @@
 
 package net.elytrium.limboapi.server;
 
+import com.velocitypowered.api.event.player.CookieReceiveEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -31,6 +33,7 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.ClientSettingsPacket;
 import com.velocitypowered.proxy.protocol.packet.KeepAlivePacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
+import com.velocitypowered.proxy.protocol.packet.ServerboundCookieResponsePacket;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerChatPacket;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerCommandPacket;
 import com.velocitypowered.proxy.protocol.packet.chat.legacy.LegacyChatPacket;
@@ -65,6 +68,7 @@ import net.elytrium.limboapi.protocol.packets.c2s.MovePositionOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveRotationOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.PlayerChatSessionPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.TeleportConfirmPacket;
+import net.kyori.adventure.key.Key;
 
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
@@ -322,6 +326,34 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   @Override
   public boolean handle(SessionPlayerCommandPacket packet) {
     return this.handleChat("/" + packet.getCommand());
+  }
+
+  @Override
+  public boolean handle(ServerboundCookieResponsePacket packet) {
+    // Mirror ClientPlaySessionHandler so that Player#requestCookie keeps working while the
+    // player is inside a Limbo. The cookie response is decoded fine here (the Limbo registry
+    // overlays the PLAY registry), but without this override the default handler returns false
+    // and the packet falls through to handleGeneric, so CookieReceiveEvent is never fired and
+    // the cookie request silently never completes.
+    this.plugin.getServer().getEventManager()
+        .fire(new CookieReceiveEvent(this.player, packet.getKey(), packet.getPayload()))
+        .thenAcceptAsync(event -> {
+          if (event.getResult().isAllowed()) {
+            // A player in a Limbo is usually not attached to a backend server; only forward the
+            // (possibly rewritten) response when a backend connection exists, exactly like the
+            // default play handler does.
+            VelocityServerConnection serverConnection = this.player.getConnectedServer();
+            if (serverConnection != null) {
+              Key resultedKey = event.getResult().getKey() == null
+                  ? event.getOriginalKey() : event.getResult().getKey();
+              byte[] resultedData = event.getResult().getData() == null
+                  ? event.getOriginalData() : event.getResult().getData();
+              serverConnection.ensureConnected().write(new ServerboundCookieResponsePacket(resultedKey, resultedData));
+            }
+          }
+        }, this.player.getConnection().eventLoop());
+
+    return true;
   }
 
   private boolean handleChat(String message) {
