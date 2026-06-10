@@ -39,6 +39,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
+import com.velocitypowered.api.event.player.CookieReceiveEvent;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.PlayerClientBrandEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -48,6 +49,7 @@ import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientConfigSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -55,6 +57,7 @@ import com.velocitypowered.proxy.connection.client.InitialConnectSessionHandler;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
+import com.velocitypowered.proxy.protocol.packet.ServerboundCookieResponsePacket;
 import com.velocitypowered.proxy.protocol.packet.UpsertPlayerInfoPacket;
 import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -77,6 +80,7 @@ import net.elytrium.limboapi.LimboAPI;
 import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 import net.elytrium.limboapi.utils.LambdaUtil;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
@@ -271,6 +275,26 @@ public class LoginTasksQueue {
           } catch (Throwable e) {
             throw new ReflectionException(e);
           }
+        }
+
+        for (ServerboundCookieResponsePacket cookie : sessionHandler.getCookies()) {
+          // Replay cookie responses buffered while in the Limbo, now that the player is being
+          // handed back to Velocity. Mirrors ClientPlaySessionHandler: fire CookieReceiveEvent
+          // and forward the (possibly rewritten) response to the backend when one is connected.
+          this.server.getEventManager()
+              .fire(new CookieReceiveEvent(this.player, cookie.getKey(), cookie.getPayload()))
+              .thenAcceptAsync(event -> {
+                if (event.getResult().isAllowed()) {
+                  VelocityServerConnection serverConnection = this.player.getConnectedServer();
+                  if (serverConnection != null) {
+                    Key resultedKey = event.getResult().getKey() == null
+                        ? event.getOriginalKey() : event.getResult().getKey();
+                    byte[] resultedData = event.getResult().getData() == null
+                        ? event.getOriginalData() : event.getResult().getData();
+                    serverConnection.ensureConnected().write(new ServerboundCookieResponsePacket(resultedKey, resultedData));
+                  }
+                }
+              }, this.player.getConnection().eventLoop());
         }
       }
 

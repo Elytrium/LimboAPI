@@ -17,12 +17,10 @@
 
 package net.elytrium.limboapi.server;
 
-import com.velocitypowered.api.event.player.CookieReceiveEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.AuthSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -50,6 +48,8 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
@@ -68,7 +68,6 @@ import net.elytrium.limboapi.protocol.packets.c2s.MovePositionOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.MoveRotationOnlyPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.PlayerChatSessionPacket;
 import net.elytrium.limboapi.protocol.packets.c2s.TeleportConfirmPacket;
-import net.kyori.adventure.key.Key;
 
 public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
@@ -92,6 +91,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private LimboPlayer limboPlayer;
   private ClientSettingsPacket settings;
   private String brand;
+  private final List<ServerboundCookieResponsePacket> cookies = new ArrayList<>();
   private ScheduledFuture<?> keepAliveTask;
   private ScheduledFuture<?> chatSessionTimeoutTask;
   private ScheduledFuture<?> respawnTask;
@@ -122,6 +122,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     if (originalHandler instanceof LimboSessionHandlerImpl sessionHandler) {
       this.settings = sessionHandler.getSettings();
       this.brand = sessionHandler.getBrand();
+      this.cookies.addAll(sessionHandler.getCookies());
     }
   }
 
@@ -330,29 +331,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(ServerboundCookieResponsePacket packet) {
-    // Mirror ClientPlaySessionHandler so that Player#requestCookie keeps working while the
-    // player is inside a Limbo. The cookie response is decoded fine here (the Limbo registry
-    // overlays the PLAY registry), but without this override the default handler returns false
-    // and the packet falls through to handleGeneric, so CookieReceiveEvent is never fired and
-    // the cookie request silently never completes.
-    this.plugin.getServer().getEventManager()
-        .fire(new CookieReceiveEvent(this.player, packet.getKey(), packet.getPayload()))
-        .thenAcceptAsync(event -> {
-          if (event.getResult().isAllowed()) {
-            // A player in a Limbo is usually not attached to a backend server; only forward the
-            // (possibly rewritten) response when a backend connection exists, exactly like the
-            // default play handler does.
-            VelocityServerConnection serverConnection = this.player.getConnectedServer();
-            if (serverConnection != null) {
-              Key resultedKey = event.getResult().getKey() == null
-                  ? event.getOriginalKey() : event.getResult().getKey();
-              byte[] resultedData = event.getResult().getData() == null
-                  ? event.getOriginalData() : event.getResult().getData();
-              serverConnection.ensureConnected().write(new ServerboundCookieResponsePacket(resultedKey, resultedData));
-            }
-          }
-        }, this.player.getConnection().eventLoop());
-
+    // The player is usually not attached to a backend while inside a Limbo, so the cookie
+    // response can't be delivered here. Buffer it (just like ClientSettings/brand) and let
+    // LoginTasksQueue replay it once the player is handed back to Velocity's session handling.
+    this.cookies.add(packet);
     return true;
   }
 
@@ -531,6 +513,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public String getBrand() {
     return this.brand;
+  }
+
+  public List<ServerboundCookieResponsePacket> getCookies() {
+    return this.cookies;
   }
 
   static {
