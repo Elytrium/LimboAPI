@@ -99,7 +99,6 @@ public class LoginListener {
   private static final MethodHandle CONNECTED_PLAYER_CONSTRUCTOR;
   private static final MethodHandle SPAWNED_FIELD;
   private static final BiConsumer<ConnectedPlayer, TabList> TAB_LIST_SETTER;
-  private static final UUID SESSION_ID = UUID.randomUUID();
 
   private final LimboAPI plugin;
   private final VelocityServer server;
@@ -233,7 +232,7 @@ public class LoginListener {
               success.setUsername(player.getUsername());
               success.setProperties(player.getGameProfileProperties());
               success.setUuid(playerUniqueID);
-              success.setSessionId(SESSION_ID);
+              success.setSessionId(this.server.getSessionId());
 
               if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
                 connection.write(success);
@@ -242,7 +241,7 @@ public class LoginListener {
                 successHook.setUsername(player.getUsername());
                 successHook.setProperties(player.getGameProfileProperties());
                 successHook.setUuid(playerUniqueID);
-                successHook.setSessionId(SESSION_ID);
+                successHook.setSessionId(this.server.getSessionId());
                 connection.write(successHook);
 
                 ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
