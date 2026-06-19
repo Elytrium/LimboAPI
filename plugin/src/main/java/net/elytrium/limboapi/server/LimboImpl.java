@@ -969,6 +969,9 @@ public class LimboImpl implements Limbo {
     joinGame.setPreviousGamemode((short) -1);
     joinGame.setDimension(dimension.getModernID());
     joinGame.setDifficulty((short) 0);
+    // TODO: different JoinGame packets for different login types,
+    //  at the moment (26.2) it tells client to fetch chat signing keypair.
+    joinGame.setOnlineMode(true);
     try {
       PARTIAL_HASHED_SEED_FIELD.invokeExact(joinGame, ThreadLocalRandom.current().nextLong());
     } catch (Throwable e) {
@@ -1266,7 +1269,7 @@ public class LimboImpl implements Limbo {
             Map<String, CompoundBinaryTag> songs = new HashMap<>();
             for (String songName : List.of("11", "13", "5", "blocks", "cat", "chirp", "creator",
                 "creator_music_box", "far", "lava_chicken", "mall", "mellohi", "otherside",
-                "pigstep", "precipice", "relic", "stal", "strad", "tears", "wait", "ward")) {
+                "pigstep", "precipice", "relic", "stal", "strad", "tears", "wait", "ward", "bounce")) {
               songs.put(songName, song);
             }
             registryContainer.put("minecraft:jukebox_song", this.createRegistry("minecraft:jukebox_song", songs));

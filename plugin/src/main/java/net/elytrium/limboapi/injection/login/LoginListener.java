@@ -232,6 +232,7 @@ public class LoginListener {
               success.setUsername(player.getUsername());
               success.setProperties(player.getGameProfileProperties());
               success.setUuid(playerUniqueID);
+              success.setSessionId(this.server.getSessionId());
 
               if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
                 connection.write(success);
@@ -240,6 +241,7 @@ public class LoginListener {
                 successHook.setUsername(player.getUsername());
                 successHook.setProperties(player.getGameProfileProperties());
                 successHook.setUuid(playerUniqueID);
+                successHook.setSessionId(this.server.getSessionId());
                 connection.write(successHook);
 
                 ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
