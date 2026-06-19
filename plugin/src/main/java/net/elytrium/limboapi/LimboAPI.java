@@ -130,7 +130,7 @@ import org.slf4j.Logger;
 )
 public class LimboAPI implements LimboFactory {
 
-  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 775;
+  private static final int SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER = 776;
 
   @MonotonicNonNull
   private static Logger LOGGER;
