@@ -46,6 +46,16 @@ public interface VirtualWorld {
   @NonNull
   Dimension getDimension();
 
+  /**
+   * Returns the identifier used to distinguish this world from other worlds on modern clients.
+   *
+   * @return the namespaced world identifier.
+   */
+  @NonNull
+  default String getWorldName() {
+    return this.getDimension().getKey();
+  }
+
   double getSpawnX();
 
   double getSpawnY();

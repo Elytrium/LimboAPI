@@ -112,6 +112,7 @@ import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
 import net.elytrium.limboapi.server.world.SimpleTagManager;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.BinaryTagTypes;
@@ -148,6 +149,8 @@ public class LimboImpl implements Limbo {
   private final RootCommandNode<CommandSource> commandNode = new RootCommandNode<>();
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   private final List<PreparedPacket> queuedToRelease = new ArrayList<>();
+  private final String worldName;
+  private final ImmutableSet<String> levelNames;
   private final List<CommandRegistrar<?>> registrars = ImmutableList.of(
       new BrigadierCommandRegistrar(this.commandNode, this.lock.writeLock()),
       new SimpleCommandRegistrar(this.commandNode, this.lock.writeLock()),
@@ -182,6 +185,11 @@ public class LimboImpl implements Limbo {
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
     this.plugin = plugin;
     this.world = world;
+    this.worldName = Key.key(world.getWorldName()).asString();
+    this.levelNames = ImmutableSet.<String>builder()
+        .addAll(LEVELS)
+        .add(this.worldName)
+        .build();
     this.localStateRegistry = LimboProtocol.getLimboStateRegistry();
 
     this.refresh();
@@ -987,7 +995,9 @@ public class LimboImpl implements Limbo {
     joinGame.setReducedDebugInfo(this.reducedDebugInfo);
 
     String key = dimension.getKey();
-    joinGame.setDimensionInfo(new DimensionInfo(key, key, false, false, version));
+    String registryIdentifier = version.noLessThan(ProtocolVersion.MINECRAFT_1_16_2)
+        && version.lessThan(ProtocolVersion.MINECRAFT_1_19) ? this.worldName : key;
+    joinGame.setDimensionInfo(new DimensionInfo(registryIdentifier, this.worldName, false, false, version));
     joinGame.setEnforcesSecureChat(Settings.IMP.MAIN.SEND_ENFORCE_SECURE_CHAT);
 
     CompoundBinaryTag.Builder registryContainer = CompoundBinaryTag.builder();
@@ -1323,7 +1333,7 @@ public class LimboImpl implements Limbo {
       }
 
       CURRENT_DIMENSION_DATA_FIELD.invokeExact(joinGame, currentDimensionData);
-      LEVEL_NAMES_FIELDS.invokeExact(joinGame, LEVELS);
+      LEVEL_NAMES_FIELDS.invokeExact(joinGame, this.levelNames);
       REGISTRY_FIELD.invokeExact(joinGame, registryContainer.build());
     } catch (Throwable e) {
       throw new ReflectionException(e);
@@ -1346,7 +1356,7 @@ public class LimboImpl implements Limbo {
   }
 
   private DefaultSpawnPositionPacket createDefaultSpawnPositionPacket() {
-    return new DefaultSpawnPositionPacket(this.world.getDimension().getKey(),
+    return new DefaultSpawnPositionPacket(this.worldName,
         (int) this.world.getSpawnX(), (int) this.world.getSpawnY(), (int) this.world.getSpawnZ(), 0.0F, 0.0f);
   }
 
