@@ -31,6 +31,7 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.packet.ClientSettingsPacket;
 import com.velocitypowered.proxy.protocol.packet.KeepAlivePacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
+import com.velocitypowered.proxy.protocol.packet.ServerboundCookieResponsePacket;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerChatPacket;
 import com.velocitypowered.proxy.protocol.packet.chat.keyed.KeyedPlayerCommandPacket;
 import com.velocitypowered.proxy.protocol.packet.chat.legacy.LegacyChatPacket;
@@ -47,6 +48,8 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
@@ -88,6 +91,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private LimboPlayer limboPlayer;
   private ClientSettingsPacket settings;
   private String brand;
+  private final List<ServerboundCookieResponsePacket> cookies = new ArrayList<>();
   private ScheduledFuture<?> keepAliveTask;
   private ScheduledFuture<?> chatSessionTimeoutTask;
   private ScheduledFuture<?> respawnTask;
@@ -118,6 +122,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     if (originalHandler instanceof LimboSessionHandlerImpl sessionHandler) {
       this.settings = sessionHandler.getSettings();
       this.brand = sessionHandler.getBrand();
+      this.cookies.addAll(sessionHandler.getCookies());
     }
   }
 
@@ -324,6 +329,18 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     return this.handleChat("/" + packet.getCommand());
   }
 
+  @Override
+  public boolean handle(ServerboundCookieResponsePacket packet) {
+    // The player is usually not attached to a backend while inside a Limbo, so the cookie
+    // response can't be delivered here. Buffer it (just like ClientSettings/brand) and let
+    // LoginTasksQueue replay it once the player is handed back to Velocity's session handling.
+    this.cookies.add(packet);
+    // Also surface it live to the Limbo handler so plugins can use the cookie value during the
+    // session (the buffered CookieReceiveEvent only fires later, on hand-back to Velocity).
+    this.callback.onCookieResponse(packet.getKey(), packet.getPayload());
+    return true;
+  }
+
   private boolean handleChat(String message) {
     int messageLength = message.length();
     if (messageLength > Settings.IMP.MAIN.MAX_CHAT_MESSAGE_LENGTH) {
@@ -499,6 +516,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   public String getBrand() {
     return this.brand;
+  }
+
+  public List<ServerboundCookieResponsePacket> getCookies() {
+    return this.cookies;
   }
 
   static {

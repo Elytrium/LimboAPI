@@ -8,6 +8,7 @@
 package net.elytrium.limboapi.api;
 
 import net.elytrium.limboapi.api.player.LimboPlayer;
+import net.kyori.adventure.key.Key;
 
 public interface LimboSessionHandler {
 
@@ -47,6 +48,19 @@ public interface LimboSessionHandler {
    * @param packet Any velocity built-in packet or any packet registered via {@link Limbo#registerPacket}.
    */
   default void onGeneric(Object packet) {
+
+  }
+
+  /**
+   * Called when the client sends a cookie response (reply to {@code Player#requestCookie}) while
+   * the player is still inside the Limbo. The response is also buffered and replayed as a
+   * {@code CookieReceiveEvent} when the player is handed back to Velocity, so this hook is meant
+   * for handlers that need the cookie value during the Limbo session itself.
+   *
+   * @param key  the cookie key
+   * @param data the cookie payload
+   */
+  default void onCookieResponse(Key key, byte[] data) {
 
   }
 
