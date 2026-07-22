@@ -184,8 +184,12 @@ public class ChunkDataPacket implements MinecraftPacket {
         buf.writeBytes(data);
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_9_4) >= 0) {
           List<VirtualBlockEntity.Entry> blockEntityEntries = this.chunk.getBlockEntityEntries();
-          ProtocolUtils.writeVarInt(buf, blockEntityEntries.size());
-          for (VirtualBlockEntity.Entry blockEntityEntry : blockEntityEntries) {
+          // Filter block entities to only include those supported on this version
+          List<VirtualBlockEntity.Entry> supportedEntries = blockEntityEntries.stream()
+              .filter(entry -> entry.getBlockEntity().isSupportedOn(version))
+              .toList();
+          ProtocolUtils.writeVarInt(buf, supportedEntries.size());
+          for (VirtualBlockEntity.Entry blockEntityEntry : supportedEntries) {
             CompoundBinaryTag blockEntityNbt = blockEntityEntry.getNbt();
             if (version.compareTo(ProtocolVersion.MINECRAFT_1_18) >= 0) {
               buf.writeByte(((blockEntityEntry.getPosX() & 15) << 4) | (blockEntityEntry.getPosZ() & 15));
