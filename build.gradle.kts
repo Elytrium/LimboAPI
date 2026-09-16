@@ -33,7 +33,7 @@ allprojects {
         excludeFilter.set(file("${rootDir}/config/spotbugs/suppressions.xml"))
     }
 
-    tasks.withType<SpotBugsTask>() {
+    tasks.withType<SpotBugsTask> {
         reports.create("html") {
             required.set(true)
             outputLocation.set(layout.buildDirectory.file("reports/spotbugs/main/spotbugs.html"))

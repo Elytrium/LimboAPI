@@ -52,6 +52,7 @@ import net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.MapDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.PlayerAbilitiesPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.SetEntityDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.SetExperiencePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.SetSlotPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
@@ -244,6 +245,12 @@ public class LimboProtocol {
         createMapping(0x21, ProtocolVersion.MINECRAFT_1_21_5, true),
         createMapping(0x25, ProtocolVersion.MINECRAFT_1_21_9, true),
         createMapping(0x26, ProtocolVersion.MINECRAFT_26_3, true)
+    );
+    register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
+        SetEntityDataPacket.class, SetEntityDataPacket::new,
+        // Paper sends the local player's own entity data on join; without it recent clients keep
+        // their default appearance (right hand, no outer skin layers).
+        createMapping(0x61, ProtocolVersion.MINECRAFT_1_21_11, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         DefaultSpawnPositionPacket.class, DefaultSpawnPositionPacket::new,
