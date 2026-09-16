@@ -206,13 +206,21 @@ public class ChunkDataPacket implements MinecraftPacket {
           if (version.compareTo(ProtocolVersion.MINECRAFT_1_20) < 0) {
             buf.writeBoolean(true); // Trust edges.
           }
-          ProtocolUtils.writeVarInt(buf, mask.length); // Skylight mask.
-          for (long m : mask) {
-            buf.writeLong(m);
-          }
-          ProtocolUtils.writeVarInt(buf, mask.length); // BlockLight mask.
-          for (long m : mask) {
-            buf.writeLong(m);
+          // 26.3 switched the light masks from a long array ("count of longs" + longs,
+          // i.e. writeBitSet) to a byte array ("count of bytes" + bytes, i.e. byteArray).
+          if (version.noLessThan(ProtocolVersion.MINECRAFT_26_3)) {
+            byte[] maskBytes = BitSet.valueOf(mask).toByteArray();
+            ProtocolUtils.writeByteArray(buf, maskBytes); // Skylight mask.
+            ProtocolUtils.writeByteArray(buf, maskBytes); // BlockLight mask.
+          } else {
+            ProtocolUtils.writeVarInt(buf, mask.length); // Skylight mask.
+            for (long m : mask) {
+              buf.writeLong(m);
+            }
+            ProtocolUtils.writeVarInt(buf, mask.length); // BlockLight mask.
+            for (long m : mask) {
+              buf.writeLong(m);
+            }
           }
           ProtocolUtils.writeVarInt(buf, 0); // EmptySkylight mask.
           ProtocolUtils.writeVarInt(buf, 0); // EmptyBlockLight mask.

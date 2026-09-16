@@ -10,7 +10,7 @@ plugins {
 }
 
 tasks.withType<JavaCompile> {
-    options.release.set(21)
+    options.release.set(25)
     options.encoding = "UTF-8"
 }
 
@@ -38,7 +38,7 @@ extensions.configure<LicenseExtension> {
 tasks.named<Javadoc>("javadoc") {
     options.encoding = "UTF-8"
     (options as? StandardJavadocDocletOptions)?.apply {
-        source = "21"
+        source = "25"
         links("https://docs.oracle.com/en/java/javase/11/docs/api/")
         addStringOption("Xdoclint:none", "-quiet")
         if (JavaVersion.current() >= JavaVersion.VERSION_1_9 && JavaVersion.current() < JavaVersion.VERSION_12) {

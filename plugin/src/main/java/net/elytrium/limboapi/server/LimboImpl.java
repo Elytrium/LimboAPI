@@ -116,6 +116,7 @@ import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.BinaryTagIO;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
+import net.kyori.adventure.nbt.IntBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
 import net.kyori.adventure.nbt.StringBinaryTag;
 import net.kyori.adventure.text.Component;
@@ -249,7 +250,10 @@ public class LimboImpl implements Limbo {
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_2, ProtocolVersion.MINECRAFT_1_21_4);
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_5, ProtocolVersion.MINECRAFT_1_21_9);
     this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_1_21_11, ProtocolVersion.MINECRAFT_1_21_11);
-    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_26_1, ProtocolVersion.MAXIMUM_VERSION);
+    // The registry contents are built once per range from its first version, so a range must not
+    // span a version that changed a registry element's shape. 26.3 changed minecraft:trim_material.
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_26_1, ProtocolVersion.MINECRAFT_26_2);
+    this.createRegistrySyncModern(configPackets, ProtocolVersion.MINECRAFT_26_3, ProtocolVersion.MAXIMUM_VERSION);
     if (this.shouldUpdateTags) {
       configPackets.prepare(this::createTagsUpdate, ProtocolVersion.MINECRAFT_1_20_2);
     } else {
@@ -315,7 +319,9 @@ public class LimboImpl implements Limbo {
           tags = Arrays.copyOf(tags, id + 1);
         }
 
-        tags[id] = Pair.of(element.getString("name"), element.getCompound("element"));
+        // getCompound() would silently turn a non-compound element (26.3's block_transformer is a
+        // bare list) into an empty compound, so take the tag as-is.
+        tags[id] = Pair.of(element.getString("name"), element.get("element"));
         if (emptyTag == null) {
           emptyTag = tags[id];
         }
@@ -851,11 +857,11 @@ public class LimboImpl implements Limbo {
     }
   }
 
-  private CompoundBinaryTag createRegistry(String registryName, Map<String, CompoundBinaryTag> tags) {
+  private CompoundBinaryTag createRegistry(String registryName, Map<String, ? extends BinaryTag> tags) {
     int id = 0;
 
     ListBinaryTag.Builder<CompoundBinaryTag> builder = ListBinaryTag.builder(BinaryTagTypes.COMPOUND);
-    for (Entry<String, CompoundBinaryTag> tag : tags.entrySet()) {
+    for (Entry<String, ? extends BinaryTag> tag : tags.entrySet()) {
       builder.add(CompoundBinaryTag.builder()
           .putString("name", tag.getKey())
           .putInt("id", id++)
@@ -966,7 +972,9 @@ public class LimboImpl implements Limbo {
     joinGame.setEntityId(1);
     joinGame.setIsHardcore(true);
     joinGame.setGamemode(this.gameMode);
-    joinGame.setPreviousGamemode((short) -1);
+    // 26.3 changed previousGamemode from "game mode or -1" to "game mode + 1 or 0"
+    // and widened both fields from byte to VarInt on the wire.
+    joinGame.setPreviousGamemode(version.noLessThan(ProtocolVersion.MINECRAFT_26_3) ? 0 : -1);
     joinGame.setDimension(dimension.getModernID());
     joinGame.setDifficulty((short) 0);
     // TODO: different JoinGame packets for different login types,
@@ -1239,9 +1247,11 @@ public class LimboImpl implements Limbo {
             registryContainer.put("minecraft:chicken_sound_variant", this.createRegistry("minecraft:chicken_sound_variant",
                 Map.of("minecraft:classic", soundVariant)));
 
-            // Trim material
+            // Trim material.
+            // 26.3 replaced the free-form "asset_name" with a reference to a trim palette.
+            boolean trimPalettes = version.noLessThan(ProtocolVersion.MINECRAFT_26_3);
             CompoundBinaryTag trim = CompoundBinaryTag.builder()
-                .putString("asset_name", "redstone")
+                .putString(trimPalettes ? "palette_id" : "asset_name", trimPalettes ? "minecraft:trim/redstone" : "redstone")
                 .put("description", CompoundBinaryTag.builder()
                     .putString("color", "#971607")
                     .putString("translate", "trim_material.minecraft.redstone")
@@ -1298,6 +1308,70 @@ public class LimboImpl implements Limbo {
                   .build());
             }
             registryContainer.put("minecraft:timeline", this.createRegistry("minecraft:timeline", timelines));
+
+            if (version.noLessThan(ProtocolVersion.MINECRAFT_26_3)) {
+              // 26.3 introduced these two registries. The client resolves them while it builds its
+              // item data components from the synced item registry, and throws when an entry that
+              // vanilla items point at is missing, so they have to be present even in a limbo.
+              // The client also requires at least one transform per entry, so vanilla's shovel
+              // transform is used as a placeholder for all three: a limbo never transforms blocks,
+              // so the behaviour is irrelevant and only the shape has to be parseable.
+              ListBinaryTag placeholderTransform = ListBinaryTag.builder(BinaryTagTypes.COMPOUND)
+                  .add(CompoundBinaryTag.builder()
+                      .put("block_state_provider", CompoundBinaryTag.builder()
+                          .putString("type", "minecraft:rule_based")
+                          .put("rules", ListBinaryTag.builder(BinaryTagTypes.COMPOUND)
+                              .add(CompoundBinaryTag.builder()
+                                  .put("if_true", CompoundBinaryTag.builder()
+                                      .putString("type", "minecraft:all_of")
+                                      .put("predicates", ListBinaryTag.builder(BinaryTagTypes.COMPOUND)
+                                          .add(CompoundBinaryTag.builder()
+                                              .putString("type", "minecraft:matching_block_tag")
+                                              .putString("tag", "minecraft:turns_into_dirt_path")
+                                              .build())
+                                          .add(CompoundBinaryTag.builder()
+                                              .putString("type", "minecraft:matching_block_tag")
+                                              .put("offset", ListBinaryTag.builder(BinaryTagTypes.INT)
+                                                  .add(IntBinaryTag.intBinaryTag(0))
+                                                  .add(IntBinaryTag.intBinaryTag(1))
+                                                  .add(IntBinaryTag.intBinaryTag(0))
+                                                  .build())
+                                              .putString("tag", "minecraft:air")
+                                              .build())
+                                          .build())
+                                      .build())
+                                  .put("then", CompoundBinaryTag.builder()
+                                      .putString("id", "minecraft:dirt_path")
+                                      .build())
+                                  .build())
+                              .build())
+                          .build())
+                      .put("disallowed_faces", ListBinaryTag.builder(BinaryTagTypes.STRING)
+                          .add(StringBinaryTag.stringBinaryTag("down"))
+                          .build())
+                      .putInt("item_damage_per_use", 1)
+                      .putString("sound", "minecraft:item.shovel.flatten")
+                      .build())
+                  .build();
+              registryContainer.put("minecraft:block_transformer", this.createRegistry("minecraft:block_transformer",
+                  Map.of(
+                      "minecraft:shovel", placeholderTransform,
+                      "minecraft:axe", placeholderTransform,
+                      "minecraft:hoe", placeholderTransform
+                  )));
+
+              // Decorated pot patterns, referenced by the pottery sherd items.
+              Map<String, BinaryTag> potPatterns = new HashMap<>();
+              for (String potPattern : List.of("angler", "archer", "arms_up", "blade", "brewer", "burn",
+                  "danger", "explorer", "flow", "friend", "guster", "heart", "heartbreak", "howl",
+                  "miner", "mourner", "plenty", "prize", "scrape", "sheaf", "shelter", "skull", "snort")) {
+                potPatterns.put("minecraft:" + potPattern, CompoundBinaryTag.builder()
+                    .putString("asset_id", "minecraft:" + potPattern + "_pottery_pattern")
+                    .build());
+              }
+              registryContainer.put("minecraft:decorated_pot_pattern",
+                  this.createRegistry("minecraft:decorated_pot_pattern", potPatterns));
+            }
           }
         } else {
           CompoundBinaryTag.Builder wolfVariant = CompoundBinaryTag.builder()

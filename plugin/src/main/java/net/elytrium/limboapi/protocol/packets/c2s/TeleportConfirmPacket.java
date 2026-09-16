@@ -26,11 +26,17 @@ import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 
 public class TeleportConfirmPacket implements MinecraftPacket {
 
+  // 26.3 makes the client echo the position and rotation it is confirming: three doubles and two floats.
+  private static final int CONFIRMED_POSITION_SIZE = 3 * Double.BYTES + 2 * Float.BYTES;
+
   private int teleportID;
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     this.teleportID = ProtocolUtils.readVarInt(buf);
+    if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_26_3)) {
+      buf.skipBytes(CONFIRMED_POSITION_SIZE);
+    }
   }
 
   @Override
@@ -49,12 +55,12 @@ public class TeleportConfirmPacket implements MinecraftPacket {
 
   @Override
   public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 5;
+    return 5 + (version.noLessThan(ProtocolVersion.MINECRAFT_26_3) ? CONFIRMED_POSITION_SIZE : 0);
   }
 
   @Override
   public int decodeExpectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 1;
+    return 1 + (version.noLessThan(ProtocolVersion.MINECRAFT_26_3) ? CONFIRMED_POSITION_SIZE : 0);
   }
 
   @Override
