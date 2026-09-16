@@ -309,7 +309,25 @@ File generateData(MinecraftVersion version) {
     File java = new File(System.getProperty("java.home"), "bin/java")
     commandLine = ["bash", "-c", String.format(command, java)]
   }
-  commandLine.execute([], parent).waitFor()
+  // The data generator logs a lot to stdout. Groovy's List.execute() wires the child's stdout
+  // and stderr to pipes that nothing ever drains, so the child blocks as soon as the OS pipe
+  // buffer fills - which happens at an arbitrary point and stalls the build indefinitely.
+  // Redirect the output to a file instead, and give the child EOF on stdin so it can never
+  // block waiting for console input either.
+  Process process = new ProcessBuilder(commandLine)
+          .directory(parent)
+          .redirectErrorStream(true)
+          .redirectOutput(new File(parent, "generator.log"))
+          .start()
+  process.getOutputStream().close()
+  int exitCode = process.waitFor()
+  if (exitCode != 0 || !new File(targetDir, "reports/blocks.json").exists()) {
+    throw new GradleException(
+            "Generating data for Minecraft ${version.getVersionName()} failed (exit code ${exitCode}), " +
+            "see ${new File(parent, "generator.log")}. Note that recent Minecraft versions require a " +
+            "newer JDK than the one running Gradle."
+    )
+  }
 
   // Remove/compact files, reduces disk usage from ~2.9gb to ~92mb (or ~9.5mb on a compressed filesystem)
   jarFile.delete()
