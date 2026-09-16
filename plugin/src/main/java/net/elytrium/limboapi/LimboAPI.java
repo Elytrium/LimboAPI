@@ -357,16 +357,16 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(short id, boolean modern) {
+  public VirtualBlock createSimpleBlock(char id, boolean modern) {
     if (modern) {
       return SimpleBlock.solid(id);
     } else {
-      return SimpleBlock.fromLegacyID(id);
+      return SimpleBlock.fromLegacyID((short) id);
     }
   }
 
   @Override
-  public VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, short id) {
+  public VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, char id) {
     return new SimpleBlock(solid, air, motionBlocking, id);
   }
 

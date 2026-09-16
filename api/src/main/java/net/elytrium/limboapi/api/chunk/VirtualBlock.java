@@ -12,12 +12,12 @@ import net.elytrium.limboapi.api.material.WorldVersion;
 
 public interface VirtualBlock {
 
-  int getModernID();
+  char getModernID();
 
   String getModernStringID();
 
   @Deprecated
-  int getID(ProtocolVersion version);
+  char getID(ProtocolVersion version);
 
   short getBlockID(WorldVersion version);
 
@@ -27,7 +27,7 @@ public interface VirtualBlock {
 
   boolean isSupportedOn(WorldVersion version);
 
-  int getBlockStateID(ProtocolVersion version);
+  char getBlockStateID(ProtocolVersion version);
 
   boolean isSolid();
 

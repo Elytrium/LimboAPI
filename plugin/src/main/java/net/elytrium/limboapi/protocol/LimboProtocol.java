@@ -372,7 +372,8 @@ public class LimboProtocol {
         createMapping(0x12, ProtocolVersion.MINECRAFT_1_19_3, true),
         createMapping(0x14, ProtocolVersion.MINECRAFT_1_19_4, true),
         createMapping(0x15, ProtocolVersion.MINECRAFT_1_20_2, true),
-        createMapping(0x14, ProtocolVersion.MINECRAFT_1_21_5, true)
+        createMapping(0x14, ProtocolVersion.MINECRAFT_1_21_5, true),
+        createMapping(0x14, ProtocolVersion.MINECRAFT_26_3, true)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.CLIENTBOUND,
         TimeUpdatePacket.class, TimeUpdatePacket::new,
@@ -457,7 +458,8 @@ public class LimboProtocol {
         createMapping(0x1B, ProtocolVersion.MINECRAFT_1_20_5, false),
         createMapping(0x1D, ProtocolVersion.MINECRAFT_1_21_2, false),
         createMapping(0x1E, ProtocolVersion.MINECRAFT_1_21_6, false),
-        createMapping(0x1F, ProtocolVersion.MINECRAFT_26_1, false)
+        createMapping(0x1F, ProtocolVersion.MINECRAFT_26_1, false),
+        createMapping(0x1F, ProtocolVersion.MINECRAFT_26_3, false)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.SERVERBOUND,
         MovePositionOnlyPacket.class, MovePositionOnlyPacket::new,
@@ -478,7 +480,8 @@ public class LimboProtocol {
         createMapping(0x1A, ProtocolVersion.MINECRAFT_1_20_5, false),
         createMapping(0x1C, ProtocolVersion.MINECRAFT_1_21_2, false),
         createMapping(0x1D, ProtocolVersion.MINECRAFT_1_21_6, false),
-        createMapping(0x1E, ProtocolVersion.MINECRAFT_26_1, false)
+        createMapping(0x1E, ProtocolVersion.MINECRAFT_26_1, false),
+        createMapping(0x1E, ProtocolVersion.MINECRAFT_26_3, false)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.SERVERBOUND,
         MoveRotationOnlyPacket.class, MoveRotationOnlyPacket::new,
@@ -499,7 +502,8 @@ public class LimboProtocol {
         createMapping(0x1C, ProtocolVersion.MINECRAFT_1_20_5, false),
         createMapping(0x1E, ProtocolVersion.MINECRAFT_1_21_2, false),
         createMapping(0x1F, ProtocolVersion.MINECRAFT_1_21_6, false),
-        createMapping(0x20, ProtocolVersion.MINECRAFT_26_1, false)
+        createMapping(0x20, ProtocolVersion.MINECRAFT_26_1, false),
+        createMapping(0x20, ProtocolVersion.MINECRAFT_26_3, false)
     );
     register(LIMBO_STATE_REGISTRY, PacketDirection.SERVERBOUND,
         MoveOnGroundOnlyPacket.class, MoveOnGroundOnlyPacket::new,

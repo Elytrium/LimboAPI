@@ -72,12 +72,12 @@ public interface LimboFactory {
   /**
    * Creates new virtual block from id and data.
    *
-   * @param legacyID Block id.
+   * @param id Block protocol id, or a legacy id when {@code modern} is false.
    * @param modern   Use the latest supported version ids or 1.12.2 and lower.
    *
    * @return new virtual block.
    */
-  VirtualBlock createSimpleBlock(short legacyID, boolean modern);
+  VirtualBlock createSimpleBlock(char id, boolean modern);
 
   /**
    * Creates new virtual customizable block.
@@ -89,7 +89,7 @@ public interface LimboFactory {
    *
    * @return new virtual block.
    */
-  VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, short id);
+  VirtualBlock createSimpleBlock(boolean solid, boolean air, boolean motionBlocking, char id);
 
   /**
    * Creates new virtual customizable block.

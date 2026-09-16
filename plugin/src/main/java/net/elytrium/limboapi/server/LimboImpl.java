@@ -972,8 +972,9 @@ public class LimboImpl implements Limbo {
     joinGame.setEntityId(1);
     joinGame.setIsHardcore(true);
     joinGame.setGamemode(this.gameMode);
-    // 26.3 changed previousGamemode from "game mode or -1" to "game mode + 1 or 0"
-    // and widened both fields from byte to VarInt on the wire.
+    // 26.3 encodes this as an optional - a boolean flag followed by a VarInt, 0 meaning absent -
+    // while Velocity writes a bare VarInt. Sending 0 is what a 26.3 client reads back as
+    // "no previous gamemode"; older versions keep the -1 sentinel.
     joinGame.setPreviousGamemode(version.noLessThan(ProtocolVersion.MINECRAFT_26_3) ? 0 : -1);
     joinGame.setDimension(dimension.getModernID());
     joinGame.setDifficulty((short) 0);
@@ -1247,23 +1248,32 @@ public class LimboImpl implements Limbo {
             registryContainer.put("minecraft:chicken_sound_variant", this.createRegistry("minecraft:chicken_sound_variant",
                 Map.of("minecraft:classic", soundVariant)));
 
-            // Trim material.
-            // 26.3 replaced the free-form "asset_name" with a reference to a trim palette.
+            // Trim material. 26.3 replaced the free-form "asset_name" with a reference to a trim
+            // palette; the colours themselves are unchanged.
             boolean trimPalettes = version.noLessThan(ProtocolVersion.MINECRAFT_26_3);
-            CompoundBinaryTag trim = CompoundBinaryTag.builder()
-                .putString(trimPalettes ? "palette_id" : "asset_name", trimPalettes ? "minecraft:trim/redstone" : "redstone")
-                .put("description", CompoundBinaryTag.builder()
-                    .putString("color", "#971607")
-                    .putString("translate", "trim_material.minecraft.redstone")
-                    .build())
-                .build();
+            Map<String, String> trimColors = Map.ofEntries(
+                Map.entry("amethyst", "#9A5CC6"),
+                Map.entry("copper", "#B4684D"),
+                Map.entry("diamond", "#6EECD2"),
+                Map.entry("emerald", "#11A036"),
+                Map.entry("gold", "#DEB12D"),
+                Map.entry("iron", "#ECECEC"),
+                Map.entry("lapis", "#416E97"),
+                Map.entry("netherite", "#625859"),
+                Map.entry("quartz", "#E3D4C4"),
+                Map.entry("redstone", "#971607"),
+                Map.entry("resin", "#FC7812")
+            );
 
             Map<String, CompoundBinaryTag> trims = new HashMap<>();
-            for (String trimName : List.of("amethyst", "copper", "diamond",
-                "emerald", "gold", "iron", "lapis", "netherite", "quartz",
-                "redstone", "resin")) {
-              trims.put(trimName, trim);
-            }
+            trimColors.forEach((trimName, trimColor) -> trims.put(trimName, CompoundBinaryTag.builder()
+                .putString(trimPalettes ? "palette_id" : "asset_name",
+                    trimPalettes ? "minecraft:trim/" + trimName : trimName)
+                .put("description", CompoundBinaryTag.builder()
+                    .putString("color", trimColor)
+                    .putString("translate", "trim_material.minecraft." + trimName)
+                    .build())
+                .build()));
             registryContainer.put("minecraft:trim_material", this.createRegistry("minecraft:trim_material", trims));
 
             // Jukebox song

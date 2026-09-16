@@ -198,7 +198,12 @@ public class ChunkDataPacket implements MinecraftPacket {
               blockEntityNbt.putInt("z", blockEntityEntry.getPosZ());
             }
 
-            ProtocolUtils.writeBinaryTag(buf, version, blockEntityNbt);
+            if (version.noLessThan(ProtocolVersion.MINECRAFT_26_3) && blockEntityNbt.size() == 0) {
+              // 26.3 makes the block entity nbt optional; an empty one is written as absent.
+              buf.writeByte(0);
+            } else {
+              ProtocolUtils.writeBinaryTag(buf, version, blockEntityNbt);
+            }
           }
         }
         if (version.compareTo(ProtocolVersion.MINECRAFT_1_17_1) > 0) {

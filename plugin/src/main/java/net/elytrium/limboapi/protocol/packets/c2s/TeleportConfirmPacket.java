@@ -30,12 +30,21 @@ public class TeleportConfirmPacket implements MinecraftPacket {
   private static final int CONFIRMED_POSITION_SIZE = 3 * Double.BYTES + 2 * Float.BYTES;
 
   private int teleportID;
+  private double posX;
+  private double posY;
+  private double posZ;
+  private float yaw;
+  private float pitch;
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     this.teleportID = ProtocolUtils.readVarInt(buf);
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_26_3)) {
-      buf.skipBytes(CONFIRMED_POSITION_SIZE);
+      this.posX = buf.readDouble();
+      this.posY = buf.readDouble();
+      this.posZ = buf.readDouble();
+      this.yaw = buf.readFloat();
+      this.pitch = buf.readFloat();
     }
   }
 
@@ -67,10 +76,35 @@ public class TeleportConfirmPacket implements MinecraftPacket {
   public String toString() {
     return "TeleportConfirm{"
         + "teleportID=" + this.teleportID
+        + ", posX=" + this.posX
+        + ", posY=" + this.posY
+        + ", posZ=" + this.posZ
+        + ", yaw=" + this.yaw
+        + ", pitch=" + this.pitch
         + "}";
   }
 
   public int getTeleportID() {
     return this.teleportID;
+  }
+
+  public double getPosX() {
+    return this.posX;
+  }
+
+  public double getPosY() {
+    return this.posY;
+  }
+
+  public double getPosZ() {
+    return this.posZ;
+  }
+
+  public float getYaw() {
+    return this.yaw;
+  }
+
+  public float getPitch() {
+    return this.pitch;
   }
 }

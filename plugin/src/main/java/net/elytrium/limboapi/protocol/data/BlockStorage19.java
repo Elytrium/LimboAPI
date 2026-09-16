@@ -38,7 +38,7 @@ public class BlockStorage19 implements BlockStorage {
 
   private final ProtocolVersion version;
   private final List<VirtualBlock> palette;
-  private final Map<Integer, VirtualBlock> rawToBlock;
+  private final Map<Character, VirtualBlock> rawToBlock;
 
   private CompactStorage storage;
 
@@ -53,7 +53,7 @@ public class BlockStorage19 implements BlockStorage {
     this.storage = this.createStorage(4);
   }
 
-  private BlockStorage19(ProtocolVersion version, List<VirtualBlock> palette, Map<Integer, VirtualBlock> rawToBlock, CompactStorage storage) {
+  private BlockStorage19(ProtocolVersion version, List<VirtualBlock> palette, Map<Character, VirtualBlock> rawToBlock, CompactStorage storage) {
     this.version = version;
     this.palette = palette;
     this.rawToBlock = rawToBlock;
@@ -87,7 +87,7 @@ public class BlockStorage19 implements BlockStorage {
 
   private int getIndex(VirtualBlock block) {
     if (this.storage.getBitsPerEntry() > 8) {
-      int raw = block.getBlockStateID(this.version);
+      char raw = block.getBlockStateID(this.version);
       this.rawToBlock.put(raw, block);
       return raw;
     } else {
@@ -124,7 +124,7 @@ public class BlockStorage19 implements BlockStorage {
   public VirtualBlock get(int posX, int posY, int posZ) {
     int id = this.storage.get(BlockStorage.index(posX, posY, posZ));
     if (this.storage.getBitsPerEntry() > 8) {
-      return this.rawToBlock.get(id);
+      return this.rawToBlock.get((char) id);
     } else {
       return this.palette.get(id);
     }
