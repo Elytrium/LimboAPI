@@ -27,10 +27,22 @@ import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 public class TeleportConfirmPacket implements MinecraftPacket {
 
   private int teleportID;
+  private double posX;
+  private double posY;
+  private double posZ;
+  private float yaw;
+  private float pitch;
 
   @Override
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     this.teleportID = ProtocolUtils.readVarInt(buf);
+    if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_26_3)) {
+      this.posX = buf.readDouble();
+      this.posY = buf.readDouble();
+      this.posZ = buf.readDouble();
+      this.yaw = buf.readFloat();
+      this.pitch = buf.readFloat();
+    }
   }
 
   @Override
@@ -49,22 +61,47 @@ public class TeleportConfirmPacket implements MinecraftPacket {
 
   @Override
   public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 5;
+    return 5 + (version.noLessThan(ProtocolVersion.MINECRAFT_26_3) ? 32 : 0);
   }
 
   @Override
   public int decodeExpectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    return 1;
+    return 1 + (version.noLessThan(ProtocolVersion.MINECRAFT_26_3) ? 32 : 0);
   }
 
   @Override
   public String toString() {
-    return "TeleportConfirm{"
+    return "TeleportConfirmPacket{"
         + "teleportID=" + this.teleportID
-        + "}";
+        + ", posX=" + this.posX
+        + ", posY=" + this.posY
+        + ", posZ=" + this.posZ
+        + ", yaw=" + this.yaw
+        + ", pitch=" + this.pitch
+        + '}';
   }
 
   public int getTeleportID() {
     return this.teleportID;
+  }
+
+  public double getPosX() {
+    return this.posX;
+  }
+
+  public double getPosY() {
+    return this.posY;
+  }
+
+  public double getPosZ() {
+    return this.posZ;
+  }
+
+  public float getYaw() {
+    return this.yaw;
+  }
+
+  public float getPitch() {
+    return this.pitch;
   }
 }

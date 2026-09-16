@@ -61,7 +61,7 @@ public class SimpleBlock implements VirtualBlock {
         LinkedTreeMap.class
     );
 
-    blocks.forEach((modernId, protocolId) -> MODERN_BLOCK_STRING_MAP.put(modernId, Short.valueOf(protocolId)));
+    blocks.forEach((modernId, protocolId) -> MODERN_BLOCK_STRING_MAP.put(modernId, parseNumericId(protocolId)));
 
     LinkedTreeMap<String, LinkedTreeMap<String, String>> blockVersionMapping = GSON.fromJson(
         new InputStreamReader(
@@ -73,8 +73,8 @@ public class SimpleBlock implements VirtualBlock {
 
     blockVersionMapping.forEach((protocolId, versionMap) -> {
       EnumMap<WorldVersion, Short> deserializedVersionMap = new EnumMap<>(WorldVersion.class);
-      versionMap.forEach((version, id) -> deserializedVersionMap.put(WorldVersion.parse(version), Short.valueOf(id)));
-      LEGACY_BLOCK_IDS_MAP.put(Short.valueOf(protocolId), deserializedVersionMap);
+      versionMap.forEach((version, id) -> deserializedVersionMap.put(WorldVersion.parse(version), parseNumericId(id)));
+      LEGACY_BLOCK_IDS_MAP.put(parseNumericId(protocolId), deserializedVersionMap);
     });
 
     LinkedTreeMap<String, String> blockStates = GSON.fromJson(
@@ -82,7 +82,7 @@ public class SimpleBlock implements VirtualBlock {
         LinkedTreeMap.class
     );
     blockStates.forEach((key, value) -> {
-      MODERN_BLOCK_STATE_PROTOCOL_ID_MAP.put(Short.valueOf(value), key);
+      MODERN_BLOCK_STATE_PROTOCOL_ID_MAP.put(parseNumericId(value), key);
 
       String[] stringIDArgs = key.split("\\[");
       if (!MODERN_BLOCK_STATE_STRING_MAP.containsKey(stringIDArgs[0])) {
@@ -90,10 +90,10 @@ public class SimpleBlock implements VirtualBlock {
       }
 
       if (stringIDArgs.length == 1) {
-        MODERN_BLOCK_STATE_STRING_MAP.get(stringIDArgs[0]).put(null, Short.valueOf(value));
+        MODERN_BLOCK_STATE_STRING_MAP.get(stringIDArgs[0]).put(null, parseNumericId(value));
       } else {
         stringIDArgs[1] = stringIDArgs[1].substring(0, stringIDArgs[1].length() - 1);
-        MODERN_BLOCK_STATE_STRING_MAP.get(stringIDArgs[0]).put(new HashSet<>(Arrays.asList(stringIDArgs[1].split(","))), Short.valueOf(value));
+        MODERN_BLOCK_STATE_STRING_MAP.get(stringIDArgs[0]).put(new HashSet<>(Arrays.asList(stringIDArgs[1].split(","))), parseNumericId(value));
       }
     });
 
@@ -102,7 +102,7 @@ public class SimpleBlock implements VirtualBlock {
         LinkedTreeMap.class
     );
     legacyBlocks.forEach((legacyBlockID, modernID)
-        -> LEGACY_BLOCK_STATE_IDS_MAP.put(Short.valueOf(legacyBlockID), solid(Short.parseShort(modernID))));
+        -> LEGACY_BLOCK_STATE_IDS_MAP.put(parseNumericId(legacyBlockID), solid(parseNumericId(modernID))));
 
     LEGACY_BLOCK_STATE_IDS_MAP.put((short) 0, AIR);
 
@@ -114,8 +114,8 @@ public class SimpleBlock implements VirtualBlock {
     modernMap.forEach((modernID, versionMap) -> {
       Short id = null;
       for (ProtocolVersion version : ProtocolVersion.SUPPORTED_VERSIONS) {
-        id = Short.valueOf(versionMap.getOrDefault(version.toString(), String.valueOf(id)));
-        SimpleBlock.MODERN_BLOCK_STATE_IDS_MAP.computeIfAbsent(version, k -> new ShortObjectHashMap<>()).put(Short.parseShort(modernID), id);
+        id = parseNumericId(versionMap.getOrDefault(version.toString(), String.valueOf(id)));
+        SimpleBlock.MODERN_BLOCK_STATE_IDS_MAP.computeIfAbsent(version, k -> new ShortObjectHashMap<>()).put(parseNumericId(modernID), id);
       }
     });
 
@@ -262,6 +262,15 @@ public class SimpleBlock implements VirtualBlock {
   public static VirtualBlock fromModernID(String modernID, Map<String, String> properties) {
     modernID = remapModernID(modernID);
     return solid(modernID, transformID(modernID, properties));
+  }
+
+  private static short parseNumericId(String id) {
+    int identifier = Integer.parseInt(id);
+    short sixteenBits = (short) identifier;
+    if ((sixteenBits & 0xFFFF) != identifier) {
+      throw new IllegalStateException("id overflow: " + identifier);
+    }
+    return sixteenBits;
   }
 
   private static short transformID(String modernID, Map<String, String> properties) {

@@ -44,15 +44,24 @@ public class StructureNbtFile implements WorldFile {
       CompoundBinaryTag map = this.palette.getCompound(i);
 
       Map<String, String> propertiesMap = null;
-      if (map.keySet().contains("Properties")) {
+
+      // use modern blockstate format if possible
+      String name = "Name";
+      String propertiesName = "Properties";
+      if (map.keySet().contains("id")) {
+        name = "id";
+        propertiesName = "properties";
+      }
+
+      if (map.keySet().contains(propertiesName)) {
         propertiesMap = new HashMap<>();
-        CompoundBinaryTag properties = map.getCompound("Properties");
+        CompoundBinaryTag properties = map.getCompound(propertiesName);
         for (String entry : properties.keySet()) {
           propertiesMap.put(entry, properties.getString(entry));
         }
       }
 
-      palettedBlocks[i] = factory.createSimpleBlock(map.getString("Name"), propertiesMap);
+      palettedBlocks[i] = factory.createSimpleBlock(map.getString(name), propertiesMap);
     }
 
     for (BinaryTag binaryTag : this.blocks) {

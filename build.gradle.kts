@@ -17,8 +17,8 @@ allprojects {
     version = "1.1.27-SNAPSHOT"
 
     tasks.withType<JavaCompile> {
-        sourceCompatibility = JavaVersion.VERSION_21.toString()
-        targetCompatibility = JavaVersion.VERSION_21.toString()
+        sourceCompatibility = JavaVersion.VERSION_25.toString()
+        targetCompatibility = JavaVersion.VERSION_25.toString()
     }
 
     checkstyle {

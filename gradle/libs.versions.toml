@@ -2,15 +2,15 @@
 elytrium-commons = "1.2.3" # https://github.com/Elytrium/elytrium-java-commons
 elytrium-fastprepare = "1.0.13" #https://github.com/Elytrium/FastPrepareAPI
 gradle-licenser = "1.2.0" # https://github.com/CadixDev/licenser
-gradle-shadow = "9.4.0" # https://github.com/GradleUp/shadow
+gradle-shadow = "9.6.1" # https://github.com/GradleUp/shadow
 gradle-spotbugs = "6.4.8" # https://github.com/spotbugs/spotbugs-gradle-plugin
-minecraft-adventure = "4.15.0" # https://github.com/KyoriPowered/adventure
+minecraft-adventure = "5.2.0" # https://github.com/KyoriPowered/adventure
 minecraft-bstats = "3.0.0" # https://github.com/Bastian/bStats
-minecraft-velocity = "3.5.0-SNAPSHOT" # https://github.com/PaperMC/Velocity
+minecraft-velocity = "4.1.2-SNAPSHOT" # https://github.com/PaperMC/Velocity
 tool-commons-io = "2.6" # https://github.com/apache/commons-io
-tool-fastutil = "8.5.11" # https://github.com/vigna/fastutil/
-tool-google-guava = "28.0-jre" # https://github.com/google/guava
-tool-netty = "4.1.86.Final" # https://github.com/netty/netty
+tool-fastutil = "8.5.19" # https://github.com/vigna/fastutil/
+tool-google-guava = "33.7.1-jre" # https://github.com/google/guava
+tool-netty = "4.2.18.Final" # https://github.com/netty/netty
 tool-spotbugs-annotations = "4.7.3" # https://github.com/spotbugs/spotbugs
 
 [libraries]

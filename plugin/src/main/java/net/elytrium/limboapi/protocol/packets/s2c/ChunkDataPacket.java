@@ -42,6 +42,7 @@ import net.elytrium.limboapi.material.Biome;
 import net.elytrium.limboapi.mcprotocollib.BitStorage116;
 import net.elytrium.limboapi.mcprotocollib.BitStorage19;
 import net.elytrium.limboapi.protocol.util.NetworkSection;
+import net.elytrium.limboapi.utils.ProtocolTools;
 import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.LongArrayBinaryTag;
@@ -206,14 +207,8 @@ public class ChunkDataPacket implements MinecraftPacket {
           if (version.compareTo(ProtocolVersion.MINECRAFT_1_20) < 0) {
             buf.writeBoolean(true); // Trust edges.
           }
-          ProtocolUtils.writeVarInt(buf, mask.length); // Skylight mask.
-          for (long m : mask) {
-            buf.writeLong(m);
-          }
-          ProtocolUtils.writeVarInt(buf, mask.length); // BlockLight mask.
-          for (long m : mask) {
-            buf.writeLong(m);
-          }
+          ProtocolTools.writeBitSet(buf, version, mask); // Skylight mask.
+          ProtocolTools.writeBitSet(buf, version, mask); // BlockLight mask.
           ProtocolUtils.writeVarInt(buf, 0); // EmptySkylight mask.
           ProtocolUtils.writeVarInt(buf, 0); // EmptyBlockLight mask.
           ProtocolUtils.writeVarInt(buf, this.chunk.getLight().length);

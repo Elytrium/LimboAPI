@@ -72,7 +72,7 @@ public class BlockStorage19 implements BlockStorage {
     } else {
       ProtocolUtils.writeVarInt(buf, this.palette.size());
       for (VirtualBlock state : this.palette) {
-        ProtocolUtils.writeVarInt(buf, state.getBlockStateID(this.version));
+        ProtocolUtils.writeVarInt(buf, state.getBlockStateID(this.version) & 0xFFFF);
       }
     }
 
@@ -89,7 +89,7 @@ public class BlockStorage19 implements BlockStorage {
     if (this.storage.getBitsPerEntry() > 8) {
       short raw = block.getBlockStateID(this.version);
       this.rawToBlock.put(raw, block);
-      return raw;
+      return raw & 0xFFFF;
     } else {
       int id = this.palette.indexOf(block);
       if (id == -1) {
@@ -97,7 +97,7 @@ public class BlockStorage19 implements BlockStorage {
           int bitsPerEntry = StorageUtils.fixBitsPerEntry(this.version, this.storage.getBitsPerEntry() + 1);
           CompactStorage newStorage = this.createStorage(bitsPerEntry);
           for (int i = 0; i < SimpleChunk.MAX_BLOCKS_PER_SECTION; ++i) {
-            newStorage.set(i, bitsPerEntry > 8 ? this.palette.get(this.storage.get(i)).getBlockStateID(this.version) : this.storage.get(i));
+            newStorage.set(i, bitsPerEntry > 8 ? this.palette.get(this.storage.get(i)).getBlockStateID(this.version) & 0xFFFF : this.storage.get(i));
           }
 
           this.storage = newStorage;
@@ -140,7 +140,7 @@ public class BlockStorage19 implements BlockStorage {
     } else {
       length += ProtocolUtils.varIntBytes(this.palette.size());
       for (VirtualBlock state : this.palette) {
-        length += ProtocolUtils.varIntBytes(state.getBlockStateID(this.version));
+        length += ProtocolUtils.varIntBytes(state.getBlockStateID(this.version) & 0xFFFF);
       }
     }
 

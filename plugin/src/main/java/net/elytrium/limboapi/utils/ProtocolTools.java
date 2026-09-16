@@ -20,6 +20,7 @@ package net.elytrium.limboapi.utils;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
+import java.util.BitSet;
 
 public class ProtocolTools {
 
@@ -36,6 +37,19 @@ public class ProtocolTools {
       return ProtocolUtils.readVarInt(buf);
     } else {
       return buf.readUnsignedByte();
+    }
+  }
+
+  public static void writeBitSet(ByteBuf buf, ProtocolVersion version, long[] bits) {
+    if (version.noLessThan(ProtocolVersion.MINECRAFT_26_3)) {
+      byte[] bytes = BitSet.valueOf(bits).toByteArray();
+      ProtocolUtils.writeVarInt(buf, bytes.length);
+      buf.writeBytes(bytes);
+    } else {
+      ProtocolUtils.writeVarInt(buf, bits.length);
+      for (long value : bits) {
+        buf.writeLong(value);
+      }
     }
   }
 }
