@@ -112,9 +112,8 @@ public class LoginListener {
   public void hookInitialServer(PlayerChooseInitialServerEvent event) {
     if (this.plugin.hasNextServer(event.getPlayer())) {
       event.setInitialServer(this.plugin.getNextServer(event.getPlayer()));
+      this.plugin.setLimboJoined(event.getPlayer());
     }
-
-    this.plugin.setLimboJoined(event.getPlayer());
   }
 
   @SuppressWarnings("ConstantConditions")
