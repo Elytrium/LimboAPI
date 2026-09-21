@@ -381,6 +381,12 @@ public class LimboAPI implements LimboFactory {
   }
 
   @Override
+  public VirtualWorld createVirtualWorld(Dimension dimension, String worldName,
+      double posX, double posY, double posZ, float yaw, float pitch) {
+    return new SimpleWorld(dimension, worldName, posX, posY, posZ, yaw, pitch);
+  }
+
+  @Override
   public VirtualChunk createVirtualChunk(int posX, int posZ) {
     return new SimpleChunk(posX, posZ);
   }
