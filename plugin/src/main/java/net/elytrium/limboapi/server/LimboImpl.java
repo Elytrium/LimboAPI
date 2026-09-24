@@ -44,6 +44,7 @@ import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommandsPacket;
 import com.velocitypowered.proxy.protocol.packet.BossBarPacket;
+import com.velocitypowered.proxy.protocol.packet.ClientSettingsPacket;
 import com.velocitypowered.proxy.protocol.packet.JoinGamePacket;
 import com.velocitypowered.proxy.protocol.packet.LegacyPlayerListItemPacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
@@ -109,6 +110,7 @@ import net.elytrium.limboapi.protocol.packets.s2c.ChangeGameStatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.ChunkDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.DefaultSpawnPositionPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.PositionRotationPacket;
+import net.elytrium.limboapi.protocol.packets.s2c.SetEntityDataPacket;
 import net.elytrium.limboapi.protocol.packets.s2c.TimeUpdatePacket;
 import net.elytrium.limboapi.protocol.packets.s2c.UpdateViewPositionPacket;
 import net.elytrium.limboapi.server.world.SimpleTagManager;
@@ -601,6 +603,13 @@ public class LimboImpl implements Limbo {
     }
 
     connection.delayedWrite(playerInfoPacket);
+
+    // Recent clients (1.21.11) expect the server to send the local player's own entity data
+    // (skin parts / main arm) on join; without it they keep the default appearance (right hand,
+    // no outer skin layers) and ignore the local skin options.
+    if (connection.getProtocolVersion() == ProtocolVersion.MINECRAFT_1_21_11) {
+      connection.delayedWrite(this.createSelfEntityDataPacket(sessionHandler.getSettings()));
+    }
 
     connection.delayedWrite(this.getBrandMessage(handlerClass));
 
@@ -1515,6 +1524,27 @@ public class LimboImpl implements Limbo {
 
   private PositionRotationPacket createPlayerPosAndLook(double posX, double posY, double posZ, float yaw, float pitch) {
     return new PositionRotationPacket(posX, posY, posZ, yaw, pitch, false, 44, true);
+  }
+
+  private SetEntityDataPacket createSelfEntityDataPacket(ClientSettingsPacket clientSettings) {
+    int skinParts = clientSettings == null ? 0x7F : clientSettings.getSkinParts();
+    // Player skin-parts metadata entry: index 16, BYTE serializer (id 0). Entity id 1 is the local
+    // player (see createJoinGamePacket). Recent clients show the outer skin layers only after the
+    // server sends the local player's own entity data.
+    byte[] skinPartsEntry = new byte[] {16, 0, (byte) skinParts};
+    // Player main-arm metadata entry: index 15, HUMANOID_ARM serializer (id 38). The value is the
+    // client main hand (0 = left, 1 = right), which matches the HumanoidArm enum ordinal.
+    int mainHand = clientSettings == null ? 1 : clientSettings.getMainHand();
+    byte[] mainArmEntry = new byte[] {15, 38, (byte) mainHand};
+    return new SetEntityDataPacket(1, new byte[][] {skinPartsEntry, mainArmEntry});
+  }
+
+  public void sendSelfEntityData(ConnectedPlayer player, ClientSettingsPacket clientSettings) {
+    MinecraftConnection connection = player.getConnection();
+    if (connection.getState() != StateRegistry.CONFIG
+        && connection.getProtocolVersion() == ProtocolVersion.MINECRAFT_1_21_11) {
+      connection.write(this.createSelfEntityDataPacket(clientSettings));
+    }
   }
 
   private UpdateViewPositionPacket createUpdateViewPosition(int posX, int posZ) {

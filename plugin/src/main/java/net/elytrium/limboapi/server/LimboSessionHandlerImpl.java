@@ -119,6 +119,14 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       this.settings = sessionHandler.getSettings();
       this.brand = sessionHandler.getBrand();
     }
+
+    if (this.settings == null) {
+      // 1.20.2+ clients don't resend ClientInformation while switching states, so the limbo session
+      // never receives it. Fall back to the settings the client sent at login (stored on the player
+      // by Velocity's config handler), otherwise main hand / skin parts default to right-hand and
+      // no layers.
+      this.settings = this.player.getClientSettingsPacket();
+    }
   }
 
   public void onConfig(LimboPlayer player) {
@@ -140,6 +148,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         this.keepAliveTask.cancel(true);
         return;
       }
+
+      // The generic/unknown packet counter is a flood guard, so it should measure traffic inside a
+      // single keepalive interval instead of accumulating for the whole session: otherwise a normal
+      // idle client (periodic keepalives, acknowledgements, ...) is eventually kicked for a "too big
+      // packet" after a few minutes.
+      this.genericBytes = 0;
 
       if (this.keepAlivePending) {
         if (++this.keepAlivesSkipped == 2) {
@@ -350,6 +364,11 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   public void handleGeneric(MinecraftPacket packet) {
     if (packet instanceof ClientSettingsPacket clientSettings) {
       this.settings = clientSettings;
+      // Mirror the original Velocity behavior: keep the player-level settings (main hand, skin
+      // parts, ...) in sync while the player is inside the limbo.
+      this.player.setClientSettings(clientSettings);
+      // Re-send the local player's own entity data so skin layers / main hand changes apply live.
+      this.limbo.sendSelfEntityData(this.player, clientSettings);
     } else if (packet instanceof PlayerChatSessionPacket) {
       if (this.chatSessionTimeoutTask != null) {
         this.chatSessionTimeoutTask.cancel(true);
