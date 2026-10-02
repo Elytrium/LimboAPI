@@ -1,0 +1,398 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.velocitypowered",
+    "module": "velocity-proxy",
+    "version": "4.1.2-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.6.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 25,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "velocity-proxy-4.1.2-SNAPSHOT.jar",
+          "url": "velocity-proxy-4.1.2-SNAPSHOT.jar",
+          "size": 931056,
+          "sha512": "279556f7b5bbdebb4e6a84c86599639001fb0cdd1343988fc2c8fa99c4621c05756d1ad850cc2be958d86985e0ffddd9f751e8222279e629e9fcfcbec6945a61",
+          "sha256": "a85b970676163841a2fa3c4bf4c2844b4627f40be252f625cbf50b44fca5a006",
+          "sha1": "7a14853816318ea22839fe7bc6e5f2594069434c",
+          "md5": "d4e592966f3b49d40d3fc39689ad7767"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 25,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.velocitypowered",
+          "module": "velocity-api",
+          "version": {
+            "requires": "4.1.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.velocitypowered",
+          "module": "velocity-native",
+          "version": {
+            "requires": "4.1.2-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.apache.logging.log4j",
+          "module": "log4j-api",
+          "version": {
+            "requires": "2.26.1"
+          }
+        },
+        {
+          "group": "org.apache.logging.log4j",
+          "module": "log4j-core",
+          "version": {
+            "requires": "2.26.1"
+          }
+        },
+        {
+          "group": "org.apache.logging.log4j",
+          "module": "log4j-slf4j2-impl",
+          "version": {
+            "requires": "2.26.1"
+          }
+        },
+        {
+          "group": "org.apache.logging.log4j",
+          "module": "log4j-iostreams",
+          "version": {
+            "requires": "2.26.1"
+          }
+        },
+        {
+          "group": "org.apache.logging.log4j",
+          "module": "log4j-jul",
+          "version": {
+            "requires": "2.26.1"
+          }
+        },
+        {
+          "group": "net.kyori",
+          "module": "ansi",
+          "version": {
+            "requires": "1.1.1"
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-codec",
+          "version": {
+            "requires": "4.2.18.Final"
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-codec-haproxy",
+          "version": {
+            "requires": "4.2.18.Final"
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-codec-http",
+          "version": {
+            "requires": "4.2.18.Final"
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-handler",
+          "version": {
+            "requires": "4.2.18.Final"
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-transport-native-epoll",
+          "version": {
+            "requires": "4.2.18.Final"
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-transport-native-epoll",
+          "version": {
+            "requires": "4.2.18.Final"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "netty-transport-native-epoll",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "linux-x86_64"
+            }
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-transport-native-epoll",
+          "version": {
+            "requires": "4.2.18.Final"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "netty-transport-native-epoll",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "linux-aarch_64"
+            }
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-transport-native-io_uring",
+          "version": {
+            "requires": "4.2.18.Final"
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-transport-native-io_uring",
+          "version": {
+            "requires": "4.2.18.Final"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "netty-transport-native-io_uring",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "linux-x86_64"
+            }
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-transport-native-io_uring",
+          "version": {
+            "requires": "4.2.18.Final"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "netty-transport-native-io_uring",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "linux-aarch_64"
+            }
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-transport-native-kqueue",
+          "version": {
+            "requires": "4.2.18.Final"
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-transport-native-kqueue",
+          "version": {
+            "requires": "4.2.18.Final"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "netty-transport-native-kqueue",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "osx-x86_64"
+            }
+          }
+        },
+        {
+          "group": "io.netty",
+          "module": "netty-transport-native-kqueue",
+          "version": {
+            "requires": "4.2.18.Final"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "netty-transport-native-kqueue",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "osx-aarch_64"
+            }
+          }
+        },
+        {
+          "group": "net.sf.jopt-simple",
+          "module": "jopt-simple",
+          "version": {
+            "requires": "5.0.4"
+          }
+        },
+        {
+          "group": "net.minecrell",
+          "module": "terminalconsoleappender",
+          "version": {
+            "requires": "1.3.0"
+          }
+        },
+        {
+          "group": "it.unimi.dsi",
+          "module": "fastutil",
+          "version": {
+            "requires": "8.5.19"
+          }
+        },
+        {
+          "group": "net.kyori",
+          "module": "adventure-bom",
+          "version": {
+            "requires": "5.2.0"
+          },
+          "attributes": {
+            "org.gradle.category": "platform"
+          }
+        },
+        {
+          "group": "net.kyori",
+          "module": "adventure-text-serializer-json-legacy-impl",
+          "version": {
+            "requires": "5.2.0"
+          }
+        },
+        {
+          "group": "com.spotify",
+          "module": "completable-futures",
+          "version": {
+            "requires": "0.3.6"
+          }
+        },
+        {
+          "group": "com.electronwill.night-config",
+          "module": "toml",
+          "version": {
+            "requires": "3.9.0"
+          }
+        },
+        {
+          "group": "org.bstats",
+          "module": "bstats-base",
+          "version": {
+            "requires": "3.2.1"
+          }
+        },
+        {
+          "group": "org.lanternpowered",
+          "module": "lmbda",
+          "version": {
+            "requires": "3.0.0"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm",
+          "version": {
+            "requires": "9.10.1"
+          }
+        },
+        {
+          "group": "space.vectrix.flare",
+          "module": "flare",
+          "version": {
+            "requires": "2.0.1"
+          }
+        },
+        {
+          "group": "space.vectrix.flare",
+          "module": "flare-fastutil",
+          "version": {
+            "requires": "2.0.1"
+          }
+        },
+        {
+          "group": "org.jline",
+          "module": "jline-terminal-jni",
+          "version": {
+            "requires": "4.3.1"
+          }
+        },
+        {
+          "group": "com.lmax",
+          "module": "disruptor",
+          "version": {
+            "requires": "4.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "velocity-proxy-4.1.2-SNAPSHOT.jar",
+          "url": "velocity-proxy-4.1.2-SNAPSHOT.jar",
+          "size": 931056,
+          "sha512": "279556f7b5bbdebb4e6a84c86599639001fb0cdd1343988fc2c8fa99c4621c05756d1ad850cc2be958d86985e0ffddd9f751e8222279e629e9fcfcbec6945a61",
+          "sha256": "a85b970676163841a2fa3c4bf4c2844b4627f40be252f625cbf50b44fca5a006",
+          "sha1": "7a14853816318ea22839fe7bc6e5f2594069434c",
+          "md5": "d4e592966f3b49d40d3fc39689ad7767"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "velocity-proxy-4.1.2-SNAPSHOT-javadoc.jar",
+          "url": "velocity-proxy-4.1.2-SNAPSHOT-javadoc.jar",
+          "size": 6213635,
+          "sha512": "87de77f84dfa9a923906102dbcea0d818dfe3a43ab82dd8c95c89a3cad1ba12f506fa0dce3b9491ab3a0b4fc71b8bc6c2c07e441ea658dacdc70a6ccc4da39f9",
+          "sha256": "1976d3ff449ddff4455046c7b3aa2e5e930d811186ef8a701d465b2b328089ca",
+          "sha1": "853fcf43daad8a4650c499d736468b7fb0856550",
+          "md5": "64cb8da0d285ad276c9153eb1fae041f"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "velocity-proxy-4.1.2-SNAPSHOT-sources.jar",
+          "url": "velocity-proxy-4.1.2-SNAPSHOT-sources.jar",
+          "size": 606259,
+          "sha512": "d74981a4ad7a76c554d899c5f0218301b578827e5b65c36b200e86e54953571aa7a4f503ccb2a65a114983392e579247425c721d20b349fc345dd6231a61208a",
+          "sha256": "259c49c473569b079d87b5106bbbfd68b765576156d9eececc0f67888e379226",
+          "sha1": "d8c97f22694e07f6f4bd06e660687adb0a974331",
+          "md5": "cdd899a8e7345d332823eeb875877949"
+        }
+      ]
+    }
+  ]
+}

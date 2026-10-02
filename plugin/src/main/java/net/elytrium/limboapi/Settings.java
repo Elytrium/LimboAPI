@@ -51,8 +51,8 @@ public class Settings extends YamlConfig {
     public int MAX_CHAT_MESSAGE_LENGTH = 256;
     public int MAX_BRAND_NAME_LENGTH = 64;
     public int MAX_UNKNOWN_PACKET_LENGTH = 2048;
-    public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 4096;
-    public int MAX_MULTI_GENERIC_PACKET_LENGTH = 131072;
+    public int MAX_SINGLE_GENERIC_PACKET_LENGTH = 262144;
+    public int MAX_MULTI_GENERIC_PACKET_LENGTH = 1048576;
     @Comment({
         "Default max packet length (in bytes) that will be proceeded, other packets will be dropped.",
         "Can be increased with Limbo#setMaxSuppressPacketLength"

@@ -1,0 +1,78 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.elytrium",
+    "module": "fastprepare",
+    "version": "1.0.13",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "net.elytrium.commons",
+          "module": "utils",
+          "version": {
+            "requires": "1.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "fastprepare-1.0.13.jar",
+          "url": "fastprepare-1.0.13.jar",
+          "size": 17080,
+          "sha512": "9f4bce65de9286f2ffe3b1f277cca3e82708841dd5d2800d2e5fad4283e37c324deac8e0ad159a121f8623650e735891049661ccf58e6e7b67b37bdee7ec4314",
+          "sha256": "d9d7a316ae958b334f456a26d461e07308b702a4372541d83033a119f61dd4ea",
+          "sha1": "5cfae7beb47a6271207da92ca705f048a63c7a91",
+          "md5": "1c1ea14b35fcf16a715afcc682148f77"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.elytrium.commons",
+          "module": "utils",
+          "version": {
+            "requires": "1.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "fastprepare-1.0.13.jar",
+          "url": "fastprepare-1.0.13.jar",
+          "size": 17080,
+          "sha512": "9f4bce65de9286f2ffe3b1f277cca3e82708841dd5d2800d2e5fad4283e37c324deac8e0ad159a121f8623650e735891049661ccf58e6e7b67b37bdee7ec4314",
+          "sha256": "d9d7a316ae958b334f456a26d461e07308b702a4372541d83033a119f61dd4ea",
+          "sha1": "5cfae7beb47a6271207da92ca705f048a63c7a91",
+          "md5": "1c1ea14b35fcf16a715afcc682148f77"
+        }
+      ]
+    }
+  ]
+}

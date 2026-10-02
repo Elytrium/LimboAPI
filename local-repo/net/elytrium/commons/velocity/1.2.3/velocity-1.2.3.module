@@ -1,0 +1,60 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.elytrium.commons",
+    "module": "velocity",
+    "version": "1.2.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.4.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "velocity-1.2.3.jar",
+          "url": "velocity-1.2.3.jar",
+          "size": 3004,
+          "sha512": "dd278e7af8ddd54be3b0fe981a91740a7447594e2c59b18456ada8f009fd5960407e8156f768c3528b70a64011a3c6d319b354b37d39a009c80442a01a20a107",
+          "sha256": "d60131c120398473fb497823e9ad1a255d4d835100ed2cb492fc14f1dd609a89",
+          "sha1": "2d7a799bf98b005c175f6a655f16fe986e0a7bec",
+          "md5": "8c0ca51fc1c307527a5f59a2228484b1"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "velocity-1.2.3.jar",
+          "url": "velocity-1.2.3.jar",
+          "size": 3004,
+          "sha512": "dd278e7af8ddd54be3b0fe981a91740a7447594e2c59b18456ada8f009fd5960407e8156f768c3528b70a64011a3c6d319b354b37d39a009c80442a01a20a107",
+          "sha256": "d60131c120398473fb497823e9ad1a255d4d835100ed2cb492fc14f1dd609a89",
+          "sha1": "2d7a799bf98b005c175f6a655f16fe986e0a7bec",
+          "md5": "8c0ca51fc1c307527a5f59a2228484b1"
+        }
+      ]
+    }
+  ]
+}

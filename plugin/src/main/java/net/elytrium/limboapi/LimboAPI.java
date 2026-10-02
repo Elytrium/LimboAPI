@@ -302,6 +302,17 @@ public class LimboAPI implements LimboFactory {
     eventManager.register(this, new DisconnectListener(this));
     eventManager.register(this, new ReloadListener(this));
 
+    // Without this, the pre-limbo profile request plugins (e.g. Floodgate) hoisted at boot by
+    // postProxyInitialization() are lost on every /velocity reload: unregisterListeners() above drops the
+    // old EventManagerHook (and with it, the reference to their handler), and the new EventManagerHook
+    // created above starts with empty handler state, so those plugins' GameProfileRequestEvent handlers
+    // never get re-hoisted and simply stop firing until the proxy is fully restarted.
+    try {
+      this.eventManagerHook.reloadHandlers();
+    } catch (IllegalAccessException e) {
+      LOGGER.error("Failed to reload pre-limbo profile request plugin handlers", e);
+    }
+
     LOGGER.info("Loaded!");
   }
 

@@ -260,6 +260,9 @@ public class LimboPlayerImpl implements LimboPlayer {
             }
           }
         });
+      } else if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+        LimboAPI.getLogger().warn("Cannot disconnect player {} because active session handler is {} instead of {}",
+            this.player, this.connection.getActiveSessionHandler(), this.sessionHandler);
       }
     });
   }
@@ -284,6 +287,9 @@ public class LimboPlayerImpl implements LimboPlayer {
             this.sendToRegisteredServer(server);
           }
         });
+      } else if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+        LimboAPI.getLogger().warn("Cannot disconnect player {} to server {} because active session handler is {} instead of {}",
+            this.player, server.getServerInfo().getName(), this.connection.getActiveSessionHandler(), this.sessionHandler);
       }
     });
   }

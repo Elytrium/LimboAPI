@@ -74,6 +74,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.Settings;
 import net.elytrium.limboapi.injection.login.confirmation.LoginConfirmHandler;
 import net.elytrium.limboapi.server.LimboSessionHandlerImpl;
 import net.elytrium.limboapi.utils.LambdaUtil;
@@ -123,6 +124,10 @@ public class LoginTasksQueue {
 
   private void finish() {
     this.plugin.removeLoginQueue(this.player);
+
+    if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+      LimboAPI.getLogger().info("Finishing login tasks queue for player {}", this.player.getUsername());
+    }
 
     EventManager eventManager = this.server.getEventManager();
     MinecraftConnection connection = this.player.getConnection();
@@ -241,6 +246,10 @@ public class LoginTasksQueue {
 
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private void connectToServer(Logger logger, ConnectedPlayer player, MinecraftConnection connection) {
+    if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+      LimboAPI.getLogger().info("Connecting player {} to server (connection state: {})", player.getUsername(), connection.getState());
+    }
+
     if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) < 0) {
       try {
         connection.setActiveSessionHandler(connection.getState(),
@@ -249,6 +258,9 @@ public class LoginTasksQueue {
         throw new ReflectionException(e);
       }
     } else if (connection.getState() == StateRegistry.PLAY) {
+      if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+        LimboAPI.getLogger().info("Player {} in PLAY state, triggering disconnectToConfig before server connect", player.getUsername());
+      }
       // Synchronize with the client to ensure that it will not corrupt CONFIG state with PLAY packets
       ((LimboSessionHandlerImpl) connection.getActiveSessionHandler())
           .disconnectToConfig(() -> this.connectToServer(logger, player, connection));

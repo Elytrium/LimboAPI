@@ -1,0 +1,60 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.elytrium.commons",
+    "module": "kyori",
+    "version": "1.2.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.4.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "kyori-1.2.3.jar",
+          "url": "kyori-1.2.3.jar",
+          "size": 3480,
+          "sha512": "a8bb818c182ac7e03a01ddd433d10eac9a031d35c4a1be7e94b7c848141f7617472f8ae91629ba599cba410805043e7c7c98095ce07a22bf02dba6f940927572",
+          "sha256": "c981ccee5f6ec465b07da6f4bd4ea8515c18585d81b0a6cd1da3d458c579a13d",
+          "sha1": "6e4132b3cd317a0813e2926412dd5c6f6a6fb0e8",
+          "md5": "7b463a5c4359323b7cd79e388e316422"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "kyori-1.2.3.jar",
+          "url": "kyori-1.2.3.jar",
+          "size": 3480,
+          "sha512": "a8bb818c182ac7e03a01ddd433d10eac9a031d35c4a1be7e94b7c848141f7617472f8ae91629ba599cba410805043e7c7c98095ce07a22bf02dba6f940927572",
+          "sha256": "c981ccee5f6ec465b07da6f4bd4ea8515c18585d81b0a6cd1da3d458c579a13d",
+          "sha1": "6e4132b3cd317a0813e2926412dd5c6f6a6fb0e8",
+          "md5": "7b463a5c4359323b7cd79e388e316422"
+        }
+      ]
+    }
+  ]
+}

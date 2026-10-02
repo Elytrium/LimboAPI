@@ -26,6 +26,7 @@ import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.event.VelocityEventManager;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -36,8 +37,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.elytrium.commons.utils.reflection.ReflectionException;
 import net.elytrium.limboapi.LimboAPI;
@@ -52,12 +55,13 @@ public class EventManagerHook {
   private static final MethodHandle FIRE_METHOD;
   private static final MethodHandle FUTURE_FIELD;
 
+  private static final Set<String> PROCEEDED_PROFILES = ConcurrentHashMap.newKeySet();
   private final Set<GameProfile> proceededProfiles = new HashSet<>();
   private final LimboAPI plugin;
   private final VelocityEventManager eventManager;
 
-  private Object handlerRegistrations;
-  private boolean hasHandlerRegistration;
+  private static Object handlerRegistrations;
+  private static boolean hasHandlerRegistration;
 
   public EventManagerHook(LimboAPI plugin, VelocityEventManager eventManager) {
     this.plugin = plugin;
@@ -67,7 +71,16 @@ public class EventManagerHook {
   @Subscribe(order = PostOrder.FIRST)
   public EventTask onGameProfileRequest(GameProfileRequestEvent event) {
     GameProfile originalProfile = event.getGameProfile();
-    if (this.proceededProfiles.remove(originalProfile)) {
+    boolean proceeded = this.proceededProfiles.remove(originalProfile);
+    if (originalProfile != null) {
+      if (originalProfile.getName() != null && PROCEEDED_PROFILES.remove(originalProfile.getName().toLowerCase(Locale.ROOT))) {
+        proceeded = true;
+      }
+      if (originalProfile.getId() != null && PROCEEDED_PROFILES.remove(originalProfile.getId().toString())) {
+        proceeded = true;
+      }
+    }
+    if (proceeded) {
       return null;
     } else {
       CompletableFuture<GameProfileRequestEvent> fireFuture = new CompletableFuture<>();
@@ -82,9 +95,9 @@ public class EventManagerHook {
         }
       });
 
-      if (this.hasHandlerRegistration) {
+      if (hasHandlerRegistration) {
         try {
-          FIRE_METHOD.invoke(this.eventManager, fireFuture, event, 0, false, this.handlerRegistrations);
+          FIRE_METHOD.invoke(this.eventManager, fireFuture, event, 0, false, handlerRegistrations);
         } catch (Throwable e) {
           fireFuture.complete(event);
           throw new ReflectionException(e);
@@ -127,18 +140,30 @@ public class EventManagerHook {
 
   public void proceedProfile(GameProfile profile) {
     this.proceededProfiles.add(profile);
+    if (profile != null) {
+      if (profile.getName() != null) {
+        PROCEEDED_PROFILES.add(profile.getName().toLowerCase(Locale.ROOT));
+      }
+      if (profile.getId() != null) {
+        PROCEEDED_PROFILES.add(profile.getId().toString());
+      }
+    }
   }
 
   @SuppressWarnings("rawtypes")
+  @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
   public void reloadHandlers() throws IllegalAccessException {
     ListMultimap<Class<?>, ?> handlersMap = (ListMultimap<Class<?>, ?>) HANDLERS_BY_TYPE_FIELD.get(this.eventManager);
     List disabledHandlers = handlersMap.get(GameProfileRequestEvent.class);
     List preEvents = new ArrayList<>();
     List newHandlers = new ArrayList<>(disabledHandlers);
 
-    if (this.handlerRegistrations != null) {
-      for (int i = 0; i < Array.getLength(this.handlerRegistrations); ++i) {
-        preEvents.add(Array.get(this.handlerRegistrations, i));
+    if (handlerRegistrations != null) {
+      for (int i = 0; i < Array.getLength(handlerRegistrations); ++i) {
+        Object existing = Array.get(handlerRegistrations, i);
+        if (!preEvents.contains(existing)) {
+          preEvents.add(existing);
+        }
       }
     }
 
@@ -146,9 +171,18 @@ public class EventManagerHook {
       for (Object handler : disabledHandlers) {
         PluginContainer pluginContainer = (PluginContainer) PLUGIN_FIELD.invoke(handler);
         String id = pluginContainer.getDescription().getId();
-        if (Settings.IMP.MAIN.PRE_LIMBO_PROFILE_REQUEST_PLUGINS.contains(id)) {
+        boolean matches = false;
+        for (String target : Settings.IMP.MAIN.PRE_LIMBO_PROFILE_REQUEST_PLUGINS) {
+          if (target.equalsIgnoreCase(id)) {
+            matches = true;
+            break;
+          }
+        }
+        if (matches) {
           LimboAPI.getLogger().info("Hooking all GameProfileRequestEvent events from {} ", id);
-          preEvents.add(handler);
+          if (!preEvents.contains(handler)) {
+            preEvents.add(handler);
+          }
           newHandlers.remove(handler);
         }
       }
@@ -157,13 +191,27 @@ public class EventManagerHook {
     }
 
     handlersMap.replaceValues(GameProfileRequestEvent.class, newHandlers);
-    this.handlerRegistrations = Array.newInstance(HANDLER_REGISTRATION_CLASS, preEvents.size());
+    handlerRegistrations = Array.newInstance(HANDLER_REGISTRATION_CLASS, preEvents.size());
 
     for (int i = 0; i < preEvents.size(); ++i) {
-      Array.set(this.handlerRegistrations, i, preEvents.get(i));
+      Array.set(handlerRegistrations, i, preEvents.get(i));
     }
 
-    this.hasHandlerRegistration = !preEvents.isEmpty();
+    hasHandlerRegistration = !preEvents.isEmpty();
+
+    try {
+      Field cacheField = VelocityEventManager.class.getDeclaredField("handlersCache");
+      cacheField.setAccessible(true);
+      Object cache = cacheField.get(this.eventManager);
+      if (cache != null) {
+        Method invalidateAll = cache.getClass().getMethod("invalidateAll");
+        invalidateAll.invoke(cache);
+      }
+    } catch (NoSuchFieldException ignored) {
+      // handlersCache may not exist in all Velocity versions
+    } catch (Throwable e) {
+      LimboAPI.getLogger().warn("Failed to invalidate Velocity event handlers cache", e);
+    }
   }
 
   static {

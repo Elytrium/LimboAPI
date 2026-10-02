@@ -184,6 +184,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
     this.switching = true;
     this.loaded = false;
 
+    if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+      LimboAPI.getLogger().info("Disconnecting {} to CONFIG state (switching=true)", this.player);
+    }
+
     if (this.player.isOnlineMode() && this.player.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_21_2) && this.joinGameTriggered) {
       // There is a race condition in the client then it reconnects too quickly (https://bugs.mojang.com/browse/MC-272506)
       if (!this.chatSession.isDone() && this.chatSessionTimeoutTask == null) {
@@ -192,10 +196,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       }
       this.chatSession.thenRunAsync(() -> {
         this.player.getConnection().write(StartUpdatePacket.INSTANCE);
+        this.player.getConnection().flush();
         this.configTransition.thenRun(this::disconnected).thenRun(runnable);
       }, this.player.getConnection().eventLoop());
     } else {
       this.player.getConnection().write(StartUpdatePacket.INSTANCE);
+      this.player.getConnection().flush();
       this.configTransition.thenRun(this::disconnected).thenRun(runnable);
     }
   }
@@ -209,6 +215,9 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       if (!this.loaded && !this.disconnecting) {
         this.limbo.spawnPlayerLocal(this.callback.getClass(), this, this.player, this.player.getConnection());
       } else if (this.switching) {
+        if (Settings.IMP.MAIN.LOGGING_ENABLED) {
+          LimboAPI.getLogger().info("{} finished update and confirmed transition to CONFIG state.", this.player);
+        }
         this.switching = false;
         this.configTransition.complete(this);
       } else {
