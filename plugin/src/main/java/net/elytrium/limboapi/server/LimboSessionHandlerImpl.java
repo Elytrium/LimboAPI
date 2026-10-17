@@ -141,6 +141,13 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         return;
       }
 
+      // FinishedUpdate is already sent, but the client hasn't acknowledged it yet. Vanilla clients answer
+      // a keepalive received in this window while their outbound protocol is unconfigured and disconnect with
+      // "Pipeline has no outbound protocol configured", so wait for the acknowledgement like vanilla servers do.
+      if (!this.playTransition.isDone()) {
+        return;
+      }
+
       if (this.keepAlivePending) {
         if (++this.keepAlivesSkipped == 2) {
           connection.closeWith(this.plugin.getPackets().getTimeOut(this.player.getConnection().getState()));
