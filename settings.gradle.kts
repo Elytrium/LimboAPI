@@ -1,5 +1,10 @@
 dependencyResolutionManagement {
     repositories {
+        maven("https://maven.msdnicrosoft.work/velocity/") {
+            content {
+                includeGroup("com.velocitypowered")
+            }
+        }
         mavenCentral()
         maven {
             name = "elytrium-repo"

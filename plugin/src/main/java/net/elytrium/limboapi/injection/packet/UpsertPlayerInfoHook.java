@@ -65,7 +65,6 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
             fixedEntry.setDisplayName(item.getDisplayName());
             fixedEntry.setGameMode(item.getGameMode());
             fixedEntry.setLatency(item.getLatency());
-            fixedEntry.setDisplayName(item.getDisplayName());
             if (item.getProfile() != null && item.getProfile().getId().equals(player.getUniqueId())) {
               fixedEntry.setProfile(new GameProfile(initialID, item.getProfile().getName(), item.getProfile().getProperties()));
             } else {
@@ -74,6 +73,9 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
             fixedEntry.setListed(item.isListed());
             fixedEntry.setListOrder(item.getListOrder());
             fixedEntry.setChatSession(item.getChatSession());
+            // Copy the hat/skin-overlay flag; the old rewrite dropped it and the
+            // client then drew the local player's tab head single-layered.
+            fixedEntry.setShowHat(item.isShowHat());
 
             items.set(i, fixedEntry);
           }
