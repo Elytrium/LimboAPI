@@ -128,7 +128,6 @@ public class LoginTasksQueue {
     MinecraftConnection connection = this.player.getConnection();
     Logger logger = LimboAPI.getLogger();
 
-    this.plugin.getEventManagerHook().proceedProfile(this.player.getGameProfile());
     eventManager.fire(new GameProfileRequestEvent(this.inbound, this.player.getGameProfile(), this.player.isOnlineMode())).thenAcceptAsync(
         gameProfile -> {
           try {

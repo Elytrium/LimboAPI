@@ -24,7 +24,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.GameProfileRequestEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.plugin.PluginContainer;
-import com.velocitypowered.api.util.GameProfile;
+import com.velocitypowered.proxy.connection.client.LoginInboundConnection;
 import com.velocitypowered.proxy.event.VelocityEventManager;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -34,9 +34,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import net.elytrium.commons.utils.reflection.ReflectionException;
@@ -52,7 +50,6 @@ public class EventManagerHook {
   private static final MethodHandle FIRE_METHOD;
   private static final MethodHandle FUTURE_FIELD;
 
-  private final Set<GameProfile> proceededProfiles = new HashSet<>();
   private final LimboAPI plugin;
   private final VelocityEventManager eventManager;
 
@@ -66,8 +63,7 @@ public class EventManagerHook {
 
   @Subscribe(order = PostOrder.FIRST)
   public EventTask onGameProfileRequest(GameProfileRequestEvent event) {
-    GameProfile originalProfile = event.getGameProfile();
-    if (this.proceededProfiles.remove(originalProfile)) {
+    if (!(event.getConnection() instanceof LoginInboundConnection)) {
       return null;
     } else {
       CompletableFuture<GameProfileRequestEvent> fireFuture = new CompletableFuture<>();
@@ -123,10 +119,6 @@ public class EventManagerHook {
     // if kick callback is null and no exception occurred, hookFuture won't be ever finished, and
     // the event chain would be broken, that is what we need.
     return EventTask.resumeWhenComplete(hookFuture);
-  }
-
-  public void proceedProfile(GameProfile profile) {
-    this.proceededProfiles.add(profile);
   }
 
   @SuppressWarnings("rawtypes")

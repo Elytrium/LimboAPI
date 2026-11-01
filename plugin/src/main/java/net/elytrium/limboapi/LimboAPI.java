@@ -45,6 +45,7 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import java.io.File;
@@ -53,8 +54,6 @@ import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -148,9 +147,9 @@ public class LimboAPI implements LimboFactory {
   private final CachedPackets packets;
   private final PacketFactory packetFactory;
   private final SimpleItemComponentManager itemComponentManager = new SimpleItemComponentManager();
-  private final HashMap<Player, LoginTasksQueue> loginQueue;
-  private final HashMap<Player, Function<KickedFromServerEvent, Boolean>> kickCallback;
-  private final HashMap<Player, RegisteredServer> nextServer;
+  private final Map<Player, LoginTasksQueue> loginQueue;
+  private final Map<Player, Function<KickedFromServerEvent, Boolean>> kickCallback;
+  private final Map<Player, RegisteredServer> nextServer;
 
   private PreparedPacketFactory preparedPacketFactory;
   private PreparedPacketFactory configPreparedPacketFactory;
@@ -169,12 +168,12 @@ public class LimboAPI implements LimboFactory {
     this.server = (VelocityServer) server;
     this.metricsFactory = metricsFactory;
     this.configFile = dataDirectory.resolve("config.yml").toFile();
-    this.players = new HashSet<>();
+    this.players = ConcurrentHashMap.newKeySet();
     this.packetFactory = new PacketFactoryImpl();
     this.packets = new CachedPackets(this);
-    this.loginQueue = new HashMap<>();
-    this.kickCallback = new HashMap<>();
-    this.nextServer = new HashMap<>();
+    this.loginQueue = new ConcurrentHashMap<>();
+    this.kickCallback = new ConcurrentHashMap<>();
+    this.nextServer = new ConcurrentHashMap<>();
 
     int maximumProtocolVersionNumber = ProtocolVersion.MAXIMUM_VERSION.getProtocol();
     if (maximumProtocolVersionNumber < SUPPORTED_MAXIMUM_PROTOCOL_VERSION_NUMBER) {
@@ -425,12 +424,12 @@ public class LimboAPI implements LimboFactory {
     return (PreparedPacket) this.configPreparedPacketFactory.createPreparedPacket(minVersion, maxVersion);
   }
 
-  public ByteBuf encodeSingleLogin(MinecraftPacket packet, ProtocolVersion version) {
-    return this.loginPreparedPacketFactory.encodeSingle(packet, version);
+  public ByteBuf encodeSingleLogin(MinecraftPacket packet, ProtocolVersion version, ByteBufAllocator alloc) {
+    return this.loginPreparedPacketFactory.encodeSingle(packet, version, alloc);
   }
 
-  public ByteBuf encodeSingleLoginUncompressed(MinecraftPacket packet, ProtocolVersion version) {
-    return this.loginUncompressedPreparedPacketFactory.encodeSingle(packet, version);
+  public ByteBuf encodeSingleLoginUncompressed(MinecraftPacket packet, ProtocolVersion version, ByteBufAllocator alloc) {
+    return this.loginUncompressedPreparedPacketFactory.encodeSingle(packet, version, alloc);
   }
 
   public void inject3rdParty(Player player, MinecraftConnection connection, ChannelPipeline pipeline) {
@@ -619,7 +618,11 @@ public class LimboAPI implements LimboFactory {
   }
 
   public void setKickCallback(Player player, Function<KickedFromServerEvent, Boolean> queue) {
-    this.kickCallback.put(player, queue);
+    if (queue == null) {
+      this.kickCallback.remove(player);
+    } else {
+      this.kickCallback.put(player, queue);
+    }
   }
 
   public void removeKickCallback(Player player) {
@@ -676,10 +679,6 @@ public class LimboAPI implements LimboFactory {
 
   public ProtocolVersion getPrepareMaxVersion() {
     return this.maxVersion;
-  }
-
-  public EventManagerHook getEventManagerHook() {
-    return this.eventManagerHook;
   }
 
   @Override

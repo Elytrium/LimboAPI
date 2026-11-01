@@ -31,6 +31,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 import net.elytrium.limboapi.LimboAPI;
@@ -266,6 +267,7 @@ public class LimboPlayerImpl implements LimboPlayer {
 
   @Override
   public void disconnect(RegisteredServer server) {
+    Objects.requireNonNull(server, "server");
     this.connection.eventLoop().execute(() -> {
       if (this.connection.getActiveSessionHandler() == this.sessionHandler) {
         this.sessionHandler.disconnect(() -> {

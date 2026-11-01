@@ -96,6 +96,7 @@ public class LoginListener {
 
   private static final MethodHandle DELEGATE_FIELD;
   private static final BiConsumer<Object, MinecraftConnection> MC_CONNECTION_SETTER;
+  private static final BiConsumer<Object, ConnectedPlayer> CONNECTED_PLAYER_SETTER;
   private static final MethodHandle CONNECTED_PLAYER_CONSTRUCTOR;
   private static final MethodHandle SPAWNED_FIELD;
   private static final BiConsumer<ConnectedPlayer, TabList> TAB_LIST_SETTER;
@@ -189,6 +190,8 @@ public class LoginListener {
 
           if (connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_20_2) >= 0) {
             loginHandler.setPlayer(player);
+          } else {
+            CONNECTED_PLAYER_SETTER.accept(handler, player);
           }
           if (this.server.canRegisterConnection(player)) {
             if (!connection.isClosed()) {
@@ -246,14 +249,14 @@ public class LoginListener {
 
                 ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
                 if (compressionHandler != null) {
-                  connection.write(this.plugin.encodeSingleLogin(success, connection.getProtocolVersion()));
+                  connection.write(this.plugin.encodeSingleLogin(success, connection.getProtocolVersion(), connection.getChannel().alloc()));
                 } else {
                   ChannelHandler frameHandler = pipeline.get(Connections.FRAME_ENCODER);
                   if (frameHandler != null) {
                     pipeline.remove(frameHandler);
                   }
 
-                  connection.write(this.plugin.encodeSingleLoginUncompressed(success, connection.getProtocolVersion()));
+                  connection.write(this.plugin.encodeSingleLoginUncompressed(success, connection.getProtocolVersion(), connection.getChannel().alloc()));
                 }
               }
 
@@ -280,6 +283,10 @@ public class LoginListener {
   private void fireRegisterEvent(ConnectedPlayer player, MinecraftConnection connection,
       InitialInboundConnection inbound, Object handler) {
     this.server.getEventManager().fire(new LoginLimboRegisterEvent(player)).thenAcceptAsync(limboRegisterEvent -> {
+      if (connection.isClosed()) {
+        return;
+      }
+
       LoginTasksQueue queue = new LoginTasksQueue(this.plugin, handler, this.server, player, inbound, limboRegisterEvent.getOnJoinCallbacks());
       this.plugin.addLoginQueue(player, queue);
       this.plugin.setKickCallback(player, limboRegisterEvent.getOnKickCallback());
@@ -338,6 +345,10 @@ public class LoginListener {
       Field mcConnectionField = AuthSessionHandler.class.getDeclaredField("mcConnection");
       mcConnectionField.setAccessible(true);
       MC_CONNECTION_SETTER = LambdaUtil.setterOf(mcConnectionField);
+
+      Field connectedPlayerField = AuthSessionHandler.class.getDeclaredField("connectedPlayer");
+      connectedPlayerField.setAccessible(true);
+      CONNECTED_PLAYER_SETTER = LambdaUtil.setterOf(connectedPlayerField);
 
       SPAWNED_FIELD = MethodHandles.privateLookupIn(ClientPlaySessionHandler.class, MethodHandles.lookup())
           .findSetter(ClientPlaySessionHandler.class, "spawned", boolean.class);

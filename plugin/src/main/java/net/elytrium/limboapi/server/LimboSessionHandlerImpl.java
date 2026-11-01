@@ -101,6 +101,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private boolean switching;
   private boolean disconnecting;
   private boolean joinGameTriggered;
+  private boolean counted;
 
   public LimboSessionHandlerImpl(LimboAPI plugin, LimboImpl limbo, ConnectedPlayer player,
       LimboSessionHandler callback, StateRegistry originalState, MinecraftSessionHandler originalHandler,
@@ -119,6 +120,10 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       this.settings = sessionHandler.getSettings();
       this.brand = sessionHandler.getBrand();
     }
+  }
+
+  public void setCounted() {
+    this.counted = true;
   }
 
   public void onConfig(LimboPlayer player) {
@@ -411,8 +416,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       this.respawnTask.cancel(true);
     }
 
-    if (this.loaded) {
+    if (this.counted) {
+      this.counted = false;
       this.limbo.onDisconnect();
+    }
+
+    if (this.loaded) {
       this.callback.onDisconnect();
     }
   }

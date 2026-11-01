@@ -78,6 +78,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -140,7 +141,7 @@ public class LimboImpl implements Limbo {
   private static final CompoundBinaryTag DAMAGE_TYPE_1194;
   private static final CompoundBinaryTag DAMAGE_TYPE_120;
 
-  private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new HashMap<>(2);
+  private final Map<Class<? extends LimboSessionHandler>, PreparedPacket> brandMessages = new ConcurrentHashMap<>(2);
   private final LimboAPI plugin;
   private final VirtualWorld world;
 
@@ -177,7 +178,7 @@ public class LimboImpl implements Limbo {
   private int viewDistance = Settings.IMP.MAIN.VIEW_DISTANCE;
   private int simulationDistance = Settings.IMP.MAIN.SIMULATION_DISTANCE;
   private volatile boolean built = true;
-  private boolean disposeScheduled = false;
+  private volatile boolean disposeScheduled = false;
 
   public LimboImpl(LimboAPI plugin, VirtualWorld world) {
     this.plugin = plugin;
@@ -188,6 +189,10 @@ public class LimboImpl implements Limbo {
   }
 
   protected void refresh() {
+    if (this.localStateRegistry != LimboProtocol.getLimboStateRegistry()) {
+      this.plugin.getPreparedPacketFactory().addStateRegistry(this.localStateRegistry);
+    }
+
     JoinGamePacket legacyJoinGame = this.createLegacyJoinGamePacket();
     JoinGamePacket joinGame = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_16);
     JoinGamePacket joinGame1162 = this.createJoinGamePacket(ProtocolVersion.MINECRAFT_1_16_2);
@@ -365,23 +370,7 @@ public class LimboImpl implements Limbo {
 
   @Override
   public void spawnPlayer(Player apiPlayer, LimboSessionHandler handler) {
-    if (!this.built) {
-      synchronized (this) {
-        if (!this.built) {
-          List<PreparedPacket> packets = this.takeSnapshot();
-          try {
-            this.refresh();
-          } finally {
-            List<PreparedPacket> changed = this.takeSnapshot();
-            for (PreparedPacket packet : packets) {
-              if (!changed.contains(packet)) {
-                this.queuedToRelease.add(packet);
-              }
-            }
-          }
-        }
-      }
-    }
+    this.ensureBuilt();
 
     ConnectedPlayer player = (ConnectedPlayer) apiPlayer;
     MinecraftConnection connection = player.getConnection();
@@ -431,6 +420,26 @@ public class LimboImpl implements Limbo {
 
     if (shouldSpawnPlayerImmediately) {
       this.spawnPlayerLocal(player, handler, null);
+    }
+  }
+
+  private void ensureBuilt() {
+    if (!this.built) {
+      synchronized (this) {
+        if (!this.built) {
+          List<PreparedPacket> packets = this.takeSnapshot();
+          try {
+            this.refresh();
+          } finally {
+            List<PreparedPacket> changed = this.takeSnapshot();
+            for (PreparedPacket packet : packets) {
+              if (!changed.contains(packet)) {
+                this.queuedToRelease.add(packet);
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -545,10 +554,14 @@ public class LimboImpl implements Limbo {
       if (connection.getActiveSessionHandler() instanceof LoginConfirmHandler confirm) {
         confirm.waitForConfirmation(() -> {
           this.currentOnline.increment();
+          sessionHandler.setCounted();
+          this.ensureBuilt();
           this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
         });
       } else {
         this.currentOnline.increment();
+        sessionHandler.setCounted();
+        this.ensureBuilt();
         this.spawnPlayerLocal(handlerClass, sessionHandler, player, connection);
       }
     });
@@ -656,9 +669,18 @@ public class LimboImpl implements Limbo {
 
   public void onDisconnect() {
     this.currentOnline.decrement();
+    if (this.currentOnline.sum() != 0 || !this.disposeScheduled && this.queuedToRelease.isEmpty()) {
+      return;
+    }
 
-    if (!this.queuedToRelease.isEmpty() && this.currentOnline.sum() == 0) {
-      synchronized (this) {
+    synchronized (this) {
+      if (this.currentOnline.sum() != 0) {
+        return;
+      }
+
+      if (this.disposeScheduled) {
+        this.localDispose();
+      } else if (!this.queuedToRelease.isEmpty()) {
         PreparedPacket[] packets = this.queuedToRelease.toArray(new PreparedPacket[0]);
         this.queuedToRelease.clear();
 
@@ -669,10 +691,6 @@ public class LimboImpl implements Limbo {
           }
         }).delay(10, TimeUnit.SECONDS).schedule();
       }
-    }
-
-    if (this.disposeScheduled && this.currentOnline.sum() == 0) {
-      this.localDispose();
     }
   }
 
@@ -792,11 +810,10 @@ public class LimboImpl implements Limbo {
   }
 
   @Override
-  public void dispose() {
+  public synchronized void dispose() {
+    this.disposeScheduled = true;
     if (this.getCurrentOnline() == 0) {
       this.localDispose();
-    } else {
-      this.disposeScheduled = true;
     }
   }
 
@@ -835,10 +852,19 @@ public class LimboImpl implements Limbo {
   }
 
   private void localDispose() {
-    this.takeSnapshot().forEach(PreparedPacket::release);
     this.built = false;
+    if (this.currentOnline.sum() != 0) {
+      return;
+    }
+
+    this.takeSnapshot().forEach(PreparedPacket::release);
+    this.queuedToRelease.forEach(PreparedPacket::release);
+    this.queuedToRelease.clear();
     this.brandMessages.values().forEach(PreparedPacket::release);
     this.brandMessages.clear();
+    if (this.localStateRegistry != LimboProtocol.getLimboStateRegistry()) {
+      this.plugin.getPreparedPacketFactory().removeStateRegistry(this.localStateRegistry);
+    }
   }
 
   // From Velocity.
@@ -1493,12 +1519,7 @@ public class LimboImpl implements Limbo {
   }
 
   private PreparedPacket getBrandMessage(Class<? extends LimboSessionHandler> clazz) {
-    PreparedPacket preparedPacket = this.brandMessages.get(clazz);
-    if (preparedPacket == null) {
-      this.brandMessages.put(clazz, preparedPacket = this.plugin.createPreparedPacket().prepare(this::createBrandMessage).build());
-    }
-
-    return preparedPacket;
+    return this.brandMessages.computeIfAbsent(clazz, key -> this.plugin.createPreparedPacket().prepare(this::createBrandMessage).build());
   }
 
   private PluginMessagePacket createBrandMessage(ProtocolVersion version) {

@@ -1,6 +1,6 @@
 [versions]
 elytrium-commons = "1.2.3" # https://github.com/Elytrium/elytrium-java-commons
-elytrium-fastprepare = "1.0.13" #https://github.com/Elytrium/FastPrepareAPI
+elytrium-fastprepare = "1.1.0" #https://github.com/Elytrium/FastPrepareAPI
 gradle-licenser = "1.2.0" # https://github.com/CadixDev/licenser
 gradle-shadow = "9.6.1" # https://github.com/GradleUp/shadow
 gradle-spotbugs = "6.4.8" # https://github.com/spotbugs/spotbugs-gradle-plugin
