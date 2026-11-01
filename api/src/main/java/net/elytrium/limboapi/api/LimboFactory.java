@@ -119,6 +119,24 @@ public interface LimboFactory {
   VirtualWorld createVirtualWorld(Dimension dimension, double posX, double posY, double posZ, float yaw, float pitch);
 
   /**
+   * Creates a new virtual world with a custom identifier.
+   *
+   * @param dimension World dimension type.
+   * @param worldName Namespaced identifier used to distinguish the world on modern clients.
+   * @param posX      Spawn location. (X)
+   * @param posY      Spawn location. (Y)
+   * @param posZ      Spawn location. (Z)
+   * @param yaw       Spawn rotation. (Yaw)
+   * @param pitch     Spawn rotation. (Pitch)
+   *
+   * @return new virtual world.
+   */
+  default VirtualWorld createVirtualWorld(Dimension dimension, String worldName,
+      double posX, double posY, double posZ, float yaw, float pitch) {
+    throw new UnsupportedOperationException("Custom world names are not supported by this LimboFactory");
+  }
+
+  /**
    * Creates new virtual chunk with plain biomes set as default.
    * You need to provide the chunk location, you can get it using {@code blockCoordinate >> 4}.
    *
